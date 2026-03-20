@@ -106,19 +106,20 @@ Also updated:
 
 ## 4 — Commit cadence
 
-> 🔲 To be defined — see TASK-013.
+Commit at the end of any session that produced a material change to `skills/`,
+`CLAUDE.md`, `TASKS.md`, `docs/`, or `shared/`. A session is a commit unit.
 
-Decision pending. Options under consideration:
+The trigger rule: **if the session wrote or modified a tracked file, commit before closing.**
+Do not let more than one session's changes accumulate uncommitted.
 
-- **Per-session** — commit at the end of any session that modified `skills/`,
-  `CLAUDE.md`, or `TASKS.md`
-- **Per-skill-version-bump** — every `<!-- version: X.Y -->` increment in a
-  `SKILL.md` triggers a commit; message writes itself from the version bump
-- **Weekly sweep** — fixed cadence regardless of change volume; risk of bundling
-  unrelated changes
+For skill changes specifically, the commit message scope writes itself from the version bump:
 
-Until decided, commit manually at the end of sessions that produce material
-changes. Do not let more than one session's worth of changes accumulate uncommitted.
+```
+skills/managing-tasks: bump to v1.6 — add override pattern
+```
+
+Weekly sweeps are not the primary cadence — they bundle unrelated changes and
+obscure causality. Prefer per-session discipline.
 
 ---
 
@@ -136,8 +137,58 @@ corrupting both histories silently.
 
 ---
 
+## 6 — Git MCP integration (Claude Desktop)
+
+`mcp-server-git` is configured as the `git-workspace` MCP server in `claude_desktop_config.json`.
+It exposes git operations as structured tool calls within Claude Desktop sessions.
+
+### Tool coverage
+
+| Tool | Available |
+| :--- | :---: |
+| `git_status` | ✅ |
+| `git_diff_unstaged` | ✅ |
+| `git_diff_staged` | ✅ |
+| `git_diff` | ✅ |
+| `git_add` | ✅ |
+| `git_commit` | ✅ |
+| `git_reset` | ✅ |
+| `git_log` | ✅ |
+| `git_branch` | ✅ |
+| `git_checkout` | ✅ |
+| `git_create_branch` | ✅ |
+| `git_show` | ✅ |
+| `git_push` | ❌ not available — run manually in WSL2 |
+
+### Config entry
+
+```json
+"git-workspace": {
+  "command": "wsl.exe",
+  "args": ["bash", "-c", "/home/gino/.local/bin/uvx mcp-server-git --repository /home/gino/workspace"]
+}
+```
+
+### Operational rules (encoded in system prompt)
+
+- Default repo: `/home/gino/workspace` (workspace root, no qualifier needed)
+- Named sub-repo: `my-claude-fmk | slide-gen | datawan` → `/home/gino/workspace/<name>`
+- `"all repos"` → run against all four repos in sequence
+- Commit requires explicit `-m` approval — propose message, wait for confirmation, then stage and commit
+
+### Known gaps
+
+- No `git_push` — must be run manually: `git push origin main` in WSL2 terminal
+- `git_log` was blocked in one session (likely a tool load order issue) — if unavailable, retry after `tool_search("git log")`
+
+### Installation prerequisite
+
+Requires Claude Desktop Win32 installer (not Store). See `setup/filesystem-mcp-wsl2-setup.md`.
+
+---
+
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-03-20 |
 | Status       | Draft      |

@@ -13,8 +13,7 @@
 - TASK-009: Refine project-bootstrapping skill post first-run | target: workspace/skills/project-bootstrapping/ | scope: update SKILL.md, project-interview.md, challenge-rules.md, output-templates.md based on TASK-008 findings; bump skill version to 1.2
 - TASK-010: Scope and resolve datawan/ repo | target: workspace/datawan/ | scope: empty src/, test/, mock/, public/ — determine if active, abandoned, or pre-scaffold; either add a CLAUDE.md + TASKS.md and start work, or archive
 - TASK-011: Frame slide-gen/use-case-3/ | target: workspace/slide-gen/use-case-3/ | scope: orphaned content only (data-architecture-reference.md) — no FRAMING.md, CONSTITUTION.md, or TASKS.md; either frame it with `build framing use-case-3` or remove it
-- TASK-013: Define workspace git commit cadence | target: workspace/docs/workspace-git.md | scope: choose and document the commit trigger — options: per-session (any skills/ or CLAUDE.md change), per-skill-version-bump, or weekly sweep; update Section 4 of workspace-git.md once decided
-- TASK-015: Validate and document Git MCP integration | target: workspace/docs/workspace-git.md | scope: git-workspace MCP confirmed working (status, diff, add, commit, branch, log); validate remaining tools (checkout, create_branch, show, reset); document tool coverage, known gaps (git_log blocked, git_diff false-positive on TASKS.md), and .gitattributes fix for CRLF issue; update workspace-git.md Section 4 with adopted approach | ref: session 2026-03-20
+
 
 ---
 
@@ -38,4 +37,7 @@
 
 ---
 
-*Last updated: 2026-03-20 — TASK-015 target corrected to workspace/*
+- TASK-013: Define workspace git commit cadence | target: workspace/docs/workspace-git.md | scope: per-session cadence decided and documented in Section 4 — commit trigger is end-of-session if any tracked file was modified; weekly sweeps explicitly rejected | done: 2026-03-20
+- TASK-015: Validate and document Git MCP integration | target: workspace/docs/workspace-git.md | scope: mcp-server-git confirmed working via Win32 Claude Desktop install; full tool coverage documented in workspace-git.md Section 6; operational rules encoded in system prompt; known gap: no git_push | done: 2026-03-20
+
+*Last updated: 2026-03-20 — TASK-013 and TASK-015 closed; filesystem-mcp-wsl2-setup.md v1.1; workspace-git.md v1.1*
