@@ -14,7 +14,7 @@
 - TASK-010: Scope and resolve datawan/ repo | target: workspace/datawan/ | scope: empty src/, test/, mock/, public/ — determine if active, abandoned, or pre-scaffold; either add a CLAUDE.md + TASKS.md and start work, or archive
 - TASK-011: Frame slide-gen/use-case-3/ | target: workspace/slide-gen/use-case-3/ | scope: orphaned content only (data-architecture-reference.md) — no FRAMING.md, CONSTITUTION.md, or TASKS.md; either frame it with `build framing use-case-3` or remove it
 - TASK-013: Define workspace git commit cadence | target: workspace/docs/workspace-git.md | scope: choose and document the commit trigger — options: per-session (any skills/ or CLAUDE.md change), per-skill-version-bump, or weekly sweep; update Section 4 of workspace-git.md once decided
-- TASK-015: Scope Git MCP server integration for Claude Desktop | target: workspace/ | scope: evaluate options for exposing git commands (status, log, diff) to Claude Desktop — dedicated Git MCP server vs bash_tool workaround vs direct .git/ reads; recommend approach and document if adopted
+- TASK-015: Validate and document Git MCP integration | target: workspace/docs/workspace-git.md | scope: git-workspace MCP confirmed working (status, diff, add, commit, branch, log); validate remaining tools (checkout, create_branch, show, reset); document tool coverage, known gaps (git_log blocked, git_diff false-positive on TASKS.md), and .gitattributes fix for CRLF issue; update workspace-git.md Section 4 with adopted approach | ref: session 2026-03-20
 
 ---
 
