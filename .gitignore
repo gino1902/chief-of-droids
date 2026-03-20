@@ -1,0 +1,15 @@
+# Project repos — each has its own git
+slide-gen/
+my-claude-fmk/
+datawan/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Large binary outputs (slide-gen outputs tracked in slide-gen repo)
+*.pptx
+*.xlsx
+*.pdf
