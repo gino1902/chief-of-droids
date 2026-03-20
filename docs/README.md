@@ -13,6 +13,7 @@ alongside the work they document.
 | File | What it covers |
 | :--- | :--- |
 | `bootstrapping-guide.md` | How to use the `project-bootstrapping` skill to scaffold a new Claude Desktop project — form, challenge, generation, file write, and post-bootstrap checklist. Includes design decisions from the 2026-03-19 session. |
+| `workspace-git.md` | Workspace git convention — what is tracked, what is excluded, commit message format, cadence options, and rules for adding new project repos. |
 
 ---
 
@@ -26,6 +27,6 @@ alongside the work they document.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-03-19 |
+| Version      | 1.1        |
+| Last Updated | 2026-03-20 |
 | Status       | Draft      |
