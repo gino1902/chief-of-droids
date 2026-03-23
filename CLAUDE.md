@@ -28,6 +28,7 @@ Applies to all repos in this workspace unless a repo-level CLAUDE.md overrides t
 - Use headers sparingly — one level of nesting is usually enough
 - Prefer tables over bullet lists for structured comparisons
 - All code examples use fenced blocks with language tag (` ```xml `, ` ```bash `, ` ```markdown `)
+- Session summaries in chat: omit git commit hashes — not actionable in chat context
 
 ---
 
