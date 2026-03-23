@@ -1,5 +1,5 @@
 # Architecture Frameworks Reference
-<!-- version: 1.1 | last_updated: 2026-03-23 -->
+<!-- version: 1.2 | last_updated: 2026-03-23 -->
 
 Stable judgment patterns — these do not require fetch verification unless a
 specific platform's current feature availability is being cited.
@@ -99,3 +99,53 @@ connector availability, or performance characteristics — these evolve with pla
 Any data that needs transformation, quality enforcement, or long-term retention
 must be ingested — not federated. Never position Federation as an alternative to
 a Bronze ingest layer for production analytical workloads.
+
+---
+
+## API and Integration Contract Standards
+
+Data platforms expose and consume data through APIs and event streams. Two ratified
+standards govern how those interfaces are described and contracted. Surface both
+during Phase 3 (Architecture Selection) and Phase 4 (Data Modelling).
+
+⚠️ Fetch from official sources before advising on specific syntax, version features,
+or tooling support — both evolve independently of Databricks runtime releases.
+
+| Standard | Use when | Official source |
+| :--- | :--- | :--- |
+| OpenAPI | Describing RESTful APIs — data product endpoints, serving layer APIs, platform REST interfaces | `spec.openapis.org` |
+| AsyncAPI | Describing event-driven and streaming interfaces — Kafka topics, Event Hubs channels, WebSocket feeds, message-driven data products | `asyncapi.com/docs/reference/specification` |
+
+**Decision rules (stable — no fetch required):**
+
+- Use OpenAPI to describe any RESTful serving layer endpoint — Gold-layer data products exposed as APIs, model inference endpoints, platform management APIs. OpenAPI contracts belong in Phase 4 alongside data contracts.
+- Use AsyncAPI to describe event-driven interfaces — Kafka topics, Event Hubs channels, streaming data products. AsyncAPI is the correct contract format when consumers need to know message schema, channel address, and protocol bindings, not just REST endpoints.
+- Never use OpenAPI to describe a Kafka topic or an Event Hubs channel — the protocol model is wrong. AsyncAPI is the correct standard for message-driven interfaces.
+- Use both OpenAPI and AsyncAPI when a data product exposes both REST and event-driven interfaces — they compose; one does not replace the other.
+
+**Senior rule:** API contracts (OpenAPI / AsyncAPI) are Phase 4 deliverables, not
+post-launch documentation. A data product without a machine-readable contract is
+not a data product — it is a table with an undocumented access pattern.
+
+### Emerging Convention: llms.txt
+
+**Maturity status:** Community proposal (Answer.AI, Sept 2024). No formal standards
+body. No confirmed support from any major LLM provider as of early 2026. Widely
+adopted by developer-focused documentation sites (Anthropic, Cloudflare, Stripe,
+Vercel) but not yet an enforced protocol.
+
+**What it does:** A Markdown-structured file at `/llms.txt` on a domain root that
+gives AI agents a curated map of the site's most relevant documentation and API
+endpoints — reducing the need for agents to parse complex HTML or crawl multiple pages.
+
+**When to surface it:** Raise `llms.txt` when AI agent or LLM-powered tooling
+consumption is an explicit requirement — typically identified in Phase 1
+(Requirements). Do not surface it as a default architecture decision.
+
+**Decision rules:**
+
+- If the platform or its data products will be consumed by AI agents, recommend adding `/llms.txt` as a low-effort discoverability layer alongside the OpenAPI / AsyncAPI contracts — not as a substitute for them.
+- Do not position `llms.txt` as equivalent to OpenAPI or AsyncAPI — it is a documentation hint, not a machine-executable contract.
+- Treat it as forward-looking infrastructure: low cost to add, no confirmed return, but aligned with the direction of AI-native consumption patterns.
+
+**Official source:** `llmstxt.org`
