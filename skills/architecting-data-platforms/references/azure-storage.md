@@ -1,4 +1,5 @@
 # Azure Cloud Storage Reference
+<!-- version: 1.1 | last_updated: 2026-03-23 -->
 
 All version-sensitive claims in this file must be verified against official sources
 before use. Access tier thresholds, replication options, HNS constraints, and
@@ -54,6 +55,30 @@ Stable architectural principle — does not require a fetch:
 
 **Senior rule:** Any integration using SP or SAS must have a defined secret rotation
 policy before go-live. "We'll handle it later" is not a policy.
+
+---
+
+## Secrets Management — Azure Key Vault
+
+Use Azure Key Vault as the single secrets store for all credentials that cannot use
+Managed Identity — Service Principal client secrets, SAS tokens, and any third-party
+API keys used in pipelines.
+
+⚠️ Fetch from `learn.microsoft.com/azure/key-vault` before advising on Key Vault
+pricing tiers, soft-delete retention periods, or purge protection behaviour — these
+are subject to change.
+
+**Decision rules (stable — no fetch required):**
+
+- Back Databricks Secret Scopes with Azure Key Vault — never store secrets in Databricks-native secret scopes for production workloads; Key Vault provides audit logging, rotation, and access policy enforcement that native scopes do not
+- Managed Identity is the correct access method for Databricks to read from Key Vault — do not use Key Vault access policies with Service Principals if Managed Identity is available
+- Rotate Service Principal client secrets on a defined schedule — define the rotation cadence and owner at Phase 5 (Security); never leave rotation as an undated future task
+- SAS token expiry must be set at generation time — never generate non-expiring SAS tokens
+- Key Vault must be provisioned and access policies confirmed before any pipeline that requires credentials goes to production — do not use placeholder secrets and "replace later"
+
+**Senior rule:** A secret that is not in Key Vault is a secret that cannot be audited,
+rotated centrally, or revoked instantly. If it is in a notebook, a config file, or
+an environment variable, it is exposed.
 
 ---
 

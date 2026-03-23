@@ -1,4 +1,5 @@
 # Databricks — Data Engineering Reference
+<!-- version: 1.1 | last_updated: 2026-03-23 -->
 
 All version-sensitive claims in this file must be verified against official sources
 before use. Do not treat this file as authoritative for API details, config syntax,
@@ -74,12 +75,23 @@ platform release.
 ## Ingestion Patterns
 
 ⚠️ Fetch from `docs.databricks.com` before advising on Auto Loader configuration,
-COPY INTO syntax, or scale limits — capabilities change across runtime versions.
+COPY INTO syntax, CDC connector availability, or scale limits — capabilities change
+across runtime versions.
 
 **Decision rules that do not require a fetch:**
 
-- Auto Loader for continuous/streaming ingest where files arrive incrementally
-- COPY INTO for periodic batch loads where idempotency is required
+| Pattern | When to use | Anti-pattern |
+| :--- | :--- | :--- |
+| Auto Loader | Continuous or incremental file-based ingest from ADLS Gen2 or cloud storage | Do not use for transactional system sync — no upsert semantics |
+| COPY INTO | Periodic batch loads where idempotency is required; full or incremental file loads | Do not use when source system produces change events — CDC is the correct pattern |
+| CDC (Change Data Capture) | Incremental sync from transactional systems (Oracle, PostgreSQL, MySQL, SAP) where only changed rows should be propagated | Do not use CDC when the source cannot expose a change feed — fall back to COPY INTO with watermark |
+
+**CDC-specific decision rules:**
+
+- CDC feeds land in Bronze as raw change events — preserve the full change record including operation type (insert / update / delete) and source timestamp
+- Silver applies deduplication and merge logic — use `MERGE INTO` on the Delta target keyed on the source primary key
+- CDC is the correct pattern for near-real-time fact table sync, audit trail maintenance, and operational reporting where full reloads are cost-prohibitive
+- Classify CDC latency requirement at design time: near-real-time (sub-minute) vs micro-batch (5–15 min) vs scheduled — each has different compute and connector implications
 - For Event Hubs or Kafka integration, confirm connector version against active runtime at `docs.databricks.com/release-notes`
 
 ---
