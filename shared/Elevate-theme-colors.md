@@ -2,7 +2,7 @@
 
 > Theme: *Elevate* — font: TWK Everett Light
 
-| Role            | Hex       | Notes                         |
+| Role            | Hex       | Property                      |
 | --------------- | --------- | ----------------------------- |
 | Dark 1 (`dk1`)  | `#000000` | Primary dark / text           |
 | Light 1 (`lt1`) | `#FFFFFF` | Primary light / background    |

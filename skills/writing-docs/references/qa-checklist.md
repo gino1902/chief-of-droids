@@ -1,4 +1,4 @@
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-03-26 -->
 
 # Doc Writer QA Checklist
 
@@ -13,4 +13,5 @@ Run before proposing any document output.
 - [ ] Version, author, and date present on any document that will be referenced
 - [ ] Output format selected deliberately — not defaulted
 - [ ] If `.md`: `references/markdown-formatting.md` read and applied
-- [ ] If version-sensitive technical claims present: `tech-reviewer/SKILL.md` read and applied
+- [ ] If output format is docx / pptx / xlsx / HTML / React / SVG: `references/theme.md` read and Elevate theme artifact passed to composed format skill
+- [ ] If version-sensitive technical claims present: `reviewing-tech-claims` skill loaded and applied

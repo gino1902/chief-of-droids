@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Elevate Office Theme — theme1.xml
+  Canonical source: shared/elevate-theme/tokens.json
+  Derived from:     shared/Elevate-theme-colors.md
+
+  Usage: inject into any .pptx / .docx / .xlsx package at:
+           pptx  → ppt/theme/theme1.xml
+           docx  → word/theme/theme1.xml
+           xlsx  → xl/theme/theme1.xml
+         See README.md for injection instructions.
+
+  dk1/lt1: use sysClr (system color reference) per universal Office convention.
+           srgbClr is schema-valid but breaks Office's system-aware text/background
+           derivation. lastClr is the fallback hex used by non-system renderers.
+
+  majorFont (headings): TWK Everett Light
+  minorFont (body):     TWK Everett Regular
+
+  fmtScheme: minimal-valid stubs. Required by schema; no visual effect unless a
+             shape's direct formatting references a theme style index.
+-->
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Elevate">
+  <a:themeElements>
+
+    <!-- COLOR SCHEME -->
+    <a:clrScheme name="Elevate">
+      <!-- dk1: Primary dark / text — sysClr required for Office system color derivation -->
+      <a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1>
+      <!-- lt1: Primary light / background — sysClr required -->
+      <a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>
+      <!-- dk2: Near-black navy -->
+      <a:dk2><a:srgbClr val="0F0E2B"/></a:dk2>
+      <!-- lt2: Warm cream -->
+      <a:lt2><a:srgbClr val="FFFAF0"/></a:lt2>
+      <!-- accent1: Electric blue — primary brand -->
+      <a:accent1><a:srgbClr val="1F24E9"/></a:accent1>
+      <!-- accent2: Sky blue -->
+      <a:accent2><a:srgbClr val="6DA5FF"/></a:accent2>
+      <!-- accent3: Ice blue (light) -->
+      <a:accent3><a:srgbClr val="C5D8F6"/></a:accent3>
+      <!-- accent4: Steel blue (muted) -->
+      <a:accent4><a:srgbClr val="425F8B"/></a:accent4>
+      <!-- accent5: Violet-blue -->
+      <a:accent5><a:srgbClr val="6164EB"/></a:accent5>
+      <!-- accent6: Periwinkle (soft) -->
+      <a:accent6><a:srgbClr val="8E8FEC"/></a:accent6>
+      <!-- hlink: Hyperlink (= accent1) -->
+      <a:hlink><a:srgbClr val="1F24E9"/></a:hlink>
+      <!-- folHlink: Followed hyperlink (= accent2) -->
+      <a:folHlink><a:srgbClr val="6DA5FF"/></a:folHlink>
+    </a:clrScheme>
+
+    <!-- FONT SCHEME -->
+    <a:fontScheme name="Elevate">
+      <!-- majorFont: headings — TWK Everett Light -->
+      <a:majorFont>
+        <a:latin typeface="TWK Everett Light"/>
+        <a:ea typeface=""/>
+        <a:cs typeface=""/>
+      </a:majorFont>
+      <!-- minorFont: body text — TWK Everett Regular -->
+      <a:minorFont>
+        <a:latin typeface="TWK Everett Regular"/>
+        <a:ea typeface=""/>
+        <a:cs typeface=""/>
+      </a:minorFont>
+    </a:fontScheme>
+
+    <!-- FORMAT SCHEME — STUB: minimal-valid, no visual effect in practice -->
+    <a:fmtScheme name="Elevate">
+      <a:fillStyleLst>
+        <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+        <a:solidFill><a:schemeClr val="phClr"><a:tint val="95000"/><a:satMod val="105000"/></a:schemeClr></a:solidFill>
+        <a:solidFill><a:schemeClr val="phClr"><a:tint val="85000"/><a:satMod val="180000"/></a:schemeClr></a:solidFill>
+      </a:fillStyleLst>
+      <a:lnStyleLst>
+        <a:ln w="6350" cap="flat" cmpd="sng" algn="ctr">
+          <a:solidFill><a:schemeClr val="phClr"><a:shade val="95000"/><a:satMod val="105000"/></a:schemeClr></a:solidFill>
+          <a:prstDash val="solid"/>
+        </a:ln>
+        <a:ln w="12700" cap="flat" cmpd="sng" algn="ctr">
+          <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+          <a:prstDash val="solid"/>
+        </a:ln>
+        <a:ln w="19050" cap="flat" cmpd="sng" algn="ctr">
+          <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+          <a:prstDash val="solid"/>
+        </a:ln>
+      </a:lnStyleLst>
+      <a:effectStyleLst>
+        <a:effectStyle><a:effectLst/></a:effectStyle>
+        <a:effectStyle><a:effectLst/></a:effectStyle>
+        <a:effectStyle><a:effectLst/></a:effectStyle>
+      </a:effectStyleLst>
+      <a:bgFillStyleLst>
+        <a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+        <a:solidFill><a:schemeClr val="phClr"><a:tint val="95000"/><a:satMod val="170000"/></a:schemeClr></a:solidFill>
+        <a:gradFill rotWithShape="1">
+          <a:gsLst>
+            <a:gs pos="0"><a:schemeClr val="phClr"><a:tint val="93000"/><a:satMod val="150000"/><a:shade val="98000"/><a:lumMod val="102000"/></a:schemeClr></a:gs>
+            <a:gs pos="50000"><a:schemeClr val="phClr"><a:tint val="98000"/><a:satMod val="130000"/><a:shade val="90000"/><a:lumMod val="103000"/></a:schemeClr></a:gs>
+            <a:gs pos="100000"><a:schemeClr val="phClr"><a:shade val="63000"/><a:satMod val="120000"/></a:schemeClr></a:gs>
+          </a:gsLst>
+          <a:lin ang="5400000" scaled="0"/>
+        </a:gradFill>
+      </a:bgFillStyleLst>
+    </a:fmtScheme>
+
+  </a:themeElements>
+</a:theme>

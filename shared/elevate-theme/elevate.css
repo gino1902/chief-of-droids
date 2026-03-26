@@ -1,0 +1,55 @@
+/*
+ * elevate.css
+ * Elevate theme — CSS custom properties
+ * Canonical source: shared/elevate-theme/tokens.json
+ * Derived from:     shared/Elevate-theme-colors.md
+ *
+ * Usage:
+ *   Link once in HTML <head> or import at the top of your stylesheet.
+ *   Reference tokens via var(--elevate-<role>).
+ *   Use semantic aliases in components — not raw palette tokens.
+ *
+ * Font: TWK Everett Light — licensed commercial font, must be loaded separately.
+ *   Add a @font-face or @import declaration in your own stylesheet.
+ *   This file declares the font-family token only; it does not load the font.
+ *
+ * Hyperlink tokens: --elevate-color-link and --elevate-color-link-visited are
+ *   semantic aliases pointing to accent1 and accent2. Named --elevate-hyperlink
+ *   and --elevate-followed-hyperlink aliases are also declared for parity with
+ *   tokens.json.
+ */
+
+:root {
+  /* --- Base palette --- */
+  --elevate-dk1:     #000000;  /* Primary dark / text                  */
+  --elevate-lt1:     #FFFFFF;  /* Primary light / background           */
+  --elevate-dk2:     #0F0E2B;  /* Near-black navy                      */
+  --elevate-lt2:     #FFFAF0;  /* Warm cream                           */
+  --elevate-accent1: #1F24E9;  /* Electric blue — primary brand        */
+  --elevate-accent2: #6DA5FF;  /* Sky blue                             */
+  --elevate-accent3: #C5D8F6;  /* Ice blue (light)                     */
+  --elevate-accent4: #425F8B;  /* Steel blue (muted)                   */
+  --elevate-accent5: #6164EB;  /* Violet-blue                          */
+  --elevate-accent6: #8E8FEC;  /* Periwinkle (soft)                    */
+
+  /* --- Semantic aliases — use these in components --- */
+  --elevate-color-text:            var(--elevate-dk1);
+  --elevate-color-background:      var(--elevate-lt1);
+  --elevate-color-surface:         var(--elevate-lt2);    /* warm cream — cards, panels       */
+  --elevate-color-surface-dark:    var(--elevate-dk2);    /* navy — dark backgrounds          */
+  --elevate-color-brand:           var(--elevate-accent1);
+  --elevate-color-brand-light:     var(--elevate-accent2);
+  --elevate-color-brand-lightest:  var(--elevate-accent3);
+  --elevate-color-brand-muted:     var(--elevate-accent4);
+  --elevate-color-brand-alt:       var(--elevate-accent5);
+  --elevate-color-brand-soft:      var(--elevate-accent6);
+
+  /* --- Hyperlink aliases — parity with tokens.json roles --- */
+  --elevate-hyperlink:             var(--elevate-accent1); /* = accent1 */
+  --elevate-followed-hyperlink:    var(--elevate-accent2); /* = accent2 */
+  --elevate-color-link:            var(--elevate-accent1);
+  --elevate-color-link-visited:    var(--elevate-accent2);
+
+  /* --- Typography --- */
+  --elevate-font-family: "TWK Everett Light", system-ui, sans-serif;
+}

@@ -1,0 +1,52 @@
+/*
+ * elevate-tailwind-v4.css
+ * Elevate theme — Tailwind CSS v4 configuration
+ * Canonical source: shared/elevate-theme/tokens.json
+ * Derived from:     shared/Elevate-theme-colors.md
+ *
+ * Usage:
+ *   Add to your main CSS entry file after the Tailwind import:
+ *
+ *     @import "tailwindcss";
+ *     @import "./elevate-tailwind-v4.css";
+ *
+ *   This generates utility classes in the --color-elevate-* namespace:
+ *     bg-elevate-brand, text-elevate-text, border-elevate-dk2, etc.
+ *
+ *   Tailwind v4 uses CSS-first @theme — tailwind.config.js is not used for colors.
+ *   For v3 projects, use the tailwindElevate export in elevate-tokens.js instead.
+ *
+ * Font: TWK Everett Light — load via @font-face in your own stylesheet.
+ *   The --font-elevate token below registers the font-family utility only.
+ */
+
+@theme {
+  /* --- Base palette --- */
+  --color-elevate-dk1:     #000000;  /* Primary dark / text               */
+  --color-elevate-lt1:     #FFFFFF;  /* Primary light / background        */
+  --color-elevate-dk2:     #0F0E2B;  /* Near-black navy                   */
+  --color-elevate-lt2:     #FFFAF0;  /* Warm cream                        */
+  --color-elevate-accent1: #1F24E9;  /* Electric blue — primary brand     */
+  --color-elevate-accent2: #6DA5FF;  /* Sky blue                          */
+  --color-elevate-accent3: #C5D8F6;  /* Ice blue (light)                  */
+  --color-elevate-accent4: #425F8B;  /* Steel blue (muted)                */
+  --color-elevate-accent5: #6164EB;  /* Violet-blue                       */
+  --color-elevate-accent6: #8E8FEC;  /* Periwinkle (soft)                 */
+
+  /* --- Semantic aliases --- */
+  --color-elevate-text:           #000000;  /* = dk1    */
+  --color-elevate-background:     #FFFFFF;  /* = lt1    */
+  --color-elevate-surface:        #FFFAF0;  /* = lt2    */
+  --color-elevate-surface-dark:   #0F0E2B;  /* = dk2    */
+  --color-elevate-brand:          #1F24E9;  /* = accent1 */
+  --color-elevate-brand-light:    #6DA5FF;  /* = accent2 */
+  --color-elevate-brand-lightest: #C5D8F6;  /* = accent3 */
+  --color-elevate-brand-muted:    #425F8B;  /* = accent4 */
+  --color-elevate-brand-alt:      #6164EB;  /* = accent5 */
+  --color-elevate-brand-soft:     #8E8FEC;  /* = accent6 */
+  --color-elevate-link:           #1F24E9;  /* = accent1 */
+  --color-elevate-link-visited:   #6DA5FF;  /* = accent2 */
+
+  /* --- Typography --- */
+  --font-elevate: "TWK Everett Light", system-ui, sans-serif;
+}

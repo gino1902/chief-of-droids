@@ -81,6 +81,20 @@ Renders natively in Obsidian, GitHub, and VS Code (with extension). Do **not**
 replace with ASCII art unless the target environment is confirmed to not support
 Mermaid.
 
+**Elevate theme:** When the document is part of an Elevate-themed deliverable,
+apply the Elevate Mermaid init block to every diagram. Read the init block from
+`shared/elevate-theme/elevate-mermaid.md` and prepend it to each diagram
+definition. Do not hardcode hex values — always copy from that file to stay in
+sync with the canonical source.
+
+````markdown
+```mermaid
+%%{init: { "theme": "base", "themeVariables": { ... } }}%%
+flowchart LR
+    A[Start] --> B[End]
+```
+````
+
 ---
 
 ## Lists
@@ -150,6 +164,7 @@ More content.
 - [ ] Blank line after every header
 - [ ] Code blocks fenced with language identifier
 - [ ] Mermaid diagrams use ` ```mermaid ` fence
+- [ ] Mermaid diagrams in Elevate deliverables include the init block from `shared/elevate-theme/elevate-mermaid.md`
 - [ ] No bare URLs
 - [ ] No skipped header levels
 - [ ] JSON blocks validated (no trailing commas, balanced brackets)

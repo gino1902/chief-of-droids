@@ -50,6 +50,14 @@ alternatives.
 | Plain prose | Inline chat responses, emails, short briefs not saved to disk |
 | Structured sections (no file) | Assessment outputs delivered in conversation before writing to disk |
 | DOCX | Formal deliverables requiring tracked changes, comments, or executive distribution |
+| PPTX | Slide-based presentations and visual storytelling |
+| XLSX | Tabular data, structured matrices, financial models |
+| HTML | Web-rendered output, interactive documents, browser-based delivery |
+| React | Component-based interactive UI, dashboards, artifact-rendered output |
+| SVG | Diagrams, illustrations, and scalable visual assets |
+
+For DOCX, PPTX, XLSX, HTML, React, and SVG outputs: read `references/theme.md`
+and apply the Elevate theme — see step 5 of the workflow.
 
 When the output is `.md`: read `references/markdown-formatting.md` before writing.
 Do not apply Markdown-specific rules from memory.

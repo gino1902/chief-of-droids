@@ -8,7 +8,7 @@ description: >
   Triggers on: "author skill", "critique skill", "assess all skills",
   "create a skill", "build a skill", "I need a skill", "new skill for".
 ---
-<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-03-26 -->
 
 # Creating Skills Skill
 
@@ -38,25 +38,26 @@ Never skip this step. Never assume the environment from context or memory.
 
 ## Step 1 — Official Source Fetch (mandatory, every invocation)
 
-Attempt both fetches after environment detection. Do not skip even if the
+Attempt all three fetches after environment detection. Do not skip even if the
 environment is known from a prior run in the same session.
 
-1. `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices`
+1. `https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/best-practices`
 2. `https://github.com/anthropics/skills/`
+3. `https://agentskills.io/specification`
 
 **Fetch outcomes:**
 
 | Environment | Expected result | Action |
 | :--- | :--- | :--- |
-| Claude Desktop | Both succeed | Proceed normally |
-| Claude Desktop — one fails | Partial | Flag, proceed with the other + local checklist |
-| Claude Desktop — both fail | Full failure | Flag both, proceed with local checklist only |
-| Claude.ai | Both blocked | Surface platform restriction, proceed with local checklist only |
+| Claude Desktop | All succeed | Proceed normally |
+| Claude Desktop — one fails | Partial | Flag, proceed with remaining + local checklist |
+| Claude Desktop — all fail | Full failure | Flag all, proceed with local checklist only |
+| Claude.ai | All blocked | Surface platform restriction, proceed with local checklist only |
 
 **Always surface fetch status before producing any output:**
 - ✅ `Official sources fetched — assessment fully verified against live docs`
-- ⚠️ `One source failed — assessment partially verified; gaps noted`
-- ⚠️ `Both sources failed — assessment run against local checklist only`
+- ⚠️ `One or more sources failed — assessment partially verified; gaps noted`
+- ⚠️ `All sources failed — assessment run against local checklist only`
 
 A failed fetch is acceptable. A skipped fetch is not.
 Never proceed from memory alone if both fetch and local checklist are unavailable.
@@ -135,7 +136,7 @@ Output: gap table in chat (no file write)
 ## QA Checklist
 
 - [ ] Environment detected and reported before any other action
-- [ ] Both official source fetches attempted — status reported explicitly
+- [ ] All three official source fetches attempted — status reported explicitly
 - [ ] assessment-checklist.md read via filesystem tool — not from memory
 - [ ] Findings cross-referenced against fetched official docs, not checklist alone
 - [ ] Description field third person, trigger-inclusive, max 1024 chars
