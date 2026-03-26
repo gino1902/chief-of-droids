@@ -1,4 +1,4 @@
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-03-25 -->
 
 # Output Templates
 
@@ -9,6 +9,7 @@ be filled and ask the user before proceeding.
 
 Generation order: FRAMING.md → CLAUDE.md → TASKS.md → system prompt.
 Each file is confirmed and written before the next is generated.
+FRAMING.md must pass the framing gate before CLAUDE.md is generated.
 
 ---
 
@@ -55,8 +56,9 @@ Each file is confirmed and written before the next is generated.
 
 ## Template 0 — FRAMING.md
 
-*User-owned. Never modified by Claude after creation. Written first, confirmed before
-CLAUDE.md is generated.*
+*User-owned after `approve framing` is issued. During the framing gate loop, Claude
+may propose and write edits on user request. Written first; must pass framing gate
+before CLAUDE.md is generated.*
 
 ```markdown
 # FRAMING.md — [PROJECT_NAME]
@@ -109,6 +111,13 @@ CLAUDE.md is generated.*
 | Last Updated | [DATE]     |
 | Status       | Draft      |
 ```
+
+**After writing FRAMING.md:**
+Read `references/framing-gate.md` via Filesystem tool.
+Re-read `workspace/[REPO_NAME]/FRAMING.md` from disk.
+Run full assessment per gate protocol — output in standard format.
+Enter assessment loop. Do not proceed to Artefact 2 until user issues `approve framing`
+with zero blocking issues remaining.
 
 ---
 

@@ -8,7 +8,7 @@ description: >
   "scaffold project", or "set up a new Claude project".
   NOT for modifying existing projects — use managing-tasks or writing-docs instead.
 ---
-<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-25 -->
 
 # Project Bootstrapping Skill
 
@@ -25,7 +25,7 @@ always happen in the conversation via Filesystem MCP after the user approves out
 
 **Generation order:** FRAMING.md → CLAUDE.md → TASKS.md → system prompt.
 Each file is confirmed and written before the next is generated. FRAMING.md must
-exist on disk before CLAUDE.md is written — CLAUDE.md references it.
+pass the framing gate before CLAUDE.md is written — CLAUDE.md references it.
 
 ---
 
@@ -37,6 +37,8 @@ exist on disk before CLAUDE.md is written — CLAUDE.md references it.
   read before the challenge step
 - `references/output-templates.md` — FRAMING.md, CLAUDE.md, TASKS.md, and system
   prompt templates with placeholder substitution rules; read before generation step
+- `references/framing-gate.md` — blocking/advisory criteria, loop protocol, and
+  assessment output format; read before running the framing gate after FRAMING.md is written
 
 ---
 
@@ -151,13 +153,19 @@ Then generate and write in this order:
 
 Render as a markdown artifact:
 - Title: `FRAMING.md — [PROJECT_NAME]`
-- Note above: "User-owned scope definition — you may edit this after creation. Claude will never modify it."
+- Note above: "User-owned scope definition — you may edit this directly. Claude will propose edits only when you request them, and will never modify FRAMING.md autonomously."
 
 Ask: "Write FRAMING.md to `workspace/[REPO_NAME]/FRAMING.md`? (yes / no)"
 
 On confirmation: write file. Confirm: `✅ Written: workspace/[REPO_NAME]/FRAMING.md`
 
-Do not proceed to Artefact 2 until FRAMING.md is written.
+**Run framing gate immediately after write:**
+Read `references/framing-gate.md` via Filesystem tool.
+Re-read `workspace/[REPO_NAME]/FRAMING.md` from disk.
+Run full assessment per gate protocol.
+Output assessment in standard format.
+Enter assessment loop — do not proceed to Artefact 2 until user issues `approve framing`
+with zero blocking issues.
 
 ---
 
@@ -214,12 +222,16 @@ After all four artefacts are delivered, provide next-step instructions:
   Do not try to display challenge results inside the artifact.
 - **Repo name validation must happen in Step 3, not in the artifact.**
 - **Do not regenerate the artifact after submit.** Re-rendering the form resets state.
-- **FRAMING.md must be written before CLAUDE.md.** CLAUDE.md's alignment rule
-  references FRAMING.md — generating CLAUDE.md before FRAMING.md exists on disk
-  creates a broken reference on the first session start.
-- **FRAMING.md is user-owned from the moment it is written.** Claude must never
-  propose modifications to it in any subsequent session, even if the user asks
-  Claude to "update" it. The user edits it directly.
+- **FRAMING.md must pass the framing gate before CLAUDE.md is generated.** CLAUDE.md's
+  alignment rule references FRAMING.md — a structurally weak FRAMING.md produces a
+  broken project foundation.
+- **FRAMING.md is user-owned after `approve framing` is issued.** During the gate loop,
+  Claude may propose and write edits on user request. Once the user approves and the
+  workflow proceeds to CLAUDE.md, FRAMING.md is user-owned — Claude must never propose
+  modifications to it in any subsequent session unless explicitly asked.
+- **Framing gate always re-reads from disk.** Never assess FRAMING.md from memory or
+  from a prior turn's output — re-read the file on every `re-assess` and every
+  `approve framing` call.
 
 ---
 
@@ -227,6 +239,6 @@ After all four artefacts are delivered, provide next-step instructions:
 
 | Skill | When |
 | :--- | :--- |
+| `analyzing-business-cases` | During framing gate — `challenge-framing` workflow provides the checklist and assessment pattern; after bootstrap, for deeper framing refinement |
 | `managing-tasks` | After file write — user may immediately want to start TASK-001 |
-| `analyzing-business-cases` | If user wants to challenge or refine FRAMING.md after creation |
 | `writing-docs` | If user requests additional project documentation beyond the four bootstrap artefacts |

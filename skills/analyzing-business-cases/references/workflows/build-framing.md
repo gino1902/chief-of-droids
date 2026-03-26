@@ -1,8 +1,8 @@
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-03-23 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-03-25 -->
 
 # Workflow: build framing
 
-Trigger: `build framing <use-case-id>` | "frame this project" | "scope this use case"
+Trigger: `build framing <project-name>` | "frame this project" | "scope this use case"
 | "what are we actually trying to solve" | "help me frame this"
 
 ## Steps
@@ -29,10 +29,10 @@ Trigger: `build framing <use-case-id>` | "frame this project" | "scope this use 
 
 ## Output
 
-`use-case-<id>/FRAMING.md` written to filesystem (on approval only)
+`[REPO_NAME]/FRAMING.md` written to filesystem (on approval only)
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.0        |
-| Last Updated | 2026-03-23 |
+| Version      | 1.1        |
+| Last Updated | 2026-03-25 |
 | Status       | Final      |

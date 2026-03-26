@@ -1,4 +1,4 @@
-<!-- version: 1.0 | author: slide-gen workspace | last_updated: 2026-03-11 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-03-25 -->
 
 # Challenge Checklist
 
@@ -17,7 +17,6 @@ Run against any FRAMING.md — during `build framing` (pre-proposal) and
 
 - [ ] Primary stakeholder (decision-maker) is named or typed
 - [ ] Secondary stakeholders (impacted, consulted) are identified
-- [ ] Audience for the output (slide deck) is distinct from project stakeholders
 
 ## Value articulation
 
@@ -36,3 +35,4 @@ Run against any FRAMING.md — during `build framing` (pre-proposal) and
 - [ ] Key assumptions are named — not buried in narrative
 - [ ] At least one risk or dependency is identified
 - [ ] No unsupported superlatives ("best", "most efficient", "only solution")
+

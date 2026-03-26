@@ -1,22 +1,22 @@
 ---
 name: analyzing-business-cases
 description: >
-  Frames use cases, challenges weak business reasoning, and assesses artifact
+  Frames projects, challenges weak business reasoning, and assesses artifact
   consistency across projects. Load this skill whenever a user wants to define,
   scope, or pressure-test a project — including vague or early-stage requests.
-  Triggers on: "build framing", "challenge framing", "assess <use-case-id>",
+  Triggers on: "build framing", "challenge framing", "assess <project-name>",
   "frame this project", "scope this use case", "challenge this proposal",
   "does this make business sense", "what are we actually trying to solve",
   "is the framing solid", "new use case". Explicit command aliases:
-  "build framing <id>", "challenge framing <id>", "assess <id>".
+  "build framing <project-name>", "challenge framing <project-name>", "assess <project-name>".
   Composes with: architecting-data-platforms (when use case is a data platform),
   reviewing-tech-claims (when technical claims appear in FRAMING).
 ---
-<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-03-23 -->
+<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-03-25 -->
 
 # Analyzing Business Cases Skill
 
-Strategic guidance for framing use cases, challenging weak business reasoning,
+Strategic guidance for framing projects, challenging weak business reasoning,
 and assessing consistency across project artifacts.
 
 **Principle:** This skill owns narrative coherence, stakeholder alignment, value
@@ -39,15 +39,15 @@ Read explicitly via filesystem tool when the relevant workflow is triggered. Not
 ## Workflows
 
 ### build framing
-Trigger: `build framing <use-case-id>` | "frame this project" | "scope this use case" | "what are we actually trying to solve"
+Trigger: `build framing <project-name>` | "frame this project" | "scope this use case" | "what are we actually trying to solve"
 Read `references/workflows/build-framing.md` for the full procedure.
 
 ### challenge framing
-Trigger: `challenge framing <use-case-id>` | "challenge this proposal" | "is the framing solid" | "does this make business sense"
+Trigger: `challenge framing <project-name>` | "challenge this proposal" | "is the framing solid" | "does this make business sense"
 Read `references/workflows/challenge-framing.md` for the full procedure.
 
 ### assess
-Trigger: `assess <use-case-id>`
+Trigger: `assess <project-name>`
 Read `references/workflows/assess.md` for the full procedure.
 
 ## QA Checklist
@@ -71,6 +71,6 @@ Read `references/workflows/assess.md` for the full procedure.
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.6        |
-| Last Updated | 2026-03-23 |
+| Version      | 1.7        |
+| Last Updated | 2026-03-25 |
 | Status       | Final      |
