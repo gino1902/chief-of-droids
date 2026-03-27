@@ -39,8 +39,9 @@ have no direct Mermaid equivalent — apply them per-node via `classDef`.
     "background":         "#FFFFFF",
     "nodeBorder":         "#425F8B",
     "clusterBkg":         "#FFFAF0",
+    "clusterBorder":      "#6DA5FF",
     "titleColor":         "#1F24E9",
-    "edgeLabelBackground":"#FFFAF0",
+    "edgeLabelBackground":"#0F0E2B",
     "fontFamily":         "TWK Everett Light, system-ui, sans-serif"
   }
 }}%%
@@ -64,8 +65,9 @@ have no direct Mermaid equivalent — apply them per-node via `classDef`.
 | background           | lt1           | `#FFFFFF` | Canvas background |
 | nodeBorder           | accent4       | `#425F8B` | Steel blue — consistent with lineColor |
 | clusterBkg           | lt2           | `#FFFAF0` | Warm cream — subgraph / cluster fill |
+| clusterBorder        | accent2       | `#6DA5FF` | Sky blue — subgraph border |
 | titleColor           | accent1       | `#1F24E9` | Brand blue for diagram title |
-| edgeLabelBackground  | lt2           | `#FFFAF0` | Warm cream label background |
+| edgeLabelBackground  | dk2           | `#0F0E2B` | Navy — edge label background |
 
 **primaryBorderColor note:** Mermaid auto-derives `primaryBorderColor` from
 `primaryColor` when not overridden. This init block explicitly sets it to dk2
@@ -96,8 +98,9 @@ Apply per-node via `classDef` — see example below.
     "background":         "#FFFFFF",
     "nodeBorder":         "#425F8B",
     "clusterBkg":         "#FFFAF0",
+    "clusterBorder":      "#6DA5FF",
     "titleColor":         "#1F24E9",
-    "edgeLabelBackground":"#FFFAF0",
+    "edgeLabelBackground":"#0F0E2B",
     "fontFamily":         "TWK Everett Light, system-ui, sans-serif"
   }
 }}%%
