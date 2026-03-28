@@ -14,3 +14,11 @@ Thumbs.db
 *.pptx
 *.xlsx
 *.pdf
+
+# Session analysis findings — local only, not versioned
+.tasks/sessions-findings/*
+!.tasks/sessions-findings/.gitkeep
+
+# Session removal logs — local only, not versioned
+.logs/sessions-removed/*
+!.logs/sessions-removed/.gitkeep

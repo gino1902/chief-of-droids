@@ -30,6 +30,38 @@ Also triggers when the user asks to record, close, or transition any task by ID.
 
 ---
 
+## managing-sessions
+
+Triggers on session history analysis, pruning recommendations, or memory hygiene.
+
+**Explicit triggers:**
+- "manage sessions"
+- "analyse sessions"
+- "prune sessions"
+- "session hygiene"
+- "what should I keep"
+- "challenge memories"
+- "check memories"
+
+**Auto-trigger (system prompt rule):**
+During session bootstrap, if `recent_chats` returns ≥10 sessions, invoke this
+skill before proceeding with any other work.
+
+**What it does:**
+- Analyses session history using `recent_chats` + `conversation_search`
+- Classifies findings as `on-disk`, `not-on-disk`, or `superseded`
+- Recommends a prune boundary with explicit date
+- Writes findings to `.tasks/sessions-findings/` and removal log to
+  `.logs/sessions-removed/` (removal log only when sessions are confirmed removed)
+- Produces a manual deletion checklist (user executes in claude.ai UI)
+- Challenges userMemories against on-disk sources for contradictions
+
+**Does NOT:**
+- Delete sessions — deletion is always manual
+- Modify userMemories — surfaces contradictions only
+
+---
+
 ## architecting-data-platforms
 
 Triggers on any data platform design, architecture, or assessment topic.
@@ -174,3 +206,6 @@ request. Common combinations in this workspace:
 | Frame + write the document | `analyzing-business-cases` + `writing-docs` |
 | Read, add, or transition tasks | `managing-tasks` |
 | Bootstrap a new Claude Desktop project | `project-bootstrapping` |
+| Analyse, prune, or audit session history | `managing-sessions` |
+| Capture session value then write a doc | `managing-sessions` + `writing-docs` |
+| Session prune surfaces open tasks | `managing-sessions` + `managing-tasks` |

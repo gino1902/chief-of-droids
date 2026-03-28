@@ -1,114 +1,103 @@
-# Elevate — Mermaid Theme Init Block
+# Elevate — Mermaid Theme
 
 Canonical source: `shared/elevate-theme/tokens.json`  
 Derived from: `shared/Elevate-theme-colors.md`
 
 ---
 
-## Usage
+## Approach
 
-Paste the init block at the top of every Mermaid diagram that should use the
-Elevate theme. The block must be the **first line** of the diagram definition,
-before the diagram type declaration.
+Elevate Mermaid theming uses a **hybrid pattern**:
 
-**Hex only:** Mermaid's theming engine recognizes hex colors only — named colors
-such as `red` or `navy` are not supported and will be silently ignored.
+- `%%{init}%%` — minimal block, used only for `edgeLabelBackground` (not controllable via `classDef`)
+- `classDef` — all node and subgraph container styling
+- `linkStyle default` — edge label text color
 
-Mermaid v11 (base theme) exposes 27+ named variables across the general theme
-and diagram-specific namespaces (flowchart, sequence, etc.). The init block below
-maps Elevate tokens to the general + flowchart variables. accent5 and accent6
-have no direct Mermaid equivalent — apply them per-node via `classDef`.
+**Why not `%%{init}%%` only:** `labelTextColor` is unreliable across renderers
+(GitHub, Obsidian, VS Code) — it is often silently ignored and edge label text
+renders white. `classDef` applied to subgraph IDs is the verified, renderer-stable
+approach for container styling.
 
----
-
-## Init block — copy-paste
-
-```
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "primaryColor":       "#1F24E9",
-    "primaryTextColor":   "#FFFFFF",
-    "primaryBorderColor": "#0F0E2B",
-    "secondaryColor":     "#6DA5FF",
-    "secondaryTextColor": "#000000",
-    "tertiaryColor":      "#C5D8F6",
-    "tertiaryTextColor":  "#000000",
-    "lineColor":          "#425F8B",
-    "textColor":          "#000000",
-    "background":         "#FFFFFF",
-    "nodeBorder":         "#425F8B",
-    "clusterBkg":         "#FFFAF0",
-    "clusterBorder":      "#6DA5FF",
-    "titleColor":         "#1F24E9",
-    "edgeLabelBackground":"#0F0E2B",
-    "fontFamily":         "TWK Everett Light, system-ui, sans-serif"
-  }
-}}%%
-```
+**Correction:** subgraph containers do accept `class <subgraph-id> <classname>` —
+this is valid Mermaid syntax and renderer-stable as of v10+.
 
 ---
 
-## Token mapping rationale
-
-| Mermaid variable     | Elevate token | Hex       | Reason |
-| :------------------- | :------------ | :-------- | :----- |
-| primaryColor         | accent1       | `#1F24E9` | Primary brand — main node fill |
-| primaryTextColor     | lt1           | `#FFFFFF` | White text on brand fill |
-| primaryBorderColor   | dk2           | `#0F0E2B` | Navy border — intentional override (not derived from primaryColor) |
-| secondaryColor       | accent2       | `#6DA5FF` | Sky blue — secondary nodes |
-| secondaryTextColor   | dk1           | `#000000` | Dark text on light fill |
-| tertiaryColor        | accent3       | `#C5D8F6` | Ice blue — tertiary / subgraph fill; contrast vs black = ~9.5:1 ✓ |
-| tertiaryTextColor    | dk1           | `#000000` | Dark text on light fill |
-| lineColor            | accent4       | `#425F8B` | Steel blue — edges / connectors |
-| textColor            | dk1           | `#000000` | Body text |
-| background           | lt1           | `#FFFFFF` | Canvas background |
-| nodeBorder           | accent4       | `#425F8B` | Steel blue — consistent with lineColor |
-| clusterBkg           | lt2           | `#FFFAF0` | Warm cream — subgraph / cluster fill |
-| clusterBorder        | accent2       | `#6DA5FF` | Sky blue — subgraph border |
-| titleColor           | accent1       | `#1F24E9` | Brand blue for diagram title |
-| edgeLabelBackground  | dk2           | `#0F0E2B` | Navy — edge label background |
-
-**primaryBorderColor note:** Mermaid auto-derives `primaryBorderColor` from
-`primaryColor` when not overridden. This init block explicitly sets it to dk2
-(`#0F0E2B` navy) — a deliberate design choice for stronger borders on the
-primary (brand blue) nodes specifically.
-
-**Not mapped (no general Mermaid equivalent):**  
-accent5 (`#6164EB` violet-blue) and accent6 (`#8E8FEC` periwinkle).
-Apply per-node via `classDef` — see example below.
-
----
-
-## Per-node classDef example
+## Canonical pattern — copy-paste
 
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "primaryColor":       "#1F24E9",
-    "primaryTextColor":   "#FFFFFF",
-    "primaryBorderColor": "#0F0E2B",
-    "secondaryColor":     "#6DA5FF",
-    "secondaryTextColor": "#000000",
-    "tertiaryColor":      "#C5D8F6",
-    "tertiaryTextColor":  "#000000",
-    "lineColor":          "#425F8B",
-    "textColor":          "#000000",
-    "background":         "#FFFFFF",
-    "nodeBorder":         "#425F8B",
-    "clusterBkg":         "#FFFAF0",
-    "clusterBorder":      "#6DA5FF",
-    "titleColor":         "#1F24E9",
-    "edgeLabelBackground":"#0F0E2B",
-    "fontFamily":         "TWK Everett Light, system-ui, sans-serif"
-  }
-}}%%
+%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}}}%%
 flowchart LR
+  classDef main      fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
+  classDef primary   fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
+  classDef secondary fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
+  classDef tertiary  fill:#C5D8F6,color:#000000,stroke:#425F8B
+  classDef cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
+  linkStyle default color:#0F0E2B
+
+  subgraph Main
+    subgraph Company
+      PM[Packmind platform\nSource of truth]
+      DEV[Developer environment\nrepo + Copilot + packmind-cli]
+      GH[GitHub Copilot]
+    end
+    subgraph Customer
+      C_DEV[Developer environment\nrepo + Claude Code + packmind-cli]
+      C_CC[Claude Code]
+    end
+  end
+
+  PM -->|copilot-instructions.md| DEV
+  PM -.->|CLAUDE.md, skills, commands| C_DEV
+  DEV <-->|read/write| GH
+  C_DEV <-->|read/write| C_CC
+  GH -->|update playbook - human| PM
+  C_CC -.->|update playbook - human| PM
+  DEV -->|violation detected - Toolchain| PM
+  C_DEV -.->|violation detected - Toolchain| PM
+
+  class PM primary
+  class DEV,GH secondary
+  class C_DEV,C_CC tertiary
+  class Company,Customer cluster
+  class Main main
+```
+
+---
+
+## classDef token mapping
+
+| Class | Role | Fill | Text | Stroke | Elevate tokens |
+| :---- | :--- | :--- | :--- | :----- | :------------- |
+| `main` | Outer wrapper subgraph — invisible | `#FFFAF0` | `#FFFAF0` | `#C5D8F6` | lt2 / lt2 / accent3 |
+| `primary` | Primary brand nodes | `#1F24E9` | `#FFFAF0` | `#425F8B` | accent1 / lt2 / accent4 |
+| `secondary` | Secondary nodes | `#6DA5FF` | `#FFFFFF` | `#425F8B` | accent2 / lt1 / accent4 |
+| `tertiary` | Tertiary nodes | `#C5D8F6` | `#000000` | `#425F8B` | accent3 / dk1 / accent4 |
+| `cluster` | Inner subgraph containers | `#FFFFFF` | `#0F0E2B` | `#0F0E2B` | lt1 / dk2 / dk2 |
+
+---
+
+## init block rationale
+
+| Variable | Value | Reason |
+| :--- | :--- | :--- |
+| `edgeLabelBackground` | `#FFFFFF` | Matches canvas — hides the grey label box. `transparent` collapses the box and degrades rendering. Not settable via `classDef` or `linkStyle`. |
+
+---
+
+## linkStyle rationale
+
+`linkStyle default color:#0F0E2B` sets edge label text to navy across all links.
+Without it, label text color is renderer-dependent and frequently renders white.
+
+---
+
+## accent5 / accent6 — per-node only
+
+accent5 (`#6164EB` violet-blue) and accent6 (`#8E8FEC` periwinkle) have no
+subgraph-level role. Apply per-node via `classDef`:
+
+```mermaid
   classDef alt5 fill:#6164EB,color:#FFFFFF,stroke:#0F0E2B
   classDef alt6 fill:#8E8FEC,color:#000000,stroke:#0F0E2B
-  A[Primary node]
-  B[Alt violet]:::alt5
-  C[Alt periwinkle]:::alt6
-  A --> B --> C
 ```

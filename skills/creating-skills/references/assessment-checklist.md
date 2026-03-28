@@ -1,4 +1,4 @@
-<!-- version: 1.1 | author: slide-gen workspace | last_updated: 2026-03-12 -->
+<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
 
 # Assessment Checklist
 
@@ -37,6 +37,39 @@ live docs, does not replace them.
 - [ ] Workflows have clear sequential steps with feedback loops where relevant
 - [ ] Failure handling defined — skill does not silently proceed on missing files
 
+## Workflow-Class Skills
+
+Apply this section only when the skill implements a multi-step execution
+workflow with classification logic, conditional branching, or stateful
+output across multiple files or passes. Skip for reference-and-apply skills
+(e.g. document formatters, domain advisors).
+
+**Trigger signal:** skill has >3 sequential workflow steps, produces
+output files, or classifies inputs into categories.
+
+- [ ] Classification criteria are explicit and exhaustive — no implicit
+  "otherwise" defaults; every possible input state maps to a named outcome
+- [ ] All conditional branches are defined — if a step fires only under
+  certain conditions, those conditions are stated; no branch is left implicit
+- [ ] Pass/stage outputs are explicitly consumed by the next pass —
+  it is clear what data flows forward and in what form
+- [ ] "Done" is defined — the workflow has an explicit completion condition,
+  not just a list of steps that ends
+- [ ] Failure handling covers runtime conditions, not just missing files —
+  what happens when a tool returns unexpected output, an empty result, or
+  a partial result mid-workflow?
+- [ ] External tool behaviour assumptions are stated — if the workflow
+  depends on a tool (e.g. `recent_chats`, `conversation_search`,
+  `filesystem:read_text_file`) behaving in a specific way, that assumption
+  is documented; known failure modes of that tool are in the failure table
+- [ ] Cross-run state is addressed — if the skill writes output files that
+  accumulate across runs, the skill defines how later runs interact with
+  earlier output (append / overwrite / deduplicate)
+- [ ] Confidence or quality level is surfaced to the user — if the workflow
+  can produce output of varying completeness depending on tool availability
+  or data quality, the skill reports that level explicitly rather than
+  presenting all output as equally reliable
+
 ## Composition
 
 - [ ] Compose declarations present if skill combines with others
@@ -61,3 +94,18 @@ live docs, does not replace them.
 - Pass — no Blocking or Major issues
 - Partial — one or more Major issues, no Blocking
 - Fail — one or more Blocking issues
+
+---
+
+## Checklist Scope Note
+
+The Frontmatter, Structure, Instructions, Composition, and Security sections
+cover all skill classes and are reliable for structural compliance assessment.
+
+The Workflow-Class Skills section covers correctness of execution logic —
+it is the only section that can surface classification errors, branching
+gaps, and state management issues. A skill passing all other sections but
+failing Workflow-Class checks should be rated Partial or Fail, not Pass.
+
+A Pass rating on this checklist does not validate extraction accuracy,
+tool query effectiveness, or real-data behaviour. Those require a live run.
