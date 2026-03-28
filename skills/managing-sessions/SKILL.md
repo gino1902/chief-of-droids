@@ -5,12 +5,12 @@ description: >
   quirks, corrections, and open items — then recommends which sessions to prune
   and writes a structured summary log of extracted value to disk. Load this
   skill whenever a user is about to delete sessions, asks what to keep, requests
-  session hygiene, or when ≥10 sessions are detected at bootstrap. Always use
+  session hygiene, or when the bootstrap sentinel check fires. Always use
   before bulk-deleting sessions — never let the user prune blind. Triggers on:
   "manage sessions", "analyse sessions", "prune sessions", "session hygiene",
   "what should I keep", "challenge memories", "check memories".
 ---
-<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
+<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
 
 # Managing Sessions Skill
 
@@ -28,16 +28,38 @@ manual user action in the claude.ai UI.
 | :--- | :--- | :--- |
 | Analysis findings | `/home/gino/workspace/.tasks/sessions-findings/` | Every confirmed run |
 | Session removal log | `/home/gino/workspace/.logs/sessions-removed/` | Only when sessions are confirmed for removal |
+| Sentinel | `/home/gino/workspace/.tasks/sessions-findings/sentinel.md` | Written/overwritten at end of every confirmed run |
 
 **Multi-project note:** This skill is shared across all workspace projects.
 Both output directories are centralised at workspace root — findings and
 removal logs accumulate across projects. `recent_chats` is project-scoped;
 run the skill once per project to build complete cross-project coverage.
 
-**Auto-trigger rule (system prompt):**
-During session bootstrap, after `recent_chats` is called, if the result
-contains ≥10 sessions: invoke this skill before proceeding with any other work.
-Announce: `⚠️ ≥10 sessions detected — running managing-sessions before proceeding.`
+**Bootstrap trigger rule (system prompt):**
+At bootstrap: call `recent_chats n=1` and read
+`.tasks/sessions-findings/sentinel.md`. If sentinel is absent OR
+`(recent_chats[0].updated_at - sentinel.last_run_date) > 10 days`, surface
+which condition is met and ask the user if they want to run the
+`managing-sessions` skill. Run only on explicit yes.
+
+---
+
+## Sentinel File Format
+
+Path: `/home/gino/workspace/.tasks/sessions-findings/sentinel.md`
+
+```markdown
+# Managing Sessions — Sentinel
+
+| Field | Value |
+|:------|:------|
+| last_run_date | YYYY-MM-DD |
+| last_run_project | [project name] |
+```
+
+Written or overwritten at the end of every confirmed skill run.
+A single file — not date-stamped, not appended. Always reflects the most
+recent run across all projects.
 
 ---
 
@@ -112,7 +134,7 @@ The resolved project name is used in all subsequent steps as `<project>`.
 ## Workflow: analyse sessions
 
 Trigger: `manage sessions` | `analyse sessions` | `session hygiene` |
-`what should I keep` | auto-trigger on ≥10 sessions at bootstrap
+`what should I keep` | bootstrap sentinel check (user confirmed yes)
 
 ### Pass 1 — Baseline inventory
 
@@ -183,7 +205,8 @@ Trigger: `manage sessions` | `analyse sessions` | `session hygiene` |
 21. On confirmation:
     a. Run **write findings** workflow (always)
     b. Run **write removal log** workflow (only if sessions are confirmed for removal)
-    c. Run **challenge memories** workflow
+    c. Run **write sentinel** workflow (always)
+    d. Run **challenge memories** workflow
 22. Produce manual deletion checklist (chat only — user executes in UI):
     - List each session to delete by title and date
     - State: "Delete these manually in claude.ai project settings → Sessions"
@@ -228,6 +251,27 @@ Steps:
    - Removed sessions table: title | date | reason | findings reference
 4. Write file via Filesystem tool
 5. Report path written
+
+---
+
+## Workflow: write sentinel
+
+Trigger: called internally after write findings completes — always
+
+Steps:
+1. Build sentinel content:
+   ```markdown
+   # Managing Sessions — Sentinel
+
+   | Field | Value |
+   |:------|:------|
+   | last_run_date | YYYY-MM-DD |
+   | last_run_project | <project> |
+   ```
+   Where `YYYY-MM-DD` is today's date and `<project>` is the resolved project name.
+2. Write (overwrite) `/home/gino/workspace/.tasks/sessions-findings/sentinel.md`
+   via Filesystem tool — this file is always overwritten, never appended.
+3. Report: `Sentinel updated: YYYY-MM-DD`
 
 ---
 
@@ -280,6 +324,7 @@ Steps:
 | Removal log filename already exists | Append `-2`, `-3` suffix — never overwrite |
 | Zero sessions confirmed for removal | Skip write removal log entirely — do not create an empty file |
 | Pass 4 not triggered (`not-on-disk` count < 6) | Proceed to Pass 5 — not a failure |
+| Sentinel write fails | Flag: `⚠️ Sentinel not updated — bootstrap trigger will re-fire next session`; do not block other outputs |
 | Filesystem tool unavailable | Halt all write operations; deliver findings as chat output only; note confidence is Low |
 
 ---
@@ -312,12 +357,13 @@ Steps:
 - [ ] Removal log written to `.logs/sessions-removed/` — only if sessions removed
 - [ ] Removal log NOT created if zero sessions are confirmed for removal
 - [ ] Both filenames include `<project>` identifier
+- [ ] Sentinel written/overwritten at end of every confirmed run
 - [ ] Pruning recommendation states an explicit date boundary
 - [ ] Deletion checklist produced as chat output — not executed by skill
 - [ ] No session deleted by the skill under any circumstance
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.6        |
+| Version      | 1.7        |
 | Last Updated | 2026-03-28 |
 | Status       | Draft      |
