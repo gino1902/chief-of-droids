@@ -62,3 +62,20 @@ Override precedence (highest to lowest):
 
 Repo-level CLAUDE.md files may declare their own default. That declaration takes
 precedence over this workspace default for sessions routed to that repo.
+
+---
+
+## Session Hygiene
+
+Run once, as the final step of reading this file. Do not repeat within the session.
+
+1. Call `recent_chats n=1` to get the most recent session's `updated_at`
+2. Read `/home/gino/workspace/.tasks/sessions-findings/sentinel.md`
+3. Evaluate:
+   - If sentinel file is absent → surface: `⚠️ Session hygiene: sentinel not found (first run)`
+   - If `recent_chats[0].updated_at - sentinel.last_run_date > 10 days` → surface:
+     `⚠️ Session hygiene: last run was [sentinel.last_run_date], last session was [updated_at]`
+   - If neither condition is met → proceed silently, no output
+4. If a condition was surfaced: ask once — "Run managing-sessions skill now?"
+   - Yes → invoke managing-sessions skill
+   - Any other response → proceed without running the skill
