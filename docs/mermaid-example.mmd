@@ -1,0 +1,38 @@
+%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}}}%%
+flowchart LR
+  classDef main      fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
+  classDef primary   fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
+  classDef secondary fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
+  classDef tertiary  fill:#C5D8F6,color:#000000,stroke:#425F8B
+  classDef cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
+  linkStyle default color:#0F0E2B
+
+  subgraph Main
+    subgraph "`**Company**`"
+      PM[Packmind platform
+      Source of truth]
+      DEV[Developer environment
+      repo + Copilot + packmind-cli]
+      GH[GitHub Copilot]
+    end
+    subgraph "`**Customer**`"
+      C_DEV[Developer environment
+      repo + Claude Code + packmind-cli]
+      C_CC[Claude Code]
+    end
+  end
+
+  PM -->|copilot-instructions.md| DEV
+  PM -.->|CLAUDE.md, skills, commands| C_DEV
+  DEV <-->|read/write| GH
+  C_DEV <-->|read/write| C_CC
+  GH -->|update playbook - human| PM
+  C_CC -.->|update playbook - human| PM
+  DEV -->|deviation detected - Toolchain| PM
+  C_DEV -.->|deviation detected - Toolchain| PM
+
+  class PM primary
+  class DEV,GH secondary
+  class C_DEV,C_CC tertiary
+  class Company,Customer cluster
+  class Main main
