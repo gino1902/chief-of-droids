@@ -47,20 +47,12 @@ possible.
 
 Three hard constraints surfaced immediately:
 
-- **`recent_chats` is project-scoped.** It returns sessions from the current
-  project only. A single skill invocation cannot analyse sessions across all
-  projects. This killed the "centralised cross-project analysis in one run"
-  idea — replaced with "run once per project, logs accumulate centrally."
-- **Claude cannot delete sessions.** The skill can recommend deletions and
-  produce a checklist, but execution is always manual in the claude.ai UI.
-  Any design that implied the skill would delete sessions was wrong.
-- **`userMemories` is not readable as a file.** The memory challenge workflow
-  had to work by reading on-disk sources and comparing them against whatever
-  was in context — not by accessing a memories file directly.
+- **`recent_chats` is project-scoped.** Solution: "run once per project, logs accumulate centrally."
+- **Claude cannot delete sessions.** Solution: execution is always manual in the claude.ai UI.
+- **`userMemories` is not readable as a file.** Solution: compare them against whatever
+  was in context.
 
-These constraints were surfaced before any file was written. The user then
-answered three design questions that resolved the remaining ambiguities:
-auto-trigger mechanism, log file fidelity, and memory challenge scope.
+These constraints were surfaced before any file was written. 
 
 **The principle:** challenge requirements against real platform behaviour
 before designing anything. Constraints discovered during build are expensive.
@@ -95,8 +87,7 @@ challenge round after each layer:
 **Layer 1 — SKILL.md and reference file stubs**
 
 Initial structure: frontmatter, reference file declarations, workflow
-outlines. No reference file content yet. The challenge after this layer
-surfaced the first design gap: the skill had no project identity resolution.
+outlines.
 Running from different projects would produce filename collisions and
 incorrect memory challenge scope. Step 0 was added.
 
@@ -104,36 +95,27 @@ incorrect memory challenge scope. Step 0 was added.
 
 Initial design: single log file in `logs/`. Challenge surfaced that
 findings (extracted value) and removal records (which sessions were deleted)
-are categorically different — one is an asset, the other is an audit trail.
-Keeping them in one file conflated their purpose and made the removal log
-mandatory even when nothing was removed. Split into two output paths:
+are categorically different. Split into two output paths:
 `.tasks/sessions-findings/` and `.logs/sessions-removed/`.
 
 **Layer 3 — Confidence model**
 
 The skill initially used a single `recent_chats` call and one
 `conversation_search` call. A challenge round asked: what is the actual
-confidence of a single pass? Answer: unknown and low — summaries are lossy,
-queries are generic, on-disk verification was by reference not by file read.
-The 5-pass model was designed in response: baseline inventory, 7 targeted
-category searches, target file reads, residual search, memory challenge.
+confidence of a single pass? Answer: unknown and low.
+The 5-pass model was designed in response.
 Each pass has a specific role. None is redundant.
 
 **Layer 4 — Reference files**
 
 `what-to-capture.md`: 7 categories, each with signal phrases, a canonical
-`search_query` for Pass 2, a capture condition, an on-disk verification
-target, and a risk-if-missed statement. The canonical query per category
-is what makes Pass 2 deterministic across runs rather than ad-hoc.
+`search_query`, a capture condition, an on-disk verification
+target, and a risk-if-missed statement.
 
-`session-log-schema.md`: two schemas — findings file and removal log — with
-write rules and the rule that a removal log is only created when at least one
-session is confirmed for removal. An empty removal log was explicitly rejected.
+`session-log-schema.md`: two schemas — findings file and removal log.
 
 `memory-contradiction-rules.md`: 7 rules, each checking a specific class
-of memory claim against a specific on-disk source. Rules cover path format,
-skill name staleness, write authority, tool availability, superseded design
-decisions, missing known gaps, and plan gating claims.
+of memory claim against a specific on-disk source.
 
 **The principle:** build in layers. Challenge after each layer. Do not
 try to get the whole skill right in one pass — the structure will surface
@@ -144,10 +126,7 @@ issues that were invisible during design.
 ## Phase 4 — Live run before assessment
 
 Before formal assessment, the skill was run for real against the actual
-project session history — approximately 20 sessions accumulated over
-two weeks.
-
-Running the skill live before assessing it served two purposes:
+project session history.
 
 1. It validated that the workflow actually executes correctly against
    real data — not just that it reads correctly on paper.
@@ -157,9 +136,7 @@ Running the skill live before assessing it served two purposes:
 
 The live run also surfaced one real-data behaviour that the skill design
 had not accounted for: `conversation_search` can return false positives —
-sessions that match the query string but contain no relevant finding.
-This was added to the Confidence Model and the Pass 2 workflow before
-assessment began.
+sessions that match the query string but contain no relevant finding. Workflow was adjusted accordingly.
 
 **The principle:** run the skill for real before assessing it. A skill
 that passes checklist assessment but fails on real data is not a pass.
