@@ -68,32 +68,14 @@ $env:APPDATA\Claude\claude_desktop_config.json
 
 ## Mermaid Diagrams
 
-Preferred format for any flowchart, sequence diagram, or architecture visual.
+When output contains Mermaid diagrams, read `references/mermaid.md` in full
+before writing any diagram code. That file governs: diagram type selection,
+direction, code structure, subgraph hierarchy, node and edge conventions,
+Elevate theme implementation, and known rendering pitfalls.
 
-````markdown
-```mermaid
-flowchart TD
-    A[Start] --> B[End]
-```
-````
-
-Renders natively in Obsidian, GitHub, and VS Code (with extension). Do **not**
-replace with ASCII art unless the target environment is confirmed to not support
-Mermaid.
-
-**Elevate theme:** When the document is part of an Elevate-themed deliverable,
-apply the Elevate Mermaid init block to every diagram. Read the init block from
-`shared/elevate-theme/elevate-mermaid.md` and prepend it to each diagram
-definition. Do not hardcode hex values — always copy from that file to stay in
-sync with the canonical source.
-
-````markdown
-```mermaid
-%%{init: { "theme": "base", "themeVariables": { ... } }}%%
-flowchart LR
-    A[Start] --> B[End]
-```
-````
+Short form: fenced with ` ```mermaid `, real newlines in node labels, two-part
+structure (declarations → connections), Elevate init block from
+`shared/elevate-theme/elevate-mermaid.md`.
 
 ---
 
@@ -163,8 +145,7 @@ More content.
 - [ ] Blank line before and after every table (including after bold labels)
 - [ ] Blank line after every header
 - [ ] Code blocks fenced with language identifier
-- [ ] Mermaid diagrams use ` ```mermaid ` fence
-- [ ] Mermaid diagrams in Elevate deliverables include the init block from `shared/elevate-theme/elevate-mermaid.md`
+- [ ] Mermaid diagrams: ` ```mermaid ` fence used; `references/mermaid.md` was read
 - [ ] No bare URLs
 - [ ] No skipped header levels
 - [ ] JSON blocks validated (no trailing commas, balanced brackets)

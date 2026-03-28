@@ -36,13 +36,16 @@ flowchart LR
   linkStyle default color:#0F0E2B
 
   subgraph Main
-    subgraph Company
-      PM[Packmind platform\nSource of truth]
-      DEV[Developer environment\nrepo + Copilot + packmind-cli]
+    subgraph "`**Company**`"
+      PM[Packmind platform
+      Source of truth]
+      DEV[Developer environment
+      repo + Copilot + packmind-cli]
       GH[GitHub Copilot]
     end
-    subgraph Customer
-      C_DEV[Developer environment\nrepo + Claude Code + packmind-cli]
+    subgraph "`**Customer**`"
+      C_DEV[Developer environment
+      repo + Claude Code + packmind-cli]
       C_CC[Claude Code]
     end
   end
@@ -53,8 +56,8 @@ flowchart LR
   C_DEV <-->|read/write| C_CC
   GH -->|update playbook - human| PM
   C_CC -.->|update playbook - human| PM
-  DEV -->|violation detected - Toolchain| PM
-  C_DEV -.->|violation detected - Toolchain| PM
+  DEV -->|deviation detected - Toolchain| PM
+  C_DEV -.->|deviation detected - Toolchain| PM
 
   class PM primary
   class DEV,GH secondary
@@ -101,3 +104,11 @@ subgraph-level role. Apply per-node via `classDef`:
   classDef alt5 fill:#6164EB,color:#FFFFFF,stroke:#0F0E2B
   classDef alt6 fill:#8E8FEC,color:#000000,stroke:#0F0E2B
 ```
+
+---
+
+| Field        | Value      |
+| :----------- | :--------- |
+| Version      | 1.4        |
+| Last Updated | 2026-03-28 |
+| Status       | Final      |

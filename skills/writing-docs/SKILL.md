@@ -11,7 +11,7 @@ description: >
   the user asks to fix formatting or structure on an existing document.
   Composes with: reviewing-tech-claims, pptx, docx, xlsx.
 ---
-<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-03-26 -->
+<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
 
 # Writing Docs Skill
 
@@ -29,7 +29,10 @@ and audience calibration. It applies regardless of output format.
   contains writing principles, density guidance, output format selection, and
   file naming rules
 - `references/markdown-formatting.md` — read when the output is a `.md` file;
-  contains table syntax, code blocks, Mermaid, and formatting QA checklist
+  contains table syntax, code blocks, and formatting QA checklist
+- `references/mermaid.md` — read when the output contains Mermaid diagrams;
+  contains diagram type selection, direction, code structure, subgraph hierarchy,
+  node and edge conventions, Elevate theme implementation, and rendering pitfalls
 - `references/theme.md` — read when the output format is docx, pptx, xlsx,
   HTML, React, or SVG; contains Elevate theme routing rules and color role table
 - `references/templates.md` — read when producing an ADR, Requirements Brief,
@@ -50,6 +53,9 @@ Steps (run for any document authoring trigger):
 4. If output format is `.md`:
    use filesystem tool to read `references/markdown-formatting.md`
    — if unreadable, flag: `⚠️ markdown-formatting.md unreadable — applying defaults`
+   If output contains Mermaid diagrams:
+   additionally use filesystem tool to read `references/mermaid.md`
+   — if unreadable, flag: `⚠️ mermaid.md unreadable — apply defaults from markdown-formatting.md`
 5. If output format is docx / pptx / xlsx / HTML / React / SVG:
    use filesystem tool to read `references/theme.md`; pass the specified theme
    artifact to the composed format skill — do not apply theme colors directly.
