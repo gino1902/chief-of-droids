@@ -29,9 +29,9 @@ What followed over the next 3–4 hours was:
 2. Resolve design decisions before writing anything
 3. Build the skill incrementally with challenge rounds at each stage
 4. Run the skill for real (live session analysis)
-5. Critique the skill against the assessment checklist
-6. Apply all findings
-7. Critique again — and confirm Pass
+5. Apply fixes surfaced by the live run
+6. Run the consistency checklist to catch structural and authoring debt
+7. Apply checklist findings and confirm Pass
 
 The output was not written in one pass. It was written, challenged, patched,
 challenged again, and patched again. That is the expected pattern, not a sign
@@ -52,7 +52,7 @@ Three hard constraints surfaced immediately:
 - **`userMemories` is not readable as a file.** Solution: compare them against whatever
   was in context.
 
-These constraints were surfaced before any file was written. 
+These constraints were surfaced before any file was written.
 
 **The principle:** challenge requirements against real platform behaviour
 before designing anything. Constraints discovered during build are expensive.
@@ -125,8 +125,13 @@ issues that were invisible during design.
 
 ## Phase 4 — Live run before assessment
 
-Before formal assessment, the skill was run for real against the actual
-project session history.
+Before any checklist or formal assessment, the skill was run for real against
+the actual project session history.
+
+Anthropic's official guidance on skill quality is observation-based: identify
+gaps by running agents on representative tasks, monitor how Claude uses the
+skill in real scenarios, and iterate based on what you observe. The live run
+is the primary quality gate — not the checklist.
 
 1. It validated that the workflow actually executes correctly against
    real data — not just that it reads correctly on paper.
@@ -134,22 +139,28 @@ project session history.
    findings and a removal log for 9 sessions. The run was not a test —
    it was real work.
 
-The live run also surfaced one real-data behaviour that the skill design
-had not accounted for: `conversation_search` can return false positives —
-sessions that match the query string but contain no relevant finding. Workflow was adjusted accordingly.
+The live run surfaced one real-data behaviour the design had not accounted
+for: `conversation_search` can return false positives — sessions that match
+the query string but contain no relevant finding. This was fixed before the
+checklist was run.
 
-**The principle:** run the skill for real before assessing it. A skill
-that passes checklist assessment but fails on real data is not a pass.
-The live run is the highest-confidence test available — it costs little
-and reveals what inspection cannot.
+**The principle:** the live run is the highest-confidence test available.
+Run it first. Fix what it surfaces. Only then run the consistency checklist.
+A skill that passes the checklist but fails on real data is not a pass.
 
 ---
 
-## Phase 5 — Formal assessment with the `creating-skills` skill
+## Phase 5 — Consistency checklist with the `creating-skills` skill
 
-After the live run, `critique skill managing-sessions` was invoked.
-The assessment checklist was read from disk. Official sources were fetched.
-All four skill files were read fresh.
+After the live run and its fixes, `critique skill managing-sessions` was
+invoked. The assessment checklist was read from disk. Official sources were
+fetched. All four skill files were read fresh.
+
+The checklist's role is consistency and maintainability — not behavioural
+quality. It catches structural debt (missing ToCs, SKILL.md bloat, missing
+failure handling) and authoring conventions (description length, imperative
+form, frontmatter compliance). It cannot catch execution errors or trigger
+mismatches — those only surface in real usage.
 
 The first assessment (v1.5) produced:
 
@@ -165,11 +176,11 @@ affecting current execution correctness.
 
 **Final rating: Pass.**
 
-**The principle:** assessment is not rubber-stamping. The checklist exists
-to surface real issues. Expect Blocking and Major findings on a first
-assessment of a complex skill — they are normal, not a sign of failure.
-Fix them and re-assess. A skill that passes on the first assessment of
-a complex workflow probably wasn't assessed rigorously enough.
+**The principle:** the checklist surfaces structural and authoring debt, not
+behavioural defects. Expect Blocking and Major findings on a first assessment
+of a complex skill — that is the checklist working correctly. Fix them. But
+do not mistake a Pass rating for proof that the skill executes correctly in
+real scenarios. That proof comes from the live run.
 
 ---
 
@@ -216,19 +227,25 @@ Use this as a gate before starting implementation.
 - [ ] Each reference file >100 lines has a ToC
 - [ ] HOW-TO-TRIGGER.md updated with new skill entry and combining table row
 
-**Before assessment:**
+**Before the consistency checklist — live run first:**
 
 - [ ] Live run executed against real data — not a synthetic test
-- [ ] Any real-data issues found during the run incorporated before assessment
+- [ ] Real-data issues surfaced and fixed before checklist is run
+- [ ] Trigger behaviour confirmed: does Claude load the skill when expected?
+- [ ] Output verified: does the skill produce correct output on real input?
 
-**Assessment:**
+**Consistency checklist (structural and authoring debt only):**
 
-- [ ] `critique skill <name>` invoked — reads checklist from disk, fetches
+- [ ] `critique skill <n>` invoked — reads checklist from disk, fetches
   official sources, reads all skill files fresh
 - [ ] All Blocking and Major findings fixed before declaring done
 - [ ] Re-assessment run after fixes — confirm rating is Pass
 - [ ] Commit staged for tracked files: SKILL.md, reference files,
   HOW-TO-TRIGGER.md, any directories created
+
+> Note: a Pass rating on the consistency checklist confirms structural
+> compliance — not that the skill executes correctly in real scenarios.
+> That is only confirmed by the live run.
 
 ---
 
@@ -261,12 +278,12 @@ What made it work:
   and decision-making.
 - The live run was treated as real work, not a test. The findings file and
   removal log it produced are genuine workspace assets.
-- Assessment was taken seriously. 10 findings on a first assessment is not
-  a failure — it is evidence that the checklist is working. The correct
-  response is to fix them, not to argue with them.
+- The consistency checklist was run after the live run — not instead of it.
+  10 findings on a first checklist assessment is not a failure — it is the
+  checklist doing its job. Fix them and re-assess.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-03-28 |
 | Status       | Final      |
