@@ -211,63 +211,34 @@ Use this as a gate before starting implementation.
   done, what must be approximated, what is the correct scope
 - [ ] Design decisions resolved — branching conditions, output format,
   write authority, trigger mechanism
-- [ ] `creating-skills` skill loaded — reads `references/assessment-checklist.md`
-  and fetches official sources before any file is written
 
 **Build:**
 
-- [ ] SKILL.md frontmatter complete — name (gerund form), description (third
-  person, trigger-inclusive, pushy, under 1024 chars)
-- [ ] Reference files declared with when-to-read guidance
-- [ ] Workflows written in numbered imperative steps
-- [ ] Failure handling covers missing files AND runtime conditions
-- [ ] If workflow-class: classification criteria exhaustive, all branches
-  defined, pass outputs explicitly consumed by next pass, "done" defined,
-  confidence level surfaced
-- [ ] Each reference file >100 lines has a ToC
+- [ ] SKILL.md and reference file stubs written — structure only, no bulk content inline
 - [ ] HOW-TO-TRIGGER.md updated with new skill entry and combining table row
+
+To inspect the workflows and authoring rules before starting, run:
+
+```
+read skills/creating-skills/SKILL.md
+```
+
+The structural and authoring rules — frontmatter spec, reference file conventions,
+workflow-class criteria — are governed by `creating-skills`. They are applied
+during the consistency assessment, not tracked here.
 
 **Before the consistency assessment — live run first:**
 
 - [ ] Live run executed against real data — not a synthetic test
 - [ ] Real-data issues surfaced and fixed before assessment is run
-- [ ] Trigger behaviour confirmed: does Claude load the skill when expected?
-- [ ] Output verified: does the skill produce correct output on real input?
 
 **Consistency assessment:**
 
-Invoke `critique skill <n>`. The `creating-skills` skill takes it from there.
-
-What it does, in order:
-
-1. Detects the environment (Claude Desktop vs claude.ai) and reports it explicitly
-2. Fetches three official Anthropic sources — live, not from memory; reports fetch
-   status before producing any output
-3. Reads `creating-skills/references/assessment-checklist.md` from disk
-4. Reads all skill files fresh — SKILL.md and every file in `references/`
-5. Runs the checklist section by section, cross-referenced against fetched docs
-
-The checklist has five sections; not all apply to every skill:
-
-| Section | Applies to | What it checks |
-| :--- | :--- | :--- |
-| Frontmatter | All skills | `name` format, `description` length, trigger-inclusiveness, "pushy" framing |
-| Structure | All skills | SKILL.md as ToC, line budget, reference file declarations, ToC on large refs |
-| Instructions | All skills | Imperative form, trigger realism, failure handling, no silent fallbacks |
-| Workflow-Class Skills | Skills with >3 sequential steps, output files, or classification logic | Branching completeness, pass-to-pass data flow, confidence surfacing, cross-run state |
-| Composition / Security | All skills | No overlap without delegation pattern, no hardcoded credentials |
-
-Each finding is rated Blocking, Major, or Minor. The overall rating:
-
-- **Pass** — no Blocking or Major issues
-- **Partial** — one or more Major issues, no Blocking
-- **Fail** — one or more Blocking issues
-
-Fix all Blocking and Major findings. Re-invoke `critique skill <n>` after fixes
-and confirm the rating is Pass before committing.
+Invoke `critique skill <n>`. Fix all Blocking and Major findings. Re-invoke after
+fixes and confirm the rating is Pass before committing.
 
 Expect Blocking and Major findings on a first assessment of a complex skill —
-that is the checklist working correctly. Fix them and re-assess.
+that is the checklist working correctly.
 
 > Note: a Pass rating confirms structural compliance — not that the skill
 > executes correctly in real scenarios. That is only confirmed by the live run.
@@ -309,6 +280,6 @@ What made it work:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
+| Version      | 1.4        |
 | Last Updated | 2026-03-28 |
 | Status       | Final      |
