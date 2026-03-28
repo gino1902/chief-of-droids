@@ -236,12 +236,41 @@ Use this as a gate before starting implementation.
 
 **Consistency checklist (structural and authoring debt only):**
 
-- [ ] `critique skill <n>` invoked — reads checklist from disk, fetches
-  official sources, reads all skill files fresh
+- [ ] `critique skill <n>` invoked — reads `references/assessment-checklist.md`
+  from disk, fetches official Anthropic sources, reads all skill files fresh
 - [ ] All Blocking and Major findings fixed before declaring done
 - [ ] Re-assessment run after fixes — confirm rating is Pass
 - [ ] Commit staged for tracked files: SKILL.md, reference files,
   HOW-TO-TRIGGER.md, any directories created
+
+**How the assessment works**
+
+`critique skill <n>` runs `creating-skills/references/assessment-checklist.md`
+section by section against the skill under review. The checklist has five
+sections; not all apply to every skill:
+
+| Section | Applies to | What it checks |
+| :--- | :--- | :--- |
+| Frontmatter | All skills | `name` format, `description` length, trigger-inclusiveness, "pushy" framing |
+| Structure | All skills | SKILL.md as ToC, line budget, reference file declarations, ToC on large refs |
+| Instructions | All skills | Imperative form, trigger realism, failure handling, no silent fallbacks |
+| Workflow-Class Skills | Skills with >3 sequential steps, output files, or classification logic | Branching completeness, pass-to-pass data flow, confidence surfacing, cross-run state |
+| Composition / Security | All skills | No overlap without delegation pattern, no hardcoded credentials |
+
+Each finding is rated Blocking, Major, or Minor:
+
+- **Blocking** — prevents correct discovery or execution; must fix before use
+- **Major** — degrades output quality or trigger accuracy; fix before production
+- **Minor** — style or optimisation issue; fix opportunistically
+
+Overall rating:
+
+- **Pass** — no Blocking or Major issues
+- **Partial** — one or more Major issues, no Blocking
+- **Fail** — one or more Blocking issues
+
+Expect Blocking and Major findings on a first assessment of a complex skill —
+that is the checklist working correctly. Fix them and re-assess.
 
 > Note: a Pass rating on the consistency checklist confirms structural
 > compliance — not that the skill executes correctly in real scenarios.
@@ -284,6 +313,6 @@ What made it work:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-03-28 |
 | Status       | Final      |
