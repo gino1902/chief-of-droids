@@ -5,6 +5,18 @@ Applies regardless of whether the document is an Elevate-themed deliverable or n
 
 ---
 
+## Closing Gate — non-negotiable
+
+After any turn in which a `.mmd` file was read, edited, or produced,
+the final line of the response must be:
+
+> QA report available for `<filename>` — want me to run it?
+
+This fires regardless of task type, scope, or skill classification.
+If the response ends without this line and a `.mmd` file was touched, the rule was violated.
+
+---
+
 ## Diagram Type Selection
 
 Choose the diagram type before writing any code.
@@ -283,47 +295,37 @@ Run each item against the draft diagram before displaying output. Fix failures f
 
 ---
 
-## Test Report Format
+## QA Report
 
-Emit this report in chat before displaying any formatted Mermaid diagram.
-The report is mandatory — it must appear every time the writing-docs skill
-processes a Mermaid format request.
+### When to emit
+
+Emit the full report only when the user confirms the closing gate offer.
+Never emit without being asked.
+
+### Report format
+
+Number rows sequentially from the current QA Checklist — do not hardcode row
+count. If the checklist grows, the report grows with it. One row per checklist item.
 
 ```
 ## Mermaid QA Report — <filename or diagram label>
 
 | # | Check | Result |
 | :- | :---- | :----- |
-| 1  | Diagram type explicit | ✅ Pass / ❌ Fail — <reason> |
-| 2  | Direction explicit | ✅ Pass / ❌ Fail — <reason> |
-| 3  | All connectors after outer subgraph 'end' | ✅ Pass / ❌ Fail — <reason> |
-| 4  | No standalone nodes first-defined on connection line | ✅ Pass / ❌ Fail — <reason> |
-| 5  | No `\n` in node labels | ✅ Pass / ❌ Fail — <reason> |
-| 6  | No reserved keyword node IDs | ✅ Pass / ❌ Fail — <reason> |
-| 7  | Subgraph IDs — no spaces | ✅ Pass / ❌ Fail — <reason> |
-| 8  | No ghost class IDs | ✅ Pass / ❌ Fail — <reason> |
-| 9  | All classnames match declared classDef | ✅ Pass / ❌ Fail — <reason> |
-| 10 | Pipe syntax only for edge labels | ✅ Pass / ❌ Fail — <reason> |
-| 11 | class assignments reference IDs not display labels | ✅ Pass / ❌ Fail — <reason> |
-| 12 | Replace FontAwesome icons by emoji | ✅ Pass / ❌ Fail — <reason> |
-| 13 | Edge labels ≤5 words | ✅ Pass / ❌ Fail — <reason> |
-| 14 | Elevate: %%{init}%% block present | ✅ Pass / ❌ Fail — <reason> |
-| 15 | Elevate: all classDef lines present | ✅ Pass / ❌ Fail — <reason> |
-| 16 | Elevate: linkStyle default present | ✅ Pass / ❌ Fail — <reason> |
-| 17 | Elevate: class Main main present | ✅ Pass / ❌ Fail — <reason> |
-| 18 | Elevate: cluster depth convention applied | ✅ Pass / ❌ Fail — <reason> |
-| 19 | Elevate: no hardcoded hex values | ✅ Pass / ❌ Fail — <reason> |
+| 1  | <first item from QA Checklist> | ✅ Pass / ❌ Fail — <reason> |
+| …  | … | … |
+| N  | <last item from QA Checklist> | ✅ Pass / ❌ Fail — <reason> |
 
-**Status: PASS / FAIL — <n> issues found and fixed**
+**Status: PASS / FAIL — <n> issues found**
 ```
 
-Fail rows must include the specific reason and what was fixed.
+Fail rows must include the specific reason.
 If all pass, status is `PASS — 0 issues`.
 
 ---
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.2        |
+| Version      | 1.4        |
 | Last Updated | 2026-03-29 |
 | Status       | Draft      |
