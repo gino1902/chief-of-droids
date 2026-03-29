@@ -2,21 +2,32 @@
 name: creating-skills
 description: >
   Authors new SKILL.md files from scratch, critiques and improves existing
-  SKILL.md files, and assesses skills against Anthropic official best practices.
-  Use when asked to create, build, author, or define a new skill, improve or
-  critique an existing skill, or audit skills in the workspace.
+  SKILL.md files, assesses skills against Anthropic official best practices,
+  and recommends new skills from session findings. Use when asked to create,
+  build, author, or define a new skill, improve or critique an existing skill,
+  audit skills in the workspace, or identify skill gaps from session history.
   Triggers on: "author skill", "critique skill", "assess all skills",
-  "create a skill", "build a skill", "I need a skill", "new skill for".
+  "create a skill", "build a skill", "I need a skill", "new skill for",
+  "recommend skills", "what skills should I add", "skill gaps from sessions",
+  "what am I missing as skills".
 ---
-<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-03-26 -->
+<!-- version: 2.0 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Creating Skills Skill
 
-Authors, critiques, and assesses SKILL.md files against Anthropic official standards.
+Authors, critiques, assesses, and recommends SKILL.md files against Anthropic official standards.
 
 **Principle:** Never author or assess from memory. Always fetch official sources
 first. Assessment checklist lives in `references/assessment-checklist.md` —
 read it via filesystem tool before any critique or assessment run.
+
+---
+
+## Reference Files
+
+- `references/assessment-checklist.md` — read before any author, critique, or assess workflow
+- `references/skill-sources.md` — source catalog; read during recommend-skills workflow (Steps 1 and 5)
+- `references/workflows/recommend-skills.md` — full workflow for skill gap analysis from session findings
 
 ---
 
@@ -122,6 +133,24 @@ Steps:
 9. If user requests fixes on a specific skill: delegate to `critique skill <n>`
 
 Output: gap table in chat (no file write)
+
+---
+
+## Workflow: recommend skills
+
+Trigger: `recommend skills` | "what skills should I add" | "skill gaps from sessions" | "what am I missing as skills"
+
+Full workflow in: `references/workflows/recommend-skills.md`
+
+Summary:
+1. Read `references/workflows/recommend-skills.md` via filesystem tool
+2. Read `references/skill-sources.md` via filesystem tool
+3. Execute the workflow as written — do not paraphrase or abbreviate steps
+4. Do NOT run Step 0 or Step 1 (official source fetch) for this workflow —
+   the recommend-skills workflow is session-analysis based, not skill-authoring;
+   fetching Anthropic docs is not relevant to gap extraction
+
+Output: `.tasks/skill-recommendations/YYYY-MM-DD-recommend-skills.md`
 
 ---
 

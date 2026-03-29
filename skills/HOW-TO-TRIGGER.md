@@ -122,13 +122,14 @@ additionally read `writing-docs/references/templates.md` and copy the relevant t
 
 ## creating-skills
 
-Triggers on any request to create, author, build, or define a new skill, or to
-critique or assess an existing one.
+Triggers on any request to create, author, build, or define a new skill, critique
+or assess an existing one, or identify skill gaps from session history.
 
 **Triggers:**
 - `author skill <n>` — scaffold a new SKILL.md from a user description
 - `critique skill <n>` — assess and improve an existing SKILL.md
 - `assess all skills` — run full assessment across all skills in `skills/`
+- `recommend skills` — analyse session findings to surface skill gaps
 
 **Natural-language equivalents (also trigger this skill):**
 - "create a skill for..."
@@ -136,16 +137,25 @@ critique or assess an existing one.
 - "build a skill for..."
 - "new skill for..."
 - "make a skill that..."
+- "what skills should I add"
+- "skill gaps from sessions"
+- "what am I missing as skills"
 
 **Examples:**
 - "author skill data-quality"
 - "critique skill writing-docs"
 - "assess all skills"
 - "I need to create a skill to manage tasks"
+- "recommend skills"
+- "what skills am I missing based on my sessions?"
 
-**Note:** Always fetches official sources before running:
-1. `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices`
+**Note:** Always fetches official sources before authoring or assessing:
+1. `https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/best-practices`
 2. `https://github.com/anthropics/skills/`
+3. `https://agentskills.io/specification`
+
+Source fetch is skipped for `recommend skills` — that workflow reads session
+findings, not official authoring docs.
 
 ---
 
@@ -201,6 +211,7 @@ request. Common combinations in this workspace:
 | Write a runbook with verified commands | `writing-docs` + `reviewing-tech-claims` |
 | Write a playbook | `writing-docs` |
 | Author or assess a skill | `creating-skills` |
+| Identify skill gaps from session history | `creating-skills` |
 | Frame or challenge a use case | `analyzing-business-cases` |
 | Frame a data platform use case | `analyzing-business-cases` + `architecting-data-platforms` |
 | Frame + write the document | `analyzing-business-cases` + `writing-docs` |
@@ -209,3 +220,4 @@ request. Common combinations in this workspace:
 | Analyse, prune, or audit session history | `managing-sessions` |
 | Capture session value then write a doc | `managing-sessions` + `writing-docs` |
 | Session prune surfaces open tasks | `managing-sessions` + `managing-tasks` |
+| Session prune then identify skill gaps | `managing-sessions` + `creating-skills` |

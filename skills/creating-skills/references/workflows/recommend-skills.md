@@ -1,8 +1,6 @@
-<!-- version: 0.1-draft | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
+<!-- version: 0.2 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Workflow: recommend skills
-
-> ⚠️ Draft — pending refinement pass (see TASK-034)
 
 Trigger: `recommend skills` | "what skills should I add" | "skill gaps from sessions"
 | "what am I missing as skills"
@@ -82,9 +80,16 @@ Confidence level is surfaced explicitly — never presented as uniform.
     - The finding is already `on-disk` in an existing skill's reference files
     - The domain is standard Claude knowledge (no skill token value)
     - The finding appears only once and shows no recurrence pattern
+      **Exception:** a single-occurrence finding corroborated by a Known Gap
+      entry in the same findings file is NOT discarded — Known Gap classification
+      is an explicit editorial signal that the finding is structurally significant,
+      regardless of session count. Treat it as equivalent to a two-session recurrence
+      for discard-rule purposes.
 
     > Rationale: single-occurrence findings may be session noise. Recurrence
-    > across multiple sessions is the primary confidence signal.
+    > across multiple sessions is the primary confidence signal. Known Gap
+    > corroboration is a deliberate override — it encodes editorial certainty
+    > that the gap is real and recurring even if session evidence is thin.
 
 ---
 
@@ -123,6 +128,12 @@ Confidence level is surfaced explicitly — never presented as uniform.
       flag as "domain reference only"
     - If no match in catalog: flag as "no external source — build from
       workspace patterns only"
+    
+    > Design note: absence of a catalog match does NOT reduce a recommendation's
+    > confidence level. Confidence is determined entirely by session signal
+    > recurrence (Step 4). The source catalog match affects implementation
+    > guidance only — it tells you where to look when building the skill,
+    > not whether the gap is real.
 
 ---
 
@@ -227,9 +238,8 @@ Not written if zero recommendations survive confidence filter.
 
 ---
 
-## Known Limitations (draft)
+## Known Limitations
 
-> 🔲 To be defined — awaiting refinement pass (TASK-034)
 - Signal extraction in Step 3 relies on findings file being well-formed.
   Malformed or partial findings files may produce false gaps.
 - Recurrence check is within one findings file only — does not compare
@@ -239,6 +249,6 @@ Not written if zero recommendations survive confidence filter.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 0.1-draft  |
-| Last Updated | 2026-03-28 |
-| Status       | Draft      |
+| Version      | 0.2        |
+| Last Updated | 2026-03-30 |
+| Status       | Active     |
