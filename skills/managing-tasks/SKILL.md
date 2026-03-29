@@ -7,7 +7,7 @@ description: >
   "update task TASK-XXX", or "bulk update tasks". Also use when the user asks
   what is pending, what to work on next, or wants to record or update a task.
 ---
-<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-03-29 -->
+<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-03-29 -->
 
 # Managing Tasks Skill
 
@@ -78,7 +78,14 @@ Steps:
 2. Read target TASKS.md via Filesystem tool
    — if Filesystem tool errors, flag: `⚠️ Filesystem tool unavailable — cannot read TASKS.md`
    — if file not found: run **bootstrap workflow** before proceeding
-3. Display tasks grouped by section (Backlog / In Progress / Done)
+3. Display tasks grouped by section (Backlog / In Progress / Done).
+   For each section render a table with these columns — all mandatory, never omit:
+
+   | ID | Description | Target | Origin |
+   | :--- | :--- | :--- | :--- |
+
+   Done tasks add a fifth column: **Done**.
+   The `scope` field is not displayed in the table — it is available via `update task` only.
 
 ---
 
@@ -90,7 +97,9 @@ Steps:
    — if Filesystem tool errors, flag: `⚠️ Filesystem tool unavailable — cannot read TASKS.md`
    — if file not found: run **bootstrap workflow** before proceeding
 3. Identify the first entry in 🔴 Backlog — if Backlog is empty, say so and stop
-4. Propose it to the user with ID, description, and target file
+4. Propose the task as a short prose card — intentionally lighter than the full
+   `read tasks` table display; includes ID, description, target, and origin.
+   Do not render as a table row.
 5. Do not start it — wait for explicit "start task TASK-XXX"
 
 ---
