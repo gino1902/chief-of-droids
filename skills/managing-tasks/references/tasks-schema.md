@@ -1,4 +1,4 @@
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-03-29 -->
 
 # TASKS.md Schema
 
@@ -69,14 +69,27 @@ Empty sections are retained — do not remove them.
 ## Entry Format
 
 ```
-- TASK-XXX: [description] | target: [file-or-component] | scope: [note]
+- TASK-XXX: [description] | target: [file-or-component] | scope: [note] | origin: [prefix:label] "[title]"
 ```
 
 Done entries append a done date:
 
 ```
-- TASK-XXX: [description] | target: [file-or-component] | scope: [note] | done: YYYY-MM-DD
+- TASK-XXX: [description] | target: [file-or-component] | scope: [note] | origin: [prefix:label] "[title]" | done: YYYY-MM-DD
 ```
+
+### Origin field
+
+`origin` records where the task was first identified. Format: `prefix:label "Human-readable title"`.
+
+| Prefix | Label | Title | Example |
+| :--- | :--- | :--- | :--- |
+| `session` | `YYYY-MM-DD` | Session name as it appears in chat history | `session:2026-03-19 "Setting up Claude framework context"` |
+| `findings` | `YYYY-MM-DD` | Findings file descriptor | `findings:2026-03-28 "Workspace session analysis run 1"` |
+| `skill` | `skill-name` | Workflow that produced the task | `skill:recommend-skills "Recommend skills workflow"` |
+
+`origin` is set at task creation and is not modified thereafter.
+`update task` may not change the `origin` field — it is immutable.
 
 ---
 
@@ -120,8 +133,8 @@ Projects that do not declare this override retain the confirmation step.
 - One active task (🟡 In Progress) per TASKS.md file — starting a second requires
   closing or moving the current one first
 - Write authority is set per project in the system prompt — not per repo or use-case
-- `update task` edits `target` and `scope` fields only — use `start task` or
-  `done task` for status transitions
+- `update task` edits `target` and `scope` fields only — `origin` is immutable;
+  use `start task` or `done task` for status transitions
 
 ---
 
@@ -145,11 +158,11 @@ Projects that do not declare this override retain the confirmation step.
 # TASKS.md — chief-of-droids
 
 ## 🔴 Backlog
-- TASK-002: Author tasks-schema.md reference file | target: skills/managing-tasks/references/ | scope: managing-tasks skill
+- TASK-002: Author tasks-schema.md reference file | target: skills/managing-tasks/references/ | scope: managing-tasks skill | origin: session:2026-03-19 "Setting up Claude framework context"
 
 ## 🟡 In Progress
-- TASK-001: Author managing-tasks SKILL.md | target: skills/managing-tasks/ | scope: managing-tasks skill
+- TASK-001: Author managing-tasks SKILL.md | target: skills/managing-tasks/ | scope: managing-tasks skill | origin: session:2026-03-19 "Setting up Claude framework context"
 
 ## ✅ Done
-- TASK-000: Update system prompt skills block | target: Custom Instructions | scope: chief-of-droids | done: 2026-03-19
+- TASK-000: Update system prompt skills block | target: Custom Instructions | scope: chief-of-droids | origin: session:2026-03-19 "Setting up Claude framework context" | done: 2026-03-19
 ```

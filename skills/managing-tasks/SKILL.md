@@ -7,7 +7,7 @@ description: >
   "update task TASK-XXX", or "bulk update tasks". Also use when the user asks
   what is pending, what to work on next, or wants to record or update a task.
 ---
-<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-03-29 -->
 
 # Managing Tasks Skill
 
@@ -23,7 +23,7 @@ execute tasks — it records and transitions their state.
 
 - `references/tasks-schema.md` — read before any write operation; defines
   canonical TASKS.md structure, entry format, ID format, status markers,
-  section names, write authority rules, scope rules, and target resolution order
+  write authority rules, scope rules, origin field prefixes, and target resolution order
 - `references/qa-checklist.md` — read and run before any write operation
 
 ---
@@ -133,9 +133,11 @@ Steps:
    — if Filesystem tool errors, flag and stop
 4. Determine next available TASK-ID (increment from highest existing ID
    across all sections, including Done)
-5. Read `references/qa-checklist.md` and run it
-6. Propose entry in correct section per schema format
-7. Write per Write Authority rule in `references/tasks-schema.md`
+5. Ask the user for `origin` if not stated in the prompt — propose `session:YYYY-MM-DD`
+   using today's date as default; user may override with any valid prefix
+6. Read `references/qa-checklist.md` and run it
+7. Propose entry in correct section per schema format
+8. Write per Write Authority rule in `references/tasks-schema.md`
 
 ---
 
@@ -150,8 +152,8 @@ Steps:
 6. Ask: "What should change — target, scope, or both?"
 7. Read `references/qa-checklist.md` and run it
 8. Propose updated entry with only `target: [file-or-component]` and/or
-   `scope: [note]` fields modified — description and status are not editable
-   via this workflow
+   `scope: [note]` fields modified — description, status, and `origin` are
+   not editable via this workflow
 9. Write per Write Authority rule in `references/tasks-schema.md`
 
 ---
