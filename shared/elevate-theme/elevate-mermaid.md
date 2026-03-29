@@ -97,6 +97,19 @@ flowchart LR
 
 ---
 
+## Edge label standard
+
+Always use pipe syntax for edge labels — never inline dash syntax:
+
+| ✅ Standard | ❌ Avoid |
+| :---------- | :------- |
+| `A -->|label| B` | `A --label--> B` |
+| `A -.->|label| B` | `A -.-label-.-> B` |
+
+Pipe syntax renders consistently across all renderers. Inline dash syntax is renderer-dependent and produces broken output in some environments.
+
+---
+
 ## init block rationale
 
 | Variable | Value | Reason |
@@ -126,6 +139,6 @@ subgraph-level role. Apply per-node via `classDef`:
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.7        |
+| Version      | 1.8        |
 | Last Updated | 2026-03-29 |
 | Status       | Final      |
