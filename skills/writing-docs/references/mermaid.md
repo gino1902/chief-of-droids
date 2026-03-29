@@ -82,7 +82,7 @@ end
 - Subgraph ID and display label are independent — always declare a clean ID
   (no spaces): `subgraph CleanID["`**Display Label**`"]`
 - `class` assignment uses the ID, not the display label:
-  `class CleanID cluster` — not `class Display Label cluster`
+  `class CleanID primary_cluster` — not `class Display Label primary_cluster`
 
 ### Non-Elevate subgraphs
 
@@ -144,8 +144,19 @@ Default to `[Label]` (rectangle) for most architecture diagrams.
 | `<-.->` | Bidirectional dashed | Optional mutual exchange |
 | `---` | Solid line, no arrow | Association without direction |
 
-### Edge labels
+### Edge labels — pipe syntax only
 
+Always use pipe syntax for edge labels. Never use inline dash syntax.
+
+| ✅ Standard | ❌ Never use |
+| :---------- | :----------- |
+| `A -->|label| B` | `A --label--> B` |
+| `A -.->|label| B` | `A -.-label-.-> B` |
+
+Pipe syntax renders consistently across all renderers. Inline dash syntax is
+renderer-dependent and produces broken output in some environments.
+
+Additional label rules:
 - Label only when the relationship is not self-evident from the node labels
 - Keep labels short: 1–5 words
 - Use lowercase, no full stop
@@ -169,7 +180,15 @@ The Elevate theme uses three mechanisms in a fixed division of responsibility:
 | `classDef` | Node fill, text color, stroke; subgraph containers | Edge label background |
 | `linkStyle default` | Edge label text color | Node appearance |
 
-**The five fixed classes:**
+### Cluster depth convention
+
+| Depth | Class | Nesting level |
+| :---- | :---- | :------------ |
+| 0 | `main` | Outermost wrapper — invisible, no visible border |
+| 1 | `primary_cluster` | Top-level named system/domain containers |
+| 2 | `secondary_cluster` | Sub-containers nested within a primary cluster |
+
+**Named classes:**
 
 | Class | Role |
 | :--- | :--- |
@@ -177,7 +196,9 @@ The Elevate theme uses three mechanisms in a fixed division of responsibility:
 | `primary` | Primary brand nodes (highest visual weight) |
 | `secondary` | Secondary nodes |
 | `tertiary` | Tertiary nodes (lightest) |
-| `cluster` | Inner subgraph container labels |
+| `primary_cluster` | Top-level named system/domain containers |
+| `secondary_cluster` | Sub-containers nested within a primary cluster |
+| `ytbc` | Yet-to-be-classified nodes |
 
 Additional accent classes (`alt5`, `alt6`) are available for per-node use.
 See `shared/elevate-theme/elevate-mermaid.md` for values.
@@ -188,7 +209,8 @@ See `shared/elevate-theme/elevate-mermaid.md` for values.
   class PM primary
   class DEV,GH secondary
   class C_DEV,C_CC tertiary
-  class Company,Customer cluster
+  class TeamA secondary_cluster
+  class Company,Customer primary_cluster
   class Main main
 ```
 
@@ -202,12 +224,16 @@ Group by class on one line each. Comma-separate nodes sharing the same class.
   will silently break parsing. Rename the node.
 - **`\n` in node labels** — renders as literal text in some renderers (Obsidian,
   GitHub). Always use real newlines.
+- **Inline dash edge label syntax** — `A --label--> B` is renderer-dependent.
+  Always use pipe syntax: `A -->|label| B`.
 - **Spaces in subgraph IDs** — `subgraph My Graph` is valid syntax but breaks
-  `class My Graph cluster`. Use a clean ID with an alias label:
-  `subgraph MyGraph["My Graph"]`, then `class MyGraph cluster`.
+  `class My Graph primary_cluster`. Use a clean ID with an alias label:
+  `subgraph MyGraph["My Graph"]`, then `class MyGraph primary_cluster`.
 - **Subgraph ID vs display label** — `class` assignment always references the
   declared ID, never the display label. Assigning to the display label silently
   fails — the class is not applied.
+- **Ghost class ID** — `class X classname` where `X` is not a declared node or
+  subgraph ID silently does nothing. Always verify IDs match declared nodes/subgraphs.
 - **`transparent` for `edgeLabelBackground`** — collapses the label box and
   causes rendering artefacts. Use `#FFFFFF` or the canvas background color.
 - **`labelTextColor` in `%%{init}%%`** — silently ignored in GitHub and Obsidian.
@@ -216,36 +242,88 @@ Group by class on one line each. Comma-separate nodes sharing the same class.
   placement is renderer-dependent. Test before committing.
 - **Deeply nested subgraphs** — more than two levels (Main → Cluster → inner)
   produces unpredictable layout in most renderers. Two levels is the hard limit.
-- **FontAwesome icons (`fa:fa-*`)** — valid Mermaid syntax but requires the
-  FontAwesome CDN to be loaded at render time. Not available in GitHub, Obsidian,
-  or VS Code by default — the icon name renders as raw text. Use emoji instead.
+- **FontAwesome icons (`fa:fa-*`)** — not available in GitHub, Obsidian, or VS Code
+  by default — the icon name renders as raw text. Replace with emoji.
+
+---
+
+## Self-Check Gate
+
+Before displaying any Mermaid diagram, run every item in the QA Checklist below
+against the draft. Fix all failures before outputting. Do not display a diagram
+that fails any checklist item.
+
+This is a blocking step — not a post-output review.
 
 ---
 
 ## QA Checklist
 
-- [ ] Diagram type matches the content model (flowchart for architecture, sequence for actor flows)
-- [ ] Direction chosen explicitly — `LR` or `TD` stated, not defaulted
-- [ ] Code in two parts: declarations + subgraphs first, connections + class assignments second
-- [ ] Standalone nodes declared explicitly in Part 1 — no node first-defined on a connection line
-- [ ] No `\n` in node labels — real newlines only
-- [ ] No Mermaid reserved keywords used as node IDs
-- [ ] Subgraph IDs contain no spaces; display label used via alias syntax if needed
-- [ ] `class` assignments reference subgraph IDs, not display labels
-- [ ] No FontAwesome `fa:fa-*` icons — use emoji if an icon is needed
-- [ ] Edge labels ≤5 words; human-triggered flows labeled `- human`
-- [ ] Elevate diagrams: `%%{init}%%` block copied from `shared/elevate-theme/elevate-mermaid.md`
-- [ ] Elevate diagrams: all five `classDef` lines present
-- [ ] Elevate diagrams: `linkStyle default color:#0F0E2B` present
-- [ ] Elevate diagrams: `class Main main` assignment present
-- [ ] Elevate diagrams: no hardcoded hex values — copied from canonical source
-- [ ] Non-Elevate diagrams: no Elevate-specific classes applied
+Run each item against the draft diagram before displaying output. Fix failures first.
 
+- [ ] Diagram type explicit
+- [ ] Direction explicit — `LR` or `TD` stated, not defaulted
+- [ ] All connectors after outer subgraph 'end'
+- [ ] No standalone nodes first-defined on a connection line
+- [ ] No `\n` in node labels — real newlines only
+- [ ] No reserved keyword node IDs
+- [ ] Subgraph IDs — no spaces; alias label used if display label needed
+- [ ] No ghost class IDs — all `class X classname` IDs match a declared node or subgraph
+- [ ] All classnames match declared classDef names
+- [ ] Pipe syntax only for edge labels — no inline dash syntax
+- [ ] class assignments reference IDs not display labels
+- [ ] Replace FontAwesome icons by emoji
+- [ ] Edge labels ≤5 words; human-triggered flows labeled `- human`
+- [ ] Elevate: `%%{init}%%` block copied from `shared/elevate-theme/elevate-mermaid.md`
+- [ ] Elevate: all `classDef` lines present and match canonical source
+- [ ] Elevate: `linkStyle default color:#0F0E2B` present
+- [ ] Elevate: `class Main main` assignment present
+- [ ] Elevate: cluster depth convention applied — `primary_cluster` depth 1, `secondary_cluster` depth 2
+- [ ] Elevate: no hardcoded hex values — copied from canonical source
+
+---
+
+## Test Report Format
+
+Emit this report in chat before displaying any formatted Mermaid diagram.
+The report is mandatory — it must appear every time the writing-docs skill
+processes a Mermaid format request.
+
+```
+## Mermaid QA Report — <filename or diagram label>
+
+| # | Check | Result |
+| :- | :---- | :----- |
+| 1  | Diagram type explicit | ✅ Pass / ❌ Fail — <reason> |
+| 2  | Direction explicit | ✅ Pass / ❌ Fail — <reason> |
+| 3  | All connectors after outer subgraph 'end' | ✅ Pass / ❌ Fail — <reason> |
+| 4  | No standalone nodes first-defined on connection line | ✅ Pass / ❌ Fail — <reason> |
+| 5  | No `\n` in node labels | ✅ Pass / ❌ Fail — <reason> |
+| 6  | No reserved keyword node IDs | ✅ Pass / ❌ Fail — <reason> |
+| 7  | Subgraph IDs — no spaces | ✅ Pass / ❌ Fail — <reason> |
+| 8  | No ghost class IDs | ✅ Pass / ❌ Fail — <reason> |
+| 9  | All classnames match declared classDef | ✅ Pass / ❌ Fail — <reason> |
+| 10 | Pipe syntax only for edge labels | ✅ Pass / ❌ Fail — <reason> |
+| 11 | class assignments reference IDs not display labels | ✅ Pass / ❌ Fail — <reason> |
+| 12 | Replace FontAwesome icons by emoji | ✅ Pass / ❌ Fail — <reason> |
+| 13 | Edge labels ≤5 words | ✅ Pass / ❌ Fail — <reason> |
+| 14 | Elevate: %%{init}%% block present | ✅ Pass / ❌ Fail — <reason> |
+| 15 | Elevate: all classDef lines present | ✅ Pass / ❌ Fail — <reason> |
+| 16 | Elevate: linkStyle default present | ✅ Pass / ❌ Fail — <reason> |
+| 17 | Elevate: class Main main present | ✅ Pass / ❌ Fail — <reason> |
+| 18 | Elevate: cluster depth convention applied | ✅ Pass / ❌ Fail — <reason> |
+| 19 | Elevate: no hardcoded hex values | ✅ Pass / ❌ Fail — <reason> |
+
+**Status: PASS / FAIL — <n> issues found and fixed**
+```
+
+Fail rows must include the specific reason and what was fixed.
+If all pass, status is `PASS — 0 issues`.
 
 ---
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.1        |
-| Last Updated | 2026-03-28 |
+| Version      | 1.2        |
+| Last Updated | 2026-03-29 |
 | Status       | Draft      |

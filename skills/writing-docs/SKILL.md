@@ -8,10 +8,11 @@ description: >
   runbook for X", "draft an ADR for Y", "turn these notes into a doc", "create
   a requirements brief", "document this workflow", or any request to produce
   output as .md, .docx, .pptx, .xlsx, HTML, React, or SVG. Also triggers when
-  the user asks to fix formatting or structure on an existing document.
+  the user asks to fix formatting or structure on an existing document, including
+  requests to "format this file", "format this diagram", or "format this document".
   Composes with: reviewing-tech-claims, pptx, docx, xlsx.
 ---
-<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
+<!-- version: 2.1 | author: chief-of-droids workspace | last_updated: 2026-03-29 -->
 
 # Writing Docs Skill
 
@@ -32,7 +33,8 @@ and audience calibration. It applies regardless of output format.
   contains table syntax, code blocks, and formatting QA checklist
 - `references/mermaid.md` — read when the output contains Mermaid diagrams;
   contains diagram type selection, direction, code structure, subgraph hierarchy,
-  node and edge conventions, Elevate theme implementation, and rendering pitfalls
+  node and edge conventions, Elevate theme implementation, rendering pitfalls,
+  self-check gate, QA checklist, and test report format
 - `references/theme.md` — read when the output format is docx, pptx, xlsx,
   HTML, React, or SVG; contains Elevate theme routing rules and color role table
 - `references/templates.md` — read when producing an ADR, Requirements Brief,
@@ -55,7 +57,12 @@ Steps (run for any document authoring trigger):
    — if unreadable, flag: `⚠️ markdown-formatting.md unreadable — applying defaults`
    If output contains Mermaid diagrams:
    additionally use filesystem tool to read `references/mermaid.md`
-   — if unreadable, flag: `⚠️ mermaid.md unreadable — apply defaults from markdown-formatting.md`
+   — if unreadable, flag: `⚠️ mermaid.md unreadable — applying defaults; QA report will be emitted using built-in checklist`
+   After drafting any Mermaid diagram:
+   a. Run every item in the mermaid.md QA Checklist against the draft — this is a blocking self-check gate
+   b. Fix all failures before displaying
+   c. Emit the Mermaid QA Report (format defined in mermaid.md) in chat before displaying the diagram
+   The report is mandatory — never display a Mermaid diagram without it
 5. If output format is docx / pptx / xlsx / HTML / React / SVG:
    use filesystem tool to read `references/theme.md`; pass the specified theme
    artifact to the composed format skill — do not apply theme colors directly.
@@ -79,6 +86,8 @@ Steps (run for any document authoring trigger):
 - "Create a runbook for the forecasting pipeline"
 - "Turn these notes into a reference doc"
 - "Fix the formatting on this document"
+- "Format this file"
+- "Format this diagram"
 - "Create an HTML page for this content"
 
 ---
