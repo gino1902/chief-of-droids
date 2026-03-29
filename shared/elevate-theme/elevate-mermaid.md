@@ -33,6 +33,7 @@ flowchart LR
   classDef secondary fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
   classDef tertiary  fill:#C5D8F6,color:#000000,stroke:#425F8B
   classDef cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
+  classDef ytbc      fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B
   linkStyle default color:#0F0E2B
 
   subgraph Main
@@ -77,6 +78,7 @@ flowchart LR
 | `secondary` | Secondary nodes | `#6DA5FF` | `#FFFFFF` | `#425F8B` | accent2 / lt1 / accent4 |
 | `tertiary` | Tertiary nodes | `#C5D8F6` | `#000000` | `#425F8B` | accent3 / dk1 / accent4 |
 | `cluster` | Inner subgraph containers | `#FFFFFF` | `#0F0E2B` | `#0F0E2B` | lt1 / dk2 / dk2 |
+| `ytbc` | Yet-to-be-classified nodes | `#D9E4F0` | `#3A3A4A` | `#425F8B` | (outside Elevate) / (outside Elevate) / accent4 |
 
 ---
 
@@ -109,6 +111,6 @@ subgraph-level role. Apply per-node via `classDef`:
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.4        |
-| Last Updated | 2026-03-28 |
+| Version      | 1.5        |
+| Last Updated | 2026-03-29 |
 | Status       | Final      |
