@@ -28,20 +28,23 @@ this is valid Mermaid syntax and renderer-stable as of v10+.
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}}}%%
 flowchart LR
-  classDef main      fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
-  classDef primary   fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
-  classDef secondary fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
-  classDef tertiary  fill:#C5D8F6,color:#000000,stroke:#425F8B
-  classDef cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
-  classDef ytbc      fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B
+  classDef main              fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
+  classDef primary           fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
+  classDef secondary         fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
+  classDef tertiary          fill:#C5D8F6,color:#000000,stroke:#425F8B
+  classDef primary_cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
+  classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#0F0E2B
+  classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B
   linkStyle default color:#0F0E2B
 
   subgraph Main
     subgraph "`**Company**`"
-      PM[Packmind platform
-      Source of truth]
-      DEV[Developer environment
-      repo + Copilot + packmind-cli]
+      subgraph "`**Team A**`"
+        PM[Packmind platform
+        Source of truth]
+        DEV[Developer environment
+        repo + Copilot + packmind-cli]
+      end
       GH[GitHub Copilot]
     end
     subgraph "`**Customer**`"
@@ -63,7 +66,8 @@ flowchart LR
   class PM primary
   class DEV,GH secondary
   class C_DEV,C_CC tertiary
-  class Company,Customer cluster
+  class TeamA secondary_cluster
+  class Company,Customer primary_cluster
   class Main main
 ```
 
@@ -77,8 +81,19 @@ flowchart LR
 | `primary` | Primary brand nodes | `#1F24E9` | `#FFFAF0` | `#425F8B` | accent1 / lt2 / accent4 |
 | `secondary` | Secondary nodes | `#6DA5FF` | `#FFFFFF` | `#425F8B` | accent2 / lt1 / accent4 |
 | `tertiary` | Tertiary nodes | `#C5D8F6` | `#000000` | `#425F8B` | accent3 / dk1 / accent4 |
-| `cluster` | Inner subgraph containers | `#FFFFFF` | `#0F0E2B` | `#0F0E2B` | lt1 / dk2 / dk2 |
+| `primary_cluster` | Top-level named system/domain containers | `#FFFFFF` | `#0F0E2B` | `#0F0E2B` | lt1 / dk2 / dk2 |
+| `secondary_cluster` | Sub-containers nested within a primary cluster | `#FFFAF0` | `#0F0E2B` | `#0F0E2B` | lt2 / dk2 / dk2 |
 | `ytbc` | Yet-to-be-classified nodes | `#D9E4F0` | `#3A3A4A` | `#425F8B` | (outside Elevate) / (outside Elevate) / accent4 |
+
+---
+
+## Cluster depth convention
+
+| Depth | Class | Nesting level |
+| :---- | :---- | :------------ |
+| 0 | `main` | Outermost wrapper — invisible, no visible border |
+| 1 | `primary_cluster` | Top-level named system/domain containers |
+| 2 | `secondary_cluster` | Sub-containers nested within a primary cluster |
 
 ---
 
@@ -111,6 +126,6 @@ subgraph-level role. Apply per-node via `classDef`:
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.5        |
+| Version      | 1.7        |
 | Last Updated | 2026-03-29 |
 | Status       | Final      |
