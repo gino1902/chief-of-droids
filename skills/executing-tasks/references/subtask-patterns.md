@@ -1,12 +1,49 @@
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Sub-Task Patterns
 
-Read at Steps 5 and 7 of the executing-tasks outer loop.
+Read at Steps 4 and 7 of the executing-tasks outer loop.
 
-Defines the inner execution loop and verify checklist for each task type.
-Step 5 uses the verify checklist as the QA suite baseline.
-Step 7 uses the inner loop for sub-task execution.
+**Step 4:** Use the verify checklist for the classified task type as input when
+defining the verification scenario. The checklist items are candidates — not all
+need to become scenario items. Select those that provide high-confidence outcome
+verification. Process steps (Create tests, Run, Debug) are never valid scenario items.
+
+**Step 7:** Use the inner loop for sub-task execution.
+
+---
+
+## Inner Loop QA Report
+
+After all sub-tasks complete — before Step 8 — surface a structured report.
+
+**Format:**
+
+```
+## Inner Loop QA Report — [pattern] sub-task [N]
+
+Verification confidence impact: [agreed %] → [adjusted %]
+
+| ID | Assertion | Severity | Result | Detail |
+| :--- | :--- | :--- | :--- | :--- |
+| XX | [assertion text] | Blocking / Major / Minor | ✅ Pass / ❌ Fail | — or failure detail |
+
+Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
+```
+
+**Severity definitions:**
+
+| Severity | Definition | Confidence impact |
+| :--- | :--- | :--- |
+| Blocking | Failure makes the verification scenario untestable or meaningless | Drops to 0% |
+| Major | Failure partially invalidates a verification scenario item | Drops 20–40% per item |
+| Minor | Quality gap — verification scenario remains valid | Drops <10% per item |
+
+**Behaviour rule:**
+
+- Always surface the report after sub-tasks complete
+- All passed → proceed to Step 8 automatically
+- Any failure → surface report, state adjusted confidence %, wait for explicit user input before proceeding
 
 ---
 
@@ -26,14 +63,17 @@ Step 7 uses the inner loop for sub-task execution.
    for criteria failures: re-evaluate with explicit rationale; document exclusion if still failing
 6. **Back to Write** if any source remains unresolved
 
-### Verify checklist (QA suite baseline)
+### Verify checklist (verification scenario input)
 
-| ID | Assertion | Pass | Fail |
-|:---|:----------|:-----|:-----|
-| R1 | All sources in scope were fetched or explicitly excluded | Every source has a status | Any source has no status |
-| R2 | Each included source has applied evaluation criteria with rationale | Rationale present per source | Rating with no rationale |
-| R3 | Excluded sources have documented exclusion reason | Reason present | Silent exclusion |
-| R4 | Findings are traceable to fetched content — not from memory | Each finding references fetch result | Finding with no source attribution |
+Candidate items for the Step 4 verification scenario. Select items that test
+outcomes — not process steps. All selected items must have observable pass conditions.
+
+| ID | Assertion | Severity | Pass | Fail |
+| :--- | :--- | :--- | :--- | :--- |
+| R1 | All sources in scope were fetched or explicitly excluded | Blocking | Every source has a status | Any source has no status |
+| R2 | Each included source has applied evaluation criteria with rationale | Major | Rationale present per source | Rating with no rationale |
+| R3 | Excluded sources have documented exclusion reason | Major | Reason present | Silent exclusion |
+| R4 | Findings are traceable to fetched content — not from memory | Blocking | Each finding references fetch result | Finding with no source attribution |
 
 ---
 
@@ -53,15 +93,18 @@ Step 7 uses the inner loop for sub-task execution.
    if row count wrong: diff draft vs written file
 6. **Back to Write** if any test fails
 
-### Verify checklist (QA suite baseline)
+### Verify checklist (verification scenario input)
 
-| ID | Assertion | Pass | Fail |
-|:---|:----------|:-----|:-----|
-| F1 | File readable via `filesystem:read_text_file` immediately after write | Read succeeds, content non-empty | Read fails or empty |
-| F2 | Row/section count matches approved draft | Counts match | Row dropped or duplicated |
-| F3 | All required schema fields present | All fields found | Any field missing |
-| F4 | Header metadata (version, last_updated) reflects current date | Date matches 2026-03-30 | Stale or missing |
-| F5 | No old-schema artefacts present | Old fields absent | Old field found |
+Candidate items for the Step 4 verification scenario. Select items that test
+outcomes — not process steps. All selected items must have observable pass conditions.
+
+| ID | Assertion | Severity | Pass | Fail |
+| :--- | :--- | :--- | :--- | :--- |
+| F1 | File readable via `filesystem:read_text_file` immediately after write | Blocking | Read succeeds, content non-empty | Read fails or empty |
+| F2 | Row/section count matches approved draft | Major | Counts match | Row dropped or duplicated |
+| F3 | All required schema fields present | Major | All fields found | Any field missing |
+| F4 | Header metadata (version, last_updated) reflects current date | Minor | Date correct | Stale or missing |
+| F5 | No old-schema artefacts present | Major | Old fields absent | Old field found |
 
 ---
 
@@ -81,14 +124,17 @@ Step 7 uses the inner loop for sub-task execution.
    for scope drift: trim or expand to match task scope
 6. **Back to Write** if QA checklist has open items
 
-### Verify checklist (QA suite baseline)
+### Verify checklist (verification scenario input)
 
-| ID | Assertion | Pass | Fail |
-|:---|:----------|:-----|:-----|
-| D1 | All sections declared in plan are present | All sections found | Any section missing |
-| D2 | Content matches task scope — no drift | Content within scope | Content outside scope |
-| D3 | writing-docs QA checklist passes | No open items | Open checklist items |
-| D4 | File written and readable | Read succeeds | Read fails |
+Candidate items for the Step 4 verification scenario. Select items that test
+outcomes — not process steps. All selected items must have observable pass conditions.
+
+| ID | Assertion | Severity | Pass | Fail |
+| :--- | :--- | :--- | :--- | :--- |
+| D1 | All sections declared in plan are present | Blocking | All sections found | Any section missing |
+| D2 | Content matches task scope — no drift | Major | Content within scope | Content outside scope |
+| D3 | writing-docs QA checklist passes | Major | No open items | Open checklist items |
+| D4 | File written and readable | Blocking | Read succeeds | Read fails |
 
 ---
 
@@ -107,14 +153,17 @@ Step 7 uses the inner loop for sub-task execution.
    (do not modify tests to pass); re-run
 6. **Back to Write** if tests still fail after fix
 
-### Verify checklist (QA suite baseline)
+### Verify checklist (verification scenario input)
 
-| ID | Assertion | Pass | Fail |
-|:---|:----------|:-----|:-----|
-| C1 | All acceptance tests pass | Test suite green | Any test red |
-| C2 | No existing tests broken (regression) | Full suite green | Regression introduced |
-| C3 | Implementation matches scope — no gold-plating | Scope match | Out-of-scope code added |
-| C4 | Code reviewed against `reviewing-tech-claims` if "verified" in scope | Review complete | Review skipped |
+Candidate items for the Step 4 verification scenario. Select items that test
+outcomes — not process steps. All selected items must have observable pass conditions.
+
+| ID | Assertion | Severity | Pass | Fail |
+| :--- | :--- | :--- | :--- | :--- |
+| C1 | All acceptance tests pass | Blocking | Test suite green | Any test red |
+| C2 | No existing tests broken (regression) | Blocking | Full suite green | Regression introduced |
+| C3 | Implementation matches scope — no gold-plating | Major | Scope match | Out-of-scope code added |
+| C4 | Code reviewed against `reviewing-tech-claims` if "verified" in scope | Major | Review complete | Review skipped |
 
 ---
 
@@ -135,15 +184,18 @@ The executing-tasks inner loop wraps the creating-skills workflow as a single su
 5. **Debug** — for trigger failures: revise description; for checklist failures: fix per critique
 6. **Back to Write** if assessment rating is not Pass
 
-### Verify checklist (QA suite baseline)
+### Verify checklist (verification scenario input)
 
-| ID | Assertion | Pass | Fail |
-|:---|:----------|:-----|:-----|
-| S1 | SKILL.md frontmatter valid (name, description, pushy, trigger-inclusive) | All fields valid | Any field invalid |
-| S2 | Assessment checklist rating: Pass | Pass | Partial or Fail |
-| S3 | Mock requests trigger correctly (2–3 tested) | All trigger | Any miss |
-| S4 | Reference files declared in SKILL.md are written and readable | All files present | Any file missing |
-| S5 | HOW-TO-TRIGGER.md updated | Entry present | Entry missing |
+Candidate items for the Step 4 verification scenario. Select items that test
+outcomes — not process steps. All selected items must have observable pass conditions.
+
+| ID | Assertion | Severity | Pass | Fail |
+| :--- | :--- | :--- | :--- | :--- |
+| S1 | SKILL.md frontmatter valid (name, description, pushy, trigger-inclusive) | Major | All fields valid | Any field invalid |
+| S2 | Assessment checklist rating: Pass | Blocking | Pass | Partial or Fail |
+| S3 | Mock requests trigger correctly (2–3 tested) — no partial-pass | Blocking | All trigger | Any miss |
+| S4 | Reference files declared in SKILL.md are written and readable | Blocking | All files present | Any file missing |
+| S5 | HOW-TO-TRIGGER.md updated | Major | Entry present | Entry missing |
 
 ---
 
@@ -151,4 +203,4 @@ The executing-tasks inner loop wraps the creating-skills workflow as a single su
 
 Apply research inner loop for all research sub-tasks.
 When research phase is complete, apply file-write inner loop for the output file.
-QA suite combines R1–R4 and F1–F5.
+Verification scenario candidates span R1–R4 and F1–F5.
