@@ -1,4 +1,4 @@
-<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 2.0 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Skill Sources
 
@@ -24,25 +24,23 @@ for conformance assessment.
 
 A source is added to this catalog only when:
 1. It has been fetched and verified to be reachable (not a 404 or auth wall)
-2. It contains a skill pattern, workflow template, or domain coverage relevant
-   to the chief-of-droids workspace context
-3. It has been assessed against the creating-skills SKILL.md principles
-   (specificity, no standard-knowledge duplication, token-cost justified)
+2. It contains individually addressable SKILL.md files with explicit trigger/scope definition
+3. It has been assessed against the five scoring criteria; sources scoring below 3.00 are excluded
 
-Sources that fail fetch or do not provide skill-authoring value are excluded.
+Sources that fail fetch, are link aggregators, or do not meet criterion 2 are excluded regardless of score.
 
 ---
 
 ## Catalog
 
-| Name | Address | Catalog | Guide | Score (/5) | Notes |
-|:-----|:--------|:--------|:------|:-----------|:------|
-| Anthropic Skills Best Practices | https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/best-practices | ✅ | ✅ | 5 | Primary source — official Anthropic authoring guide; covers frontmatter, description, structure, instructions, composition |
-| Anthropic Skills GitHub Repo | https://github.com/anthropics/skills/ | ✅ | ✅ | 5 | Primary source — reference skill implementations; use for structural pattern matching |
-| AgentSkills Specification | https://agentskills.io/specification | ✅ | ✅ | 4 | Specification-level detail on skill discovery and trigger patterns; useful for description and trigger design |
-| Workspace: managing-sessions | /home/gino/workspace/skills/managing-sessions/ | ✅ | ✅ | 5 | Internal pattern — workflow-class skill with multi-pass confidence model, findings file output, tool-failure handling; use as template for similar workflow-class skills |
-| Workspace: managing-tasks | /home/gino/workspace/skills/managing-tasks/ | ✅ | ✅ | 5 | Internal pattern — CRUD workflow with schema + QA checklist composition; use as template for stateful write skills |
-| Workspace: creating-skills | /home/gino/workspace/skills/creating-skills/ | ✅ | ✅ | 5 | Internal pattern — environment detection, official source fetch, assessment integration; use as template for skills that compose with external verification |
+*Stars fetched 2026-03-30. ~ = from search snippet, not direct repo page.*
+
+| Name | Address | Repo | Reusability (25%) | Context-awareness (20%) | Tool integration (20%) | Determinism (15%) | Security (20%) | Score | Stars | Engineer signal |
+|:-----|:--------|:-----|:------------------|:------------------------|:-----------------------|:------------------|:---------------|:------|:------|:----------------|
+| Workspace Skills | /home/gino/workspace/skills/ | n/a | 4 | 5 | 5 | 5 | 5 | 4.85 | n/a | n/a — internal |
+| Anthropic Skills GitHub Repo | https://github.com/anthropics/skills/ | anthropics/skills | n/a | n/a | n/a | n/a | n/a | 5.00 | 102,000 | Strong — official Anthropic repo; cited in all major platform docs |
+| OpenAI Skills | https://github.com/openai/skills | openai/skills | 4 | 4 | 5 | 4 | 4 | 4.20 | 15,700 | Strong — OpenAI Agents SDK team engineering blog; cited in VS Code and Codex official docs |
+| obra/superpowers | https://github.com/obra/superpowers | obra/superpowers | 3 | 5 | 4 | 5 | 4 | 4.10 | ~2,000 | Strong — Jesse Vincent (Prime Radiant); blog.fsck.com writeup; Simon Willison citation |
 
 ---
 
@@ -52,10 +50,34 @@ Sources that fail fetch or do not provide skill-authoring value are excluded.
 |:-------|:--------|
 | Name | Human-readable source label |
 | Address | Full URL or absolute filesystem path |
-| Catalog | ✅ Source contains a catalog of patterns or skills; ❌ does not |
-| Guide | ✅ Source contains authoring guidance or workflow templates; ❌ does not |
-| Score (/5) | Usefulness for skill authoring in this workspace — 5 = primary; 1 = marginal |
-| Notes | Domain focus and recommended use case |
+| Repo | GitHub repo identifier (owner/repo); n/a for internal sources |
+| Reusability (25%) | 1–5: no project-context or sibling-skill dependencies; n/a for primary sources not sampled against criteria |
+| Context-awareness (20%) | 1–5: skill adapts gracefully across trigger variants without breaking; n/a for primary sources |
+| Tool integration (20%) | 1–5: skill explicitly states when, why, and how to invoke each tool; n/a for primary sources |
+| Determinism (15%) | 1–5: output structure consistent across runs; n/a for primary sources |
+| Security (20%) | 1–5: rated on worst-case sampled skill — scoped calls, no blind exec, no unconstrained external fetch; n/a for primary sources |
+| Score | Weighted decimal: Σ(rating × weight). Anthropic GitHub Repo: editorial 5.00 — correctness standard, not a pattern-extraction source |
+| Stars | GitHub stars at fetch date; ~ = from search snippet not direct repo page; n/a for internal |
+| Engineer signal | Strong / Weak / None + one-line evidence. Strong = named practitioner citation. Weak = roundup/vendor only. None = no evidence found |
+
+---
+
+## Exclusion Log
+
+Sources evaluated and excluded from this catalog:
+
+| Source | Reason | Criterion failed |
+|:-------|:-------|:----------------|
+| skillmatic-ai/awesome-agent-skills | Primary artifact is curated links; no own SKILL.md files | Criterion 2 |
+| affaan-m/everything-claude-code | Skills embedded in config harness; not independently addressable | Criterion 2 |
+| abubakarsiddik31/claude-skills-collection | Link aggregator | Criterion 2 |
+| travisvn/awesome-claude-skills | Link aggregator | Criterion 2 |
+| ComposioHQ/awesome-claude-skills | Aggregator with 1 embedded skill; insufficient catalog | Criterion 2 |
+| agentskills.io / Microsoft Agent Framework | Specification and SDK sources only; no SKILL.md catalog | Criterion 2 |
+| cloudflare/skills | Direct SKILL.md fetch blocked; confidence penalty applied; excluded pending verification | Criterion 1 |
+| sickn33/antigravity-awesome-skills | Score 2.65 — below 3.00 threshold; security findings (33 triage items); uneven community quality | Criterion 3 |
+| Anthropic Skills Best Practices | Spec/guide source; no SKILL.md catalog to sample | Criterion 2 |
+| AgentSkills Specification | Spec source; no SKILL.md catalog to sample | Criterion 2 |
 
 ---
 
@@ -63,7 +85,9 @@ Sources that fail fetch or do not provide skill-authoring value are excluded.
 
 To add a source:
 1. Fetch the URL — confirm it returns content (not 404, not auth wall)
-2. Confirm it contains skill-authoring patterns or domain content not already covered
-3. Add a row following the existing format
-4. Update `last_updated` in the header comment
-5. Do not add sources that duplicate existing higher-scored entries
+2. Confirm it contains individually addressable SKILL.md files with explicit trigger/scope definition
+3. Sample 2–3 skills (stratified for catalogs >10 skills: 1 simple + 1 workflow + 1 tool-integration)
+4. Score all five criteria; compute weighted decimal; exclude if score < 3.00
+5. Populate Stars and Engineer signal columns
+6. Add row sorted by Score desc, Stars desc within ties
+7. Update `last_updated` in the header comment
