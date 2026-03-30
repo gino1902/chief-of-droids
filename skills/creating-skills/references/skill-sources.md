@@ -1,11 +1,21 @@
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Skill Sources
 
-Reference catalog used by the `recommend-skills` workflow to match skill gap
-candidates against known external patterns and sources.
+Reference catalog used by the `enrich skill` and `recommend skills` workflows.
 
-**Consumed by:** `references/workflows/recommend-skills.md` — Step 1 and Step 5
+**Consumed by:**
+- `enrich skill` workflow (E2–E3) — pattern extraction: identifies authoring patterns
+  present in catalog sources that are absent from the skill under review
+- `references/workflows/recommend-skills.md` (Step 1 and Step 5) — coverage matching:
+  checks whether a gap identified in session findings already has a source catalog entry,
+  and states the coverage delta vs. the gap
+
+**Role:** Completeness instrument — surfaces patterns present in comparable skills
+that may be absent from the skill under review, and matches session-identified gaps
+against known sources. Not a correctness standard; use `assessment-checklist.md`
+for conformance assessment.
+
 **Updated by:** manual addition after a verified source qualifies (see Qualification below)
 
 ---

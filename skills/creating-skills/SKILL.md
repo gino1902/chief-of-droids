@@ -14,20 +14,11 @@ description: >
   sessions", "what am I missing as skills", "what's missing from skill",
   "improve skill from catalog".
 ---
-<!-- version: 2.4 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 2.6 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Creating Skills Skill
 
 Authors, critiques, enriches, assesses, and recommends SKILL.md files against Anthropic official standards.
-
-**Principle:** Never author, assess, or enrich from memory. Always fetch from authoritative
-sources before producing output. Two fetch modes apply depending on workflow:
-- `author`, `critique`, `assess all skills` — fetch the three Anthropic official sources (Step 1)
-- `enrich skill` — fetch sources from the `skill-sources.md` catalog (internal + external)
-- `recommend skills` — no source fetch; reads session findings only
-
-Assessment checklist lives in `references/assessment-checklist.md` —
-read it via filesystem tool before any critique or assessment run.
 
 ---
 
@@ -36,6 +27,29 @@ read it via filesystem tool before any critique or assessment run.
 - `references/assessment-checklist.md` — read before any author, critique, or assess workflow
 - `references/skill-sources.md` — source catalog; read during enrich and recommend-skills workflows
 - `references/workflows/recommend-skills.md` — full workflow for skill gap analysis from session findings
+
+---
+
+## Source Governance
+
+Two questions drive this skill's knowledge sources — they are orthogonal and must not be conflated:
+
+**Correctness** — "Does this skill conform to the Anthropic standard?"
+Answered by: official Anthropic sources (Step 1) + `references/assessment-checklist.md`
+Used by: `author`, `critique`, `assess all skills`
+
+**Completeness** — "Does this skill capture patterns present in comparable skills?"
+Answered by: `references/skill-sources.md` catalog (internal + external), via pattern extraction
+Used by: `enrich skill`
+
+**Gap analysis** — "What skill-shaped work am I doing manually, and does the source catalog already address it?"
+Answered by: session findings files (primary) + `references/skill-sources.md` (coverage check only — not pattern extraction)
+Used by: `recommend skills`
+
+Never substitute one source for another. A skill can be structurally correct (passes checklist)
+and pattern-incomplete (misses catalog patterns) simultaneously. For `recommend skills`: a gap
+identified in session findings may already have a source catalog entry — state that match and
+its coverage delta as part of every recommendation.
 
 ---
 
@@ -141,7 +155,7 @@ Output: structured critique in chat (no file write unless requested)
 
 Trigger: `enrich skill <n>` | "what's missing from skill <n>" | "improve skill <n> from catalog"
 
-**Scope:** catalog-driven enrichment only — does not run the assessment checklist.
+**Scope:** catalog-driven pattern extraction only — does not run the assessment checklist.
 To check structural compliance, run `critique skill <n>` separately.
 
 **Note on preconditions:** No structural gate is enforced. If SKILL.md read reveals
@@ -328,11 +342,9 @@ Full workflow in: `references/workflows/recommend-skills.md`
 Summary:
 1. Run Step 0 — Environment Detection
 2. Read `references/workflows/recommend-skills.md` via filesystem tool
-3. Read `references/skill-sources.md` via filesystem tool
+3. Read `references/skill-sources.md` via filesystem tool — for gap-to-source coverage matching, not pattern extraction
 4. Execute the workflow as written — do not paraphrase or abbreviate steps
-5. Do NOT run Step 1 (official source fetch) for this workflow —
-   the recommend-skills workflow is session-analysis based, not skill-authoring;
-   fetching Anthropic docs is not relevant to gap extraction
+5. Source consultation for this workflow is coverage matching via `skill-sources.md` only (step 3 above) — Step 1 official source fetch does not apply
 
 Output: `.tasks/skill-recommendations/YYYY-MM-DD-recommend-skills.md`
 
@@ -351,14 +363,15 @@ Output: `.tasks/skill-recommendations/YYYY-MM-DD-recommend-skills.md`
 - [ ] Environment detected and reported before any other action — every workflow
 - [ ] Step 0 probe file is `references/assessment-checklist.md` — stable, workflow-neutral
 - [ ] assessment-checklist.md reused from Step 0 result — not re-read in subsequent steps
-- [ ] Correct fetch mode used for workflow: official sources (author/critique/assess) vs. catalog (enrich)
+- [ ] Correct source mode used per workflow: official sources (author/critique/assess) | catalog pattern extraction (enrich) | catalog coverage matching + session findings (recommend)
 - [ ] All three official source fetches attempted — status reported explicitly (author / critique / assess only)
 - [ ] Findings cross-referenced against fetched official docs, not checklist alone
 - [ ] Description field third person, trigger-inclusive, max 1024 chars
 - [ ] SKILL.md lean — no content that belongs in reference files
 - [ ] Test prompts proposed for new skills before writing
 - [ ] No file written without user approval
-- [ ] recommend skills: Step 0 run; Step 1 not run
+- [ ] recommend skills: Step 0 run; Step 1 not run; skill-sources.md read for coverage matching
+- [ ] recommend skills: each recommendation states source catalog match and coverage delta vs. gap identified
 - [ ] enrich workflow: steps labelled E1–E10 — no collision with global Step 0 / Step 1
 - [ ] enrich workflow: E1 cap sets E2–E8 to `Skipped — filesystem unavailable` / Low
 - [ ] enrich workflow: E3 cap names Environment Detection (E1) explicitly — not "Step 1"

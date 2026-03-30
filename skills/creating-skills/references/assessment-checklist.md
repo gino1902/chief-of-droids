@@ -1,10 +1,14 @@
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
+<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Assessment Checklist
 
 Run against any SKILL.md during critique or assess workflows.
 Always fetch official sources before running — this checklist supplements
 live docs, does not replace them.
+
+**Scope:** This checklist is the *correctness instrument* — it answers whether a skill
+conforms to the Anthropic standard. It does not assess pattern completeness against
+comparable skills; that is the role of `skill-sources.md` via the `enrich skill` workflow.
 
 ---
 
