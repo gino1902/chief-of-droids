@@ -123,11 +123,13 @@ additionally read `writing-docs/references/templates.md` and copy the relevant t
 ## creating-skills
 
 Triggers on any request to create, author, build, or define a new skill, critique
-or assess an existing one, or identify skill gaps from session history.
+or assess an existing one, enrich an existing one from catalog sources, or identify
+skill gaps from session history.
 
 **Triggers:**
 - `author skill <n>` — scaffold a new SKILL.md from a user description
-- `critique skill <n>` — assess and improve an existing SKILL.md
+- `critique skill <n>` — compliance assessment of an existing SKILL.md against checklist
+- `enrich skill <n>` — catalog-driven enrichment; identifies patterns missing from an existing skill
 - `assess all skills` — run full assessment across all skills in `skills/`
 - `recommend skills` — analyse session findings to surface skill gaps
 
@@ -140,22 +142,26 @@ or assess an existing one, or identify skill gaps from session history.
 - "what skills should I add"
 - "skill gaps from sessions"
 - "what am I missing as skills"
+- "what's missing from skill..."
+- "improve skill from catalog"
 
 **Examples:**
 - "author skill data-quality"
 - "critique skill writing-docs"
+- "enrich skill managing-tasks"
 - "assess all skills"
 - "I need to create a skill to manage tasks"
 - "recommend skills"
 - "what skills am I missing based on my sessions?"
+- "what's missing from skill creating-skills"
 
-**Note:** Always fetches official sources before authoring or assessing:
-1. `https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/best-practices`
-2. `https://github.com/anthropics/skills/`
-3. `https://agentskills.io/specification`
-
-Source fetch is skipped for `recommend skills` — that workflow reads session
-findings, not official authoring docs.
+**Note on source fetch:**
+- `author skill`, `critique skill`, `assess all skills` — always fetch official sources:
+  1. `https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/best-practices`
+  2. `https://github.com/anthropics/skills/`
+  3. `https://agentskills.io/specification`
+- `enrich skill` — fetches sources from `references/skill-sources.md` catalog (internal + external)
+- `recommend skills` — skips source fetch; reads session findings only
 
 ---
 
@@ -211,6 +217,7 @@ request. Common combinations in this workspace:
 | Write a runbook with verified commands | `writing-docs` + `reviewing-tech-claims` |
 | Write a playbook | `writing-docs` |
 | Author or assess a skill | `creating-skills` |
+| Enrich a skill from catalog | `creating-skills` |
 | Identify skill gaps from session history | `creating-skills` |
 | Frame or challenge a use case | `analyzing-business-cases` |
 | Frame a data platform use case | `analyzing-business-cases` + `architecting-data-platforms` |
