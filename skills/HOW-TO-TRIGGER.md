@@ -30,6 +30,39 @@ Also triggers when the user asks to record, close, or transition any task by ID.
 
 ---
 
+## executing-tasks
+
+Triggers after `start TASK-XXX` completes (opt-in) or via standalone command.
+
+**Primary trigger (opt-in):**
+After managing-tasks transitions TASK-XXX to 🟡 In Progress, Claude asks once:
+> "Run executing-tasks workflow for TASK-XXX?"
+Skill loads only on explicit yes.
+
+**Standalone triggers:**
+- `execute TASK-XXX` — load directly, begin workflow
+- `run TASK-XXX` — alias for execute
+
+**Does NOT trigger on:**
+- "my intent is [...]" — too ambiguous
+- "start TASK-XXX" alone — that belongs to managing-tasks
+
+**What it does:**
+- Extracts task context from TASKS.md (no re-prompt to user)
+- Classifies task type (code / research / doc / file-write / skill-authoring / framing)
+- Runs confidence-based challenge gate on intent and scope
+- Produces and approves a stepped plan
+- Designs a QA suite against the plan before any sub-task executes
+- Executes sub-tasks via composing skills per task type
+- Verifies all outputs against the QA suite
+- Prompts user to close task via managing-tasks on completion
+
+**Does NOT:**
+- Manage task state — that is managing-tasks
+- Implement domain logic — defers to composing skills per task type
+
+---
+
 ## managing-sessions
 
 Triggers on session history analysis, pruning recommendations, or memory hygiene.
@@ -223,6 +256,9 @@ request. Common combinations in this workspace:
 | Frame a data platform use case | `analyzing-business-cases` + `architecting-data-platforms` |
 | Frame + write the document | `analyzing-business-cases` + `writing-docs` |
 | Read, add, or transition tasks | `managing-tasks` |
+| Execute a task with quality workflow | `managing-tasks` + `executing-tasks` |
+| Execute a skill-authoring task | `managing-tasks` + `executing-tasks` + `creating-skills` |
+| Execute a doc task | `managing-tasks` + `executing-tasks` + `writing-docs` |
 | Bootstrap a new Claude Desktop project | `project-bootstrapping` |
 | Analyse, prune, or audit session history | `managing-sessions` |
 | Capture session value then write a doc | `managing-sessions` + `writing-docs` |

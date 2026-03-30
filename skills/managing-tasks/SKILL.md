@@ -7,7 +7,7 @@ description: >
   "update task TASK-XXX", or "bulk update tasks". Also use when the user asks
   what is pending, what to work on next, or wants to record or update a task.
 ---
-<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-03-29 -->
+<!-- version: 2.0 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Managing Tasks Skill
 
@@ -117,6 +117,9 @@ Steps:
 6. Read `references/qa-checklist.md` and run it
 7. Propose the state transition: move entry from 🔴 Backlog → 🟡 In Progress
 8. Write per Write Authority rule in `references/tasks-schema.md`
+9. Ask once: "Run executing-tasks workflow for TASK-XXX?"
+   If yes → load `executing-tasks` skill; it takes over from here.
+   If no → stop; task is 🟡 In Progress, user executes ad hoc.
 
 ---
 
