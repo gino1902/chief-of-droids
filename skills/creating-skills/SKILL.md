@@ -14,7 +14,7 @@ description: >
   sessions", "what am I missing as skills", "what's missing from skill",
   "improve skill from catalog".
 ---
-<!-- version: 2.6 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 2.7 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Creating Skills Skill
 
@@ -46,10 +46,12 @@ Used by: `enrich skill`
 Answered by: session findings files (primary) + `references/skill-sources.md` (coverage check only — not pattern extraction)
 Used by: `recommend skills`
 
-Never substitute one source for another. A skill can be structurally correct (passes checklist)
-and pattern-incomplete (misses catalog patterns) simultaneously. For `recommend skills`: a gap
-identified in session findings may already have a source catalog entry — state that match and
-its coverage delta as part of every recommendation.
+Never substitute one source for another. Correctness is measured against an external standard
+(Anthropic spec); completeness is measured against comparable practice (workspace + external
+skill catalogs). These require different reference frames and cannot be collapsed. A skill can
+be structurally correct (passes checklist) and pattern-incomplete (misses catalog patterns)
+simultaneously. For `recommend skills`: a gap identified in session findings may already have
+a source catalog entry — state that match and its coverage delta as part of every recommendation.
 
 ---
 
@@ -345,6 +347,7 @@ Summary:
 3. Read `references/skill-sources.md` via filesystem tool — for gap-to-source coverage matching, not pattern extraction
 4. Execute the workflow as written — do not paraphrase or abbreviate steps
 5. Source consultation for this workflow is coverage matching via `skill-sources.md` only (step 3 above) — Step 1 official source fetch does not apply
+6. Each recommendation in the output must state: gap identified + source catalog match (if any) + coverage delta
 
 Output: `.tasks/skill-recommendations/YYYY-MM-DD-recommend-skills.md`
 
