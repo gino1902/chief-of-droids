@@ -3,22 +3,25 @@ name: creating-skills
 description: >
   Authors new SKILL.md files from scratch, critiques and improves existing
   SKILL.md files, assesses skills against Anthropic official best practices,
-  recommends new skills from session findings, and enriches existing skills
-  from catalog patterns. Use when asked to create, build, author, or define
-  a new skill, improve or critique an existing skill, audit skills in the
-  workspace, identify skill gaps from session history, or enrich an existing
-  skill from external or internal sources.
+  recommends new skills from session findings, enriches existing skills from
+  catalog patterns, and evaluates and adds new sources to the skill catalog.
+  Use when asked to create, build, author, or define a new skill, improve or
+  critique an existing skill, audit skills in the workspace, identify skill
+  gaps from session history, enrich an existing skill from external or internal
+  sources, or add a URL to the skills catalog.
   Triggers on: "author skill", "critique skill", "enrich skill", "assess all
   skills", "create a skill", "build a skill", "I need a skill", "new skill
   for", "recommend skills", "what skills should I add", "skill gaps from
   sessions", "what am I missing as skills", "what's missing from skill",
-  "improve skill from catalog".
+  "improve skill from catalog", "add source to skill-sources", "add [URL] to
+  skill sources", "add [URL] to the skills catalog", "evaluate [URL] as a
+  skill source".
 ---
-<!-- version: 2.7 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 2.8 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Creating Skills Skill
 
-Authors, critiques, enriches, assesses, and recommends SKILL.md files against Anthropic official standards.
+Authors, critiques, enriches, assesses, recommends, and extends the source catalog for SKILL.md files against Anthropic official standards.
 
 ---
 
@@ -27,6 +30,7 @@ Authors, critiques, enriches, assesses, and recommends SKILL.md files against An
 - `references/assessment-checklist.md` — read before any author, critique, or assess workflow
 - `references/skill-sources.md` — source catalog; read during enrich and recommend-skills workflows
 - `references/workflows/recommend-skills.md` — full workflow for skill gap analysis from session findings
+- `references/workflows/add-source.md` — full workflow for evaluating and adding a new external source to skill-sources.md
 
 ---
 
@@ -80,7 +84,7 @@ Never skip this step. Never assume the environment from context or memory.
 
 ## Step 1 — Official Source Fetch (author / critique / assess all skills only)
 
-Not used by `enrich skill` or `recommend skills` — those workflows have their own source protocols.
+Not used by `enrich skill`, `recommend skills`, or `add source` — those workflows have their own source protocols.
 
 Attempt all three fetches after environment detection. Do not skip even if the
 environment is known from a prior run in the same session.
@@ -353,6 +357,23 @@ Output: `.tasks/skill-recommendations/YYYY-MM-DD-recommend-skills.md`
 
 ---
 
+## Workflow: add source
+
+Trigger: "add [URL] to skill sources" | "add [URL] to the skills catalog" | "I want to add X to the skills catalog sources" | "add source to skill-sources" | "evaluate [URL] as a skill source" | "add source: [URL]"
+
+Full workflow in: `references/workflows/add-source.md`
+
+Summary:
+1. Run Step 0 — Environment Detection
+2. Read `references/workflows/add-source.md` via filesystem tool
+3. Execute the workflow as written — do not paraphrase or abbreviate steps
+4. Sources are always external URLs — no filesystem-path branch in this workflow
+5. Step 1 official source fetch does not apply — this workflow has its own fetch protocol
+
+Output: new row added to `references/skill-sources.md` (on approval); rejected sources added to Exclusion Log
+
+---
+
 ## Composes With
 
 | Skill | When |
@@ -366,7 +387,7 @@ Output: `.tasks/skill-recommendations/YYYY-MM-DD-recommend-skills.md`
 - [ ] Environment detected and reported before any other action — every workflow
 - [ ] Step 0 probe file is `references/assessment-checklist.md` — stable, workflow-neutral
 - [ ] assessment-checklist.md reused from Step 0 result — not re-read in subsequent steps
-- [ ] Correct source mode used per workflow: official sources (author/critique/assess) | catalog pattern extraction (enrich) | catalog coverage matching + session findings (recommend)
+- [ ] Correct source mode used per workflow: official sources (author/critique/assess) | catalog pattern extraction (enrich) | catalog coverage matching + session findings (recommend) | own fetch protocol (add source)
 - [ ] All three official source fetches attempted — status reported explicitly (author / critique / assess only)
 - [ ] Findings cross-referenced against fetched official docs, not checklist alone
 - [ ] Description field third person, trigger-inclusive, max 1024 chars
@@ -375,6 +396,10 @@ Output: `.tasks/skill-recommendations/YYYY-MM-DD-recommend-skills.md`
 - [ ] No file written without user approval
 - [ ] recommend skills: Step 0 run; Step 1 not run; skill-sources.md read for coverage matching
 - [ ] recommend skills: each recommendation states source catalog match and coverage delta vs. gap identified
+- [ ] add source: Step 0 run; Step 1 not run; add-source.md workflow read and executed as written
+- [ ] add source: all three qualification criteria evaluated before any write
+- [ ] add source: rejected sources added to Exclusion Log with criterion and reason
+- [ ] add source: write only on explicit user approval; read-back confirms write succeeded
 - [ ] enrich workflow: steps labelled E1–E10 — no collision with global Step 0 / Step 1
 - [ ] enrich workflow: E1 cap sets E2–E8 to `Skipped — filesystem unavailable` / Low
 - [ ] enrich workflow: E3 cap names Environment Detection (E1) explicitly — not "Step 1"

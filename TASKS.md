@@ -1,4 +1,4 @@
-<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # TASKS.md — workspace
 
@@ -35,6 +35,8 @@
 
 ## 🟡 In Progress
 
+- TASK-047: Add workflow `add-source` to creating-skills SKILL.md | target: workspace/skills/creating-skills/SKILL.md | scope: "Adding a New Source" exists as a 7-step procedure in skill-sources.md but has no SKILL.md workflow — no trigger phrase, no Step 0 environment detection, no approval gate; a user saying "add [source] to skill-sources" routes to creating-skills but lands on no workflow; add a named workflow covering: trigger phrases, Step 0 environment detection, 6-step qualification protocol (fetch → SKILL.md check → stratified sampling → score → populate columns → write on approval); sourced from existing skill-sources.md Adding a New Source section | origin: session:2026-03-30 "Add Task: creating-skills add-source workflow"
+
 ---
 
 ## ✅ Done
@@ -69,4 +71,4 @@
 - TASK-045: Author executing-tasks meta-skill | target: workspace/skills/executing-tasks/ | scope: meta-skill governing end-to-end task execution with quality and determinism; 9-step outer loop (extract → classify → challenge → plan → QA suite → load skills → sub-task loop → verify → refine); 4 reference files authored (challenge-protocol.md: confidence-based gate with blocking/advisory distinction; task-type-classifier.md: 6-type decision table with compound research+file-write type; subtask-patterns.md: 5 inner loop patterns with verify checklists — research/file-write/doc/code/skill-authoring; SKILL.md: meta-skill declaration, Composes With table as primary execution mechanism); 20-test QA suite designed and run; 2 mock requests validated (research+file-write, skill-authoring with status gate); assessed Pass; HOW-TO-TRIGGER.md updated with executing-tasks entry and 3 new Combining rows; managing-tasks SKILL.md v2.0 — Step 9 opt-in handoff added to start task workflow | origin: session:2026-03-30 "Executing tasks skill build" | done: 2026-03-30
 - TASK-046: Improve executing-tasks workflow | target: workspace/skills/executing-tasks/ | scope: Step 4 extended with mandatory verification scenario subset — user proposes scenario, Claude challenges for outcome-vs-process validity and observable pass conditions, confidence % always stated, plan gated until scenario approved, closing question always "Does this plan and verification scenario meet your confidence bar?"; Step 5 QA suite rescoped to verification scenario items only (outer and inner loop procedural steps excluded); subtask-patterns.md extended with Inner Loop QA Report format (severity: Blocking/Major/Minor tied to confidence impact), severity column added to all 5 pattern verify checklists, behaviour rule: always surface report after sub-tasks complete, auto-proceed on all-pass, wait for user input on any failure; SKILL.md v1.2, subtask-patterns.md v1.2 | origin: session:2026-03-30 "Improve executing-tasks workflow" | done: 2026-03-30
 
-*Last updated: 2026-03-30 — TASK-046 done*
+*Last updated: 2026-03-30 — TASK-047 in progress*

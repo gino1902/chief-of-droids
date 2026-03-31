@@ -156,8 +156,8 @@ additionally read `writing-docs/references/templates.md` and copy the relevant t
 ## creating-skills
 
 Triggers on any request to create, author, build, or define a new skill, critique
-or assess an existing one, enrich an existing one from catalog sources, or identify
-skill gaps from session history.
+or assess an existing one, enrich an existing one from catalog sources, identify
+skill gaps from session history, or add a new external source to the skill catalog.
 
 **Triggers:**
 - `author skill <n>` — scaffold a new SKILL.md from a user description
@@ -165,6 +165,7 @@ skill gaps from session history.
 - `enrich skill <n>` — catalog-driven enrichment; identifies patterns missing from an existing skill
 - `assess all skills` — run full assessment across all skills in `skills/`
 - `recommend skills` — analyse session findings to surface skill gaps
+- `add source: [URL]` — evaluate and add a new external source to `skill-sources.md`
 
 **Natural-language equivalents (also trigger this skill):**
 - "create a skill for..."
@@ -177,6 +178,10 @@ skill gaps from session history.
 - "what am I missing as skills"
 - "what's missing from skill..."
 - "improve skill from catalog"
+- "add [URL] to skill sources"
+- "add [URL] to the skills catalog"
+- "I want to add X to the skills catalog sources"
+- "evaluate [URL] as a skill source"
 
 **Examples:**
 - "author skill data-quality"
@@ -187,6 +192,8 @@ skill gaps from session history.
 - "recommend skills"
 - "what skills am I missing based on my sessions?"
 - "what's missing from skill creating-skills"
+- "add github.com/foo/bar to skill sources"
+- "I want to add https://github.com/foo/bar to the skills catalog"
 
 **Note on source fetch:**
 - `author skill`, `critique skill`, `assess all skills` — always fetch official sources:
@@ -195,6 +202,7 @@ skill gaps from session history.
   3. `https://agentskills.io/specification`
 - `enrich skill` — fetches sources from `references/skill-sources.md` catalog (internal + external)
 - `recommend skills` — skips source fetch; reads session findings only
+- `add source` — runs its own fetch protocol via `references/workflows/add-source.md`; Step 1 does not apply
 
 ---
 
@@ -252,6 +260,7 @@ request. Common combinations in this workspace:
 | Author or assess a skill | `creating-skills` |
 | Enrich a skill from catalog | `creating-skills` |
 | Identify skill gaps from session history | `creating-skills` |
+| Add a new source to skill catalog | `creating-skills` |
 | Frame or challenge a use case | `analyzing-business-cases` |
 | Frame a data platform use case | `analyzing-business-cases` + `architecting-data-platforms` |
 | Frame + write the document | `analyzing-business-cases` + `writing-docs` |

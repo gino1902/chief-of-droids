@@ -1,4 +1,4 @@
-<!-- version: 2.0 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 2.1 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Skill Sources
 
@@ -16,7 +16,7 @@ that may be absent from the skill under review, and matches session-identified g
 against known sources. Not a correctness standard; use `assessment-checklist.md`
 for conformance assessment.
 
-**Updated by:** manual addition after a verified source qualifies (see Qualification below)
+**Updated by:** `add source` workflow in `creating-skills` — evaluates, scores, and writes on approval
 
 ---
 
@@ -28,6 +28,8 @@ A source is added to this catalog only when:
 3. It has been assessed against the five scoring criteria; sources scoring below 3.00 are excluded
 
 Sources that fail fetch, are link aggregators, or do not meet criterion 2 are excluded regardless of score.
+
+See `references/workflows/add-source.md` for the full qualification protocol.
 
 ---
 
@@ -41,6 +43,7 @@ Sources that fail fetch, are link aggregators, or do not meet criterion 2 are ex
 | Anthropic Skills GitHub Repo | https://github.com/anthropics/skills/ | anthropics/skills | n/a | n/a | n/a | n/a | n/a | 5.00 | 102,000 | Strong — official Anthropic repo; cited in all major platform docs |
 | OpenAI Skills | https://github.com/openai/skills | openai/skills | 4 | 4 | 5 | 4 | 4 | 4.20 | 15,700 | Strong — OpenAI Agents SDK team engineering blog; cited in VS Code and Codex official docs |
 | obra/superpowers | https://github.com/obra/superpowers | obra/superpowers | 3 | 5 | 4 | 5 | 4 | 4.10 | ~2,000 | Strong — Jesse Vincent (Prime Radiant); blog.fsck.com writeup; Simon Willison citation |
+| EveryInc/compound-engineering-plugin | https://github.com/EveryInc/compound-engineering-plugin | EveryInc/compound-engineering-plugin | 3 | 4 | 4 | 4 | 3 | 3.55 | ~10,100 | Strong — Every.to published case study; named engineering team; 10k+ stars with active release cadence (v2.53.0 2026-03-25) |
 
 ---
 
@@ -78,16 +81,3 @@ Sources evaluated and excluded from this catalog:
 | sickn33/antigravity-awesome-skills | Score 2.65 — below 3.00 threshold; security findings (33 triage items); uneven community quality | Criterion 3 |
 | Anthropic Skills Best Practices | Spec/guide source; no SKILL.md catalog to sample | Criterion 2 |
 | AgentSkills Specification | Spec source; no SKILL.md catalog to sample | Criterion 2 |
-
----
-
-## Adding a New Source
-
-To add a source:
-1. Fetch the URL — confirm it returns content (not 404, not auth wall)
-2. Confirm it contains individually addressable SKILL.md files with explicit trigger/scope definition
-3. Sample 2–3 skills (stratified for catalogs >10 skills: 1 simple + 1 workflow + 1 tool-integration)
-4. Score all five criteria; compute weighted decimal; exclude if score < 3.00
-5. Populate Stars and Engineer signal columns
-6. Add row sorted by Score desc, Stars desc within ties
-7. Update `last_updated` in the header comment

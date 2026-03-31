@@ -1,4 +1,4 @@
-<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
 
 # Assessment Checklist
 
@@ -74,6 +74,23 @@ output files, or classifies inputs into categories.
   or data quality, the skill reports that level explicitly rather than
   presenting all output as equally reliable
 
+## Source Catalog Workflows (add source)
+
+Apply this section when the skill includes a workflow that evaluates external
+sources and writes to a scored catalog file (e.g. `add source` workflow).
+
+- [ ] Three qualification criteria evaluated in order before any write:
+  (1) URL fetchable and returns content, (2) individually addressable SKILL.md
+  files present with explicit trigger/scope, (3) score ≥ 3.00 threshold applied
+- [ ] Partial fetch handling defined — workflow states what to do when URL loads
+  but SKILL.md content is not directly accessible (sub-path attempts, confidence flag)
+- [ ] Scoring rubric present — five criteria with weights, 1–5 scale, worst-case
+  security rule stated
+- [ ] Exclusion Log write defined — rejected sources recorded with criterion and reason
+- [ ] Catalog row insertion order stated (Score desc, Stars desc within ties)
+- [ ] Write gate present — no write to skill-sources.md without explicit user approval
+- [ ] Read-back after write — workflow confirms write succeeded via filesystem read
+
 ## Composition
 
 - [ ] Compose declarations present if skill combines with others
@@ -110,6 +127,11 @@ The Workflow-Class Skills section covers correctness of execution logic —
 it is the only section that can surface classification errors, branching
 gaps, and state management issues. A skill passing all other sections but
 failing Workflow-Class checks should be rated Partial or Fail, not Pass.
+
+The Source Catalog Workflows section covers correctness of catalog management
+logic — applies only to skills with a source evaluation and write workflow.
+A skill with an add-source workflow that fails this section should be rated
+Partial or Fail even if all other sections pass.
 
 A Pass rating on this checklist does not validate extraction accuracy,
 tool query effectiveness, or real-data behaviour. Those require a live run.
