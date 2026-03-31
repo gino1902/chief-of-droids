@@ -11,7 +11,7 @@ description: >
   declares which skill handles each sub-task. Triggers on: "execute TASK-XXX",
   or opt-in confirmation after "start TASK-XXX".
 ---
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
 
 # Executing Tasks Skill
 
@@ -27,10 +27,10 @@ Domain work belongs to the composing skill matched by the task-type classifier.
 
 - `references/challenge-protocol.md` — read at Step 3; defines confidence gate,
   self-assessment question, minimum recommendation, user approval prompt, exit conditions
-- `references/subtask-patterns.md` — read at Steps 4 and 7; defines inner loop per task type
-  (code / research / doc / file-write), each with steps and verify checklist used as
-  input to the verification scenario definition at Step 4; contains Inner Loop QA Report
-  format, severity definitions, and behaviour rule
+- `references/subtask-patterns.md` — read at Step 7; defines inner loop per task type
+  (code / research / doc / file-write), each with steps and Inner-loop checklist as the
+  formal Test step gate; contains Inner Loop QA Report format, severity definitions,
+  and behaviour rule
 - `references/task-type-classifier.md` — read at Step 2; decision table mapping
   task scope/target/origin signals to primary type + composing skills
 
@@ -108,20 +108,28 @@ Produce a stepped plan: phases, actions, outputs per phase.
 
 **Final subset of the plan — Verification scenario (mandatory):**
 
-Read `references/subtask-patterns.md`. Use the verify checklist for the classified
-task type as input. Propose a verification scenario: what will be checked after all
-sub-tasks complete, how it will be checked, and what constitutes a high-confidence pass.
+For each distinct outcome of the task, author one scenario item using this template:
+
+| Slot | Content |
+| :--- | :--- |
+| Outcome | What specific state or artifact should exist or have changed |
+| Verified by | Which tool or check — `read_text_file`, `list_directory`, grep, live run, etc. |
+| Pass condition | Exact, observable criterion — not "it works" |
+
+Author one instance per distinct task outcome. Coverage is determined by task scope — no fixed count.
 
 Always include a confidence level % for the proposed scenario:
 > "Verification scenario confidence: [N]% — [one-line rationale for the score]"
 
-Challenge the scenario before presenting the full plan:
-- Is the scenario testing outcomes or process steps? (Outcomes only — process steps are not valid scenario items)
-- Does each item have a concrete, observable pass condition?
-- Is the confidence level justified? Surface any factors that reduce it below 90%
+Before presenting the plan, validate each scenario item against these criteria:
 
-Loop until both Claude and user are satisfied the scenario will provide high-confidence verification.
-The plan is not presented for approval until the verification scenario is agreed.
+| Criterion | Severity | Consequence |
+| :--- | :--- | :--- |
+| Outcome not process — removing this item leaves the task outcome untestable | Blocking | Rework before presenting |
+| Observable pass condition present — checkable with a tool call or a read | Blocking | Rework before presenting |
+| Traceable to task description or scope | Advisory | Surface to user; does not block |
+
+Any Blocking failure must be resolved before the plan is presented.
 
 Present the full plan including the agreed verification scenario.
 Close with exactly:
@@ -158,8 +166,10 @@ Read `references/subtask-patterns.md`. Apply the inner loop for the classified t
 
 For each sub-task:
 - Apply inner loop: Create tests → Write → Run → Test → Debug → back to Write if failing
+- For the **Test step**: apply the **Inner-loop checklist** for the classified pattern
+  from `references/subtask-patterns.md` as the formal test gate — not the prose description
 - Flag blockers immediately; do not silently skip or work around
-- Do not advance to the next sub-task until the current one passes its inner test gate
+- Do not advance to the next sub-task until all Inner-loop checklist items pass
 
 After all sub-tasks complete, surface the Inner Loop QA Report (format defined in
 `references/subtask-patterns.md`) covering all sub-tasks:
@@ -206,15 +216,17 @@ Prompt user:
 - [ ] Task type classified explicitly and stated before Step 3
 - [ ] Composing skill(s) declared before sub-task loop enters
 - [ ] Challenge gate exited cleanly — no new blocking issues, user approved
+- [ ] Verification scenario: one item per distinct task outcome using Outcome / Verified by / Pass condition template
+- [ ] Verification scenario: 3-criteria gate applied — Blocking items resolved before plan presented
 - [ ] Verification scenario proposed with confidence % and rationale before plan approval
-- [ ] Verification scenario challenged for outcome-vs-process and observable pass conditions
 - [ ] Plan closed with "Does this plan and verification scenario meet your confidence bar?"
 - [ ] Plan approved explicitly before QA suite design
 - [ ] QA suite scoped to verification scenario items only — outer and inner loop procedural steps excluded
 - [ ] QA suite designed before any sub-task executes
 - [ ] QA suite used as direct input to Step 8 — no separate checklist authored at Step 8
 - [ ] Each sub-task's governing skill declared before execution
-- [ ] No sub-task advanced with open inner test failures
+- [ ] Step 7 Test step uses Inner-loop checklist from subtask-patterns.md — not prose description
+- [ ] No sub-task advanced with open Inner-loop checklist failures
 - [ ] Inner Loop QA Report surfaced after all sub-tasks complete — before Step 8
 - [ ] Step 8 proceeds automatically on all-pass; waits for user input on any failure
 - [ ] Step 8 QA report surfaced before Step 9

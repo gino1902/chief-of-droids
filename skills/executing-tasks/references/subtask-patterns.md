@@ -1,15 +1,12 @@
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
 
 # Sub-Task Patterns
 
-Read at Steps 4 and 7 of the executing-tasks outer loop.
+Read at Step 7 of the executing-tasks outer loop.
 
-**Step 4:** Use the verify checklist for the classified task type as input when
-defining the verification scenario. The checklist items are candidates — not all
-need to become scenario items. Select those that provide high-confidence outcome
-verification. Process steps (Create tests, Run, Debug) are never valid scenario items.
-
-**Step 7:** Use the inner loop for sub-task execution.
+**Step 7:** For each sub-task, use the inner loop for execution. For the Test step,
+apply the **Inner-loop checklist** for the classified pattern as the formal test gate.
+All checklist items must pass before advancing to the next sub-task.
 
 ---
 
@@ -57,16 +54,12 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
    source reachable, content fetched, evaluation criteria applied, findings recorded
 2. **Write** — fetch source; extract relevant content; apply evaluation criteria
 3. **Run** — confirm fetch succeeded; content non-empty; criteria applied to all items
-4. **Test** — check each finding against test from step 1;
-   flag any source that returned no content or failed the criteria gate
+4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for failed fetches: retry with alternative URL or search query;
    for criteria failures: re-evaluate with explicit rationale; document exclusion if still failing
-6. **Back to Write** if any source remains unresolved
+6. **Back to Write** if any Inner-loop checklist item fails
 
-### Verify checklist (verification scenario input)
-
-Candidate items for the Step 4 verification scenario. Select items that test
-outcomes — not process steps. All selected items must have observable pass conditions.
+### Inner-loop checklist
 
 | ID | Assertion | Severity | Pass | Fail |
 | :--- | :--- | :--- | :--- | :--- |
@@ -87,16 +80,12 @@ outcomes — not process steps. All selected items must have observable pass con
    path, schema, row/section count, required fields, header format
 2. **Write** — compose file content; write via Filesystem tool
 3. **Run** — read file back immediately via `filesystem:read_text_file`
-4. **Test** — verify: file readable, content non-empty, schema matches, required fields present,
-   row/section count matches draft
+4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — if read-back fails: retry write; if schema mismatch: fix content and rewrite;
    if row count wrong: diff draft vs written file
-6. **Back to Write** if any test fails
+6. **Back to Write** if any Inner-loop checklist item fails
 
-### Verify checklist (verification scenario input)
-
-Candidate items for the Step 4 verification scenario. Select items that test
-outcomes — not process steps. All selected items must have observable pass conditions.
+### Inner-loop checklist
 
 | ID | Assertion | Severity | Pass | Fail |
 | :--- | :--- | :--- | :--- | :--- |
@@ -118,16 +107,12 @@ outcomes — not process steps. All selected items must have observable pass con
    required sections, mandatory content per section, format rules (from `writing-docs`)
 2. **Write** — draft document following `writing-docs` skill conventions
 3. **Run** — read draft; apply `writing-docs` QA checklist
-4. **Test** — verify all required sections present; no formatting violations;
-   content matches scope from task entry
+4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for missing sections: add; for formatting violations: fix per `writing-docs`;
    for scope drift: trim or expand to match task scope
-6. **Back to Write** if QA checklist has open items
+6. **Back to Write** if any Inner-loop checklist item fails
 
-### Verify checklist (verification scenario input)
-
-Candidate items for the Step 4 verification scenario. Select items that test
-outcomes — not process steps. All selected items must have observable pass conditions.
+### Inner-loop checklist
 
 | ID | Assertion | Severity | Pass | Fail |
 | :--- | :--- | :--- | :--- | :--- |
@@ -148,15 +133,12 @@ outcomes — not process steps. All selected items must have observable pass con
    before writing any implementation code (TDD: RED phase)
 2. **Write** — implement minimal code to pass the acceptance tests (GREEN phase)
 3. **Run** — execute tests; capture output
-4. **Test** — all acceptance tests pass; no regressions in existing test suite
+4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for failing tests: read error; identify root cause; fix implementation only
    (do not modify tests to pass); re-run
-6. **Back to Write** if tests still fail after fix
+6. **Back to Write** if any Inner-loop checklist item fails
 
-### Verify checklist (verification scenario input)
-
-Candidate items for the Step 4 verification scenario. Select items that test
-outcomes — not process steps. All selected items must have observable pass conditions.
+### Inner-loop checklist
 
 | ID | Assertion | Severity | Pass | Fail |
 | :--- | :--- | :--- | :--- | :--- |
@@ -180,14 +162,11 @@ The executing-tasks inner loop wraps the creating-skills workflow as a single su
 1. **Create tests** — design assessment mock requests (2–3 realistic triggers)
 2. **Write** — run creating-skills workflow; produce SKILL.md + reference files
 3. **Run** — run mock requests against the draft
-4. **Test** — mock requests trigger correctly; assessment-checklist passes (Pass rating)
+4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for trigger failures: revise description; for checklist failures: fix per critique
-6. **Back to Write** if assessment rating is not Pass
+6. **Back to Write** if any Inner-loop checklist item fails
 
-### Verify checklist (verification scenario input)
-
-Candidate items for the Step 4 verification scenario. Select items that test
-outcomes — not process steps. All selected items must have observable pass conditions.
+### Inner-loop checklist
 
 | ID | Assertion | Severity | Pass | Fail |
 | :--- | :--- | :--- | :--- | :--- |
@@ -203,4 +182,4 @@ outcomes — not process steps. All selected items must have observable pass con
 
 Apply research inner loop for all research sub-tasks.
 When research phase is complete, apply file-write inner loop for the output file.
-Verification scenario candidates span R1–R4 and F1–F5.
+Inner-loop checklists R1–R4 and F1–F5 apply to their respective sub-tasks.

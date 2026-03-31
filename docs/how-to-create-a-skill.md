@@ -37,6 +37,44 @@ The output was not written in one pass. It was written, challenged, patched,
 challenged again, and patched again. That is the expected pattern, not a sign
 that something went wrong.
 
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}}}%%
+flowchart TD
+  classDef main              fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
+  classDef primary           fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
+  classDef secondary         fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
+  classDef tertiary          fill:#C5D8F6,color:#000000,stroke:#425F8B
+  classDef primary_cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
+  classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#0F0E2B
+  classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B
+  linkStyle default color:#0F0E2B
+
+  subgraph Main
+    P1(Phase 1
+    Challenge intent)
+    P2(Phase 2
+    Resolve design decisions)
+    P3(Phase 3
+    Build in layers)
+    P4(Phase 4
+    Live run)
+    P5(Phase 5
+    Consistency assessment)
+  end
+
+  P1 -->|constraints surfaced| P2
+  P2 -->|decisions locked| P3
+  P3 -->|each layer challenged| P4
+  P4 -->|real-data issues fixed| P5
+  P4 -.->|failure found| P3
+  P5 -.->|Blocking or Major| P3
+
+  class P1 primary
+  class P2,P3 secondary
+  class P4,P5 tertiary
+  class Main main
+```
+
 ---
 
 ## Phase 1 — Challenge before designing
@@ -280,6 +318,6 @@ What made it work:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.4        |
-| Last Updated | 2026-03-28 |
+| Version      | 1.5        |
+| Last Updated | 2026-03-31 |
 | Status       | Final      |
