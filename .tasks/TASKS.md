@@ -1,4 +1,4 @@
-<!-- version: 1.11 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
+<!-- version: 1.12 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
 
 # TASKS.md — workspace
 
@@ -33,9 +33,6 @@
 ---
 
 ## 🟡 In Progress
-
-- TASK-050: Decouple inner-loop unit tests from verification scenario in executing-tasks | target: workspace/skills/executing-tasks/references/subtask-patterns.md + workspace/skills/executing-tasks/SKILL.md | scope: 4 changes — (1) rename "Verify checklist" → "Inner-loop checklist" in subtask-patterns.md; remove from Step 4 entirely; no structural change (Pass/Fail columns stay — sole consumer: Step 7 inner loop); (2) replace scenario scaffold questions with fill-in-the-blank scenario item template per pattern with mandatory slots: Outcome / Verified by / Pass condition; one instance per distinct task outcome; no fixed count; (3) add scenario item gate to SKILL.md Step 4: before presenting scenario, validate each item against 3 criteria — outcome not process (Blocking if fails), observable pass condition present (Blocking if fails), traceable to task description or scope (Advisory); (4) wire Inner-loop checklist into SKILL.md Step 7 as formal Test step gate — replacing prose description; affects all 5 patterns (research, file-write, doc, code, skill-authoring) | origin: session:2026-03-31 "Refactor managing-tasks — .tasks/ migration"
-- TASK-027: Add process diagram to how-to-create-a-skill.md | target: workspace/docs/how-to-create-a-skill.md | scope: insert a Mermaid flowchart illustrating the 5-phase skill creation process (challenge → design decisions → layered build → live run → formal assessment); use Elevate theme from shared/elevate-theme/elevate-mermaid.md; read the canonical theme file before generating; place diagram at the top of Phase sections after the opening paragraph | origin: findings:2026-03-28 "Workspace session analysis run 2"
 
 ---
 
@@ -73,5 +70,7 @@
 - TASK-047: Add workflow `add-source` to creating-skills SKILL.md | target: workspace/skills/creating-skills/SKILL.md | scope: add-source.md workflow authored (Step 0 + 5 qualification steps + failure table); SKILL.md v2.8 — workflow declaration + reference added, description extended, Step 1 exclusion noted, QA checklist items added; assessment-checklist.md v1.4 — Source Catalog Workflows section added (7 items); skill-sources.md v2.1 — "Adding a New Source" section removed, Updated-by pointer added, EveryInc/compound-engineering-plugin row added (score 3.55, 10.1k stars, partial fetch noted); HOW-TO-TRIGGER.md — add-source triggers + examples added; live qualification run against EveryInc/compound-engineering-plugin confirmed all 3 criteria met | origin: session:2026-03-30 "Add Task: creating-skills add-source workflow" | done: 2026-03-30
 - TASK-049: Smoke test — end-to-end path verification | target: workspace/.tasks/TASKS.md | scope: verify add → done cycle works against new .tasks/ path | origin: session:2026-03-31 "Refactor managing-tasks — .tasks/ migration" | done: 2026-03-31
 - TASK-029: Refactor managing-tasks skill — move TASKS.md default to .tasks/ | target: workspace/skills/managing-tasks/ + workspace/CLAUDE.md + workspace/.tasks/ | scope: migrate default path to workspace/.tasks/TASKS.md; moved TASKS.md via move_file, updated CLAUDE.md (2 refs) and tasks-schema.md v1.5 (File Locations row); .gitignore: no change needed; HOW-TO-TRIGGER.md: confirmed clean | origin: session:2026-03-28 "Managing sessions build" | done: 2026-03-31
+- TASK-050: Decouple inner-loop unit tests from verification scenario in executing-tasks | target: workspace/skills/executing-tasks/references/subtask-patterns.md + workspace/skills/executing-tasks/SKILL.md | scope: 4 changes — (1) rename "Verify checklist" → "Inner-loop checklist" across all 5 patterns; (2) replace verify checklist as Step 4 input with Outcome/Verified by/Pass condition template + 3-criteria gate; (3) wire Inner-loop checklist into SKILL.md Step 7 as formal Test step gate; (4) TASKS.md v1.11 updated; verification scenario: TASK-027 run through updated skill — Step 4 scenario outcome-level, Step 7 applied D1-D4 as formal gate; all QA tests pass | origin: session:2026-03-31 "Refactor managing-tasks — .tasks/ migration" | done: 2026-03-31
+- TASK-027: Add process diagram to how-to-create-a-skill.md | target: workspace/docs/how-to-create-a-skill.md | scope: Mermaid flowchart inserted (5-phase process, Elevate theme, TD direction, feedback loops P4→P3 and P5→P3); 19-item mermaid QA checklist: Pass; doc v1.5 | origin: findings:2026-03-28 "Workspace session analysis run 2" | done: 2026-03-31
 
-*Last updated: 2026-03-31 — TASK-050 scope extended (change 4 added); TASK-027 started*
+*Last updated: 2026-03-31 — TASK-050 done; TASK-027 done*
