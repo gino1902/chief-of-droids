@@ -1,4 +1,4 @@
-<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-03-29 -->
+<!-- version: 1.5 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
 
 # TASKS.md Schema
 
@@ -44,7 +44,7 @@ if a higher-priority source is available and readable.
 
 | Scope | Path |
 | :--- | :--- |
-| Workspace-level | `workspace/TASKS.md` |
+| Workspace-level | `workspace/.tasks/TASKS.md` |
 | Repo-level | `<repo-root>/TASKS.md` |
 | Use-case-level | `<repo-root>/use-case-<id>/TASKS.md` |
 

@@ -49,7 +49,7 @@ Format: `1.0` for initial release, `1.1`, `1.2` etc. for incremental updates, `2
 
 ## Task Management
 
-Default TASKS.md for this workspace context: `workspace/TASKS.md`
+Default TASKS.md for this workspace context: `workspace/.tasks/TASKS.md`
 
 This applies when the active Claude Desktop project operates at workspace scope —
 i.e. its work spans multiple repos or the shared skills library rather than a
@@ -57,7 +57,7 @@ single named repo.
 
 Override precedence (highest to lowest):
 1. Explicit path in the user's prompt — e.g. "add task to slide-gen" → `workspace/slide-gen/TASKS.md`
-2. This CLAUDE.md default — `workspace/TASKS.md`
+2. This CLAUDE.md default — `workspace/.tasks/TASKS.md`
 3. Schema fallback — `<repo-root>/TASKS.md` relative to the active default repo
 
 Repo-level CLAUDE.md files may declare their own default. That declaration takes
