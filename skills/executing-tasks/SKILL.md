@@ -11,7 +11,7 @@ description: >
   declares which skill handles each sub-task. Triggers on: "execute TASK-XXX",
   or opt-in confirmation after "start TASK-XXX".
 ---
-<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
+<!-- version: 1.10 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
 
 # Executing Tasks Skill
 
@@ -94,10 +94,80 @@ State classification explicitly before proceeding:
 If two types match equally: surface both, ask user to confirm primary.
 One question only. Resolution stops further prompting.
 
+### Step 2a — Verification scenario (hard gate)
+
+A verification scenario describes how the task's output will be exercised and what
+behaviour is expected — from the actor's perspective. It operates at the functional
+level: what triggers, what the actor observes. It does not name files, assertions,
+or tool calls — those belong in Step 2b and Step 5.
+
+Present the schema to the user and ask them to author the scenarios:
+
+> "Please provide one or more verification scenarios using this schema:
+>
+> ```
+> S[N]
+> Given: [what is true before the trigger fires]
+> When:  [single trigger — one action or event only]
+> Then:  [observable system result] and/or [data change] and/or [user-visible impact]
+> ```
+>
+> One block per distinct functional behaviour introduced or changed by this task.
+> A single When per scenario — if you have a compound trigger, split it into two scenarios."
+
+On receipt, validate each user-provided scenario against these criteria before
+accepting it:
+
+| Criterion | Severity | Action on failure |
+| :--- | :--- | :--- |
+| No file paths, tool calls, or assertions in any field | Blocking | Return to user with specific field flagged |
+| `When` contains exactly one trigger | Blocking | Return to user; ask to split |
+| `Given` describes system or data state — not storage, tools, or implementation | Blocking | Return to user with specific gap identified |
+| Traceable to task description or scope | Advisory | Surface to user; does not block acceptance |
+
+If any Blocking criterion fails: surface the specific issue, return the scenario
+to the user for correction. Do not accept partial scenarios.
+
+**Hard gate:** do not proceed to Step 2b until all scenarios pass validation and
+the user explicitly confirms the set is complete. Silence or partial response is
+not confirmation.
+
+### Step 2b — Acceptance criteria (hard gate)
+
+For each confirmed scenario from Step 2a, Claude derives the conditions that must
+hold for that scenario to be considered passing. This is where the abstraction
+level drops from behaviour to observable state.
+
+Propose to the user:
+
+| Scenario ID | Acceptance criterion |
+| :--- | :--- |
+| Scenario ID from Step 2a | Exact, observable condition that must hold — file, section, field, or system state |
+
+One or more criteria per scenario. A scenario may generate multiple criteria
+if its `Then` clause depends on several independent conditions.
+
+Before presenting, validate each criterion:
+
+| Criterion | Severity | Consequence |
+| :--- | :--- | :--- |
+| Observable — checkable with a tool call or a read | Blocking | Rework before presenting |
+| Unambiguous — only one interpretation of pass/fail | Blocking | Rework before presenting |
+| Traceable to its scenario | Blocking | Remove or reassign |
+
+**Hard gate:** do not proceed to Step 3 until the user explicitly confirms or
+modifies the acceptance criteria. Acceptance criteria are the evaluation anchor
+for Step 3 (challenge) and the constraint frame for Step 4 (plan). They must
+be agreed before either step runs.
+
 ### Step 3 — Challenge intent and scope
 
 Read `references/challenge-protocol.md` before this step.
 Apply the confidence gate exactly as defined there.
+
+**Evaluation anchor:** use the acceptance criteria from Step 2b. A blocking issue
+is any gap, contradiction, missing input, or assumption that would prevent one or
+more acceptance criteria from being met.
 
 Do NOT enter Step 4 until the gate exits cleanly:
 condition = no new blocking issues in the last round AND user explicitly approves.
@@ -105,51 +175,29 @@ condition = no new blocking issues in the last round AND user explicitly approve
 ### Step 4 — Propose and approve plan
 
 Produce a stepped plan: phases, actions, outputs per phase.
+The plan is constrained by the acceptance criteria agreed in Step 2b —
+every output of every phase must be traceable to at least one criterion.
 
-**Final subset of the plan — Verification scenario (mandatory):**
-
-For each distinct outcome of the task, author one scenario item using this template:
-
-| Slot | Content |
-| :--- | :--- |
-| Outcome | What specific state or artifact should exist or have changed |
-| Verified by | Which tool or check — `read_text_file`, `list_directory`, grep, live run, etc. |
-| Pass condition | Exact, observable criterion — not "it works" |
-
-Author one instance per distinct task outcome. Coverage is determined by task scope — no fixed count.
-
-Always include a confidence level % for the proposed scenario:
-> "Verification scenario confidence: [N]% — [one-line rationale for the score]"
-
-Before presenting the plan, validate each scenario item against these criteria:
-
-| Criterion | Severity | Consequence |
-| :--- | :--- | :--- |
-| Outcome not process — removing this item leaves the task outcome untestable | Blocking | Rework before presenting |
-| Observable pass condition present — checkable with a tool call or a read | Blocking | Rework before presenting |
-| Traceable to task description or scope | Advisory | Surface to user; does not block |
-
-Any Blocking failure must be resolved before the plan is presented.
-
-Present the full plan including the agreed verification scenario.
 Close with exactly:
-> "Does this plan and verification scenario meet your confidence bar?"
+> "Does this plan meet the acceptance criteria agreed in Step 2b?"
 
-Await explicit approval. If user requests changes: revise, re-present, re-close with the same question.
-Do not proceed to Step 5 on partial approval.
+Await explicit approval. If user requests changes: revise, re-present, re-close
+with the same question. Do not proceed to Step 5 on partial approval.
 
 ### Step 5 — Design QA suite
 
 Immediately after plan approval — before any sub-task executes.
 
-The QA suite is scoped to the verification scenario agreed in Step 4 exclusively.
-Outer loop procedural steps (Steps 1–4, 6) are excluded.
-Inner loop procedural steps (Create tests, Run, Debug) are excluded.
-Only the verification scenario items from Step 4 generate QA tests.
+**Handoff rule:** expand each acceptance criterion from Step 2b into one or more
+full QA test rows. Do not author tests not traceable to a Step 2b criterion.
 
 Format: ID | Assertion | Pass condition | Fail condition | Artifact.
-Minimum: one test per verification scenario item.
-Present suite to user. Await confirmation before proceeding.
+Minimum: one test per acceptance criterion.
+
+After presenting the suite, state confidence before awaiting user confirmation:
+> "QA suite confidence: [N]% — [one-line rationale for the score]"
+
+Await user confirmation before proceeding.
 
 The QA suite produced here is the direct input to Step 8 (Verify).
 Do not author a separate verification checklist at Step 8.
@@ -213,15 +261,22 @@ Prompt user:
 
 - [ ] Task context read from TASKS.md — user not asked to re-describe
 - [ ] Task status confirmed 🟡 In Progress before proceeding
-- [ ] Task type classified explicitly and stated before Step 3
+- [ ] Task type classified explicitly and stated before Step 2a
 - [ ] Composing skill(s) declared before sub-task loop enters
+- [ ] Verification scenario schema presented to user — user authored the scenarios
+- [ ] Verification scenario: each user-provided scenario validated against blocking criteria before acceptance
+- [ ] Verification scenario: blocking failures returned to user with specific issue identified
+- [ ] Verification scenario confirmed complete by user (hard gate) before Step 2b
+- [ ] Acceptance criteria: one or more criteria per scenario derived by Claude — Scenario ID / Acceptance criterion format
+- [ ] Acceptance criteria: observable, unambiguous, traceable criteria applied — Blocking items resolved before presenting
+- [ ] Acceptance criteria confirmed by user (hard gate) before Step 3
+- [ ] Challenge gate anchored to Step 2b acceptance criteria
 - [ ] Challenge gate exited cleanly — no new blocking issues, user approved
-- [ ] Verification scenario: one item per distinct task outcome using Outcome / Verified by / Pass condition template
-- [ ] Verification scenario: 3-criteria gate applied — Blocking items resolved before plan presented
-- [ ] Verification scenario proposed with confidence % and rationale before plan approval
-- [ ] Plan closed with "Does this plan and verification scenario meet your confidence bar?"
+- [ ] Plan constrained by Step 2b acceptance criteria — every phase output traceable to a criterion
+- [ ] Plan closed with "Does this plan meet the acceptance criteria agreed in Step 2b?"
 - [ ] Plan approved explicitly before QA suite design
-- [ ] QA suite scoped to verification scenario items only — outer and inner loop procedural steps excluded
+- [ ] QA suite: each test traceable to a Step 2b acceptance criterion — no untethered tests
+- [ ] QA suite confidence % stated with one-line rationale before user confirmation
 - [ ] QA suite designed before any sub-task executes
 - [ ] QA suite used as direct input to Step 8 — no separate checklist authored at Step 8
 - [ ] Each sub-task's governing skill declared before execution

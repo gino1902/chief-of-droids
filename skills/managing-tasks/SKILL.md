@@ -4,10 +4,11 @@ description: >
   Manages TASKS.md files across repos and use-cases — reads, adds, starts,
   completes, and bootstraps task lists. Use when the user says "show tasks",
   "next task", "start task TASK-XXX", "done task TASK-XXX", "add task",
-  "update task TASK-XXX", or "bulk update tasks". Also use when the user asks
-  what is pending, what to work on next, or wants to record or update a task.
+  "update task TASK-XXX", "bulk update tasks", or "show archive". Also use
+  when the user asks what is pending, what to work on next, or wants to record
+  or update a task.
 ---
-<!-- version: 2.0 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 2.1 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
 
 # Managing Tasks Skill
 
@@ -16,6 +17,10 @@ across sessions as the primary continuity mechanism for the workspace.
 
 **Scope:** Reading, writing, and bootstrapping TASKS.md files only. Does not
 execute tasks — it records and transitions their state.
+
+**Archive:** Done entries are appended to `archive.md` (co-located with TASKS.md).
+The ✅ Done section of TASKS.md is always empty post-migration. Use `show archive`
+to retrieve done history.
 
 ---
 
@@ -47,6 +52,7 @@ No prompt override and no CLAUDE.md declaration:
 use `<repo-root>/TASKS.md` relative to the active default repo.
 
 All workflows below reference "determine target TASKS.md" — that means run Steps A → B → C.
+Archive path is always `archive.md` co-located in the same directory as the target TASKS.md.
 
 ---
 
@@ -56,15 +62,16 @@ All workflows below reference "determine target TASKS.md" — that means run Ste
 
 | Phrase | Action |
 | :--- | :--- |
-| "show tasks" | Read and display all tasks from the target TASKS.md |
+| "show tasks" | Read and display Backlog and In Progress from the target TASKS.md |
 | "next task" | Read TASKS.md, identify first entry in 🔴 Backlog, propose it |
+| "show archive" | Read archive.md and display all done entries |
 
 **Write triggers** (file write per Write Authority rule in `references/tasks-schema.md`):
 
 | Phrase | Action |
 | :--- | :--- |
 | "start task TASK-XXX" | Move TASK-XXX from 🔴 Backlog → 🟡 In Progress |
-| "done task TASK-XXX" | Move TASK-XXX from current section → ✅ Done, append `done: YYYY-MM-DD` |
+| "done task TASK-XXX" | Remove TASK-XXX from current section, append to archive.md with `done: YYYY-MM-DD` |
 | "add task" | Propose new entry in correct section, write per authority rule |
 | "update task TASK-XXX" | Update `target` and/or `scope` fields of TASK-XXX, write per authority rule |
 | "bulk update tasks" | Apply user-provided change list as a diff across multiple tasks, write per authority rule |
@@ -78,14 +85,27 @@ Steps:
 2. Read target TASKS.md via Filesystem tool
    — if Filesystem tool errors, flag: `⚠️ Filesystem tool unavailable — cannot read TASKS.md`
    — if file not found: run **bootstrap workflow** before proceeding
-3. Display tasks grouped by section (Backlog / In Progress / Done).
+3. Display tasks grouped by section (Backlog / In Progress only — Done section is always empty).
    For each section render a table with these columns — all mandatory, never omit:
 
    | ID | Description | Target | Origin |
    | :--- | :--- | :--- | :--- |
 
-   Done tasks add a fifth column: **Done**.
    The `scope` field is not displayed in the table — it is available via `update task` only.
+   To view done history, use `show archive`.
+
+---
+
+## Workflow: show archive
+
+Steps:
+1. Determine archive path: same directory as target TASKS.md, filename `archive.md`
+2. Read archive.md via Filesystem tool
+   — if file not found, surface: `⚠️ No archive found at [path]`
+3. Display all entries as a table:
+
+   | ID | Description | Target | Origin | Done |
+   | :--- | :--- | :--- | :--- | :--- |
 
 ---
 
@@ -131,8 +151,9 @@ Steps:
 3. Read target TASKS.md — if Filesystem tool errors, flag and stop
 4. Locate TASK-XXX in any non-Done section — if not found, flag and stop
 5. Read `references/qa-checklist.md` and run it
-6. Propose: move entry to ✅ Done, append `done: YYYY-MM-DD`
-7. Write per Write Authority rule in `references/tasks-schema.md`
+6. Propose: remove entry from TASKS.md, append to archive.md with `done: YYYY-MM-DD`
+7. Write TASKS.md (entry removed) per Write Authority rule
+8. Append entry to archive.md — create archive.md with `# Archive` header if it does not exist
 
 ---
 
@@ -143,8 +164,8 @@ Steps:
 2. Determine target TASKS.md (Target Resolution above)
 3. Read target TASKS.md (run bootstrap if missing)
    — if Filesystem tool errors, flag and stop
-4. Determine next available TASK-ID (increment from highest existing ID
-   across all sections, including Done)
+4. Determine next available TASK-ID — increment from highest existing ID
+   across all sections in TASKS.md and archive.md combined
 5. Ask the user for `origin` if not stated in the prompt — propose `session:YYYY-MM-DD`
    using today's date as default; user may override with any valid prefix
 6. Read `references/qa-checklist.md` and run it
@@ -159,7 +180,7 @@ Steps:
 1. Read `references/tasks-schema.md`
 2. Determine target TASKS.md (Target Resolution above)
 3. Read target TASKS.md — if Filesystem tool errors, flag and stop
-4. Locate TASK-XXX in any section — if not found, flag and stop
+4. Locate TASK-XXX in any section — if not found, check archive.md before flagging
 5. Display current entry to the user
 6. Ask: "What should change — target, scope, or both?"
 7. Read `references/qa-checklist.md` and run it

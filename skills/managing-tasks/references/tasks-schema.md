@@ -1,4 +1,4 @@
-<!-- version: 1.5 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
+<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
 
 # TASKS.md Schema
 
@@ -45,8 +45,13 @@ if a higher-priority source is available and readable.
 | Scope | Path |
 | :--- | :--- |
 | Workspace-level | `workspace/.tasks/TASKS.md` |
+| Workspace archive | `workspace/.tasks/archive.md` — append-only; contains all done entries |
 | Repo-level | `<repo-root>/TASKS.md` |
+| Repo archive | `<repo-root>/archive.md` — append-only; co-located with repo TASKS.md |
 | Use-case-level | `<repo-root>/use-case-<id>/TASKS.md` |
+
+Archive path is always `archive.md` in the same directory as the target TASKS.md.
+Archive is created automatically on first `done task` if it does not exist.
 
 ---
 
@@ -63,6 +68,7 @@ Every TASKS.md contains exactly these three sections, in this order:
 ```
 
 Empty sections are retained — do not remove them.
+The `## ✅ Done` section is always empty post-migration. Done entries live in `archive.md`.
 
 ---
 
@@ -72,7 +78,7 @@ Empty sections are retained — do not remove them.
 - TASK-XXX: [description] | target: [file-or-component] | scope: [note] | origin: [prefix:label] "[title]"
 ```
 
-Done entries append a done date:
+Done entries (in archive.md) append a done date:
 
 ```
 - TASK-XXX: [description] | target: [file-or-component] | scope: [note] | origin: [prefix:label] "[title]" | done: YYYY-MM-DD
@@ -97,7 +103,7 @@ Done entries append a done date:
 
 - Format: `TASK-` followed by zero-padded three-digit number: `TASK-001`, `TASK-042`
 - IDs are unique per TASKS.md file — not globally unique across the workspace
-- Increment from the highest existing ID in the file (including Done section)
+- Increment from the highest existing ID across TASKS.md and archive.md combined
 
 ---
 
@@ -107,7 +113,7 @@ Done entries append a done date:
 | :--- | :--- |
 | 🔴 Backlog | Not started |
 | 🟡 In Progress | Active — only one per file |
-| ✅ Done | Complete |
+| ✅ Done | Complete — entry lives in archive.md, not TASKS.md |
 
 Active is defined as 🟡 In Progress only. Any other state is not active.
 
@@ -164,5 +170,10 @@ Projects that do not declare this override retain the confirmation step.
 - TASK-001: Author managing-tasks SKILL.md | target: skills/managing-tasks/ | scope: managing-tasks skill | origin: session:2026-03-19 "Setting up Claude framework context"
 
 ## ✅ Done
+```
+
+```markdown
+# archive.md — chief-of-droids
+
 - TASK-000: Update system prompt skills block | target: Custom Instructions | scope: chief-of-droids | origin: session:2026-03-19 "Setting up Claude framework context" | done: 2026-03-19
 ```
