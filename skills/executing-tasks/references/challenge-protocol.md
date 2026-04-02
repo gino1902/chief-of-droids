@@ -1,9 +1,9 @@
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-04-01 -->
 
 # Challenge Protocol
 
-Read at Step 3 of the executing-tasks outer loop.
-Defines the confidence gate for challenging task intent and plan.
+Read at Step 5 of the executing-tasks outer loop.
+Defines the confidence gate for challenging the task plan against confirmed intent.
 
 ---
 
@@ -36,11 +36,11 @@ If NO → surface the finding and ask the user once:
 Two challenge rounds are recommended before seeking approval.
 
 This is a recommendation, not a hard gate. If the first round surfaces no
-blocking issues and the task scope is narrow and well-specified, one round
-may suffice — but Claude must state explicitly that it is recommending
-approval after fewer than the minimum.
+blocking issues and the confirmed intent is narrow and well-specified, one round
+may suffice — but Claude must state explicitly that it is recommending approval
+after fewer than the minimum.
 
-> "Only one challenge round run — scope appears well-specified. Recommend approval,
+> "Only one challenge round run — intent appears well-specified. Recommend approval,
 > but an additional round is available if you want it."
 
 ---
@@ -50,9 +50,9 @@ approval after fewer than the minimum.
 Each round targets a different layer. Run in this order:
 
 | Round | Focus | Questions to ask |
-|:------|:------|:----------------|
-| 1 | Scope and assumptions | Is the task boundary clear? Are there unstated dependencies? Does the scope match the target? |
-| 2 | Plan feasibility | Can each phase be executed with available tools? Are outputs from one phase actually consumed by the next? Is "done" defined? |
+| :--- | :--- | :--- |
+| 1 | Intent precision | Is the action clause specific enough to produce a deterministic plan? Is the value clause testable — could a pass/fail verdict be reached against it? Does the confirmed target match the action implied by the intent? |
+| 2 | Plan feasibility | Can each phase be executed with available tools? Are there unstated dependencies between phases? Are outputs from one phase actually consumed by the next? Is "done" defined? |
 | 3+ | Edge cases and failure modes | What happens if a tool fails? What if the output does not match the QA test? Is there a rollback path? |
 
 ---
@@ -60,8 +60,9 @@ Each round targets a different layer. Run in this order:
 ## Blocking vs Advisory Issues
 
 **Blocking** — must be resolved before plan is approved:
-- Undefined scope boundary
-- Missing required input (file not found, task ID wrong)
+- Intent action clause too vague to produce a deterministic plan
+- Value clause not testable — no observable pass/fail condition
+- Missing required input — Path 1: file not found, task ID wrong; Path 2: unparseable trigger prompt
 - Plan phase with no defined output
 - Tool dependency with no failure handling
 
@@ -89,7 +90,14 @@ The gate does NOT exit on:
 ## After Gate Exit
 
 Record which rounds were run and what was resolved.
-Surface a one-line summary before Step 4:
+Surface a one-line summary before Step 6:
 
 > "Challenge complete: [N] rounds. Blocking issues resolved: [list or 'none'].
 > Advisory items open: [list or 'none']. Plan approved."
+
+
+| Field        | Value       |
+|--------------|-------------|
+| Version      | 1.1         |
+| Last Updated | 2026-04-01  |
+| Status       | Draft       |

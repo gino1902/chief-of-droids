@@ -8,7 +8,7 @@ description: >
   when the user asks what is pending, what to work on next, or wants to record
   or update a task.
 ---
-<!-- version: 2.1 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
+<!-- version: 2.3 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Managing Tasks Skill
 
@@ -30,6 +30,21 @@ to retrieve done history.
   canonical TASKS.md structure, entry format, ID format, status markers,
   write authority rules, scope rules, origin field prefixes, and target resolution order
 - `references/qa-checklist.md` — read and run before any write operation
+
+---
+
+## Caller Context
+
+This skill is invoked by two caller types. Behaviour differs at steps that
+would otherwise prompt the user:
+
+| Caller | How to detect | Behaviour on ambiguous fields |
+| :--- | :--- | :--- |
+| User | Direct prompt in chat | Ask the user for missing fields |
+| Skill | Structured field payload passed in-session by a composing skill (e.g. `executing-tasks`) | Use provided field values directly — do not ask the user |
+
+If a field is absent in a skill call: surface the gap to the orchestrating skill,
+not to the user. The orchestrating skill is responsible for resolving it.
 
 ---
 
@@ -166,11 +181,23 @@ Steps:
    — if Filesystem tool errors, flag and stop
 4. Determine next available TASK-ID — increment from highest existing ID
    across all sections in TASKS.md and archive.md combined
-5. Ask the user for `origin` if not stated in the prompt — propose `session:YYYY-MM-DD`
-   using today's date as default; user may override with any valid prefix
-6. Read `references/qa-checklist.md` and run it
-7. Propose entry in correct section per schema format
-8. Write per Write Authority rule in `references/tasks-schema.md`
+5. Resolve `origin` field:
+   - Skill call: use the `origin` value provided in the call payload directly —
+     do not ask the user
+   - User call: if `origin` not stated in the prompt, propose `session:YYYY-MM-DD`
+     using today's date as default; user may override with any valid prefix
+6. Resolve remaining fields (description, target) from the call payload or prompt.
+   For skill calls: use provided values directly.
+   For user calls: derive from the prompt; ask if ambiguous.
+7. Read `references/qa-checklist.md` and run it
+8. Propose and write entry:
+   - User call: propose entry in correct section per schema format; await confirmation
+     per Write Authority rule in `references/tasks-schema.md`
+   - Skill call: write entry directly — no proposal step; field values are
+     already confirmed by the orchestrating skill
+9. Return the assigned TASK-ID to the caller — surface explicitly:
+    > "Task created: TASK-XXX"
+    Skill callers must retain this ID before proceeding.
 
 ---
 
@@ -221,3 +248,10 @@ Steps:
 
 None. This skill manages task state only — it does not compose with doc-writer
 or other skills. Task documentation beyond TASKS.md is out of scope.
+
+
+| Field        | Value       |
+|--------------|-------------|
+| Version      | 2.3         |
+| Last Updated | 2026-04-02  |
+| Status       | Draft       |

@@ -1,17 +1,12 @@
 ---
 name: executing-tasks
 description: >
-  Meta-skill that governs the end-to-end execution of a workspace task with
-  enforced quality and determinism — from intent extraction through challenge,
-  plan, QA suite, sub-task execution, verification, and refinement. Load this
-  skill after `start TASK-XXX` transitions a task to In Progress and the user
-  confirms execution, or when the user says "execute TASK-XXX". Does NOT manage
-  task state (that is managing-tasks), does NOT implement domain logic (that is
-  the composing skill for the task type). Orchestrates other skills; always
-  declares which skill handles each sub-task. Triggers on: "execute TASK-XXX",
-  or opt-in confirmation after "start TASK-XXX".
+  Executes workspace tasks with quality-gated workflow: intent, plan, QA,
+  sub-tasks, verify. Triggers: 'execute TASK-XXX' (existing task), 'execute
+  new task' (no prior entry), or opt-in after 'start TASK-XXX'. Not on
+  'start TASK-XXX' alone.
 ---
-<!-- version: 1.10 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
+<!-- version: 1.15 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Executing Tasks Skill
 
@@ -25,21 +20,23 @@ Domain work belongs to the composing skill matched by the task-type classifier.
 
 ## Reference Files
 
-- `references/challenge-protocol.md` — read at Step 3; defines confidence gate,
+- `references/intent-schema.md` — read at Step 2; defines intent sentence structure,
+  actor taxonomy, per-path authoring rules, and validation criteria
+- `references/challenge-protocol.md` — read at Step 5; defines confidence gate,
   self-assessment question, minimum recommendation, user approval prompt, exit conditions
-- `references/subtask-patterns.md` — read at Step 7; defines inner loop per task type
+- `references/subtask-patterns.md` — read at Step 9; defines inner loop per task type
   (code / research / doc / file-write), each with steps and Inner-loop checklist as the
   formal Test step gate; contains Inner Loop QA Report format, severity definitions,
   and behaviour rule
-- `references/task-type-classifier.md` — read at Step 2; decision table mapping
-  task scope/target/origin signals to primary type + composing skills
+- `references/task-type-classifier.md` — read at Step 3; decision table mapping
+  confirmed intent and target signals to primary type + composing skills
 
 ---
 
 ## Meta-Skill Declaration
 
 `executing-tasks` does not implement domain logic. It is an orchestration layer.
-When a task's type or scope matches another skill's trigger, `executing-tasks`
+When a task's type or confirmed intent matches another skill's trigger, `executing-tasks`
 loads that skill and defers to it for the relevant sub-tasks.
 
 Consequence: the `Composes With` table is the primary execution mechanism,
@@ -50,16 +47,23 @@ entering the sub-task loop.
 
 ## Trigger Surface
 
-**Primary (opt-in after managing-tasks):**
+**Primary (opt-in after managing-tasks) — Path 1:**
 After `start TASK-XXX` transitions a task to 🟡 In Progress, ask exactly once:
 > "Run executing-tasks workflow for TASK-XXX?"
 
 If yes → load this skill and begin at Step 1.
 If no → stop; user executes ad hoc.
 
-**Standalone:**
+**Standalone — Path 1:**
 - `execute TASK-XXX` — load directly, begin at Step 1
 - `run TASK-XXX` — alias
+
+**Standalone — Path 2 (no prior TASKS.md entry):**
+- `execute new task` — load directly, begin at Step 1; no TASKS.md lookup
+- `run new task` — alias
+
+Path 2 intent, target, and task entry are defined during the workflow.
+The task entry is created and closed via managing-tasks at Step 11.
 
 Do NOT trigger on "my intent is [...]" — too ambiguous; conflicts with other skills.
 Do NOT trigger on "start TASK-XXX" alone — that belongs to managing-tasks.
@@ -68,11 +72,15 @@ Do NOT trigger on "start TASK-XXX" alone — that belongs to managing-tasks.
 
 ## Outer Loop Workflow
 
-### Step 1 — Extract task context from TASKS.md
+### Step 1 — Extract task context
 
+**Detect path from trigger:**
+
+If triggered by `execute TASK-XXX`, `run TASK-XXX`, or opt-in after `start TASK-XXX` → **Path 1:**
 Read target TASKS.md via Filesystem tool. Extract the TASK-XXX entry.
 Fields required: description, scope, target, origin.
-
+Scope is extracted here for Step 2 intent proposal only — it is retired as a
+working field after Step 2A confirmation. Do not reference it beyond Step 2A.
 Do NOT ask the user to re-describe the task. All context comes from TASKS.md.
 
 If TASK-XXX not found:
@@ -83,10 +91,53 @@ If task status is not 🟡 In Progress:
 > ⚠️ TASK-XXX is not In Progress (current: [status]) — run "start TASK-XXX" first.
 Stop.
 
-### Step 2 — Classify task type
+If triggered by `execute new task` or `run new task` → **Path 2:**
+> "No existing task — proceeding to Step 2 for intent formulation."
+Proceed directly to Step 2. No TASKS.md lookup.
+
+### Step 2 — Intent Formulation
+
+Read `references/intent-schema.md` before this step.
+
+#### Step 2A — Propose intent (hard gate)
+
+Using the authoring rules in `references/intent-schema.md`, propose an intent sentence:
+
+> "As [actor] I need to [action] so that [value]"
+
+Per-path input source:
+
+**Path 1:** derive action from the `description` field; derive value from the `scope` field.
+Scope is used here as the value basis and retired after this confirmation.
+Do not reference scope beyond this step.
+
+**Path 2:** derive action and value from the trigger prompt text.
+If the value clause cannot be inferred, flag it inline:
+> "[…so that [inferred value — confirm or revise if incorrect]]"
+
+Validate the proposed intent against `references/intent-schema.md` before presenting.
+
+**Scope retirement:** scope is retired as a working field after this confirmation.
+Do not reference it in any downstream step.
+
+**Hard gate:** do not proceed to Step 2B until the user explicitly confirms or
+modifies the intent.
+
+#### Step 2B — Confirm or define target (hard gate)
+
+**Path 1:** present the target extracted at Step 1.
+> "Confirm this target: [target from TASKS.md]"
+
+**Path 2:** ask the user to define it.
+> "Define the target: [file or component this task will modify or produce]"
+
+**Hard gate:** do not proceed to Step 3 until the user explicitly confirms or
+defines the target.
+
+### Step 3 — Classify task type
 
 Read `references/task-type-classifier.md`.
-Apply decision table to scope and target fields.
+Apply decision table to confirmed intent and target.
 
 State classification explicitly before proceeding:
 > "Task type: [type]. Composing skills: [list]. Sub-task pattern: [pattern]."
@@ -94,12 +145,12 @@ State classification explicitly before proceeding:
 If two types match equally: surface both, ask user to confirm primary.
 One question only. Resolution stops further prompting.
 
-### Step 2a — Verification scenario (hard gate)
+### Step 4a — Verification scenario (hard gate)
 
 A verification scenario describes how the task's output will be exercised and what
 behaviour is expected — from the actor's perspective. It operates at the functional
 level: what triggers, what the actor observes. It does not name files, assertions,
-or tool calls — those belong in Step 2b and Step 5.
+or tool calls — those belong in Step 4b and Step 7.
 
 Present the schema to the user and ask them to author the scenarios:
 
@@ -123,18 +174,18 @@ accepting it:
 | No file paths, tool calls, or assertions in any field | Blocking | Return to user with specific field flagged |
 | `When` contains exactly one trigger | Blocking | Return to user; ask to split |
 | `Given` describes system or data state — not storage, tools, or implementation | Blocking | Return to user with specific gap identified |
-| Traceable to task description or scope | Advisory | Surface to user; does not block acceptance |
+| Traceable to task description or confirmed intent | Advisory | Surface to user; does not block acceptance |
 
 If any Blocking criterion fails: surface the specific issue, return the scenario
 to the user for correction. Do not accept partial scenarios.
 
-**Hard gate:** do not proceed to Step 2b until all scenarios pass validation and
+**Hard gate:** do not proceed to Step 4b until all scenarios pass validation and
 the user explicitly confirms the set is complete. Silence or partial response is
 not confirmation.
 
-### Step 2b — Acceptance criteria (hard gate)
+### Step 4b — Acceptance criteria (hard gate)
 
-For each confirmed scenario from Step 2a, Claude derives the conditions that must
+For each confirmed scenario from Step 4a, Claude derives the conditions that must
 hold for that scenario to be considered passing. This is where the abstraction
 level drops from behaviour to observable state.
 
@@ -142,7 +193,7 @@ Propose to the user:
 
 | Scenario ID | Acceptance criterion |
 | :--- | :--- |
-| Scenario ID from Step 2a | Exact, observable condition that must hold — file, section, field, or system state |
+| Scenario ID from Step 4a | Exact, observable condition that must hold — file, section, field, or system state |
 
 One or more criteria per scenario. A scenario may generate multiple criteria
 if its `Then` clause depends on several independent conditions.
@@ -155,41 +206,41 @@ Before presenting, validate each criterion:
 | Unambiguous — only one interpretation of pass/fail | Blocking | Rework before presenting |
 | Traceable to its scenario | Blocking | Remove or reassign |
 
-**Hard gate:** do not proceed to Step 3 until the user explicitly confirms or
+**Hard gate:** do not proceed to Step 5 until the user explicitly confirms or
 modifies the acceptance criteria. Acceptance criteria are the evaluation anchor
-for Step 3 (challenge) and the constraint frame for Step 4 (plan). They must
+for Step 5 (challenge) and the constraint frame for Step 6 (plan). They must
 be agreed before either step runs.
 
-### Step 3 — Challenge intent and scope
+### Step 5 — Challenge plan against confirmed intent
 
 Read `references/challenge-protocol.md` before this step.
 Apply the confidence gate exactly as defined there.
 
-**Evaluation anchor:** use the acceptance criteria from Step 2b. A blocking issue
+**Evaluation anchor:** use the acceptance criteria from Step 4b. A blocking issue
 is any gap, contradiction, missing input, or assumption that would prevent one or
 more acceptance criteria from being met.
 
-Do NOT enter Step 4 until the gate exits cleanly:
+Do NOT enter Step 6 until the gate exits cleanly:
 condition = no new blocking issues in the last round AND user explicitly approves.
 
-### Step 4 — Propose and approve plan
+### Step 6 — Propose and approve plan
 
 Produce a stepped plan: phases, actions, outputs per phase.
-The plan is constrained by the acceptance criteria agreed in Step 2b —
+The plan is constrained by the acceptance criteria agreed in Step 4b —
 every output of every phase must be traceable to at least one criterion.
 
 Close with exactly:
-> "Does this plan meet the acceptance criteria agreed in Step 2b?"
+> "Does this plan meet the acceptance criteria agreed in Step 4b?"
 
 Await explicit approval. If user requests changes: revise, re-present, re-close
-with the same question. Do not proceed to Step 5 on partial approval.
+with the same question. Do not proceed to Step 7 on partial approval.
 
-### Step 5 — Design QA suite
+### Step 7 — Design QA suite
 
 Immediately after plan approval — before any sub-task executes.
 
-**Handoff rule:** expand each acceptance criterion from Step 2b into one or more
-full QA test rows. Do not author tests not traceable to a Step 2b criterion.
+**Handoff rule:** expand each acceptance criterion from Step 4b into one or more
+full QA test rows. Do not author tests not traceable to a Step 4b criterion.
 
 Format: ID | Assertion | Pass condition | Fail condition | Artifact.
 Minimum: one test per acceptance criterion.
@@ -199,16 +250,16 @@ After presenting the suite, state confidence before awaiting user confirmation:
 
 Await user confirmation before proceeding.
 
-The QA suite produced here is the direct input to Step 8 (Verify).
-Do not author a separate verification checklist at Step 8.
+The QA suite produced here is the direct input to Step 10 (Verify).
+Do not author a separate verification checklist at Step 10.
 
-### Step 6 — Load composing skill(s)
+### Step 8 — Load composing skill(s)
 
-Load each skill from the Composes With table matched in Step 2.
+Load each skill from the Composes With table matched in Step 3.
 State which skill governs each sub-task before entering the loop:
 > "Sub-task [N] governed by: [skill name]."
 
-### Step 7 — Execute sub-task loop
+### Step 9 — Execute sub-task loop
 
 Read `references/subtask-patterns.md`. Apply the inner loop for the classified type.
 
@@ -221,26 +272,42 @@ For each sub-task:
 
 After all sub-tasks complete, surface the Inner Loop QA Report (format defined in
 `references/subtask-patterns.md`) covering all sub-tasks:
-- All passed → proceed to Step 8 automatically
+- All passed → proceed to Step 10 automatically
 - Any failure → state adjusted confidence %, wait for explicit user input before proceeding
 
-### Step 8 — Verify
+### Step 10 — Verify
 
-Run every test from the QA suite (Step 5) against all outputs.
+Run every test from the QA suite (Step 7) against all outputs.
 Report each: ✅ Pass | ⚠️ Partial | ❌ Fail.
 
-If any ❌: return to Step 7 for the relevant sub-task. Do not proceed with open failures.
-If all ✅ or ⚠️ only: surface the full QA report before Step 9.
+If any ❌: return to Step 9 for the relevant sub-task. Do not proceed with open failures.
+If all ✅ or ⚠️ only: surface the full QA report before Step 11.
 
-### Step 9 — Refine
+### Step 11 — Refine
 
 For any remaining ⚠️: propose targeted fixes, apply, re-run affected tests only.
 
 When all tests ✅:
 > "Execution complete. All QA tests pass. Ready for commit."
 
-Prompt user:
+Prompt user — path-dependent:
+
+**Path 1:**
 > "Run 'done TASK-XXX' to close the task in managing-tasks."
+
+**Path 2:**
+Hand off to managing-tasks in sequence:
+
+1. `add task` — pass the confirmed intent sentence as the task input.
+   managing-tasks derives all fields from it.
+   Also pass explicitly:
+   - description: confirmed intent sentence.
+   - target: confirmed at Step 2B
+   - origin: `session:YYYY-MM-DD "[noun-phrase derived from confirmed intent, title-cased]"`
+   Retain the TASK-ID assigned by managing-tasks before proceeding.
+
+2. `done task TASK-XXX` — trigger immediately after `add task` confirms,
+   using the TASK-ID retained from step 1.
 
 ---
 
@@ -248,42 +315,59 @@ Prompt user:
 
 | Skill | When | Sub-tasks governed |
 | :--- | :--- | :--- |
-| `managing-tasks` | Always — task context source and state close | Step 1 (read), Step 9 (done prompt) |
-| `writing-docs` | Task type = doc | Step 7 inner loop: doc pattern |
-| `creating-skills` | Task type = skill-authoring (origin prefix: skill:*) | Step 7 inner loop: skill pattern |
-| `reviewing-tech-claims` | Any type where scope contains "verified" or "tech-checked" | Step 7: verification sub-tasks |
-| `architecting-data-platforms` | Task type = research, target involves data platform | Step 7 inner loop: research pattern |
-| `analyzing-business-cases` | Task type = framing | Step 7 inner loop: framing sub-tasks |
+| `managing-tasks` | Always — task context source (Path 1) and state close (both paths) | Step 1 read (Path 1), Step 11 done (Path 1) / add+done (Path 2) |
+| `writing-docs` | Task type = doc | Step 9 inner loop: doc pattern |
+| `creating-skills` | Task type = skill-authoring; origin prefix `skill:*` is Path 1 signal only — Path 2 classification deferred to classifier reengineering | Step 9 inner loop: skill pattern |
+| `reviewing-tech-claims` | Any type where confirmed intent contains "verified" or "tech-checked" | Step 9: verification sub-tasks |
+| `architecting-data-platforms` | Task type = research, target involves data platform | Step 9 inner loop: research pattern |
+| `analyzing-business-cases` | Task type = framing | Step 9 inner loop: framing sub-tasks |
 
 ---
 
 ## QA Checklist
 
-- [ ] Task context read from TASKS.md — user not asked to re-describe
-- [ ] Task status confirmed 🟡 In Progress before proceeding
-- [ ] Task type classified explicitly and stated before Step 2a
+- [ ] Path detected at Step 1 — TASKS.md lookup for Path 1; "No existing task" surfaced for Path 2
+- [ ] Task context read from TASKS.md (Path 1) — user not asked to re-describe
+- [ ] Task status confirmed 🟡 In Progress before proceeding (Path 1 only)
+- [ ] Intent proposed by Claude from correct input source — description + scope for Path 1; trigger prompt for Path 2
+- [ ] Path 2 value clause flagged inline if inferred — not silently assumed
+- [ ] Intent validated against intent-schema.md before presenting
+- [ ] Intent confirmed by user (hard gate) before Step 2B
+- [ ] Scope not referenced beyond Step 2A
+- [ ] Target confirmed (Path 1) or defined (Path 2) by user (hard gate) before Step 3
+- [ ] Task type classified explicitly from confirmed intent + target — stated before Step 4a
 - [ ] Composing skill(s) declared before sub-task loop enters
 - [ ] Verification scenario schema presented to user — user authored the scenarios
 - [ ] Verification scenario: each user-provided scenario validated against blocking criteria before acceptance
 - [ ] Verification scenario: blocking failures returned to user with specific issue identified
-- [ ] Verification scenario confirmed complete by user (hard gate) before Step 2b
+- [ ] Verification scenario confirmed complete by user (hard gate) before Step 4b
 - [ ] Acceptance criteria: one or more criteria per scenario derived by Claude — Scenario ID / Acceptance criterion format
 - [ ] Acceptance criteria: observable, unambiguous, traceable criteria applied — Blocking items resolved before presenting
-- [ ] Acceptance criteria confirmed by user (hard gate) before Step 3
-- [ ] Challenge gate anchored to Step 2b acceptance criteria
+- [ ] Acceptance criteria confirmed by user (hard gate) before Step 5
+- [ ] Challenge gate anchored to Step 4b acceptance criteria
 - [ ] Challenge gate exited cleanly — no new blocking issues, user approved
-- [ ] Plan constrained by Step 2b acceptance criteria — every phase output traceable to a criterion
-- [ ] Plan closed with "Does this plan meet the acceptance criteria agreed in Step 2b?"
+- [ ] Plan constrained by Step 4b acceptance criteria — every phase output traceable to a criterion
+- [ ] Plan closed with "Does this plan meet the acceptance criteria agreed in Step 4b?"
 - [ ] Plan approved explicitly before QA suite design
-- [ ] QA suite: each test traceable to a Step 2b acceptance criterion — no untethered tests
+- [ ] QA suite: each test traceable to a Step 4b acceptance criterion — no untethered tests
 - [ ] QA suite confidence % stated with one-line rationale before user confirmation
 - [ ] QA suite designed before any sub-task executes
-- [ ] QA suite used as direct input to Step 8 — no separate checklist authored at Step 8
+- [ ] QA suite used as direct input to Step 10 — no separate checklist authored at Step 10
 - [ ] Each sub-task's governing skill declared before execution
-- [ ] Step 7 Test step uses Inner-loop checklist from subtask-patterns.md — not prose description
+- [ ] Step 9 Test step uses Inner-loop checklist from subtask-patterns.md — not prose description
 - [ ] No sub-task advanced with open Inner-loop checklist failures
-- [ ] Inner Loop QA Report surfaced after all sub-tasks complete — before Step 8
-- [ ] Step 8 proceeds automatically on all-pass; waits for user input on any failure
-- [ ] Step 8 QA report surfaced before Step 9
+- [ ] Inner Loop QA Report surfaced after all sub-tasks complete — before Step 10
+- [ ] Step 10 proceeds automatically on all-pass; waits for user input on any failure
+- [ ] Step 10 QA report surfaced before Step 11
 - [ ] Completion declared only when all tests ✅
-- [ ] User prompted to close task via managing-tasks
+- [ ] Path 1: user prompted to run 'done TASK-XXX' via managing-tasks
+- [ ] Path 2: origin derived from confirmed intent action clause — title-cased noun-phrase
+- [ ] Path 2: TASK-ID returned by `add task` retained before calling `done task`
+- [ ] Path 2: managing-tasks `add task` confirmed before `done task` triggered
+
+
+| Field        | Value       |
+|--------------|-------------|
+| Version      | 1.15        |
+| Last Updated | 2026-04-02  |
+| Status       | Draft       |

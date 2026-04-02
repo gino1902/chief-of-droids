@@ -47,6 +47,34 @@ Format: `1.0` for initial release, `1.1`, `1.2` etc. for incremental updates, `2
 
 ---
 
+## Skills Architecture
+
+This workspace loads skills via Claude Desktop + Filesystem MCP — not the official Claude Code Agent Skills mechanism. This distinction matters when applying official Anthropic guidance to skill design or assessment.
+
+**How skills load in this workspace:**
+- Claude reads `skills/HOW-TO-TRIGGER.md` explicitly via Filesystem tool at session bootstrap to determine routing
+- The matched `SKILL.md` is then read in full via Filesystem tool
+- No frontmatter scanning occurs — the full file content is always available once loaded
+
+**Official Claude Code behaviors that do NOT apply here:**
+
+| Claude Code behavior | Status in this workspace |
+| :--- | :--- |
+| Frontmatter description scanning — routes skills by reading descriptions | Not applicable — routing is via HOW-TO-TRIGGER.md, read explicitly |
+| 250-char description cap — descriptions truncated in routing index | Not applicable — full SKILL.md content is loaded; length has no routing effect |
+| `disable-model-invocation: true` — removes skill from auto-loading | Not applicable — no automatic loading mechanism exists |
+| `context: fork` / `agent` fields — runs skill in a forked subagent | Not applicable — no subagent spawning in Claude Desktop |
+
+**Example — 250-char cap:**
+In Claude Code, a frontmatter description longer than 250 chars gets truncated in the routing index. The trigger keywords after the cutpoint become invisible to Claude's routing engine. In this workspace, Claude reads `HOW-TO-TRIGGER.md` for routing (full file, no truncation) and then loads the full SKILL.md. A 500-char description is entirely visible. Front-loading key triggers remains good practice for readability, but the 250-char limit is not a technical constraint here.
+
+**Example — `disable-model-invocation: true`:**
+In Claude Code, setting this field prevents the skill from auto-loading when a user's prompt matches the description. In this workspace, no auto-loading from description matching occurs — every skill load is explicit. The field is simply ignored.
+
+When applying official Anthropic documentation (via `reviewing-tech-claims` or any source fetch) to skill design, always confirm whether the guidance is Claude Code-specific or general. Guidance about prompt engineering, description specificity, and negative examples applies to both environments. Guidance about frontmatter fields, forking, and routing mechanisms applies to Claude Code only.
+
+---
+
 ## Task Management
 
 Default TASKS.md for this workspace context: `workspace/.tasks/TASKS.md`

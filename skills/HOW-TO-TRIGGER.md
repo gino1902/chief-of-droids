@@ -32,30 +32,44 @@ Also triggers when the user asks to record, close, or transition any task by ID.
 
 ## executing-tasks
 
-Triggers after `start TASK-XXX` completes (opt-in) or via standalone command.
+Two paths — select based on whether a TASKS.md entry exists.
 
-**Primary trigger (opt-in):**
+**Path 1 — Execute an existing task (task entry exists in TASKS.md):**
+
+Primary trigger (opt-in after managing-tasks):
 After managing-tasks transitions TASK-XXX to 🟡 In Progress, Claude asks once:
 > "Run executing-tasks workflow for TASK-XXX?"
 Skill loads only on explicit yes.
 
-**Standalone triggers:**
+Standalone triggers:
 - `execute TASK-XXX` — load directly, begin workflow
 - `run TASK-XXX` — alias for execute
+
+**Path 2 — Execute a new task (no prior TASKS.md entry):**
+
+Standalone triggers:
+- `execute new task: [description]` — load directly, define intent during workflow
+- `run new task: [description]` — alias
+- `execute new task` (bare) — loads skill; Claude asks for description before proceeding
+
+Path 2 defines intent, target, and task entry during the workflow.
+The task entry is created and closed via managing-tasks at the end.
 
 **Does NOT trigger on:**
 - "my intent is [...]" — too ambiguous
 - "start TASK-XXX" alone — that belongs to managing-tasks
 
-**What it does:**
-- Extracts task context from TASKS.md (no re-prompt to user)
+**What it does (both paths):**
+- Formulates and confirms intent from task context (Path 1) or trigger prompt (Path 2)
+- Confirms or defines target
 - Classifies task type (code / research / doc / file-write / skill-authoring / framing)
-- Runs confidence-based challenge gate on intent and scope
+- Challenges the plan against confirmed intent
 - Produces and approves a stepped plan
 - Designs a QA suite against the plan before any sub-task executes
 - Executes sub-tasks via composing skills per task type
 - Verifies all outputs against the QA suite
-- Prompts user to close task via managing-tasks on completion
+- Path 1: prompts user to close task via managing-tasks
+- Path 2: creates task entry via managing-tasks `add task`, then closes it via `done task`
 
 **Does NOT:**
 - Manage task state — that is managing-tasks
@@ -198,11 +212,17 @@ skill gaps from session history, or add a new external source to the skill catal
 **Note on source fetch:**
 - `author skill`, `critique skill`, `assess all skills` — always fetch official sources:
   1. `https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/best-practices`
-  2. `https://github.com/anthropics/skills/`
+     > ⚠️ Unverified — URL exists in official nav but content is not publicly accessible. Fetch before use; flag if unreachable.
+  2. `https://github.com/anthropics/claude-code/tree/main/plugins/`
+     (official Anthropic skills examples — confirmed location of bundled skills including frontend-design)
   3. `https://agentskills.io/specification`
+     (Agent Skills open standard — referenced in official Anthropic Claude Code docs)
 - `enrich skill` — fetches sources from `references/skill-sources.md` catalog (internal + external)
 - `recommend skills` — skips source fetch; reads session findings only
 - `add source` — runs its own fetch protocol via `references/workflows/add-source.md`; Step 1 does not apply
+
+**Note on official source applicability:**
+These sources describe the Claude Code Agent Skills mechanism (VM-based, frontmatter scanning, `disable-model-invocation`). This workspace uses Claude Desktop + Filesystem MCP — not all official behaviors apply. See CLAUDE.md `## Skills Architecture` for the full distinction before applying any guidance from these sources to skill assessment.
 
 ---
 
@@ -265,7 +285,8 @@ request. Common combinations in this workspace:
 | Frame a data platform use case | `analyzing-business-cases` + `architecting-data-platforms` |
 | Frame + write the document | `analyzing-business-cases` + `writing-docs` |
 | Read, add, or transition tasks | `managing-tasks` |
-| Execute a task with quality workflow | `managing-tasks` + `executing-tasks` |
+| Execute an existing task with quality workflow | `managing-tasks` + `executing-tasks` |
+| Execute a new task without a prior TASKS.md entry | `executing-tasks` + `managing-tasks` (at close) |
 | Execute a skill-authoring task | `managing-tasks` + `executing-tasks` + `creating-skills` |
 | Execute a doc task | `managing-tasks` + `executing-tasks` + `writing-docs` |
 | Bootstrap a new Claude Desktop project | `project-bootstrapping` |
@@ -273,3 +294,10 @@ request. Common combinations in this workspace:
 | Capture session value then write a doc | `managing-sessions` + `writing-docs` |
 | Session prune surfaces open tasks | `managing-sessions` + `managing-tasks` |
 | Session prune then identify skill gaps | `managing-sessions` + `creating-skills` |
+
+
+| Field        | Value       |
+|--------------|-------------|
+| Version      | 1.2         |
+| Last Updated | 2026-04-02  |
+| Status       | Draft       |

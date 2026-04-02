@@ -1,10 +1,10 @@
-<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
+<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Sub-Task Patterns
 
-Read at Step 7 of the executing-tasks outer loop.
+Read at Step 9 of the executing-tasks outer loop.
 
-**Step 7:** For each sub-task, use the inner loop for execution. For the Test step,
+**Step 9:** For each sub-task, use the inner loop for execution. For the Test step,
 apply the **Inner-loop checklist** for the classified pattern as the formal test gate.
 All checklist items must pass before advancing to the next sub-task.
 
@@ -12,7 +12,7 @@ All checklist items must pass before advancing to the next sub-task.
 
 ## Inner Loop QA Report
 
-After all sub-tasks complete — before Step 8 — surface a structured report.
+After all sub-tasks complete — before Step 10 — surface a structured report.
 
 **Format:**
 
@@ -39,7 +39,7 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 **Behaviour rule:**
 
 - Always surface the report after sub-tasks complete
-- All passed → proceed to Step 8 automatically
+- All passed → proceed to Step 10 automatically
 - Any failure → surface report, state adjusted confidence %, wait for explicit user input before proceeding
 
 ---
@@ -109,7 +109,7 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 3. **Run** — read draft; apply `writing-docs` QA checklist
 4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for missing sections: add; for formatting violations: fix per `writing-docs`;
-   for scope drift: trim or expand to match task scope
+   for intent drift: trim or expand to match confirmed intent
 6. **Back to Write** if any Inner-loop checklist item fails
 
 ### Inner-loop checklist
@@ -117,7 +117,7 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 | ID | Assertion | Severity | Pass | Fail |
 | :--- | :--- | :--- | :--- | :--- |
 | D1 | All sections declared in plan are present | Blocking | All sections found | Any section missing |
-| D2 | Content matches task scope — no drift | Major | Content within scope | Content outside scope |
+| D2 | Content matches confirmed intent — no drift | Major | Content within confirmed intent boundary | Content outside confirmed intent |
 | D3 | writing-docs QA checklist passes | Major | No open items | Open checklist items |
 | D4 | File written and readable | Blocking | Read succeeds | Read fails |
 
@@ -144,8 +144,8 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 | :--- | :--- | :--- | :--- | :--- |
 | C1 | All acceptance tests pass | Blocking | Test suite green | Any test red |
 | C2 | No existing tests broken (regression) | Blocking | Full suite green | Regression introduced |
-| C3 | Implementation matches scope — no gold-plating | Major | Scope match | Out-of-scope code added |
-| C4 | Code reviewed against `reviewing-tech-claims` if "verified" in scope | Major | Review complete | Review skipped |
+| C3 | Implementation matches confirmed intent — no gold-plating | Major | Intent match | Out-of-scope code added |
+| C4 | Code reviewed against `reviewing-tech-claims` if "verified" in confirmed intent | Major | Review complete | Review skipped |
 
 ---
 
@@ -170,8 +170,8 @@ The executing-tasks inner loop wraps the creating-skills workflow as a single su
 
 | ID | Assertion | Severity | Pass | Fail |
 | :--- | :--- | :--- | :--- | :--- |
-| S1 | SKILL.md frontmatter valid (name, description, pushy, trigger-inclusive) | Major | All fields valid | Any field invalid |
-| S2 | Assessment checklist rating: Pass | Blocking | Pass | Partial or Fail |
+| S1 | SKILL.md frontmatter valid — `name` and `description` present and well-formed; description is specific and trigger-inclusive. Note: the official Anthropic SKILL.md spec requires only `name` and `description`; any additional fields are workspace conventions | Major | name and description present and valid | name or description absent or vague |
+| S2 | Assessment checklist (`creating-skills/references/assessment-checklist.md`) rating: Pass | Blocking | Pass | Partial or Fail |
 | S3 | Mock requests trigger correctly (2–3 tested) — no partial-pass | Blocking | All trigger | Any miss |
 | S4 | Reference files declared in SKILL.md are written and readable | Blocking | All files present | Any file missing |
 | S5 | HOW-TO-TRIGGER.md updated | Major | Entry present | Entry missing |
@@ -183,3 +183,10 @@ The executing-tasks inner loop wraps the creating-skills workflow as a single su
 Apply research inner loop for all research sub-tasks.
 When research phase is complete, apply file-write inner loop for the output file.
 Inner-loop checklists R1–R4 and F1–F5 apply to their respective sub-tasks.
+
+
+| Field        | Value       |
+|--------------|-------------|
+| Version      | 1.7         |
+| Last Updated | 2026-04-02  |
+| Status       | Draft       |
