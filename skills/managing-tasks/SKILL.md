@@ -8,7 +8,7 @@ description: >
   when the user asks what is pending, what to work on next, or wants to record
   or update a task.
 ---
-<!-- version: 2.3 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
+<!-- version: 2.4 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Managing Tasks Skill
 
@@ -147,12 +147,10 @@ Steps:
 3. Read target TASKS.md (run bootstrap if missing)
    — if Filesystem tool errors, flag and stop
 4. Locate TASK-XXX in 🔴 Backlog — if not found, flag and stop
-5. Check 🟡 In Progress section: if any task is already present in this file,
-   flag the conflict and stop — one active task per TASKS.md file
-6. Read `references/qa-checklist.md` and run it
-7. Propose the state transition: move entry from 🔴 Backlog → 🟡 In Progress
-8. Write per Write Authority rule in `references/tasks-schema.md`
-9. Ask once: "Run executing-tasks workflow for TASK-XXX?"
+5. Read `references/qa-checklist.md` and run it
+6. Propose the state transition: move entry from 🔴 Backlog → 🟡 In Progress
+7. Write per Write Authority rule in `references/tasks-schema.md`
+8. Ask once: "Run executing-tasks workflow for TASK-XXX?"
    If yes → load `executing-tasks` skill; it takes over from here.
    If no → stop; task is 🟡 In Progress, user executes ad hoc.
 
@@ -252,6 +250,6 @@ or other skills. Task documentation beyond TASKS.md is out of scope.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 2.3         |
+| Version      | 2.4         |
 | Last Updated | 2026-04-02  |
 | Status       | Draft       |

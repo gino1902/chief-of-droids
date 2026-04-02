@@ -1,4 +1,4 @@
-<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-03-31 -->
+<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # TASKS.md Schema
 
@@ -112,10 +112,8 @@ Done entries (in archive.md) append a done date:
 | Marker | Meaning |
 | :--- | :--- |
 | 🔴 Backlog | Not started |
-| 🟡 In Progress | Active — only one per file |
+| 🟡 In Progress | Active |
 | ✅ Done | Complete — entry lives in archive.md, not TASKS.md |
-
-Active is defined as 🟡 In Progress only. Any other state is not active.
 
 ---
 
@@ -136,8 +134,6 @@ Projects that do not declare this override retain the confirmation step.
 - Workspace-level TASKS.md: cross-repo infrastructure, shared skills library work
 - Repo-level TASKS.md: shared tasks and cross-use-case work within that repo
 - Use-case TASKS.md: tasks scoped to that use-case only
-- One active task (🟡 In Progress) per TASKS.md file — starting a second requires
-  closing or moving the current one first
 - Write authority is set per project in the system prompt — not per repo or use-case
 - `update task` edits `target` and `scope` fields only — `origin` is immutable;
   use `start task` or `done task` for status transitions
