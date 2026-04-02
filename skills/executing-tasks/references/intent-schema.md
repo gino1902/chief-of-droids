@@ -1,4 +1,4 @@
-<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-04-01 -->
+<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Intent Schema
 
@@ -53,9 +53,9 @@ In this workspace, actor is `user` for all direct-prompt executions.
 
 Input sources:
 - `description` field → action basis
-- `scope` field → value basis (one-time use; the scope field value is retired as
-  the working reference after Step 2A confirmation — the field itself remains in
-  the TASKS.md entry unchanged)
+- `scope` field → value basis (one-time use; retired as the working reference after
+  Step 2A confirmation — see SKILL.md Step 2A for the retirement rule.
+  The scope field itself remains in the TASKS.md entry unchanged.)
 
 Authoring steps:
 1. Extract the primary verb and object from `description` → compose action clause
@@ -121,6 +121,6 @@ and may indicate a misclassification of the trigger source.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.1         |
-| Last Updated | 2026-04-01  |
+| Version      | 1.2         |
+| Last Updated | 2026-04-02  |
 | Status       | Draft       |

@@ -6,7 +6,7 @@ description: >
   new task' (no prior entry), or opt-in after 'start TASK-XXX'. Not on
   'start TASK-XXX' alone.
 ---
-<!-- version: 1.15 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
+<!-- version: 1.18 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Executing Tasks Skill
 
@@ -98,6 +98,7 @@ Proceed directly to Step 2. No TASKS.md lookup.
 ### Step 2 — Intent Formulation
 
 Read `references/intent-schema.md` before this step.
+If read fails: `⚠️ intent-schema.md could not be read — surface to user and stop before proceeding.`
 
 #### Step 2A — Propose intent (hard gate)
 
@@ -137,6 +138,8 @@ defines the target.
 ### Step 3 — Classify task type
 
 Read `references/task-type-classifier.md`.
+If read fails: `⚠️ task-type-classifier.md could not be read — surface to user and stop before proceeding.`
+
 Apply decision table to confirmed intent and target.
 
 State classification explicitly before proceeding:
@@ -174,6 +177,7 @@ accepting it:
 | No file paths, tool calls, or assertions in any field | Blocking | Return to user with specific field flagged |
 | `When` contains exactly one trigger | Blocking | Return to user; ask to split |
 | `Given` describes system or data state — not storage, tools, or implementation | Blocking | Return to user with specific gap identified |
+| `Then` describes an observable outcome — system state, data change, or user-visible impact — not an internal quality judgment | Blocking | Return to user with specific gap identified |
 | Traceable to task description or confirmed intent | Advisory | Surface to user; does not block acceptance |
 
 If any Blocking criterion fails: surface the specific issue, return the scenario
@@ -211,9 +215,11 @@ modifies the acceptance criteria. Acceptance criteria are the evaluation anchor
 for Step 5 (challenge) and the constraint frame for Step 6 (plan). They must
 be agreed before either step runs.
 
-### Step 5 — Challenge plan against confirmed intent
+### Step 5 — Challenge plan against acceptance criteria
 
 Read `references/challenge-protocol.md` before this step.
+If read fails: `⚠️ challenge-protocol.md could not be read — surface to user and stop before proceeding.`
+
 Apply the confidence gate exactly as defined there.
 
 **Evaluation anchor:** use the acceptance criteria from Step 4b. A blocking issue
@@ -225,9 +231,9 @@ condition = no new blocking issues in the last round AND user explicitly approve
 
 ### Step 6 — Propose and approve plan
 
-Produce a stepped plan: phases, actions, outputs per phase.
+Produce a stepped plan: sub-tasks, actions, outputs per sub-task.
 The plan is constrained by the acceptance criteria agreed in Step 4b —
-every output of every phase must be traceable to at least one criterion.
+every output of every sub-task must be traceable to at least one criterion.
 
 Close with exactly:
 > "Does this plan meet the acceptance criteria agreed in Step 4b?"
@@ -262,9 +268,10 @@ State which skill governs each sub-task before entering the loop:
 ### Step 9 — Execute sub-task loop
 
 Read `references/subtask-patterns.md`. Apply the inner loop for the classified type.
+If read fails: `⚠️ subtask-patterns.md could not be read — surface to user and stop before proceeding.`
 
-For each sub-task:
-- Apply inner loop: Create tests → Write → Run → Test → Debug → back to Write if failing
+For each sub-task from the Step 6 plan:
+- Run the inner loop within that sub-task: Create tests → Write → Run → Test → Debug → back to Write if failing
 - For the **Test step**: apply the **Inner-loop checklist** for the classified pattern
   from `references/subtask-patterns.md` as the formal test gate — not the prose description
 - Flag blockers immediately; do not silently skip or work around
@@ -317,7 +324,7 @@ Hand off to managing-tasks in sequence:
 | :--- | :--- | :--- |
 | `managing-tasks` | Always — task context source (Path 1) and state close (both paths) | Step 1 read (Path 1), Step 11 done (Path 1) / add+done (Path 2) |
 | `writing-docs` | Task type = doc | Step 9 inner loop: doc pattern |
-| `creating-skills` | Task type = skill-authoring; origin prefix `skill:*` is Path 1 signal only — Path 2 classification deferred to classifier reengineering | Step 9 inner loop: skill pattern |
+| `creating-skills` | Task type = skill-authoring | Step 9 inner loop: skill pattern |
 | `reviewing-tech-claims` | Any type where confirmed intent contains "verified" or "tech-checked" | Step 9: verification sub-tasks |
 | `architecting-data-platforms` | Task type = research, target involves data platform | Step 9 inner loop: research pattern |
 | `analyzing-business-cases` | Task type = framing | Step 9 inner loop: framing sub-tasks |
@@ -326,48 +333,50 @@ Hand off to managing-tasks in sequence:
 
 ## QA Checklist
 
-- [ ] Path detected at Step 1 — TASKS.md lookup for Path 1; "No existing task" surfaced for Path 2
-- [ ] Task context read from TASKS.md (Path 1) — user not asked to re-describe
-- [ ] Task status confirmed 🟡 In Progress before proceeding (Path 1 only)
-- [ ] Intent proposed by Claude from correct input source — description + scope for Path 1; trigger prompt for Path 2
-- [ ] Path 2 value clause flagged inline if inferred — not silently assumed
-- [ ] Intent validated against intent-schema.md before presenting
-- [ ] Intent confirmed by user (hard gate) before Step 2B
-- [ ] Scope not referenced beyond Step 2A
-- [ ] Target confirmed (Path 1) or defined (Path 2) by user (hard gate) before Step 3
-- [ ] Task type classified explicitly from confirmed intent + target — stated before Step 4a
-- [ ] Composing skill(s) declared before sub-task loop enters
-- [ ] Verification scenario schema presented to user — user authored the scenarios
-- [ ] Verification scenario: each user-provided scenario validated against blocking criteria before acceptance
-- [ ] Verification scenario: blocking failures returned to user with specific issue identified
-- [ ] Verification scenario confirmed complete by user (hard gate) before Step 4b
-- [ ] Acceptance criteria: one or more criteria per scenario derived by Claude — Scenario ID / Acceptance criterion format
-- [ ] Acceptance criteria: observable, unambiguous, traceable criteria applied — Blocking items resolved before presenting
-- [ ] Acceptance criteria confirmed by user (hard gate) before Step 5
-- [ ] Challenge gate anchored to Step 4b acceptance criteria
-- [ ] Challenge gate exited cleanly — no new blocking issues, user approved
-- [ ] Plan constrained by Step 4b acceptance criteria — every phase output traceable to a criterion
-- [ ] Plan closed with "Does this plan meet the acceptance criteria agreed in Step 4b?"
-- [ ] Plan approved explicitly before QA suite design
-- [ ] QA suite: each test traceable to a Step 4b acceptance criterion — no untethered tests
-- [ ] QA suite confidence % stated with one-line rationale before user confirmation
-- [ ] QA suite designed before any sub-task executes
-- [ ] QA suite used as direct input to Step 10 — no separate checklist authored at Step 10
-- [ ] Each sub-task's governing skill declared before execution
-- [ ] Step 9 Test step uses Inner-loop checklist from subtask-patterns.md — not prose description
-- [ ] No sub-task advanced with open Inner-loop checklist failures
-- [ ] Inner Loop QA Report surfaced after all sub-tasks complete — before Step 10
-- [ ] Step 10 proceeds automatically on all-pass; waits for user input on any failure
-- [ ] Step 10 QA report surfaced before Step 11
-- [ ] Completion declared only when all tests ✅
-- [ ] Path 1: user prompted to run 'done TASK-XXX' via managing-tasks
-- [ ] Path 2: origin derived from confirmed intent action clause — title-cased noun-phrase
-- [ ] Path 2: TASK-ID returned by `add task` retained before calling `done task`
-- [ ] Path 2: managing-tasks `add task` confirmed before `done task` triggered
+- [ ] **Blocking** — Path detected at Step 1: TASKS.md lookup for Path 1; "No existing task" surfaced for Path 2
+- [ ] **Blocking** — Task context read from TASKS.md (Path 1) — user not asked to re-describe
+- [ ] **Blocking** — Task status confirmed 🟡 In Progress before proceeding (Path 1 only)
+- [ ] **Major** — Intent proposed by Claude from correct input source: description + scope for Path 1; trigger prompt for Path 2
+- [ ] **Major** — Path 2 value clause flagged inline if inferred — not silently assumed
+- [ ] **Major** — Intent validated against intent-schema.md before presenting
+- [ ] **Blocking** — Intent confirmed by user (hard gate) before Step 2B
+- [ ] **Major** — Scope not referenced beyond Step 2A
+- [ ] **Blocking** — Target confirmed (Path 1) or defined (Path 2) by user (hard gate) before Step 3
+- [ ] **Major** — Task type classified explicitly from confirmed intent + target — stated before Step 4a
+- [ ] **Major** — Composing skill(s) declared before sub-task loop enters
+- [ ] **Major** — Verification scenario schema presented to user — user authored the scenarios
+- [ ] **Blocking** — Verification scenario: each user-provided scenario validated against blocking criteria before acceptance
+- [ ] **Blocking** — Verification scenario: `Then` clause validated for observability before acceptance — not an internal quality judgment
+- [ ] **Blocking** — Verification scenario: blocking failures returned to user with specific issue identified
+- [ ] **Blocking** — Verification scenario confirmed complete by user (hard gate) before Step 4b
+- [ ] **Major** — Acceptance criteria: one or more criteria per scenario derived by Claude — Scenario ID / Acceptance criterion format
+- [ ] **Blocking** — Acceptance criteria: observable, unambiguous, traceable criteria applied — Blocking items resolved before presenting
+- [ ] **Blocking** — Acceptance criteria confirmed by user (hard gate) before Step 5
+- [ ] **Blocking** — Challenge gate anchored to Step 4b acceptance criteria
+- [ ] **Blocking** — Challenge gate exited cleanly — no new blocking issues, user approved
+- [ ] **Minor** — Challenge summary emitted before Step 6: N rounds, blocking issues resolved, advisory items open
+- [ ] **Major** — Plan constrained by Step 4b acceptance criteria — every sub-task output traceable to a criterion
+- [ ] **Major** — Plan closed with "Does this plan meet the acceptance criteria agreed in Step 4b?"
+- [ ] **Blocking** — Plan approved explicitly before QA suite design
+- [ ] **Major** — QA suite: each test traceable to a Step 4b acceptance criterion — no untethered tests
+- [ ] **Minor** — QA suite confidence % stated with one-line rationale before user confirmation
+- [ ] **Blocking** — QA suite designed before any sub-task executes
+- [ ] **Major** — QA suite used as direct input to Step 10 — no separate checklist authored at Step 10
+- [ ] **Major** — Each sub-task's governing skill declared before execution
+- [ ] **Blocking** — Step 9 Test step uses Inner-loop checklist from subtask-patterns.md — not prose description
+- [ ] **Blocking** — No sub-task advanced with open Inner-loop checklist failures
+- [ ] **Major** — Inner Loop QA Report surfaced after all sub-tasks complete — before Step 10
+- [ ] **Blocking** — Step 10 proceeds automatically on all-pass; waits for user input on any failure
+- [ ] **Major** — Step 10 QA report surfaced before Step 11
+- [ ] **Blocking** — Completion declared only when all tests ✅
+- [ ] **Major** — Path 1: user prompted to run 'done TASK-XXX' via managing-tasks
+- [ ] **Minor** — Path 2: origin derived from confirmed intent action clause — title-cased noun-phrase
+- [ ] **Blocking** — Path 2: TASK-ID returned by `add task` retained before calling `done task`
+- [ ] **Blocking** — Path 2: managing-tasks `add task` confirmed before `done task` triggered
 
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.15        |
+| Version      | 1.18        |
 | Last Updated | 2026-04-02  |
 | Status       | Draft       |

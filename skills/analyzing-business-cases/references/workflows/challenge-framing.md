@@ -1,4 +1,4 @@
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-25 -->
+<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Workflow: challenge framing
 
@@ -20,7 +20,7 @@ Never hardcode a path. Always confirm resolved path to the user before reading:
 ## Steps
 
 1. Resolve FRAMING.md path (see Path Resolution above); read via Filesystem tool
-2. Use filesystem tool to read `references/challenge-checklist.md`
+2. Use filesystem tool to read `references/qa-checklist.md`
 3. Run checklist against every section
 4. Output a structured critique — section by section, issue by issue
 5. Surface findings only — do not rewrite FRAMING.md unless user requests (see step 6)
@@ -29,7 +29,7 @@ Never hardcode a path. Always confirm resolved path to the user before reading:
 ## Failure handling
 
 - FRAMING.md absent at resolved path: halt — `⚠️ FRAMING.md not found at <resolved-path> — nothing to challenge.`
-- `references/challenge-checklist.md` unreadable: proceed but flag — `⚠️ challenge-checklist.md unreadable — critique run from skill memory only.`
+- `references/qa-checklist.md` unreadable: proceed but flag — `⚠️ qa-checklist.md unreadable — critique run from skill memory only.`
 
 ## Output
 
@@ -37,6 +37,6 @@ Structured critique in chat (no file write unless user requests)
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.2        |
-| Last Updated | 2026-03-25 |
+| Version      | 1.3        |
+| Last Updated | 2026-04-02 |
 | Status       | Final      |

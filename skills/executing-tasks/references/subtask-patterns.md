@@ -1,11 +1,13 @@
-<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
+<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Sub-Task Patterns
 
 Read at Step 9 of the executing-tasks outer loop.
 
-**Step 9:** For each sub-task, use the inner loop for execution. For the Test step,
-apply the **Inner-loop checklist** for the classified pattern as the formal test gate.
+**Step 9:** For each sub-task from the Step 6 plan, run the inner loop defined
+for the classified pattern. The inner loop runs within a single sub-task — it is
+not the sub-task sequence itself. For the Test step, apply the **Inner-loop
+checklist** for the classified pattern as the formal test gate.
 All checklist items must pass before advancing to the next sub-task.
 
 ---
@@ -181,12 +183,12 @@ The executing-tasks inner loop wraps the creating-skills workflow as a single su
 ## Compound Pattern: research + file-write
 
 Apply research inner loop for all research sub-tasks.
-When research phase is complete, apply file-write inner loop for the output file.
+When the research sub-task is complete, apply the file-write inner loop for the output file.
 Inner-loop checklists R1–R4 and F1–F5 apply to their respective sub-tasks.
 
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.7         |
+| Version      | 1.8         |
 | Last Updated | 2026-04-02  |
 | Status       | Draft       |

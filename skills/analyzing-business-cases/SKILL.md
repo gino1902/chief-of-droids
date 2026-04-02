@@ -12,7 +12,7 @@ description: >
   Composes with: architecting-data-platforms (when use case is a data platform),
   reviewing-tech-claims (when technical claims appear in FRAMING).
 ---
-<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-03-25 -->
+<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
 
 # Analyzing Business Cases Skill
 
@@ -30,7 +30,7 @@ Read explicitly via filesystem tool when the relevant workflow is triggered. Not
 | File | When to read |
 |---|---|
 | `template/FRAMING-template.md` | During `build framing` — structural base for all sections |
-| `references/challenge-checklist.md` | During `build framing` and `challenge framing` |
+| `references/qa-checklist.md` | During `build framing` and `challenge framing` |
 | `references/consistency-check.md` | During `assess` |
 | `references/workflows/build-framing.md` | Full procedure for `build framing` |
 | `references/workflows/challenge-framing.md` | Full procedure for `challenge framing` |
@@ -71,6 +71,6 @@ Read `references/workflows/assess.md` for the full procedure.
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.7        |
-| Last Updated | 2026-03-25 |
+| Version      | 1.8        |
+| Last Updated | 2026-04-02 |
 | Status       | Final      |
