@@ -93,6 +93,17 @@ precedence over this workspace default for sessions routed to that repo.
 
 ---
 
+## Git
+
+- Default repo: `/home/gino/workspace`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/home/gino/workspace/<name>`; "all repos" → run across all repos
+- Stage by explicit file path array — never by directory (risk of sweeping untracked files from subdirectories)
+- Mandatory gate: run `git_diff_staged` before every commit — do not commit without reviewing the diff
+- Commit message: propose and commit directly after a clean diff — no approval required
+- Commit message format: `type(scope): description`
+- Push: `git_push` unavailable via MCP — always push manually from WSL2
+
+---
+
 ## Session Hygiene
 
 Run once, as the final step of reading this file. Do not repeat within the session.
