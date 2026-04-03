@@ -47,6 +47,27 @@ Format: `1.0` for initial release, `1.1`, `1.2` etc. for incremental updates, `2
 
 ---
 
+## MCP Tools
+
+This workspace uses two MCP servers for content retrieval. They have similar verb semantics but distinct scopes — do not conflate them.
+
+| Tool | Server | Use for |
+| :--- | :--- | :--- |
+| `filesystem:read_text_file` | Filesystem MCP | Local file paths under `/home/gino/workspace/` |
+| `fetch` | mcp-server-fetch | External URLs (HTTP/HTTPS) |
+
+**Routing rule:** if the target is a URL → use `fetch`. If the target is a filesystem path → use `filesystem:read_text_file`. Never attempt a URL via Filesystem MCP or a local path via `fetch`.
+
+**`fetch` tool behaviour:**
+- Returns page content converted to markdown
+- Truncates by default; use `start_index` to read in chunks
+- Respects `robots.txt` when the call originates from a tool (model-initiated); ignores it when user-initiated via prompt
+- Can access local/internal IP addresses — do not use `fetch` against localhost or internal network addresses in this workspace
+
+**Enforcement:** the system prompt rule `never cite an external source unless its full content has been fetched and verified via web_fetch` is satisfied in Claude Desktop sessions by calling `fetch` via mcp-server-fetch. This tool is the Desktop-session equivalent of the `web_fetch` runtime tool available in claude.ai sessions.
+
+---
+
 ## Skills Architecture
 
 This workspace loads skills via Claude Desktop + Filesystem MCP — not the official Claude Code Agent Skills mechanism. This distinction matters when applying official Anthropic guidance to skill design or assessment.
@@ -95,7 +116,7 @@ precedence over this workspace default for sessions routed to that repo.
 
 ## Git
 
-- Default repo: `/home/gino/workspace`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/home/gino/workspace/<name>`; "all repos" → run across all repos
+- Default repo: `/home/gino/workspace`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/home/gino/workspace/<n>`; "all repos" → run across all repos
 - Stage by explicit file path array — never by directory (risk of sweeping untracked files from subdirectories)
 - Before committing, ask once: "Show diff? (yes/no)"; if no → commit directly; if yes → run `git_diff_staged` and wait for explicit confirmation before committing
 - Commit message: propose and commit directly — no approval required
