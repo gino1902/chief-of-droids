@@ -6,7 +6,7 @@ description: >
   new task' (no prior entry), or opt-in after 'start TASK-XXX'. Not on
   'start TASK-XXX' alone.
 ---
-<!-- version: 1.18 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
+<!-- version: 1.19 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
 
 # Executing Tasks Skill
 
@@ -25,9 +25,9 @@ Domain work belongs to the composing skill matched by the task-type classifier.
 - `references/challenge-protocol.md` — read at Step 5; defines confidence gate,
   self-assessment question, minimum recommendation, user approval prompt, exit conditions
 - `references/subtask-patterns.md` — read at Step 9; defines inner loop per task type
-  (code / research / doc / file-write), each with steps and Inner-loop checklist as the
-  formal Test step gate; contains Inner Loop QA Report format, severity definitions,
-  and behaviour rule
+  (code / research / doc / file-write / skill-authoring), each with steps and Inner-loop
+  checklist as the formal Test step gate; contains Inner Loop QA Report format, severity
+  definitions, and behaviour rule
 - `references/task-type-classifier.md` — read at Step 3; decision table mapping
   confirmed intent and target signals to primary type + composing skills
 
@@ -215,7 +215,7 @@ modifies the acceptance criteria. Acceptance criteria are the evaluation anchor
 for Step 5 (challenge) and the constraint frame for Step 6 (plan). They must
 be agreed before either step runs.
 
-### Step 5 — Challenge plan against acceptance criteria
+### Step 5 — Challenge acceptance criteria
 
 Read `references/challenge-protocol.md` before this step.
 If read fails: `⚠️ challenge-protocol.md could not be read — surface to user and stop before proceeding.`
@@ -223,8 +223,9 @@ If read fails: `⚠️ challenge-protocol.md could not be read — surface to us
 Apply the confidence gate exactly as defined there.
 
 **Evaluation anchor:** use the acceptance criteria from Step 4b. A blocking issue
-is any gap, contradiction, missing input, or assumption that would prevent one or
-more acceptance criteria from being met.
+is any gap, contradiction, missing input, or assumption in the acceptance criteria
+that would prevent a viable plan from being authored or one or more criteria from
+being met.
 
 Do NOT enter Step 6 until the gate exits cleanly:
 condition = no new blocking issues in the last round AND user explicitly approves.
@@ -244,6 +245,14 @@ with the same question. Do not proceed to Step 7 on partial approval.
 ### Step 7 — Design QA suite
 
 Immediately after plan approval — before any sub-task executes.
+
+**Plan coverage validation (gate before QA authoring):**
+For each sub-task from the Step 6 plan, verify:
+- Sub-task maps to at least one acceptance criterion from Step 4b
+- Sub-task has a defined output
+
+If either check fails for any sub-task: return to Step 6 to revise the plan.
+Do not proceed to QA authoring with uncovered or output-less sub-tasks.
 
 **Handoff rule:** expand each acceptance criterion from Step 4b into one or more
 full QA test rows. Do not author tests not traceable to a Step 4b criterion.
@@ -357,7 +366,8 @@ Hand off to managing-tasks in sequence:
 - [ ] **Minor** — Challenge summary emitted before Step 6: N rounds, blocking issues resolved, advisory items open
 - [ ] **Major** — Plan constrained by Step 4b acceptance criteria — every sub-task output traceable to a criterion
 - [ ] **Major** — Plan closed with "Does this plan meet the acceptance criteria agreed in Step 4b?"
-- [ ] **Blocking** — Plan approved explicitly before QA suite design
+- [ ] **Blocking** — Plan approved explicitly before Step 7
+- [ ] **Blocking** — Step 7 plan coverage validated: each sub-task maps to at least one Step 4b criterion and has a defined output before QA authoring begins
 - [ ] **Major** — QA suite: each test traceable to a Step 4b acceptance criterion — no untethered tests
 - [ ] **Minor** — QA suite confidence % stated with one-line rationale before user confirmation
 - [ ] **Blocking** — QA suite designed before any sub-task executes
@@ -377,6 +387,6 @@ Hand off to managing-tasks in sequence:
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.18        |
-| Last Updated | 2026-04-02  |
+| Version      | 1.19        |
+| Last Updated | 2026-04-03  |
 | Status       | Draft       |
