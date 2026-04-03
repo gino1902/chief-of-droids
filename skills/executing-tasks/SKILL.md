@@ -6,7 +6,7 @@ description: >
   new task' (no prior entry), or opt-in after 'start TASK-XXX'. Not on
   'start TASK-XXX' alone.
 ---
-<!-- version: 1.21 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
+<!-- version: 1.22 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
 
 # Executing Tasks Skill
 
@@ -28,7 +28,7 @@ Domain work belongs to the composing skill matched by the task-type classifier.
   (code / research / doc / file-write / skill-authoring / framing), each with an inner loop
   and Inner-loop checklist as the formal Test step gate; contains Inner Loop QA Report format,
   severity definitions, and behaviour rule
-- `references/task-type-classifier.md` — read at Step 3; decision table mapping
+- `references/composing-skills.md` — read at Step 3; decision table mapping
   confirmed intent and target signals to primary type + composing skills
 
 ---
@@ -137,8 +137,8 @@ defines the target.
 
 ### Step 3 — Classify task type
 
-Read `references/task-type-classifier.md`.
-If read fails: `⚠️ task-type-classifier.md could not be read — surface to user and stop before proceeding.`
+Read `references/composing-skills.md`.
+If read fails: `⚠️ composing-skills.md could not be read — surface to user and stop before proceeding.`
 
 Apply decision table to confirmed intent and target.
 
@@ -387,6 +387,6 @@ Hand off to managing-tasks in sequence:
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.21        |
+| Version      | 1.22        |
 | Last Updated | 2026-04-03  |
 | Status       | Draft       |
