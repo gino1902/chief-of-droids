@@ -118,6 +118,7 @@ precedence over this workspace default for sessions routed to that repo.
 
 - Default repo: `/home/gino/workspace`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/home/gino/workspace/<n>`; "all repos" → run across all repos
 - Stage by explicit file path array — never by directory (risk of sweeping untracked files from subdirectories)
+- After every file write, offer to commit the changed file(s) before proceeding
 - Before committing, ask once: "Show diff? (yes/no)"; if no → commit directly; if yes → run `git_diff_staged` and wait for explicit confirmation before committing
 - Commit message: propose and commit directly — no approval required
 - Commit message format: `type(scope): description`
