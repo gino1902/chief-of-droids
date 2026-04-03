@@ -1,4 +1,4 @@
-<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
+<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
 
 # Sub-Task Patterns
 
@@ -180,6 +180,41 @@ The executing-tasks inner loop wraps the creating-skills workflow as a single su
 
 ---
 
+## Pattern: framing
+
+**Scope:** Build or challenge a FRAMING.md for a project or use case.
+Delegates to `analyzing-business-cases` for domain logic.
+
+### Inner loop
+
+1. **Create tests** — define what a valid FRAMING.md output looks like:
+   all 6 template sections present; all 7 challenge framing Blocking criteria met;
+   advisory items surfaced and acknowledged by user
+2. **Write** — run `analyzing-business-cases` workflow:
+   - `build framing`: read `FRAMING-template.md`; scaffold FRAMING.md with user
+   - `challenge framing` only: read existing FRAMING.md via filesystem tool
+3. **Run** — apply challenge framing sub-workflow:
+   read `analyzing-business-cases/references/qa-checklist.md §challenge framing`;
+   apply all Blocking and Advisory criteria to FRAMING.md content; record pass/fail per item
+4. **Test** — apply Inner-loop checklist (below) as the formal test gate
+5. **Debug** — for Blocking failures: read qa-checklist.md failure signal; propose
+   targeted section edit; apply on explicit user confirmation; re-run challenge;
+   never rewrite FRAMING.md without user instruction.
+   For Advisory: surface all findings; do not block
+6. **Back to Write** if any Inner-loop checklist item fails
+
+### Inner-loop checklist
+
+| ID | Assertion | Severity | Pass | Fail |
+| :--- | :--- | :--- | :--- | :--- |
+| FR1 | FRAMING.md written and readable via `filesystem:read_text_file` | Blocking | Read succeeds, content non-empty | Read fails or empty |
+| FR2 | All 6 FRAMING-template.md sections present: Context, Problem, Client, Objectives, Solution, Constraints | Blocking | All 6 section headers found | Any section missing |
+| FR3 | All 7 challenge framing Blocking criteria pass (`qa-checklist.md §challenge framing`) | Blocking | All 7 pass | Any one fails |
+| FR4 | All Advisory items from `qa-checklist.md §challenge framing` surfaced to user | Major | All advisory findings listed; user acknowledged | Advisory section skipped |
+| FR5 | No FRAMING.md edit applied without explicit user confirmation | Major | All edits user-confirmed | Any unrequested rewrite |
+
+---
+
 ## Compound Pattern: research + file-write
 
 Apply research inner loop for all research sub-tasks.
@@ -189,6 +224,6 @@ Inner-loop checklists R1–R4 and F1–F5 apply to their respective sub-tasks.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.8         |
-| Last Updated | 2026-04-02  |
+| Version      | 1.9         |
+| Last Updated | 2026-04-03  |
 | Status       | Draft       |

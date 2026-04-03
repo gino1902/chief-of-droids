@@ -6,7 +6,7 @@ description: >
   new task' (no prior entry), or opt-in after 'start TASK-XXX'. Not on
   'start TASK-XXX' alone.
 ---
-<!-- version: 1.19 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
+<!-- version: 1.21 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
 
 # Executing Tasks Skill
 
@@ -25,9 +25,9 @@ Domain work belongs to the composing skill matched by the task-type classifier.
 - `references/challenge-protocol.md` — read at Step 5; defines confidence gate,
   self-assessment question, minimum recommendation, user approval prompt, exit conditions
 - `references/subtask-patterns.md` — read at Step 9; defines inner loop per task type
-  (code / research / doc / file-write / skill-authoring), each with steps and Inner-loop
-  checklist as the formal Test step gate; contains Inner Loop QA Report format, severity
-  definitions, and behaviour rule
+  (code / research / doc / file-write / skill-authoring / framing), each with an inner loop
+  and Inner-loop checklist as the formal Test step gate; contains Inner Loop QA Report format,
+  severity definitions, and behaviour rule
 - `references/task-type-classifier.md` — read at Step 3; decision table mapping
   confirmed intent and target signals to primary type + composing skills
 
@@ -336,7 +336,7 @@ Hand off to managing-tasks in sequence:
 | `creating-skills` | Task type = skill-authoring | Step 9 inner loop: skill pattern |
 | `reviewing-tech-claims` | Any type where confirmed intent contains "verified" or "tech-checked" | Step 9: verification sub-tasks |
 | `architecting-data-platforms` | Task type = research, target involves data platform | Step 9 inner loop: research pattern |
-| `analyzing-business-cases` | Task type = framing | Step 9 inner loop: framing sub-tasks |
+| `analyzing-business-cases` | Task type = framing | Step 9 inner loop: framing pattern — delegates domain work to analyzing-business-cases |
 
 ---
 
@@ -387,6 +387,6 @@ Hand off to managing-tasks in sequence:
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.19        |
+| Version      | 1.21        |
 | Last Updated | 2026-04-03  |
 | Status       | Draft       |
