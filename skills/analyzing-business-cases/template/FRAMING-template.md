@@ -1,8 +1,8 @@
-<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
 <!-- Canonical location: skills/analyzing-business-cases/template/FRAMING-template.md -->
 <!-- Original source: slide-gen/template/FRAMING-template.md (v1.0, unversioned) -->
 
-# FRAMING.md — use-case-<id>
+# FRAMING.md — <project-name>
 
 ## Context
 Describe the stable state: the business environment, organizational structure, key processes,

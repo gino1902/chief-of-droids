@@ -4,15 +4,15 @@ description: >
   Frames projects, challenges weak business reasoning, and assesses artifact
   consistency across projects. Load this skill whenever a user wants to define,
   scope, or pressure-test a project — including vague or early-stage requests.
-  Triggers on: "build framing", "challenge framing", "assess <project-name>",
+  Triggers on: "build framing", "challenge framing", "assess-artifacts <project-name>",
   "frame this project", "scope this use case", "challenge this proposal",
   "does this make business sense", "what are we actually trying to solve",
   "is the framing solid", "new use case". Explicit command aliases:
-  "build framing <project-name>", "challenge framing <project-name>", "assess <project-name>".
+  "build framing <project-name>", "challenge framing <project-name>", "assess-artifacts <project-name>".
   Composes with: architecting-data-platforms (when use case is a data platform),
   reviewing-tech-claims (when technical claims appear in FRAMING).
 ---
-<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
+<!-- version: 2.3 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
 
 # Analyzing Business Cases Skill
 
@@ -30,11 +30,10 @@ Read explicitly via filesystem tool when the relevant workflow is triggered. Not
 | File | When to read |
 |---|---|
 | `template/FRAMING-template.md` | During `build framing` — structural base for all sections |
-| `references/qa-checklist.md` | During `build framing` and `challenge framing` |
-| `references/consistency-check.md` | During `assess` |
+| `references/qa-checklist.md` | During `build framing`, `challenge framing`, and `assess-artifacts` (workflow-specific section only) |
 | `references/workflows/build-framing.md` | Full procedure for `build framing` |
-| `references/workflows/challenge-framing.md` | Full procedure for `challenge framing` |
-| `references/workflows/assess.md` | Full procedure for `assess` |
+| `references/workflows/challenge-framing.md` | Full procedure for `challenge framing` and sub-step of `assess-artifacts` |
+| `references/workflows/assess-artifacts.md` | Full procedure for `assess-artifacts` |
 
 ## Workflows
 
@@ -46,9 +45,9 @@ Read `references/workflows/build-framing.md` for the full procedure.
 Trigger: `challenge framing <project-name>` | "challenge this proposal" | "is the framing solid" | "does this make business sense"
 Read `references/workflows/challenge-framing.md` for the full procedure.
 
-### assess
-Trigger: `assess <project-name>`
-Read `references/workflows/assess.md` for the full procedure.
+### assess-artifacts
+Trigger: `assess-artifacts <project-name>`
+Read `references/workflows/assess-artifacts.md` for the full procedure.
 
 ## QA Checklist
 
@@ -57,7 +56,7 @@ Read `references/workflows/assess.md` for the full procedure.
 - [ ] Value articulation is measurable and stakeholder-linked
 - [ ] Scope boundary is explicit
 - [ ] Assumptions surfaced — not buried
-- [ ] All artifact transitions pass consistency-check before proceeding
+- [ ] All artifact transitions pass qa-checklist assess-artifacts section before proceeding
 - [ ] No rewrite of FRAMING.md without explicit user instruction
 - [ ] No file written without user approval
 - [ ] Technical claims in FRAMING delegated to architecting-data-platforms / reviewing-tech-claims
@@ -67,10 +66,10 @@ Read `references/workflows/assess.md` for the full procedure.
 | Skill | When |
 |---|---|
 | `architecting-data-platforms` | When use case is a data platform design or architecture |
-| `reviewing-tech-claims` | When technical claims appear in FRAMING or CONSTITUTION |
+| `reviewing-tech-claims` | When technical claims appear in FRAMING or [REPO_NAME]/CLAUDE.md |
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.8        |
-| Last Updated | 2026-04-02 |
+| Version      | 2.3        |
+| Last Updated | 2026-04-03 |
 | Status       | Final      |

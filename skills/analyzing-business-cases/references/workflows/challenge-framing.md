@@ -1,4 +1,4 @@
-<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-04-02 -->
+<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
 
 # Workflow: challenge framing
 
@@ -20,9 +20,9 @@ Never hardcode a path. Always confirm resolved path to the user before reading:
 ## Steps
 
 1. Resolve FRAMING.md path (see Path Resolution above); read via Filesystem tool
-2. Use filesystem tool to read `references/qa-checklist.md`
-3. Run checklist against every section
-4. Output a structured critique — section by section, issue by issue
+2. Use filesystem tool to read `references/qa-checklist.md` — `challenge framing` section only
+3. Run each item in the `challenge framing` checklist section against FRAMING.md
+4. Output a structured critique — one finding per checklist item that fails, grouped by FRAMING.md section
 5. Surface findings only — do not rewrite FRAMING.md unless user requests (see step 6)
 6. If user confirms findings and requests a fix: propose edits, await approval, then write
 
@@ -37,6 +37,6 @@ Structured critique in chat (no file write unless user requests)
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.3        |
-| Last Updated | 2026-04-02 |
+| Version      | 1.4        |
+| Last Updated | 2026-04-03 |
 | Status       | Final      |

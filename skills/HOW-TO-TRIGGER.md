@@ -231,14 +231,14 @@ These sources describe the Claude Code Agent Skills mechanism (VM-based, frontma
 Explicit trigger only — does not auto-load.
 
 **Triggers:**
-- `build framing <use-case-id>` — scaffold a new FRAMING.md from a user prompt
-- `challenge framing <use-case-id>` — critique an existing FRAMING.md
-- `assess <use-case-id>` — cross-artifact consistency check
+- `build framing <project-name>` — scaffold a new FRAMING.md from a user prompt
+- `challenge framing <project-name>` — critique an existing FRAMING.md
+- `assess-artifacts <project-name>` — cross-artifact consistency check
 
 **Examples:**
-- "build framing use-case-2"
-- "challenge framing use-case-1"
-- "assess use-case-1"
+- "build framing my-project"
+- "challenge framing my-project"
+- "assess-artifacts my-project"
 
 ---
 
@@ -298,6 +298,6 @@ request. Common combinations in this workspace:
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.2         |
-| Last Updated | 2026-04-02  |
+| Version      | 1.4         |
+| Last Updated | 2026-04-03  |
 | Status       | Draft       |
