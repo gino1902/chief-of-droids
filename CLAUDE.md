@@ -68,6 +68,14 @@ This workspace uses two MCP servers for content retrieval. They have similar ver
 
 ---
 
+## File Edits
+
+- Pattern: `filesystem:read_text_file` → `filesystem:write_file` (full rewrite)
+- `str_replace` has known silent failure behaviour in this workspace — do not use
+- Always read the full current file before writing — never rewrite from memory or prior context
+
+---
+
 ## Skills Architecture
 
 This workspace loads skills via Claude Desktop + Filesystem MCP — not the official Claude Code Agent Skills mechanism. This distinction matters when applying official Anthropic guidance to skill design or assessment.
@@ -118,11 +126,19 @@ precedence over this workspace default for sessions routed to that repo.
 
 - Default repo: `/home/gino/workspace`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/home/gino/workspace/<n>`; "all repos" → run across all repos
 - Stage by explicit file path array — never by directory (risk of sweeping untracked files from subdirectories)
-- After every file write, offer to commit the changed file(s) before proceeding
-- Before committing, ask once: "Show diff? (yes/no)"; if no → commit directly; if yes → run `git_diff_staged` and wait for explicit confirmation before committing
+- After every file write, ask "Do you want to commit?"
+  - Yes → ask "Display diffs? (yes/no)"; if yes → run `git_diff_staged` per uncommitted file, display each diff, then commit; if no → commit directly
+  - No → wait for next prompt
 - Commit message: propose and commit directly — no approval required
 - Commit message format: `type(scope): description`
 - Push: `git_push` unavailable via MCP — always push manually from WSL2
+
+---
+
+## Maintenance
+
+Run a token audit whenever a rule, workflow, or routing path is added to the system prompt.
+Pattern: `my-claude-fmk/claude-desktop/context/prompt-maintenance.md` — four-step workflow.
 
 ---
 
