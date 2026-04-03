@@ -1,4 +1,4 @@
-<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 1.5 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
 
 # Assessment Checklist
 
@@ -34,6 +34,9 @@ comparable skills; that is the role of `skill-sources.md` via the `enrich skill`
 ## Instructions
 
 - [ ] Imperative form used throughout ("Read...", "Fetch...", "Output...")
+- [ ] Enforcement-critical rules use unambiguous directive language
+  ("Always...", "Never...") — reserved for rules where deviation causes
+  silent failure or incorrect output; not used for general guidance
 - [ ] Specificity matched to task fragility: high / medium / low freedom explicit
 - [ ] No heavy-handed MUSTs where explanation of why would work better
 - [ ] Trigger examples are realistic — reflect actual user phrases
@@ -57,6 +60,14 @@ output files, or classifies inputs into categories.
   certain conditions, those conditions are stated; no branch is left implicit
 - [ ] Pass/stage outputs are explicitly consumed by the next pass —
   it is clear what data flows forward and in what form
+- [ ] Workflow stages are explicitly labelled — each stage has a name
+  or number; outputs produced by a stage are identified by that label
+  when referenced downstream
+- [ ] Data-producing stages declare output persistence — if a stage
+  produces data consumed in a later stage or surfaced to the user,
+  the skill states whether that data is held in context or written
+  to a file; implicit context-only storage is a silent failure risk
+  on long workflows
 - [ ] "Done" is defined — the workflow has an explicit completion condition,
   not just a list of steps that ends
 - [ ] Failure handling covers runtime conditions, not just missing files —
