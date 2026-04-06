@@ -1,4 +1,4 @@
-<!-- version: 1.5 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
+<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # Assessment Checklist
 
@@ -43,6 +43,22 @@ comparable skills; that is the role of `skill-sources.md` via the `enrich skill`
 - [ ] Instructions generalise — not overfit to narrow examples
 - [ ] Workflows have clear sequential steps with feedback loops where relevant
 - [ ] Failure handling defined — skill does not silently proceed on missing files
+
+## QA Checklist
+
+Apply this section to all skills regardless of class.
+
+- [ ] **Major** — QA checklist present: `references/qa-checklist.md` (unified) or
+  per-workflow split files (`references/qa-checklist-[name].md`)
+- [ ] **Major** — QA item format conforms to severity-labelled model:
+  `- [ ] **[Severity]** — [item]` with Blocking / Major / Minor labels only
+- [ ] **Major** — Placement decision documented: if split files used, SKILL.md Reference
+  Files section lists each split file individually with its scope stated; if unified,
+  branch-exclusive items carry inline path labels
+- [ ] **Major** — All Blocking items traceable to a hard gate, silent failure risk,
+  or data-loss condition in the skill's workflow — no unsourced Blocking items
+- [ ] **Minor** — No severity inflation: preferences and style items labelled Minor,
+  not Major; correctness gates labelled Blocking, not Major
 
 ## Workflow-Class Skills
 
@@ -133,6 +149,10 @@ sources and writes to a scored catalog file (e.g. `add source` workflow).
 
 The Frontmatter, Structure, Instructions, Composition, and Security sections
 cover all skill classes and are reliable for structural compliance assessment.
+
+The QA Checklist section applies to all skills. Absence of a QA checklist
+(`references/qa-checklist.md` or equivalent split files) is always a Major
+finding regardless of skill class.
 
 The Workflow-Class Skills section covers correctness of execution logic —
 it is the only section that can surface classification errors, branching

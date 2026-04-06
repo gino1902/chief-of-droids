@@ -17,7 +17,7 @@ description: >
   skill sources", "add [URL] to the skills catalog", "evaluate [URL] as a
   skill source".
 ---
-<!-- version: 2.8 | author: chief-of-droids workspace | last_updated: 2026-03-30 -->
+<!-- version: 2.9 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # Creating Skills Skill
 
@@ -28,6 +28,7 @@ Authors, critiques, enriches, assesses, recommends, and extends the source catal
 ## Reference Files
 
 - `references/assessment-checklist.md` — read before any author, critique, or assess workflow
+- `references/qa-template.md` — read during `author skill` workflow only, before authoring the QA checklist
 - `references/skill-sources.md` — source catalog; read during enrich and recommend-skills workflows
 - `references/workflows/recommend-skills.md` — full workflow for skill gap analysis from session findings
 - `references/workflows/add-source.md` — full workflow for evaluating and adding a new external source to skill-sources.md
@@ -129,10 +130,24 @@ Steps:
    Apply rules from fetched official sources and checklist — not from memory
 6. Run assessment-checklist against the draft before proposing it
 7. Surface checklist gaps as open questions
-8. Propose test prompts (2-3 realistic triggers) for manual validation
-9. Await user approval before writing any file
+8. **Author QA checklist:**
+   a. Read `references/qa-template.md` via Filesystem tool
+      If read fails: `⚠️ qa-template.md could not be read — surface to user and stop QA authoring`
+   b. Enumerate all hard gates, reference file reads, output writes, and failure
+      conditions from the drafted skill
+   c. Assign severity per template definitions (Blocking / Major / Minor)
+   d. Apply placement decision rule: compute branch-exclusive ratio; choose
+      unified (`references/qa-checklist.md`) or split (`references/qa-checklist-[name].md`)
+   e. Verify minimum coverage requirements from template are met
+   f. Draft checklist file(s) with required header block from template
+   g. State placement decision with ratio before proposing:
+      > "QA placement: [Unified / Split] — [N] of [total] items are branch-exclusive ([ratio]%)"
+9. Propose test prompts (2–3 realistic triggers) for manual validation
+10. Propose skill draft + QA checklist together — await user approval before writing any file
+11. On approval: write SKILL.md, then write QA checklist file(s)
 
-Output: `skills/<n>/SKILL.md` written to filesystem (on approval only)
+Output: `skills/<n>/SKILL.md` + `skills/<n>/references/qa-checklist.md`
+(or per-workflow split files) written to filesystem (on approval only)
 
 ---
 
@@ -384,34 +399,48 @@ Output: new row added to `references/skill-sources.md` (on approval); rejected s
 
 ## QA Checklist
 
-- [ ] Environment detected and reported before any other action — every workflow
-- [ ] Step 0 probe file is `references/assessment-checklist.md` — stable, workflow-neutral
-- [ ] assessment-checklist.md reused from Step 0 result — not re-read in subsequent steps
-- [ ] Correct source mode used per workflow: official sources (author/critique/assess) | catalog pattern extraction (enrich) | catalog coverage matching + session findings (recommend) | own fetch protocol (add source)
-- [ ] All three official source fetches attempted — status reported explicitly (author / critique / assess only)
-- [ ] Findings cross-referenced against fetched official docs, not checklist alone
-- [ ] Description field third person, trigger-inclusive, max 1024 chars
-- [ ] SKILL.md lean — no content that belongs in reference files
-- [ ] Test prompts proposed for new skills before writing
-- [ ] No file written without user approval
-- [ ] recommend skills: Step 0 run; Step 1 not run; skill-sources.md read for coverage matching
-- [ ] recommend skills: each recommendation states source catalog match and coverage delta vs. gap identified
-- [ ] add source: Step 0 run; Step 1 not run; add-source.md workflow read and executed as written
-- [ ] add source: all three qualification criteria evaluated before any write
-- [ ] add source: rejected sources added to Exclusion Log with criterion and reason
-- [ ] add source: write only on explicit user approval; read-back confirms write succeeded
-- [ ] enrich workflow: steps labelled E1–E10 — no collision with global Step 0 / Step 1
-- [ ] enrich workflow: E1 cap sets E2–E8 to `Skipped — filesystem unavailable` / Low
-- [ ] enrich workflow: E3 cap names Environment Detection (E1) explicitly — not "Step 1"
-- [ ] enrich workflow: E3 cap distinguishes filesystem-Low from external-URL-Low
-- [ ] enrich workflow: E3 reports per-source table with SKILL.md count and content status
-- [ ] enrich workflow: SKILL.md count = 0 flags source as improper catalog entry for removal
-- [ ] enrich workflow: E2 row count compared against full file read row count — not a hardcoded number
-- [ ] enrich workflow: skipped steps emit `Skipped — <reason>` and `Low` in confidence column
-- [ ] enrich workflow: E6 Low short-circuits E7 — E7 set to `Skipped — no candidates after filter`
-- [ ] enrich workflow: E5 confidence rubric — Medium = ≥1 source zero patterns; Low = all sources zero patterns
-- [ ] enrich workflow: E6 filter denominator is pre-filter candidate count — not source count
-- [ ] enrich workflow: confidence report emitted before awaiting approval
-- [ ] enrich workflow: Gap and Enrichment Opportunity columns independently legible
-- [ ] enrich workflow: every High-priority row has a concrete proposal with named target file
-- [ ] enrich workflow: approved proposals written to declared target files; workflow complete on confirmed writes
+- [ ] **Blocking** — Environment detected and reported before any other action — every workflow
+- [ ] **Blocking** — Step 0 probe file is `references/assessment-checklist.md` — stable, workflow-neutral
+- [ ] **Major** — assessment-checklist.md reused from Step 0 result — not re-read in subsequent steps
+- [ ] **Blocking** — Correct source mode used per workflow: official sources (author/critique/assess) | catalog pattern extraction (enrich) | catalog coverage matching + session findings (recommend) | own fetch protocol (add source)
+- [ ] **Major** — All three official source fetches attempted — status reported explicitly (author / critique / assess only)
+- [ ] **Major** — Findings cross-referenced against fetched official docs, not checklist alone
+- [ ] **Major** — Description field third person, trigger-inclusive, max 1024 chars
+- [ ] **Major** — SKILL.md lean — no content that belongs in reference files
+- [ ] **Major** — Test prompts proposed for new skills before writing
+- [ ] **Blocking** — No file written without user approval
+- [ ] **Blocking** — qa-template.md read before QA checklist authored (author skill only)
+- [ ] **Major** — QA checklist enumerated from hard gates, reference reads, writes, and failure conditions in the drafted skill
+- [ ] **Major** — Severity assigned per template definitions — no inflation
+- [ ] **Major** — Placement decision rule applied — branch-exclusive ratio computed and stated before proposing
+- [ ] **Major** — Minimum coverage requirements verified before proposing checklist
+- [ ] **Major** — QA checklist proposed alongside skill draft — not after approval
+- [ ] **Blocking** — QA checklist file(s) written on approval, not before
+- [ ] **Major** — recommend skills: Step 0 run; Step 1 not run; skill-sources.md read for coverage matching
+- [ ] **Major** — recommend skills: each recommendation states source catalog match and coverage delta vs. gap identified
+- [ ] **Major** — add source: Step 0 run; Step 1 not run; add-source.md workflow read and executed as written
+- [ ] **Major** — add source: all three qualification criteria evaluated before any write
+- [ ] **Minor** — add source: rejected sources added to Exclusion Log with criterion and reason
+- [ ] **Blocking** — add source: write only on explicit user approval; read-back confirms write succeeded
+- [ ] **Major** — enrich workflow: steps labelled E1–E10 — no collision with global Step 0 / Step 1
+- [ ] **Major** — enrich workflow: E1 cap sets E2–E8 to `Skipped — filesystem unavailable` / Low
+- [ ] **Minor** — enrich workflow: E3 cap names Environment Detection (E1) explicitly — not "Step 1"
+- [ ] **Major** — enrich workflow: E3 cap distinguishes filesystem-Low from external-URL-Low
+- [ ] **Major** — enrich workflow: E3 reports per-source table with SKILL.md count and content status
+- [ ] **Major** — enrich workflow: SKILL.md count = 0 flags source as improper catalog entry for removal
+- [ ] **Major** — enrich workflow: E2 row count compared against full file read row count — not a hardcoded number
+- [ ] **Minor** — enrich workflow: skipped steps emit `Skipped — <reason>` and `Low` in confidence column
+- [ ] **Major** — enrich workflow: E6 Low short-circuits E7 — E7 set to `Skipped — no candidates after filter`
+- [ ] **Major** — enrich workflow: E5 confidence rubric — Medium = ≥1 source zero patterns; Low = all sources zero patterns
+- [ ] **Minor** — enrich workflow: E6 filter denominator is pre-filter candidate count — not source count
+- [ ] **Major** — enrich workflow: confidence report emitted before awaiting approval
+- [ ] **Major** — enrich workflow: Gap and Enrichment Opportunity columns independently legible
+- [ ] **Major** — enrich workflow: every High-priority row has a concrete proposal with named target file
+- [ ] **Major** — enrich workflow: approved proposals written to declared target files; workflow complete on confirmed writes
+
+
+| Field        | Value      |
+|:-------------|:-----------|
+| Version      | 2.9        |
+| Last Updated | 2026-04-06 |
+| Status       | Draft      |
