@@ -1,4 +1,4 @@
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # QA Checklist Template
 
@@ -13,33 +13,44 @@ by `creating-skills` must have a QA checklist conforming to this template.
 
 ## Item Format
 
-Each checklist item follows this exact format:
+Each checklist item is a table row with five columns:
 
+```markdown
+| Severity | Maps to | Item | Pass | Fail signal |
+|:---------|:--------|:-----|:-----|:------------|
+| Blocking / Major / Minor | Hard gate / Output quality / Style | What must be true | Observable condition that constitutes passing | What Claude surfaces or does on failure |
 ```
-- [ ] **[Severity]** — [what must be true for this item to pass]
-```
 
-Severity is one of three labels — always bold, always sentence-case:
+**Column definitions:**
 
-| Label | Meaning |
-|:------|:--------|
-| **Blocking** | Silent failure or incorrect output if this item does not hold. Must pass before execution continues or output is accepted. |
-| **Major** | Output quality or trigger accuracy degrades if this item does not hold. Fix before production use. |
-| **Minor** | Style or optimisation issue. Fix opportunistically. |
+| Column | Content |
+|:-------|:--------|
+| Severity | One of three labels: `Blocking`, `Major`, `Minor` |
+| Maps to | The workflow element this item governs — hard gate, reference file read, output write, path detection, failure handling, etc. |
+| Item | The assertion — what must hold; observable outcome, not a process step |
+| Pass | Exact condition that constitutes passing — checkable without inference |
+| Fail signal | What Claude must surface or do when this item does not hold |
+
+**Severity definitions:**
+
+| Severity | Meaning | Fail behaviour |
+|:---------|:--------|:---------------|
+| Blocking | Hard gate or silent failure risk — execution must not continue if this fails | Halt and surface specific violation before proceeding |
+| Major | Output quality or trigger accuracy degrades if this fails | Flag finding; do not present output as fully reliable |
+| Minor | Style or optimisation issue | Note opportunistically; does not block output |
 
 **Rules:**
-- Every item must be independently verifiable — a reader can determine pass/fail
-  without reading another item
+- Every item must be independently verifiable — Pass column fully defines what passing looks like
 - Items describe observable outcomes, not process steps
 - No severity inflation — a preference is Minor, a correctness gate is Blocking
-- Blocking items must be traceable to a hard gate, silent failure risk, or
-  data-loss condition in the skill's workflow
+- Blocking items must be traceable to a hard gate, silent failure risk, or data-loss condition in the skill's workflow
+- Fail signal must prescribe a specific action — not "handle appropriately"
 
 ---
 
 ## Placement Decision Rule
 
-After authoring the full item list, apply this rule to determine file placement:
+After authoring the full item table, apply this rule to determine file placement:
 
 **Step 1 — Count branch-exclusive items.**
 An item is branch-exclusive if it applies to one workflow or path only
@@ -55,7 +66,7 @@ branch-exclusive items ÷ total items
 
 | Ratio | Placement |
 |:------|:----------|
-| < 50% branch-exclusive | **Unified** — single `references/qa-checklist.md`; use inline path labels where needed (e.g. `(Path 1 only)`) |
+| < 50% branch-exclusive | **Unified** — single `references/qa-checklist.md`; group items under workflow section headings |
 | ≥ 50% branch-exclusive | **Split** — one file per workflow branch; see naming convention below |
 
 **Split file naming convention:**
@@ -119,8 +130,9 @@ filled in for the skill being authored:
 # QA Checklist — [skill name]
 
 Governs: `[skill-name]` skill
-Format: executing-tasks severity model (Blocking / Major / Minor)
+Format: table (Severity / Maps to / Item / Pass / Fail signal)
 Placement: Unified | Split ([list split files if applicable])
+Branch-exclusive ratio: N of M items are branch-specific (N%) — [below/above] 50% threshold; [unified/split] placement correct
 ```
 
 ---
@@ -131,7 +143,7 @@ Placement: Unified | Split ([list split files if applicable])
 2. Read this template (`references/qa-template.md`)
 3. Enumerate all hard gates, reference file reads, output writes, and failure
    conditions from the drafted skill
-4. Assign severity per the definitions above
+4. For each: assign severity, identify Maps to element, write Pass condition, write Fail signal
 5. Apply the placement decision rule — compute ratio, choose unified or split
 6. Draft the checklist file(s) with the required header
 7. Verify minimum coverage requirements are met before proposing to user
@@ -142,13 +154,13 @@ Placement: Unified | Split ([list split files if applicable])
 
 ## Anti-Patterns
 
-Avoid these common defects when authoring:
-
 | Anti-pattern | Correct approach |
 |:-------------|:----------------|
 | Severity inflation — labelling preferences as Blocking | Reserve Blocking for hard gates and silent failure risks only |
 | Untraceable Blocking items | Every Blocking item must point to a specific gate or failure mode in the skill |
 | Process steps as items ("Claude reads the file") | Items describe outcomes ("Reference file read before workflow step executes") |
+| Vague Pass column ("item holds") | Pass must be independently checkable without reading any other column |
+| Vague Fail signal ("handle error") | Fail signal must prescribe a specific action: halt, flag, return to user, etc. |
 | Duplicate items with different labels | Merge into one item at the higher severity |
 | Checklist describes the happy path only | Include at least one item per declared failure condition |
 
@@ -156,6 +168,6 @@ Avoid these common defects when authoring:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-04-06 |
 | Status       | Active     |
