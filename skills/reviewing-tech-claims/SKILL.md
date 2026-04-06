@@ -9,7 +9,7 @@ description: >
   config syntax, install steps, or UI paths. Composes with:
   architecting-data-platforms, writing-docs.
 ---
-<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # Reviewing Tech Claims Skill
 
@@ -22,6 +22,11 @@ Trigger by including one of the following phrases in the prompt:
 - `tech-checked`
 - `source-verified`
 - `confirmed against official source`
+- `update comparison guide`
+- `tech verify comparison guide`
+- `verify and update claude-code-vs-claudeai`
+- `refresh comparison guide`
+- `check comparison guide against official docs`
 
 Also load proactively when composing with `architecting-data-platforms` or
 `writing-docs` and the planned output contains version-sensitive technical claims
@@ -40,6 +45,9 @@ paths). Do not wait for an explicit qualifier in that context.
 
 - `references/verification-workflow.md` — use filesystem tool to read before any verification task;
   contains the Official Sources table and the 4-step verification procedure
+- `references/workflows/update-comparison-guide.md` — step-by-step workflow for verifying,
+  correcting, and gap-filling `my-claude-fmk/claude-desktop/claude-code-vs-claudeai.md`;
+  load when any trigger phrase for that workflow is detected
 
 ---
 

@@ -14,8 +14,9 @@ those rows here.**
 
 | Topic | Official Source |
 | :--- | :--- |
-| Anthropic — Claude Desktop, Claude Code, API | `docs.anthropic.com` |
-| Anthropic — support, plans, billing | `support.anthropic.com` |
+| Anthropic — Claude API, models, general docs | `docs.anthropic.com` |
+| Anthropic — Claude Code docs (settings, memory, skills, subagents, hooks, permissions, surfaces) | `code.claude.com` |
+| Anthropic — support, plans, billing, release notes | `support.claude.com` |
 | MCP protocol spec | `modelcontextprotocol.io` |
 | npm packages | `npmjs.com` — confirm exact package name exists and is not deprecated |
 | Node.js | `nodejs.org/en/docs` |
