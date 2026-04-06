@@ -90,9 +90,11 @@ Not used by `enrich skill`, `recommend skills`, or `add source` — those workfl
 Attempt all three fetches after environment detection. Do not skip even if the
 environment is known from a prior run in the same session.
 
-1. `https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/best-practices`
-2. `https://github.com/anthropics/skills/`
-3. `https://agentskills.io/specification`
+1. `https://agentskills.io/specification`
+2. `https://agentskills.io/skill-creation/best-practices`
+3. `https://agentskills.io/skill-creation/optimizing-descriptions`
+4. `https://agentskills.io/skill-creation/evaluating-skills`
+5. `https://agentskills.io/skill-creation/using-scripts`
 
 **Fetch outcomes:**
 
