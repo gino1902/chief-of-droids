@@ -1,4 +1,4 @@
-<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # Assessment Checklist
 
@@ -23,8 +23,8 @@ comparable skills; that is the role of `skill-sources.md` via the `enrich skill`
 
 ## Structure
 
-- [ ] SKILL.md acts as table of contents — no bulk content inline
-- [ ] SKILL.md body under 500 lines (official limit for optimal performance)
+- [ ] SKILL.md body under 500 lines — official limit; consider splitting longer content
+  into reference files when approaching this limit (agentskills.io/specification)
 - [ ] Reference files declared explicitly with guidance on when to read them
 - [ ] Large reference files (>100 lines) have a table of contents
 - [ ] Multi-domain skills organise references by domain variant
@@ -50,8 +50,12 @@ Apply this section to all skills regardless of class.
 
 - [ ] **Major** — QA checklist present: `references/qa-checklist.md` (unified) or
   per-workflow split files (`references/qa-checklist-[name].md`)
-- [ ] **Major** — QA item format conforms to severity-labelled model:
-  `- [ ] **[Severity]** — [item]` with Blocking / Major / Minor labels only
+- [ ] **Major** — QA item format uses a consistent severity-labelled model.
+  Two accepted formats:
+  - Simple skills: `- [ ] **[Severity]** — [item]` with Blocking / Major / Minor labels
+  - Complex workflow skills: table with Severity / Item / Pass / Fail columns
+  Both formats must use only Blocking / Major / Minor as severity values.
+  Mixed formats within a single checklist file are not permitted.
 - [ ] **Major** — Placement decision documented: if split files used, SKILL.md Reference
   Files section lists each split file individually with its scope stated; if unified,
   branch-exclusive items carry inline path labels
@@ -89,6 +93,9 @@ output files, or classifies inputs into categories.
 - [ ] Failure handling covers runtime conditions, not just missing files —
   what happens when a tool returns unexpected output, an empty result, or
   a partial result mid-workflow?
+- [ ] Retry loops are bounded — any step that can re-run on failure defines
+  a maximum retry count or escalation path; unbounded loops are a silent
+  failure risk on long workflows
 - [ ] External tool behaviour assumptions are stated — if the workflow
   depends on a tool (e.g. `recent_chats`, `conversation_search`,
   `filesystem:read_text_file`) behaving in a specific way, that assumption

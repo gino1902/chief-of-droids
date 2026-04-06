@@ -1,12 +1,15 @@
 ---
 name: executing-tasks
 description: >
-  Executes workspace tasks with quality-gated workflow: intent, plan, QA,
-  sub-tasks, verify. Triggers: 'execute TASK-XXX' (existing task), 'execute
-  new task' (no prior entry), or opt-in after 'start TASK-XXX'. Not on
-  'start TASK-XXX' alone.
+  Use this skill whenever a workspace task needs executing. Enforces a
+  quality-gated workflow — intent, plan, QA, sub-tasks, verify — so no task
+  runs without confirmed scope and traceable tests. Triggers: 'execute
+  TASK-XXX' (existing task), 'execute new task' (no prior entry), or opt-in
+  after 'start TASK-XXX'. Do not wait to be asked — offer this workflow
+  automatically after any task transitions to In Progress. Not on 'start
+  TASK-XXX' alone.
 ---
-<!-- version: 1.24 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 1.25 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # Executing Tasks Skill
 
@@ -29,7 +32,8 @@ Domain work belongs to the composing skill matched by the task-type classifier.
   and Inner-loop checklist as the formal Test step gate; contains Inner Loop QA Report format,
   severity definitions, and behaviour rule
 - `references/composing-skills.md` — read at Step 3; decision table mapping
-  confirmed intent and target signals to primary type + composing skills
+  confirmed intent and target signals to primary type + composing skills; owns the
+  ambiguity-resolution rule for equal-match cases
 - `references/qa-checklist.md` — consulted during mock-request validation or skill
   assessment; not read during task execution
 - See workspace `CLAUDE.md` §`MCP Tools` and §`File Edits` for known tool behaviour
@@ -155,14 +159,11 @@ defines the target.
 Read `references/composing-skills.md`.
 If read fails: `⚠️ composing-skills.md could not be read — surface to user and stop before proceeding.`
 
-Apply decision table to confirmed intent and target (includes an explicit unclassified
-fallback — see composing-skills.md).
+Apply the decision table to confirmed intent and target. Ambiguity resolution rule is
+defined in `references/composing-skills.md` — follow it; do not restate here.
 
 State classification explicitly before proceeding:
 > "Task type: [type]. Composing skills: [list]. Sub-task pattern: [pattern]."
-
-If two types match equally: surface both, ask user to confirm primary.
-One question only. Resolution stops further prompting.
 
 ### Step 4a — Verification scenario (hard gate)
 
@@ -318,7 +319,14 @@ After all sub-tasks complete, surface the Inner Loop QA Report (format defined i
 Run every test from the QA suite (Step 7) against all outputs.
 Report each: ✅ Pass | ⚠️ Partial | ❌ Fail.
 
-If any ❌: return to Step 9 for the relevant sub-task. Do not proceed with open failures.
+If any ❌: return to Step 9 for the relevant sub-task.
+**Retry cap:** if a sub-task returns to Step 9 and fails Step 10 a second time, do not
+loop again automatically. Surface:
+> "Sub-task [N] has failed verification twice. Options: (1) revise the acceptance
+> criterion; (2) revise the plan sub-task; (3) accept residual risk and proceed.
+> Which do you prefer?"
+Await explicit user choice before proceeding.
+
 If all ✅ or ⚠️ only: surface the full QA report before Step 11.
 
 ### Step 11 — Refine
@@ -347,6 +355,11 @@ Hand off to managing-tasks in sequence:
 2. `done task TASK-XXX` — trigger immediately after `add task` confirms,
    using the TASK-ID retained from step 1.
 
+**Path 2 session-interruption recovery:** if the session ends after `add task` confirms
+but before `done task` is called, the task will exist in TASKS.md as 🟡 In Progress with
+no corresponding close. On resumption: use `execute TASK-XXX` (Path 1) with the TASK-ID
+from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`.
+
 ---
 
 ## Composes With
@@ -362,6 +375,6 @@ Hand off to managing-tasks in sequence:
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.24        |
+| Version      | 1.25        |
 | Last Updated | 2026-04-06  |
 | Status       | Draft       |
