@@ -6,7 +6,7 @@ description: >
   new task' (no prior entry), or opt-in after 'start TASK-XXX'. Not on
   'start TASK-XXX' alone.
 ---
-<!-- version: 1.23 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 1.24 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # Executing Tasks Skill
 
@@ -32,6 +32,8 @@ Domain work belongs to the composing skill matched by the task-type classifier.
   confirmed intent and target signals to primary type + composing skills
 - `references/qa-checklist.md` — consulted during mock-request validation or skill
   assessment; not read during task execution
+- See workspace `CLAUDE.md` §`MCP Tools` and §`File Edits` for known tool behaviour
+  and failure modes (POSIX path requirement, `str_replace` silent failure) — not re-stated here.
 
 ---
 
@@ -74,6 +76,13 @@ Do NOT trigger on "start TASK-XXX" alone — that belongs to managing-tasks.
 
 ## Outer Loop Workflow
 
+**Workflow state:** The artifacts produced at Steps 2A (confirmed intent), 2B (confirmed
+target), 4a (verification scenarios), 4b (acceptance criteria), 6 (approved plan), and 7
+(QA suite) are held in context for the remainder of the workflow. They are not written to
+disk. If any downstream step references an artifact that appears missing (e.g. after a
+session interruption): re-run from the step that produced it. Do not proceed with an
+unconfirmed artifact.
+
 ### Step 1 — Extract task context
 
 **Detect path from trigger:**
@@ -84,6 +93,10 @@ Fields required: description, scope, target, origin.
 Scope is extracted here for Step 2 intent proposal only — it is retired as a
 working field after Step 2A confirmation. Do not reference it beyond Step 2A.
 Do NOT ask the user to re-describe the task. All context comes from TASKS.md.
+
+If `filesystem:read_text_file` returns a tool error (not a parsed result):
+> ⚠️ TASKS.md could not be read — tool error. Verify the file path and MCP server status before retrying.
+Stop. Do not treat as "task not found."
 
 If TASK-XXX not found:
 > ⚠️ TASK-XXX not found in TASKS.md — verify task ID and status via managing-tasks before proceeding.
@@ -142,7 +155,8 @@ defines the target.
 Read `references/composing-skills.md`.
 If read fails: `⚠️ composing-skills.md could not be read — surface to user and stop before proceeding.`
 
-Apply decision table to confirmed intent and target.
+Apply decision table to confirmed intent and target (includes an explicit unclassified
+fallback — see composing-skills.md).
 
 State classification explicitly before proceeding:
 > "Task type: [type]. Composing skills: [list]. Sub-task pattern: [pattern]."
@@ -266,6 +280,12 @@ After presenting the suite, state confidence before awaiting user confirmation:
 > "QA suite confidence: [N]% — [one-line rationale for the score]"
 
 Await user confirmation before proceeding.
+If user requests changes:
+- If the objection is with the criteria themselves → return to Step 4b, revise criteria,
+  re-derive the QA suite from the updated criteria, re-present.
+- If the objection is with the test expansion (a Claude authoring error) → revise the
+  affected test rows, re-present the full suite, re-confirm before proceeding.
+Do not proceed on partial approval.
 
 The QA suite produced here is the direct input to Step 10 (Verify).
 Do not author a separate verification checklist at Step 10.
@@ -342,6 +362,6 @@ Hand off to managing-tasks in sequence:
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.23        |
+| Version      | 1.24        |
 | Last Updated | 2026-04-06  |
 | Status       | Draft       |
