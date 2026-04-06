@@ -9,7 +9,7 @@ description: >
   automatically after any task transitions to In Progress. Not on 'start
   TASK-XXX' alone.
 ---
-<!-- version: 1.25 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 1.26 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # Executing Tasks Skill
 
@@ -119,40 +119,69 @@ Proceed directly to Step 2. No TASKS.md lookup.
 Read `references/intent-schema.md` before this step.
 If read fails: `⚠️ intent-schema.md could not be read — surface to user and stop before proceeding.`
 
-#### Step 2A — Propose intent (hard gate)
+#### Step 2A — Collect and propose intent (hard gate)
 
-Using the authoring rules in `references/intent-schema.md`, propose an intent sentence:
+Render **Artifact 1** — the intent input form. Per-path pre-fill behaviour:
 
-> "As [actor] I need to [action] so that [value]"
+**Path 1:** before rendering, derive pre-fill values from the TASKS.md entry read at Step 1:
+- `action` field: extract primary verb + object from `description`
+- `value` field: extract purpose or benefit signal from `scope`
+- `actor` pill: pre-select `user` (direct prompt trigger)
 
-Per-path input source:
+Inject derived text as default textarea content. The user may edit any field before submitting.
 
-**Path 1:** derive action from the `description` field; derive value from the `scope` field.
-Scope is used here as the value basis and retired after this confirmation.
-Do not reference scope beyond this step.
+**Path 2:** render with empty `action` and `value` fields. Pre-select `user` on the `actor` pill.
+If the trigger prompt contains sufficient description text, pre-fill `action` from it; leave
+`value` empty.
 
-**Path 2:** derive action and value from the trigger prompt text.
-If the value clause cannot be inferred, flag it inline:
-> "[…so that [inferred value — confirm or revise if incorrect]]"
+**Artifact 1 structure** (render as elicit form):
+- Actor pill group: `user` | `System` | `Other` (single-select; `Other` reveals free-text input)
+- Action textarea: "What must be done? (verb + object — no file paths or tool names)"
+- Value textarea: "What is the observable benefit when this is done? (actor perspective, not implementation state)"
+- Submit button: "Propose intent"
 
-Validate the proposed intent against `references/intent-schema.md` before presenting.
+On submit, `sendPrompt()` delivers raw field values to Claude. Apply all five blocking
+validation rules from `references/intent-schema.md` before proceeding:
 
-**Scope retirement:** scope is retired as a working field after this confirmation.
-Do not reference it in any downstream step.
+| Outcome | Action |
+| :--- | :--- |
+| Any blocking rule fails | Surface the specific field and violation in chat; ask user to correct and resubmit — do not render Artifact 2 |
+| `actor` is `Other` and value resembles `API <n>` | Block: `⚠️ API <n> actor has no active trigger path in this workspace — likely a misclassification. Correct the actor or stop.` Do not render Artifact 2. |
+| `actor` is `System` | Surface advisory from intent-schema.md; require explicit user confirmation before rendering Artifact 2 |
+| All rules pass | Assemble intent sentence and proceed to Artifact 2 |
 
-**Hard gate:** do not proceed to Step 2B until the user explicitly confirms or
-modifies the intent.
+Assemble: `"As [actor] I need to [action] so that [value]"`
 
-#### Step 2B — Confirm or define target (hard gate)
+Validate the assembled sentence against `references/intent-schema.md` before rendering Artifact 2.
 
-**Path 1:** present the target extracted at Step 1.
-> "Confirm this target: [target from TASKS.md]"
+**Scope retirement (Path 1):** scope is retired as a working field after the user confirms
+the intent sentence. Do not reference it in any downstream step.
 
-**Path 2:** ask the user to define it.
-> "Define the target: [file or component this task will modify or produce]"
+#### Step 2B — Confirm intent and target (hard gate)
 
-**Hard gate:** do not proceed to Step 3 until the user explicitly confirms or
-defines the target.
+Before rendering Artifact 2, derive the target proposal:
+
+**Path 1:** use the `target` field from TASKS.md directly.
+
+**Path 2 (or Path 1 with no target field):** infer from the confirmed action clause —
+identify the primary noun object and map it to the most specific matching path in the
+workspace (skill file, reference file, repo-level doc, or component). Pre-fill with the
+inferred path. If confidence is low, append inline: `*(inferred — verify before confirming)*`
+
+Render **Artifact 2** — the confirm + target form:
+
+**Artifact 2 structure** (render as elicit form):
+- Intent sentence textarea: pre-filled with the assembled sentence from Step 2A; user may edit
+- Target textarea: pre-filled per derivation rule above; user may edit
+- Submit button: "Confirm intent"
+
+On submit, `sendPrompt()` delivers both fields to Claude.
+
+If the user edited the intent sentence: re-validate against the five blocking rules before
+accepting. Surface any failure and ask to correct; do not proceed with an invalid sentence.
+
+**Hard gate:** do not proceed to Step 3 until both `intent_sentence` and `target` are
+non-empty and the user has submitted Artifact 2.
 
 ### Step 3 — Classify task type
 
@@ -375,6 +404,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.25        |
+| Version      | 1.26        |
 | Last Updated | 2026-04-06  |
 | Status       | Draft       |
