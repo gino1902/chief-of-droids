@@ -9,7 +9,7 @@ description: >
   automatically after any task transitions to In Progress. Not on 'start
   TASK-XXX' alone.
 ---
-<!-- version: 1.27 | author: chief-of-droids workspace | last_updated: 2026-04-07 -->
+<!-- version: 1.28 | author: chief-of-droids workspace | last_updated: 2026-04-07 -->
 
 # Executing Tasks Skill
 
@@ -139,6 +139,9 @@ If the trigger prompt contains sufficient description text, pre-fill `action` fr
 - Action textarea: "What must be done? (verb + object — no file paths or tool names)"
 - Value textarea: "What is the observable benefit when this is done? (actor perspective, not implementation state)"
 - Submit button: "Propose intent"
+- Rendering note: Artifact 1 contains form elements — read `shared/elevate-theme/elevate-artifact.md`
+  before building and apply the `applyAll()` inline style pattern. CSS custom properties on
+  inputs, textareas, and buttons are prohibited.
 
 On submit, `sendPrompt()` delivers raw field values to Claude. Apply all five blocking
 validation rules from `references/intent-schema.md` before proceeding:
@@ -174,6 +177,9 @@ Render **Artifact 2** — the confirm + target form:
 - Intent sentence textarea: pre-filled with the assembled sentence from Step 2A; user may edit
 - Target textarea: pre-filled per derivation rule above; user may edit
 - Submit button: "Confirm intent"
+- Rendering note: Artifact 2 contains form elements — read `shared/elevate-theme/elevate-artifact.md`
+  before building and apply the `applyAll()` inline style pattern. CSS custom properties on
+  inputs, textareas, and buttons are prohibited.
 
 On submit, `sendPrompt()` delivers both fields to Claude.
 
@@ -412,6 +418,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.27        |
+| Version      | 1.28        |
 | Last Updated | 2026-04-07  |
 | Status       | Draft       |

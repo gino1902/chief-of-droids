@@ -210,11 +210,14 @@ elements — regardless of which skill authors the artifact. It does not apply t
 - `.md` output — governed by `elevate-mermaid.md` for diagrams
 - `.pptx`, `.docx`, `.xlsx` — governed by `theme1.xml` injection
 - Static HTML pages with no interactive form elements — use `elevate.css`
+- `visualize:show_widget` tool output — that tool has its own design system
+  (`var(--color-*)` host variables, flat surfaces) that conflicts with this pattern;
+  applying Elevate here would break the tool's rendering contract
 
 ---
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-04-07 |
 | Status       | Draft      |
