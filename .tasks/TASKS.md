@@ -1,4 +1,4 @@
-<!-- version: 1.23 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 1.24 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
 
 # TASKS.md — workspace
 
@@ -44,8 +44,9 @@
 
 ## ✅ Done
 
-*Last updated: 2026-04-06 — TASK-056 closed*
+*Last updated: 2026-04-06 — TASK-057 closed*
 
+- TASK-057: Improve executing-tasks Step 2 intent formulation with form inputs | target: workspace/skills/executing-tasks/SKILL.md | done: 2026-04-06 | scope delivered: replaced Step 2 prose with two-artifact elicit form flow — Artifact 1 collects actor/action/value with per-path pre-fill (Path 1 from description/scope, Path 2 from trigger prompt); sendPrompt() delivers raw values to Claude for validation and sentence assembly; Artifact 2 pre-fills assembled intent sentence + derived target (Path 1 from TASKS.md, Path 2 inferred from action clause with low-confidence annotation); API actor case blocks with ⚠️; System actor surfaces advisory; hard gates preserved on both 2A and 2B; v1.25 → v1.26 | origin: session:2026-04-06 "Improve executing-tasks intent formulation"
 - TASK-056: Critique and refactor executing-tasks skill (round 2) + assessment-checklist.md | target: workspace/skills/executing-tasks/SKILL.md + workspace/skills/creating-skills/references/assessment-checklist.md | done: 2026-04-06 | scope delivered: full critique run against executing-tasks v1.24 with source verification against agentskills.io/specification; I2 (ToC constraint) downgraded to Minor after spec confirmed no format restrictions — "consider splitting" is advisory only; I4 (QA format) withdrawn — checkbox format had no external basis; fixes applied: description made pushy (v1.25), Step 3 duplicate rule removed, Step 10 retry cap + escalation added, Step 11 Path 2 session-interruption recovery added; assessment-checklist.md v1.7: Structure item reworded to spec-accurate 500-line guidance, QA format item expanded to allow table format for complex workflow skills, Workflow-Class gains bounded-retry-loops item | origin: session:2026-04-06 "Critique and refactor executing-tasks skill"
 - TASK-042: Design enforcement mechanism for managing-tasks read display spec | target: workspace/skills/managing-tasks/ | done: 2026-04-06 | scope delivered: resolved as part of QA checklist Level 3 architecture — qa-checklist.md pattern established; read-display enforcement deferred to TASK-018 (mock-request harness) | origin: session:2026-03-29 "Fix why Claude missed origin column"
 - TASK-020: Rework challenge-checklist.md to encode severity and evaluation criteria | target: workspace/skills/analyzing-business-cases/references/ | done: 2026-04-03 | scope delivered: full restructure of qa-checklist.md (v2.0) — 3 workflow sections (build framing / challenge framing / assess-artifacts), global severity definitions, Blocking/Advisory per item with pass/fail criteria; challenge-checklist.md removed; consistency-check.md merged into qa-checklist.md and deleted; assess workflow renamed to assess-artifacts throughout; CONSTITUTION.md replaced with [REPO_NAME]/CLAUDE.md; HOW-TO-TRIGGER.md and FRAMING-template.md updated for consistency | origin: session:2026-03-25 "Task list display"

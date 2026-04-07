@@ -26,15 +26,16 @@ this is valid Mermaid syntax and renderer-stable as of v10+.
 ## Canonical pattern — copy-paste
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}}}%%
-flowchart LR
+%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}, "flowchart": {"defaultRenderer": "elk"}}}%%%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}, "flowchart": {"defaultRenderer": "elk"}}}%%
+
+flowchart BT
   classDef main              fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
   classDef primary           fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
   classDef secondary         fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
   classDef tertiary          fill:#C5D8F6,color:#000000,stroke:#425F8B
   classDef primary_cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
-  classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#0F0E2B
-  classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B
+  classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#6DA5FF
+  classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B,stroke-dasharray:5
   linkStyle default color:#0F0E2B
 
   subgraph Main
