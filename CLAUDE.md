@@ -126,7 +126,11 @@ precedence over this workspace default for sessions routed to that repo.
 
 - Default repo: `/home/gino/workspace`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/home/gino/workspace/<n>`; "all repos" → run across all repos
 - Stage by explicit file path array — never by directory (risk of sweeping untracked files from subdirectories)
-- After every file write, ask "Do you want to commit?"
+- **Mandatory commit gate — applies after every `filesystem:write_file` call without exception:**
+  - Ask: "Do you want to commit?" — do not skip or pre-answer this question from context
+  - A user message containing "commit" or any prior commit instruction does not bypass the gate — ask regardless
+  - In a multi-write sequence, ask the gate after each individual write, not once at the end
+  - Await explicit yes or no in the next user message before proceeding
   - Yes → ask "Display diffs? (yes/no)"; if yes → run `git_diff_staged` per uncommitted file, display each diff, then commit; if no → commit directly
   - No → wait for next prompt
 - Commit message: propose and commit directly — no approval required
