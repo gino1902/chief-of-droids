@@ -9,7 +9,7 @@ description: >
   automatically after any task transitions to In Progress. Not on 'start
   TASK-XXX' alone.
 ---
-<!-- version: 1.26 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 1.27 | author: chief-of-droids workspace | last_updated: 2026-04-07 -->
 
 # Executing Tasks Skill
 
@@ -215,6 +215,14 @@ Present the schema to the user and ask them to author the scenarios:
 > One block per distinct functional behaviour introduced or changed by this task.
 > A single When per scenario — if you have a compound trigger, split it into two scenarios."
 
+**Submission protocol — one scenario at a time:**
+Scenarios are submitted and validated one at a time. After the user submits a scenario,
+Claude validates it immediately against the criteria below. If validation passes, Claude
+confirms acceptance and asks: "Add another scenario, or confirm the set is complete?"
+If validation fails, Claude returns the scenario with the specific field and issue
+identified — the user corrects and resubmits that scenario before any further scenarios
+are accepted. Claude does not accept a new scenario while a correction is pending.
+
 On receipt, validate each user-provided scenario against these criteria before
 accepting it:
 
@@ -404,6 +412,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.26        |
-| Last Updated | 2026-04-06  |
+| Version      | 1.27        |
+| Last Updated | 2026-04-07  |
 | Status       | Draft       |
