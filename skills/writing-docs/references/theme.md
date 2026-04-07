@@ -13,6 +13,11 @@ Do not apply theme colors directly. Pass the appropriate theme file or token set
 to the composed format skill. The format skill owns rendering; this skill owns
 the decision to apply the theme and which artifact to pass.
 
+When the output is an HTML or React artifact containing interactive form elements
+(inputs, textareas, buttons, pill groups): read `shared/elevate-theme/elevate-artifact.md`
+in addition to this file. The artifact form pattern is mandatory — CSS custom properties
+on interactive elements are overridden by the host dark-mode stylesheet and must not be used.
+
 ---
 
 ## Format routing
@@ -22,8 +27,9 @@ the decision to apply the theme and which artifact to pass.
 | `.pptx` | `shared/elevate-theme/theme1.xml` | Instruct the pptx skill to inject into `ppt/theme/theme1.xml` |
 | `.docx` | `shared/elevate-theme/theme1.xml` | Instruct the docx skill to inject into `word/theme/theme1.xml` |
 | `.xlsx` | `shared/elevate-theme/theme1.xml` | Instruct the xlsx skill to inject into `xl/theme/theme1.xml` |
-| HTML / CSS | `shared/elevate-theme/elevate.css` | Link or import; use `var(--elevate-*)` semantic aliases |
-| React (inline styles) | `shared/elevate-theme/elevate-tokens.js` | Import `elevateTokens`; use semantic token keys |
+| HTML / CSS (no form elements) | `shared/elevate-theme/elevate.css` | Link or import; use `var(--elevate-*)` semantic aliases |
+| HTML / React (with form elements) | `shared/elevate-theme/elevate-artifact.md` | Read and apply `applyAll()` pattern — CSS vars prohibited on inputs |
+| React (inline styles, no forms) | `shared/elevate-theme/elevate-tokens.js` | Import `elevateTokens`; use semantic token keys |
 | React + Tailwind v3 | `shared/elevate-theme/elevate-tokens.js` | Import `tailwindElevate`; extend `theme.colors` in `tailwind.config.js` |
 | React + Tailwind v4 | `shared/elevate-theme/elevate-tailwind-v4.css` | Import after `@import "tailwindcss"` |
 | SVG | `shared/elevate-theme/elevate.css` | Embed `:root` block or reference CSS file; use `var(--elevate-*)` |
@@ -64,3 +70,9 @@ Declared in all theme artifacts; not embedded. Office and browsers substitute si
 
 See `shared/elevate-theme/README.md` for injection instructions, format-specific
 usage examples, and the complete color role reference.
+
+| Field        | Value      |
+| :----------- | :--------- |
+| Version      | 1.1        |
+| Last Updated | 2026-04-07 |
+| Status       | Draft      |
