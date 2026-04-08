@@ -1,4 +1,4 @@
-<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-04-03 -->
+<!-- version: 1.10 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
 
 # Sub-Task Patterns
 
@@ -9,6 +9,14 @@ for the classified pattern. The inner loop runs within a single sub-task — it 
 not the sub-task sequence itself. For the Test step, apply the **Inner-loop
 checklist** for the classified pattern as the formal test gate.
 All checklist items must pass before advancing to the next sub-task.
+
+**TDD discipline in this file:**
+Each pattern's Create tests step carries a State-0 reference — what "fail before
+writing begins" looks like for that type. Each Write step carries a Green constraint —
+restrict changes to the minimum required for the current owned QA row. Both
+annotations encode the Red → Green discipline declared in SKILL.md Step 9.
+The QA Row Ownership Table (produced at SKILL.md Step 8) is the authority for
+which rows are owned by the current sub-task.
 
 ---
 
@@ -53,8 +61,15 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 ### Inner loop
 
 1. **Create tests** — define what a valid research output looks like:
-   source reachable, content fetched, evaluation criteria applied, findings recorded
-2. **Write** — fetch source; extract relevant content; apply evaluation criteria
+   source reachable, content fetched, evaluation criteria applied, findings recorded.
+   State-0 reference: the rows from the Step 8 ownership table assigned to this
+   sub-task define the not-yet-started state — source not fetched, evaluation not
+   applied. Record fail state (source absent / criteria not applied) per owned row
+   before proceeding to Write.
+2. **Write** — fetch source; extract relevant content; apply evaluation criteria.
+   Green: fetch and evaluate only what is required to satisfy the current owned QA
+   row. Advance to the next owned row only after the current row's assertion passes
+   its Test step.
 3. **Run** — confirm fetch succeeded; content non-empty; criteria applied to all items
 4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for failed fetches: retry with alternative URL or search query;
@@ -79,8 +94,14 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 ### Inner loop
 
 1. **Create tests** — define expected file properties:
-   path, schema, row/section count, required fields, header format
-2. **Write** — compose file content; write via Filesystem tool
+   path, schema, row/section count, required fields, header format.
+   State-0 reference: for each owned QA row, run `filesystem:read_text_file` on
+   the target path and confirm the file is absent or does not yet satisfy the row's
+   assertion. Record the observed state (file absent / field missing / schema
+   non-conformant) per row before proceeding to Write.
+2. **Write** — compose file content; write via Filesystem tool.
+   Green: write only the minimum file content required to pass the current owned
+   QA row. Do not pre-write content for future rows.
 3. **Run** — read file back immediately via `filesystem:read_text_file`
 4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — if read-back fails: retry write; if schema mismatch: fix content and rewrite;
@@ -106,8 +127,13 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 ### Inner loop
 
 1. **Create tests** — define document completeness criteria:
-   required sections, mandatory content per section, format rules (from `writing-docs`)
-2. **Write** — draft document following `writing-docs` skill conventions
+   required sections, mandatory content per section, format rules (from `writing-docs`).
+   State-0 reference: for each owned QA row, record section-absent or content-absent
+   as the fail state before drafting begins. No execution required — absence is the
+   definitional fail state.
+2. **Write** — draft document following `writing-docs` skill conventions.
+   Green: draft only the sections or content blocks required for the current owned
+   QA row. Do not speculatively draft sections for future rows.
 3. **Run** — read draft; apply `writing-docs` QA checklist
 4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for missing sections: add; for formatting violations: fix per `writing-docs`;
@@ -132,8 +158,15 @@ Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 ### Inner loop
 
 1. **Create tests** — write acceptance tests that define the expected behaviour
-   before writing any implementation code (TDD: RED phase)
-2. **Write** — implement minimal code to pass the acceptance tests (GREEN phase)
+   before writing any implementation code (TDD: RED phase). Confirm all owned QA
+   row tests fail against the current system before entering Write. State:
+   `"State-0 confirmed for sub-task [N]: [M] rows fail as expected."` If any row
+   passes before changes are made, surface as a State-0 anomaly and resolve with
+   the user before proceeding.
+2. **Write** — implement minimal code to pass the acceptance tests (GREEN phase).
+   Green: implement only the minimum code required to pass the current failing test.
+   Do not implement logic not demanded by the current red test. Advance to the next
+   test only after the current one passes.
 3. **Run** — execute tests; capture output
 4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for failing tests: read error; identify root cause; fix implementation only
@@ -161,8 +194,13 @@ Delegates entirely to `creating-skills` for domain logic.
 Defer to `creating-skills` workflow (author / enrich / critique as applicable).
 The executing-tasks inner loop wraps the creating-skills workflow as a single sub-task.
 
-1. **Create tests** — design assessment mock requests (2–3 realistic triggers)
-2. **Write** — run creating-skills workflow; produce SKILL.md + reference files
+1. **Create tests** — design assessment mock requests (2–3 realistic triggers).
+   State-0 reference: for each owned QA row, record SKILL.md absent or the specific
+   criterion (section, trigger, reference file) absent as the fail state before
+   the creating-skills workflow begins.
+2. **Write** — run creating-skills workflow; produce SKILL.md + reference files.
+   Green: produce only the SKILL.md content or reference file content required to
+   pass the current owned QA row. Do not speculatively author sections for future rows.
 3. **Run** — run mock requests against the draft
 4. **Test** — apply Inner-loop checklist (below) as the formal test gate
 5. **Debug** — for trigger failures: revise description; for checklist failures: fix per critique
@@ -189,10 +227,15 @@ Delegates to `analyzing-business-cases` for domain logic.
 
 1. **Create tests** — define what a valid FRAMING.md output looks like:
    all 6 template sections present; all 7 challenge framing Blocking criteria met;
-   advisory items surfaced and acknowledged by user
+   advisory items surfaced and acknowledged by user.
+   State-0 reference: for each owned QA row, record FRAMING.md absent or the required
+   section absent / non-conformant as the fail state before drafting begins. No
+   execution required — absence is the definitional fail state.
 2. **Write** — run `analyzing-business-cases` workflow:
    - `build framing`: read `FRAMING-template.md`; scaffold FRAMING.md with user
-   - `challenge framing` only: read existing FRAMING.md via filesystem tool
+   - `challenge framing` only: read existing FRAMING.md via filesystem tool.
+   Green: draft only the FRAMING.md section(s) required for the current owned QA
+   row. Do not speculatively draft sections for future rows.
 3. **Run** — apply challenge framing sub-workflow:
    read `analyzing-business-cases/references/qa-checklist.md §challenge framing`;
    apply all Blocking and Advisory criteria to FRAMING.md content; record pass/fail per item
@@ -224,6 +267,6 @@ Inner-loop checklists R1–R4 and F1–F5 apply to their respective sub-tasks.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.9         |
-| Last Updated | 2026-04-03  |
+| Version      | 1.10        |
+| Last Updated | 2026-04-08  |
 | Status       | Draft       |

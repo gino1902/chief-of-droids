@@ -9,7 +9,7 @@ description: >
   'execute the complex task TASK-XXX'. Does NOT trigger on 'start TASK-XXX'
   alone — that belongs to managing-tasks.
 ---
-<!-- version: 1.32 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
+<!-- version: 1.33 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
 
 # Executing Tasks Skill
 
@@ -96,6 +96,16 @@ point prevents treating inner-loop success as acceptance.
   correctness for each unit of work. Inner-loop green is necessary but not sufficient —
   the outer loop closes only when all scenarios from Step 4a are exercised and pass
   in Step 10.
+
+**TDD inner-loop discipline (Red → Green → Refactor):**
+Step 9 enforces the TDD cycle at sub-task granularity, per owned QA row:
+- **Red:** State-0 check confirms each owned QA row fails before any change is made.
+- **Green:** Write phase is constrained to the minimum change required to pass the current row.
+- **Refactor:** Immediately after the sub-task confidence gate passes, a scoped Refactor
+  pass cleans the sub-task's output before advancing. Refactor does not touch other sub-tasks.
+
+This cycle is owned by SKILL.md Step 9. The per-pattern inner loop in
+`references/subtask-patterns.md` encodes Green and State-0 annotations per task type.
 
 **Workflow state:** The artifacts produced at Steps 2A (confirmed intent), 2B (confirmed
 target), 4a (verification scenarios), 4b (acceptance criteria), 6 (approved plan), and 7
@@ -384,6 +394,27 @@ Load each skill from the Composes With table matched in Step 3.
 State which skill governs each sub-task before entering the loop:
 > "Sub-task [N] governed by: [skill name]."
 
+**QA Row Ownership Table (produce before entering Step 9):**
+
+For each QA row from the Step 7 suite, assign it to the sub-task whose Step 6 plan
+output will satisfy its assertion. Produce and surface:
+
+| Sub-task | QA Row IDs | Acceptance criterion IDs |
+| :--- | :--- | :--- |
+| Sub-task N | QA-X, QA-Y | Criterion IDs from Step 4b |
+
+Derivation rule: match each QA row's assertion target to the sub-task that produces
+the output under test.
+
+Constraints:
+- Every QA row must map to exactly one sub-task.
+- If a QA row's assertion spans multiple sub-tasks' outputs: flag as ambiguous; resolve
+  by splitting the row or assigning to the sub-task that produces the primary artifact.
+- If a QA row cannot be assigned to any sub-task: plan gap — return to Step 6 before proceeding.
+
+This table is the ownership reference for the State-0 check (Red) and per-row Write
+discipline (Green) throughout Step 9.
+
 ### Step 9 — Execute sub-task loop
 
 Read `references/subtask-patterns.md`. Apply the inner loop for the classified type.
@@ -395,16 +426,49 @@ is necessary but not sufficient — it confirms the sub-task is well-formed, not
 the outer acceptance gate has been met. The outer loop closes only at Step 10.
 
 For each sub-task from the Step 6 plan:
-- Run the inner loop within that sub-task: Create tests → Write → Run → Test → Debug → back to Write if failing
-- For the **Test step**: apply the **Inner-loop checklist** for the classified pattern
-  from `references/subtask-patterns.md` as the formal test gate — not the prose description
-- Flag blockers immediately; do not silently skip or work around
-- Do not advance to the next sub-task until all Inner-loop checklist items pass
 
-After the Inner-loop checklist is assessed, apply the Confidence Derivation Rule to the checklist results:
-- Confidence ≥ 95%: state the score and advance to the next sub-task.
+**Red — State-0 check (before Write):**
+Using the QA Row Ownership Table from Step 8, identify rows owned by this sub-task.
+For each owned row:
+- `code` or `file-write` type: run the assertion against the current system; confirm
+  it returns fail. If any row already passes before changes begin, surface as a
+  State-0 anomaly — the sub-task may be redundant or the criterion may need revision.
+  Resolve with the user before proceeding.
+- `doc`, `skill-authoring`, `framing`, or `research` type: record artifact-absent or
+  section-absent as the fail state. One line per row. No execution required.
+
+State before entering Write:
+> `"State-0 confirmed for sub-task [N]: [M] rows fail as expected."`
+
+If any row passes unexpectedly: block. State:
+> `"State-0 anomaly — QA row [ID] already passes before changes. Resolve before proceeding."`
+
+**Green — per-row Write discipline:**
+Work through owned QA rows one at a time:
+- Write only the minimum change required to advance the current row from fail to pass.
+- Run the Test step; if the row passes, advance to the next owned row.
+- Do not speculatively address rows not yet in the current Write cycle.
+
+Follow the inner loop from `references/subtask-patterns.md` for the classified type:
+Create tests → Write → Run → Test → Debug → back to Write if failing.
+For the **Test step**: apply the **Inner-loop checklist** for the classified pattern
+as the formal test gate — not the prose description.
+Flag blockers immediately; do not silently skip or work around.
+Do not advance to the next sub-task until all Inner-loop checklist items pass.
+
+After the Inner-loop checklist is assessed, apply the Confidence Derivation Rule:
+- Confidence ≥ 95%: state the score. Run the Refactor phase (below), then advance to the next sub-task.
 - Confidence < 95%: block advancement. State:
   > "Sub-task [N] confidence: [N]% — below 95% gate. Failing items: [list]. Resolve before advancing."
+
+**Refactor — per-sub-task (after confidence gate):**
+Immediately after confidence ≥ 95% is confirmed, apply a scoped Refactor pass:
+- Permitted: restructure for clarity, remove redundancy, improve naming — within this sub-task's output only.
+- Prohibited: any change that touches outputs owned by another sub-task.
+
+After Refactor: re-run this sub-task's owned QA rows. All must still pass before advancing.
+If any row fails after Refactor: re-enter the Write phase for that row only; do not reset
+the confidence gate unless a new Blocking failure is introduced.
 
 After all sub-tasks complete, surface the Inner Loop QA Report (format defined in
 `references/subtask-patterns.md`) covering all sub-tasks:
@@ -447,9 +511,13 @@ Await explicit user choice before proceeding.
 
 If all ✅ or ⚠️ only: surface the full QA report before Step 11.
 
-### Step 11 — Refine
+### Step 11 — Integration Refine
 
-For any remaining ⚠️: propose targeted fixes, apply, re-run affected tests only.
+Address any remaining ⚠️ from Step 10. Permitted changes: cross-sub-task consistency
+only — wiring, shared references, structural cohesion. No new content introduced here;
+per-sub-task quality was addressed in the Step 9 Refactor phase.
+
+Apply targeted fixes; re-run affected tests only.
 
 When all tests ✅:
 > "Execution complete. All QA tests pass. Ready for commit."
@@ -493,6 +561,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.32        |
+| Version      | 1.33        |
 | Last Updated | 2026-04-08  |
 | Status       | Draft       |
