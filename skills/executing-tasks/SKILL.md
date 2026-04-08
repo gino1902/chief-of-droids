@@ -9,7 +9,7 @@ description: >
   'execute the complex task TASK-XXX'. Does NOT trigger on 'start TASK-XXX'
   alone — that belongs to managing-tasks.
 ---
-<!-- version: 1.34 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
+<!-- version: 1.35 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
 
 # Executing Tasks Skill
 
@@ -35,11 +35,10 @@ Domain work belongs to the composing skill matched by the task-type classifier.
   matrix format; applies at Steps 7, 8, 9, and 10
 - `references/subtask-patterns.md` — read at Step 9; defines inner loop per task type
   (code / research / doc / file-write / skill-authoring / framing), each with an inner loop
-  and Inner-loop checklist as the formal Test step gate; contains Inner Loop QA Report format,
-  severity definitions, and behaviour rule
-- `references/composing-skills.md` — read at Step 3; decision table mapping
-  confirmed intent and target signals to primary type + composing skills; owns the
-  ambiguity-resolution rule for equal-match cases
+  and Inner-loop checklist as the formal Test step gate; contains Inner Loop QA Report format
+- `references/composing-skills.md` — read at Step 3; decision table mapping confirmed
+  intent and target signals to primary type + composing skills; owns the classification
+  output format and ambiguity-resolution rule
 - `references/qa-checklist.md` — consulted during mock-request validation or skill
   assessment; not read during task execution
 - See workspace `CLAUDE.md` §`MCP Tools` and §`File Edits` for known tool behaviour
@@ -91,17 +90,12 @@ Task scope appearing self-evident, narrow, or verbatim is not a reason to skip i
 ## Outer Loop Workflow
 
 **ATDD double-loop structure:**
-This workflow enforces two nested loops. Understanding which loop you are in at any
-point prevents treating inner-loop success as acceptance.
-
-- **Outer loop (acceptance):** Steps 4a → 4b → 7 → 10. Constitutes the acceptance
-  gate. Opened at Step 4a when the user authors verification scenarios; remains open
-  until Step 10 closes it via the traceability matrix. A sub-task passing its inner
-  loop does not constitute outer-loop acceptance.
+- **Outer loop (acceptance):** Steps 4a → 4b → 7 → 10. Opened at Step 4a; closed at
+  Step 10 via the traceability matrix. A sub-task passing its inner loop does not
+  constitute outer-loop acceptance.
 - **Inner loop (implementation):** Step 9 per sub-task. Governs implementation
-  correctness for each unit of work. Inner-loop green is necessary but not sufficient —
-  the outer loop closes only when all scenarios from Step 4a are exercised and pass
-  in Step 10.
+  correctness for each unit of work. The outer loop closes only when all scenarios
+  from Step 4a pass at Step 10.
 
 **TDD inner-loop discipline (Red → Green → Refactor):**
 Step 9 enforces the TDD cycle at sub-task granularity, per owned QA row:
@@ -110,8 +104,8 @@ Step 9 enforces the TDD cycle at sub-task granularity, per owned QA row:
 - **Refactor:** Immediately after the sub-task confidence gate passes, a scoped Refactor
   pass cleans the sub-task's output before advancing. Refactor does not touch other sub-tasks.
 
-This cycle is owned by SKILL.md Step 9. The per-pattern inner loop in
-`references/subtask-patterns.md` encodes Green and State-0 annotations per task type.
+The per-pattern inner loop in `references/subtask-patterns.md` encodes State-0 and
+Green annotations per task type.
 
 **Workflow state:** The artifacts produced at Steps 2A (confirmed intent), 2B (confirmed
 target), 4a (verification scenarios), 4b (acceptance criteria), 6 (approved plan), and 7
@@ -120,13 +114,9 @@ disk. If any downstream step references an artifact that appears missing (e.g. a
 session interruption): re-run from the step that produced it. Do not proceed with an
 unconfirmed artifact.
 
-**Confidence Derivation Rule:** formula, report format, and threshold defined in
-`references/qa-schema.md`. Gate: Confidence ≥ 95% is required to advance at Steps 9
-and 10; below 95% blocks the current step.
+**Confidence Derivation Rule:** defined in `references/qa-schema.md`.
 
 ### Step 1 — Extract task context
-
-**Detect TASK-XXX in trigger prompt:**
 
 Scan the triggering prompt for a pattern matching `TASK-` followed by digits (e.g. `TASK-025`).
 
@@ -229,26 +219,16 @@ non-empty and the user has submitted Artifact 2.
 Read `references/composing-skills.md`.
 If read fails: `⚠️ composing-skills.md could not be read — surface to user and stop before proceeding.`
 
-Apply the decision table to confirmed intent and target. Ambiguity resolution rule is
-defined in `references/composing-skills.md` — follow it; do not restate here.
-
-State classification explicitly before proceeding:
-> "Task type: [type]. Composing skills: [list]. Sub-task pattern: [pattern]."
+Apply the decision table to confirmed intent and target. Follow the classification output
+format and ambiguity resolution rule from `references/composing-skills.md`.
 
 ### Step 4a — Verification scenario (hard gate)
 
 Read `references/verification-schema.md` before this step.
 If read fails: `⚠️ verification-schema.md could not be read — surface to user and stop before proceeding.`
 
-A verification scenario describes how the task's output will be exercised and what
-behaviour is expected — from the actor's perspective. It operates at the functional
-level: what triggers, what the actor observes. It does not name files, assertions,
-or tool calls — those belong in Step 4b and Step 7.
-
-**Role in the outer loop:** scenarios authored here constitute the acceptance specification.
-They open the outer loop and remain the reference point through Steps 4b, 7, and 10.
-No scenario may be dropped, merged, or reinterpreted in any downstream step without
-returning to this step for explicit user confirmation.
+**Outer loop:** scenarios open the acceptance gate. No scenario may be dropped, merged,
+or reinterpreted in any downstream step without returning here for explicit user confirmation.
 
 Present the scenario format from `references/verification-schema.md` to the user and
 ask them to author scenarios. Include the field definitions inline so the user has
@@ -275,10 +255,8 @@ For each confirmed scenario from Step 4a, derive the conditions that must hold f
 scenario to be considered passing. This is where the abstraction level drops from
 behaviour to observable state.
 
-**Role in the outer loop:** these criteria are the outer-loop acceptance specification.
-They must remain unmet by the current system state until all sub-tasks in Step 9
-complete. Agreement here binds Steps 5, 6, 7, and 10 — criteria cannot be silently
-revised in any downstream step without returning here for explicit user confirmation.
+**Outer loop:** acceptance criteria cannot be silently revised in any downstream step
+without returning here for explicit user confirmation.
 
 Propose to the user using the acceptance criteria format from `references/verification-schema.md`.
 One or more criteria per scenario. A scenario may generate multiple criteria if its
@@ -297,12 +275,8 @@ be agreed before either step runs.
 Read `references/challenge-protocol.md` before this step.
 If read fails: `⚠️ challenge-protocol.md could not be read — surface to user and stop before proceeding.`
 
-Apply the confidence gate exactly as defined there.
-
-**Evaluation anchor:** use the acceptance criteria from Step 4b. A blocking issue
-is any gap, contradiction, missing input, or assumption in the acceptance criteria
-that would prevent a viable plan from being authored or one or more criteria from
-being met.
+Apply the confidence gate exactly as defined there. Evaluation anchor: acceptance
+criteria from Step 4b.
 
 Do NOT enter Step 6 until the gate exits cleanly:
 condition = no new blocking issues in the last round AND user explicitly approves.
@@ -341,7 +315,6 @@ A test row with no Scenario reference is invalid and must be removed or reassign
 before the suite is confirmed.
 
 Use the QA suite row format and severity taxonomy from `references/qa-schema.md`.
-Minimum: one test per acceptance criterion.
 
 After presenting the suite, state confidence before awaiting user confirmation:
 > "QA suite confidence: [N]% — [one-line rationale for the score]"
@@ -380,11 +353,6 @@ discipline (Green) throughout Step 9.
 Read `references/subtask-patterns.md`. Apply the inner loop for the classified type.
 If read fails: `⚠️ subtask-patterns.md could not be read — surface to user and stop before proceeding.`
 
-**Role in the double loop:** Step 9 is the inner loop. Each sub-task's inner-loop
-checklist governs implementation correctness for that unit of work. Inner-loop green
-is necessary but not sufficient — it confirms the sub-task is well-formed, not that
-the outer acceptance gate has been met. The outer loop closes only at Step 10.
-
 For each sub-task from the Step 6 plan:
 
 **Red — State-0 check (before Write):**
@@ -409,12 +377,10 @@ Work through owned QA rows one at a time:
 - Run the Test step; if the row passes, advance to the next owned row.
 - Do not speculatively address rows not yet in the current Write cycle.
 
-Follow the inner loop from `references/subtask-patterns.md` for the classified type:
-Create tests → Write → Run → Test → Debug → back to Write if failing.
+Follow the inner loop from `references/subtask-patterns.md` for the classified type.
 For the **Test step**: apply the **Inner-loop checklist** for the classified pattern
 as the formal test gate — not the prose description.
 Flag blockers immediately; do not silently skip or work around.
-Do not advance to the next sub-task until all Inner-loop checklist items pass.
 
 After the Inner-loop checklist is assessed, apply the Confidence Derivation Rule
 from `references/qa-schema.md`:
@@ -513,6 +479,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.34        |
+| Version      | 1.35        |
 | Last Updated | 2026-04-08  |
 | Status       | Draft       |

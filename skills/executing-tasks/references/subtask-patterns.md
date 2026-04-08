@@ -1,4 +1,4 @@
-<!-- version: 1.10 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
+<!-- version: 1.11 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
 
 # Sub-Task Patterns
 
@@ -38,19 +38,14 @@ Verification confidence impact: [agreed %] → [adjusted %]
 Summary: [N] passed · [N] failed ([N] Blocking · [N] Major · [N] Minor)
 ```
 
-**Severity definitions:**
+**Severity definitions** (for inner-loop checklist items — numeric confidence impacts
+defined in the Confidence Derivation Rule in `references/qa-schema.md`):
 
-| Severity | Definition | Confidence impact |
-| :--- | :--- | :--- |
-| Blocking | Failure makes the verification scenario untestable or meaningless | Drops to 0% |
-| Major | Failure partially invalidates a verification scenario item | Drops 20–40% per item |
-| Minor | Quality gap — verification scenario remains valid | Drops <10% per item |
-
-**Behaviour rule:**
-
-- Always surface the report after sub-tasks complete
-- All passed → proceed to Step 10 automatically
-- Any failure → surface report, state adjusted confidence %, wait for explicit user input before proceeding
+| Severity | Definition |
+| :--- | :--- |
+| Blocking | Failure makes the verification scenario untestable or meaningless |
+| Major | Failure partially invalidates a verification scenario item |
+| Minor | Quality gap — verification scenario remains valid |
 
 ---
 
@@ -267,6 +262,6 @@ Inner-loop checklists R1–R4 and F1–F5 apply to their respective sub-tasks.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.10        |
+| Version      | 1.11        |
 | Last Updated | 2026-04-08  |
 | Status       | Draft       |
