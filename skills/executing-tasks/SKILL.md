@@ -3,13 +3,13 @@ name: executing-tasks
 description: >
   Use this skill whenever a workspace task needs executing. Enforces a
   quality-gated workflow — intent, plan, QA, sub-tasks, verify — so no task
-  runs without confirmed scope and traceable tests. Triggers: 'execute
-  TASK-XXX' (existing task), 'execute new task' (no prior entry), or opt-in
-  after 'start TASK-XXX'. Do not wait to be asked — offer this workflow
-  automatically after any task transitions to In Progress. Not on 'start
-  TASK-XXX' alone.
+  runs without confirmed scope and traceable tests. Triggers: any prompt
+  matching '% execute % task %', 'run % task', or '% run % task %' patterns.
+  Examples: 'Claude execute the following task: ...', 'run TASK-025',
+  'execute the complex task TASK-XXX'. Does NOT trigger on 'start TASK-XXX'
+  alone — that belongs to managing-tasks.
 ---
-<!-- version: 1.28 | author: chief-of-droids workspace | last_updated: 2026-04-07 -->
+<!-- version: 1.29 | author: chief-of-droids workspace | last_updated: 2026-04-07 -->
 
 # Executing Tasks Skill
 
@@ -55,26 +55,30 @@ entering the sub-task loop.
 
 ## Trigger Surface
 
-**Primary (opt-in after managing-tasks) — Path 1:**
+**Pattern-based triggers (primary):**
+
+Load this skill when the prompt matches any of:
+- `% execute % task %` — e.g. "Claude execute the following task: ..."
+- `run % task %` — e.g. "run TASK-025", "run the complex task"
+- `% run % task %` — e.g. "Claude run task TASK-XXX"
+
+where `%` matches any text including empty string.
+
+**Opt-in trigger (secondary — after managing-tasks):**
+
 After `start TASK-XXX` transitions a task to 🟡 In Progress, ask exactly once:
-> "Run executing-tasks workflow for TASK-XXX?"
+> "TASK-XXX is now In Progress. Run executing-tasks workflow, or proceed directly?"
 
-If yes → load this skill and begin at Step 1.
-If no → stop; user executes ad hoc.
+- "workflow" → load this skill, begin at Step 1
+- "directly" → stop; user executes ad hoc
+- No response or ambiguous → ask once more, then wait
 
-**Standalone — Path 1:**
-- `execute TASK-XXX` — load directly, begin at Step 1
-- `run TASK-XXX` — alias
+This question fires unconditionally after every `start TASK-XXX` transition.
+Task scope appearing self-evident, narrow, or verbatim is not a reason to skip it.
 
-**Standalone — Path 2 (no prior TASKS.md entry):**
-- `execute new task` — load directly, begin at Step 1; no TASKS.md lookup
-- `run new task` — alias
-
-Path 2 intent, target, and task entry are defined during the workflow.
-The task entry is created and closed via managing-tasks at Step 11.
-
-Do NOT trigger on "my intent is [...]" — too ambiguous; conflicts with other skills.
-Do NOT trigger on "start TASK-XXX" alone — that belongs to managing-tasks.
+**Does NOT trigger on:**
+- `start TASK-XXX` alone — that belongs to managing-tasks
+- `my intent is [...]` — too ambiguous
 
 ---
 
@@ -89,30 +93,28 @@ unconfirmed artifact.
 
 ### Step 1 — Extract task context
 
-**Detect path from trigger:**
+**Detect TASK-XXX in trigger prompt:**
 
-If triggered by `execute TASK-XXX`, `run TASK-XXX`, or opt-in after `start TASK-XXX` → **Path 1:**
-Read target TASKS.md via Filesystem tool. Extract the TASK-XXX entry.
-Fields required: description, scope, target, origin.
-Scope is extracted here for Step 2 intent proposal only — it is retired as a
-working field after Step 2A confirmation. Do not reference it beyond Step 2A.
-Do NOT ask the user to re-describe the task. All context comes from TASKS.md.
+Scan the triggering prompt for a pattern matching `TASK-` followed by digits (e.g. `TASK-025`).
 
-If `filesystem:read_text_file` returns a tool error (not a parsed result):
-> ⚠️ TASKS.md could not be read — tool error. Verify the file path and MCP server status before retrying.
-Stop. Do not treat as "task not found."
+```
+if TASK-XXX found in prompt:
+    attempt filesystem:read_text_file on target TASKS.md
+    if tool error (not a parsed result):
+        ⚠️ TASKS.md could not be read — tool error. Verify file path and MCP server status.
+        Stop.
+    if TASK-XXX found in TASKS.md:
+        extract description, scope, target, origin fields
+        scope used for Step 2 intent pre-fill only — retired after Step 2A confirmation
+        proceed to Step 2 (Path 1 — TASKS.md context available)
+    else:
+        ⚠️ TASK-XXX not found in TASKS.md — verify task ID before proceeding.
+        Stop.
+else:
+    proceed to Step 2 (Path 2 — prompt as intent source)
+```
 
-If TASK-XXX not found:
-> ⚠️ TASK-XXX not found in TASKS.md — verify task ID and status via managing-tasks before proceeding.
-Stop.
-
-If task status is not 🟡 In Progress:
-> ⚠️ TASK-XXX is not In Progress (current: [status]) — run "start TASK-XXX" first.
-Stop.
-
-If triggered by `execute new task` or `run new task` → **Path 2:**
-> "No existing task — proceeding to Step 2 for intent formulation."
-Proceed directly to Step 2. No TASKS.md lookup.
+No status check on task state. Hard stop only on tool read error or TASK-XXX not found.
 
 ### Step 2 — Intent Formulation
 
@@ -123,14 +125,14 @@ If read fails: `⚠️ intent-schema.md could not be read — surface to user an
 
 Render **Artifact 1** — the intent input form. Per-path pre-fill behaviour:
 
-**Path 1:** before rendering, derive pre-fill values from the TASKS.md entry read at Step 1:
+**Path 1 (TASKS.md entry found):** before rendering, derive pre-fill values from the extracted entry:
 - `action` field: extract primary verb + object from `description`
 - `value` field: extract purpose or benefit signal from `scope`
 - `actor` pill: pre-select `user` (direct prompt trigger)
 
 Inject derived text as default textarea content. The user may edit any field before submitting.
 
-**Path 2:** render with empty `action` and `value` fields. Pre-select `user` on the `actor` pill.
+**Path 2 (no TASKS.md entry):** render with empty `action` and `value` fields. Pre-select `user` on the `actor` pill.
 If the trigger prompt contains sufficient description text, pre-fill `action` from it; leave
 `value` empty.
 
@@ -164,7 +166,7 @@ the intent sentence. Do not reference it in any downstream step.
 
 Before rendering Artifact 2, derive the target proposal:
 
-**Path 1:** use the `target` field from TASKS.md directly.
+**Path 1:** use the `target` field from the extracted TASKS.md entry.
 
 **Path 2 (or Path 1 with no target field):** infer from the confirmed action clause —
 identify the primary noun object and map it to the most specific matching path in the
@@ -381,16 +383,16 @@ When all tests ✅:
 
 Prompt user — path-dependent:
 
-**Path 1:**
+**Path 1 (TASKS.md entry was found):**
 > "Run 'done TASK-XXX' to close the task in managing-tasks."
 
-**Path 2:**
+**Path 2 (no TASKS.md entry):**
 Hand off to managing-tasks in sequence:
 
 1. `add task` — pass the confirmed intent sentence as the task input.
    managing-tasks derives all fields from it.
    Also pass explicitly:
-   - description: confirmed intent sentence.
+   - description: confirmed intent sentence
    - target: confirmed at Step 2B
    - origin: `session:YYYY-MM-DD "[noun-phrase derived from confirmed intent, title-cased]"`
    Retain the TASK-ID assigned by managing-tasks before proceeding.
@@ -400,7 +402,7 @@ Hand off to managing-tasks in sequence:
 
 **Path 2 session-interruption recovery:** if the session ends after `add task` confirms
 but before `done task` is called, the task will exist in TASKS.md as 🟡 In Progress with
-no corresponding close. On resumption: use `execute TASK-XXX` (Path 1) with the TASK-ID
+no corresponding close. On resumption: use the pattern-based trigger with the TASK-ID
 from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`.
 
 ---
@@ -418,6 +420,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.28        |
+| Version      | 1.30        |
 | Last Updated | 2026-04-07  |
 | Status       | Draft       |

@@ -32,48 +32,45 @@ Also triggers when the user asks to record, close, or transition any task by ID.
 
 ## executing-tasks
 
-Two paths — select based on whether a TASKS.md entry exists.
+**Pattern-based triggers (primary):**
 
-**Path 1 — Execute an existing task (task entry exists in TASKS.md):**
+Load this skill when the prompt matches any of:
+- `% execute % task %` — e.g. "Claude execute the following task: ...", "execute TASK-025"
+- `run % task %` — e.g. "run TASK-025", "run the complex task"
+- `% run % task %` — e.g. "Claude run task TASK-XXX"
 
-Primary trigger (opt-in after managing-tasks):
-After managing-tasks transitions TASK-XXX to 🟡 In Progress, Claude asks once:
-> "Run executing-tasks workflow for TASK-XXX?"
-Skill loads only on explicit yes.
+where `%` matches any text including empty string.
 
-Standalone triggers:
-- `execute TASK-XXX` — load directly, begin workflow
-- `run TASK-XXX` — alias for execute
+**Opt-in trigger (secondary — after managing-tasks):**
 
-**Path 2 — Execute a new task (no prior TASKS.md entry):**
+After `start TASK-XXX` transitions a task to 🟡 In Progress, Claude asks once:
+> "TASK-XXX is now In Progress. Run executing-tasks workflow, or proceed directly?"
 
-Standalone triggers:
-- `execute new task: [description]` — load directly, define intent during workflow
-- `run new task: [description]` — alias
-- `execute new task` (bare) — loads skill; Claude asks for description before proceeding
-
-Path 2 defines intent, target, and task entry during the workflow.
-The task entry is created and closed via managing-tasks at the end.
+This question fires unconditionally — task scope appearing self-evident is not a reason to skip it.
 
 **Does NOT trigger on:**
-- "my intent is [...]" — too ambiguous
-- "start TASK-XXX" alone — that belongs to managing-tasks
+- `start TASK-XXX` alone — that belongs to managing-tasks
+- `my intent is [...]` — too ambiguous
 
-**What it does (both paths):**
-- Formulates and confirms intent from task context (Path 1) or trigger prompt (Path 2)
-- Confirms or defines target
+**What it does:**
+- Scans the triggering prompt for a TASK-XXX pattern; if found, looks it up in TASKS.md
+- If TASK-XXX found in TASKS.md: uses entry fields to pre-fill intent formulation
+- If TASK-XXX present in prompt but not found in TASKS.md: hard stop with warning
+- If TASK-XXX absent from prompt: uses prompt content as intent basis
+- Confirms intent and target via elicit forms (Artifact 1 + Artifact 2)
 - Classifies task type (code / research / doc / file-write / skill-authoring / framing)
-- Challenges the plan against confirmed intent
+- Challenges acceptance criteria before plan authoring
 - Produces and approves a stepped plan
 - Designs a QA suite against the plan before any sub-task executes
 - Executes sub-tasks via composing skills per task type
 - Verifies all outputs against the QA suite
-- Path 1: prompts user to close task via managing-tasks
-- Path 2: creates task entry via managing-tasks `add task`, then closes it via `done task`
+- If TASK-XXX was found: prompts to close via managing-tasks `done task`
+- If no TASK-XXX: creates entry via `add task` then closes via `done task`
 
 **Does NOT:**
 - Manage task state — that is managing-tasks
 - Implement domain logic — defers to composing skills per task type
+- Continue when TASK-XXX is present in prompt but not found in TASKS.md — that is always a hard stop
 
 ---
 
@@ -298,6 +295,6 @@ request. Common combinations in this workspace:
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.4         |
-| Last Updated | 2026-04-03  |
+| Version      | 1.6         |
+| Last Updated | 2026-04-07  |
 | Status       | Draft       |
