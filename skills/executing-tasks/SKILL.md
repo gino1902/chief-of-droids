@@ -9,7 +9,7 @@ description: >
   'execute the complex task TASK-XXX'. Does NOT trigger on 'start TASK-XXX'
   alone — that belongs to managing-tasks.
 ---
-<!-- version: 1.29 | author: chief-of-droids workspace | last_updated: 2026-04-07 -->
+<!-- version: 1.31 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
 
 # Executing Tasks Skill
 
@@ -90,6 +90,17 @@ target), 4a (verification scenarios), 4b (acceptance criteria), 6 (approved plan
 disk. If any downstream step references an artifact that appears missing (e.g. after a
 session interruption): re-run from the step that produced it. Do not proceed with an
 unconfirmed artifact.
+
+**Confidence Derivation Rule (applies at Steps 9 and 10):**
+After applying any checklist or test suite, compute confidence from the severity profile of failures:
+- Start: 100%
+- Any Blocking failure: Confidence = 0% (hard floor — cannot recover in the current run)
+- Per Major failure: −20%
+- Per Minor failure: −3%
+- Report format: `Confidence: [N]% — [B] Blocking / [M] Major / [m] Minor failures`
+- Gate: Confidence ≥ 95% is required to advance at Steps 9 and 10; below 95% blocks the current step
+
+Threshold interpretation: ≥ 95% = 0 Blocking + 0 Major + at most 1 Minor failure.
 
 ### Step 1 — Extract task context
 
@@ -319,8 +330,13 @@ Do not proceed to QA authoring with uncovered or output-less sub-tasks.
 **Handoff rule:** expand each acceptance criterion from Step 4b into one or more
 full QA test rows. Do not author tests not traceable to a Step 4b criterion.
 
-Format: ID | Assertion | Pass condition | Fail condition | Artifact.
+Format: ID | Severity | Assertion | Pass condition | Fail condition | Artifact.
 Minimum: one test per acceptance criterion.
+
+Assign Severity per the acceptance criterion each test covers:
+- Blocking: test covers a criterion whose failure makes the associated verification scenario untestable
+- Major: test covers a criterion that partially validates the scenario
+- Minor: test covers a style or advisory criterion
 
 After presenting the suite, state confidence before awaiting user confirmation:
 > "QA suite confidence: [N]% — [one-line rationale for the score]"
@@ -354,6 +370,11 @@ For each sub-task from the Step 6 plan:
 - Flag blockers immediately; do not silently skip or work around
 - Do not advance to the next sub-task until all Inner-loop checklist items pass
 
+After the Inner-loop checklist is assessed, apply the Confidence Derivation Rule to the checklist results:
+- Confidence ≥ 95%: state the score and advance to the next sub-task.
+- Confidence < 95%: block advancement. State:
+  > "Sub-task [N] confidence: [N]% — below 95% gate. Failing items: [list]. Resolve before advancing."
+
 After all sub-tasks complete, surface the Inner Loop QA Report (format defined in
 `references/subtask-patterns.md`) covering all sub-tasks:
 - All passed → proceed to Step 10 automatically
@@ -363,6 +384,13 @@ After all sub-tasks complete, surface the Inner Loop QA Report (format defined i
 
 Run every test from the QA suite (Step 7) against all outputs.
 Report each: ✅ Pass | ⚠️ Partial | ❌ Fail.
+
+After all tests are reported, apply the Confidence Derivation Rule using each test's
+Severity from the Step 7 QA suite:
+- Compute and state: `QA suite confidence: [N]%`
+- Confidence ≥ 95%: proceed to Step 11.
+- Confidence < 95%: treat as suite failure regardless of individual ✅/⚠️ counts —
+  return to Step 9 for the failing sub-tasks.
 
 If any ❌: return to Step 9 for the relevant sub-task.
 **Retry cap:** if a sub-task returns to Step 9 and fails Step 10 a second time, do not
@@ -420,6 +448,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.30        |
-| Last Updated | 2026-04-07  |
+| Version      | 1.31        |
+| Last Updated | 2026-04-08  |
 | Status       | Draft       |
