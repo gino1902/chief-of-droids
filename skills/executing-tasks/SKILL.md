@@ -9,7 +9,7 @@ description: >
   'execute the complex task TASK-XXX'. Does NOT trigger on 'start TASK-XXX'
   alone — that belongs to managing-tasks.
 ---
-<!-- version: 1.33 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
+<!-- version: 1.34 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
 
 # Executing Tasks Skill
 
@@ -25,8 +25,14 @@ Domain work belongs to the composing skill matched by the task-type classifier.
 
 - `references/intent-schema.md` — read at Step 2; defines intent sentence structure,
   actor taxonomy, per-path authoring rules, and validation criteria
+- `references/verification-schema.md` — read at Step 4a; defines verification scenario
+  format, scenario validation criteria, acceptance criteria format, and acceptance
+  criteria validation rules
 - `references/challenge-protocol.md` — read at Step 5; defines confidence gate,
   self-assessment question, minimum recommendation, user approval prompt, exit conditions
+- `references/qa-schema.md` — read at Step 7; defines QA suite row format, severity
+  taxonomy, Confidence Derivation Rule, QA Row Ownership Table format, and traceability
+  matrix format; applies at Steps 7, 8, 9, and 10
 - `references/subtask-patterns.md` — read at Step 9; defines inner loop per task type
   (code / research / doc / file-write / skill-authoring / framing), each with an inner loop
   and Inner-loop checklist as the formal Test step gate; contains Inner Loop QA Report format,
@@ -114,16 +120,9 @@ disk. If any downstream step references an artifact that appears missing (e.g. a
 session interruption): re-run from the step that produced it. Do not proceed with an
 unconfirmed artifact.
 
-**Confidence Derivation Rule (applies at Steps 9 and 10):**
-After applying any checklist or test suite, compute confidence from the severity profile of failures:
-- Start: 100%
-- Any Blocking failure: Confidence = 0% (hard floor — cannot recover in the current run)
-- Per Major failure: −20%
-- Per Minor failure: −3%
-- Report format: `Confidence: [N]% — [B] Blocking / [M] Major / [m] Minor failures`
-- Gate: Confidence ≥ 95% is required to advance at Steps 9 and 10; below 95% blocks the current step
-
-Threshold interpretation: ≥ 95% = 0 Blocking + 0 Major + at most 1 Minor failure.
+**Confidence Derivation Rule:** formula, report format, and threshold defined in
+`references/qa-schema.md`. Gate: Confidence ≥ 95% is required to advance at Steps 9
+and 10; below 95% blocks the current step.
 
 ### Step 1 — Extract task context
 
@@ -238,6 +237,9 @@ State classification explicitly before proceeding:
 
 ### Step 4a — Verification scenario (hard gate)
 
+Read `references/verification-schema.md` before this step.
+If read fails: `⚠️ verification-schema.md could not be read — surface to user and stop before proceeding.`
+
 A verification scenario describes how the task's output will be exercised and what
 behaviour is expected — from the actor's perspective. It operates at the functional
 level: what triggers, what the actor observes. It does not name files, assertions,
@@ -248,41 +250,20 @@ They open the outer loop and remain the reference point through Steps 4b, 7, and
 No scenario may be dropped, merged, or reinterpreted in any downstream step without
 returning to this step for explicit user confirmation.
 
-Present the schema to the user and ask them to author the scenarios:
-
-> "Please provide one or more verification scenarios using this schema:
->
-> ```
-> S[N]
-> Given: [what is true before the trigger fires]
-> When:  [single trigger — one action or event only]
-> Then:  [observable system result] and/or [data change] and/or [user-visible impact]
-> ```
->
-> One block per distinct functional behaviour introduced or changed by this task.
-> A single When per scenario — if you have a compound trigger, split it into two scenarios."
+Present the scenario format from `references/verification-schema.md` to the user and
+ask them to author scenarios. Include the field definitions inline so the user has
+them while authoring.
 
 **Submission protocol — one scenario at a time:**
 Scenarios are submitted and validated one at a time. After the user submits a scenario,
-Claude validates it immediately against the criteria below. If validation passes, Claude
-confirms acceptance and asks: "Add another scenario, or confirm the set is complete?"
-If validation fails, Claude returns the scenario with the specific field and issue
-identified — the user corrects and resubmits that scenario before any further scenarios
-are accepted. Claude does not accept a new scenario while a correction is pending.
+validate it immediately against the criteria table in `references/verification-schema.md`.
+If validation passes, confirm acceptance and ask: "Add another scenario, or confirm the set is complete?"
+If validation fails, return the scenario with the specific field and issue identified —
+the user corrects and resubmits before any further scenarios are accepted. Do not accept
+a new scenario while a correction is pending.
 
-On receipt, validate each user-provided scenario against these criteria before
-accepting it:
-
-| Criterion | Severity | Action on failure |
-| :--- | :--- | :--- |
-| No file paths, tool calls, or assertions in any field | Blocking | Return to user with specific field flagged |
-| `When` contains exactly one trigger | Blocking | Return to user; ask to split |
-| `Given` describes system or data state — not storage, tools, or implementation | Blocking | Return to user with specific gap identified |
-| `Then` describes an observable outcome — system state, data change, or user-visible impact — not an internal quality judgment | Blocking | Return to user with specific gap identified |
-| Traceable to task description or confirmed intent | Advisory | Surface to user; does not block acceptance |
-
-If any Blocking criterion fails: surface the specific issue, return the scenario
-to the user for correction. Do not accept partial scenarios.
+If any Blocking criterion fails: surface the specific issue, return the scenario to the
+user for correction. Do not accept partial scenarios.
 
 **Hard gate:** do not proceed to Step 4b until all scenarios pass validation and
 the user explicitly confirms the set is complete. Silence or partial response is
@@ -290,31 +271,21 @@ not confirmation.
 
 ### Step 4b — Acceptance criteria (hard gate)
 
-For each confirmed scenario from Step 4a, Claude derives the conditions that must
-hold for that scenario to be considered passing. This is where the abstraction
-level drops from behaviour to observable state.
+For each confirmed scenario from Step 4a, derive the conditions that must hold for that
+scenario to be considered passing. This is where the abstraction level drops from
+behaviour to observable state.
 
 **Role in the outer loop:** these criteria are the outer-loop acceptance specification.
 They must remain unmet by the current system state until all sub-tasks in Step 9
 complete. Agreement here binds Steps 5, 6, 7, and 10 — criteria cannot be silently
 revised in any downstream step without returning here for explicit user confirmation.
 
-Propose to the user:
+Propose to the user using the acceptance criteria format from `references/verification-schema.md`.
+One or more criteria per scenario. A scenario may generate multiple criteria if its
+`Then` clause depends on several independent conditions.
 
-| Scenario ID | Acceptance criterion |
-| :--- | :--- |
-| Scenario ID from Step 4a | Exact, observable condition that must hold — file, section, field, or system state |
-
-One or more criteria per scenario. A scenario may generate multiple criteria
-if its `Then` clause depends on several independent conditions.
-
-Before presenting, validate each criterion:
-
-| Criterion | Severity | Consequence |
-| :--- | :--- | :--- |
-| Observable — checkable with a tool call or a read | Blocking | Rework before presenting |
-| Unambiguous — only one interpretation of pass/fail | Blocking | Rework before presenting |
-| Traceable to its scenario | Blocking | Remove or reassign |
+Before presenting, validate each criterion against the validation rules in
+`references/verification-schema.md`. Resolve all Blocking validation failures before presenting.
 
 **Hard gate:** do not proceed to Step 5 until the user explicitly confirms or
 modifies the acceptance criteria. Acceptance criteria are the evaluation anchor
@@ -350,6 +321,9 @@ with the same question. Do not proceed to Step 7 on partial approval.
 
 ### Step 7 — Design QA suite
 
+Read `references/qa-schema.md` before this step.
+If read fails: `⚠️ qa-schema.md could not be read — surface to user and stop before proceeding.`
+
 Immediately after plan approval — before any sub-task executes.
 
 **Plan coverage validation (gate before QA authoring):**
@@ -366,13 +340,8 @@ Every test row must cite at least one S[N] from Step 4a in the Scenario column.
 A test row with no Scenario reference is invalid and must be removed or reassigned
 before the suite is confirmed.
 
-Format: ID | Scenario | Severity | Assertion | Pass condition | Fail condition | Artifact.
+Use the QA suite row format and severity taxonomy from `references/qa-schema.md`.
 Minimum: one test per acceptance criterion.
-
-Assign Severity per the acceptance criterion each test covers:
-- Blocking: test covers a criterion whose failure makes the associated verification scenario untestable
-- Major: test covers a criterion that partially validates the scenario
-- Minor: test covers a style or advisory criterion
 
 After presenting the suite, state confidence before awaiting user confirmation:
 > "QA suite confidence: [N]% — [one-line rationale for the score]"
@@ -397,20 +366,11 @@ State which skill governs each sub-task before entering the loop:
 **QA Row Ownership Table (produce before entering Step 9):**
 
 For each QA row from the Step 7 suite, assign it to the sub-task whose Step 6 plan
-output will satisfy its assertion. Produce and surface:
+output will satisfy its assertion. Use the QA Row Ownership Table format and apply
+the constraints from `references/qa-schema.md`. Surface the completed table before
+entering Step 9.
 
-| Sub-task | QA Row IDs | Acceptance criterion IDs |
-| :--- | :--- | :--- |
-| Sub-task N | QA-X, QA-Y | Criterion IDs from Step 4b |
-
-Derivation rule: match each QA row's assertion target to the sub-task that produces
-the output under test.
-
-Constraints:
-- Every QA row must map to exactly one sub-task.
-- If a QA row's assertion spans multiple sub-tasks' outputs: flag as ambiguous; resolve
-  by splitting the row or assigning to the sub-task that produces the primary artifact.
-- If a QA row cannot be assigned to any sub-task: plan gap — return to Step 6 before proceeding.
+If any QA row cannot be assigned to any sub-task: plan gap — return to Step 6 before proceeding.
 
 This table is the ownership reference for the State-0 check (Red) and per-row Write
 discipline (Green) throughout Step 9.
@@ -456,7 +416,8 @@ as the formal test gate — not the prose description.
 Flag blockers immediately; do not silently skip or work around.
 Do not advance to the next sub-task until all Inner-loop checklist items pass.
 
-After the Inner-loop checklist is assessed, apply the Confidence Derivation Rule:
+After the Inner-loop checklist is assessed, apply the Confidence Derivation Rule
+from `references/qa-schema.md`:
 - Confidence ≥ 95%: state the score. Run the Refactor phase (below), then advance to the next sub-task.
 - Confidence < 95%: block advancement. State:
   > "Sub-task [N] confidence: [N]% — below 95% gate. Failing items: [list]. Resolve before advancing."
@@ -481,21 +442,12 @@ Run every test from the QA suite (Step 7) against all outputs.
 Report each: ✅ Pass | ⚠️ Partial | ❌ Fail.
 
 **Traceability matrix (required before confidence computation):**
-After all per-test results are reported, produce the following table:
-
-| Scenario | Acceptance criteria | QA tests | Scenario status |
-| :--- | :--- | :--- | :--- |
-| S[N] from Step 4a | Criterion IDs from Step 4b | Test IDs from Step 7 | ✅ Pass / ❌ Fail |
-
-Rules:
-- Scenario status = ✅ only if all QA tests mapped to that scenario pass.
-- If any scenario from Step 4a has no QA test mapped to it: block — return to Step 7
-  to close the gap before computing confidence. Do not proceed with an unmapped scenario.
-- If any scenario status = ❌: the outer loop is not closed. Treat as a Blocking failure
-  regardless of the individual test's severity.
+Produce the traceability matrix using the format and rules from `references/qa-schema.md`.
+Apply all scenario status rules defined there before computing confidence.
 
 After the traceability matrix is confirmed complete and all scenarios are accounted for,
-apply the Confidence Derivation Rule using each test's Severity from the Step 7 QA suite:
+apply the Confidence Derivation Rule from `references/qa-schema.md` using each test's
+Severity from the Step 7 QA suite:
 - Compute and state: `QA suite confidence: [N]%`
 - Confidence ≥ 95%: proceed to Step 11.
 - Confidence < 95%: treat as suite failure regardless of individual ✅/⚠️ counts —
@@ -561,6 +513,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.33        |
+| Version      | 1.34        |
 | Last Updated | 2026-04-08  |
 | Status       | Draft       |
