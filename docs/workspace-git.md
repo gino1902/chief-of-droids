@@ -14,13 +14,13 @@ it does not track code, build artefacts, or project deliverables.
 | Tracked | Why |
 | :--- | :--- |
 | `CLAUDE.md` | Workspace-wide behaviour defaults; changes here affect every project |
-| `TASKS.md` | Cross-repo task board; history shows what work was done and when |
 | `skills/` | Shared skills library; the most important thing to version — a breaking change here propagates to all projects |
 | `docs/` | Operational guides and design records for the workspace framework |
 | `shared/` | Assets shared across project repos (e.g. theme files) |
 
 | Excluded | Why |
 | :--- | :--- |
+| `.tasks/` | gitignored — TASKS.md and session findings are disk-only; task state is not version-controlled |
 | `slide-gen/` | Has its own git repo and remote |
 | `my-claude-fmk/` | Has its own git repo and remote |
 | `datawan/` | Has its own git repo and remote |
@@ -70,7 +70,6 @@ the workspace history.
 | `skills/<skill-name>` | Any change inside `skills/<skill-name>/` |
 | `skills` | Changes to `skills/HOW-TO-TRIGGER.md` or the library as a whole |
 | `CLAUDE.md` | Workspace root behaviour defaults |
-| `TASKS.md` | Task board updates (open, close, bulk transition) |
 | `docs` | Any file under `docs/` |
 | `shared` | Any file under `shared/` |
 | `chore` | Housekeeping with no functional impact (`.gitignore`, README tweaks) |
@@ -82,7 +81,6 @@ skills/writing-docs: add qa-checklist v1.1  [ref: slide-gen]
 skills/managing-tasks: bump to v1.5 — write authority rules
 skills: update HOW-TO-TRIGGER.md — add project-bootstrapping triggers
 CLAUDE.md: add task-manager default TASKS.md path
-TASKS.md: close TASK-014; add TASK-012, TASK-013
 docs: add workspace-git.md v1.0
 shared: add Elevate theme colors
 chore: add .gitignore exclusions for datawan/
@@ -99,7 +97,6 @@ skills/project-bootstrapping: v1.1 post first-run refinements  [ref: chief-of-dr
 
 Also updated:
 - skills/HOW-TO-TRIGGER.md: added `scaffold project` alias
-- TASKS.md: closed TASK-009
 ```
 
 ---
@@ -107,7 +104,7 @@ Also updated:
 ## 4 — Commit cadence
 
 Commit at the end of any session that produced a material change to `skills/`,
-`CLAUDE.md`, `TASKS.md`, `docs/`, or `shared/`. A session is a commit unit.
+`CLAUDE.md`, `docs/`, or `shared/`. A session is a commit unit.
 
 The trigger rule: **if the session wrote or modified a tracked file, commit before closing.**
 Do not let more than one session's changes accumulate uncommitted.
@@ -169,26 +166,33 @@ It exposes git operations as structured tool calls within Claude Desktop session
 }
 ```
 
-### Operational rules (encoded in system prompt)
+### Operational rules (from CLAUDE.md `## Git`)
 
-- Default repo: `/home/gino/workspace` (workspace root, no qualifier needed)
-- Named sub-repo: `my-claude-fmk | slide-gen | datawan` → `/home/gino/workspace/<name>`
-- `"all repos"` → run against all four repos in sequence
-- Commit requires explicit `-m` approval — propose message, wait for confirmation, then stage and commit
+- Default repo: `/home/gino/workspace`
+- Stage by explicit file path array — never by directory
+- Run `git_diff_staged` as a mandatory gate before every commit
+- Commit message requires no approval — propose and commit directly after clean diff
+- Commit message format: `type(scope): description`
+- Push: `git_push` unavailable via MCP — always push manually from WSL2
 
-### Known gaps
+### Known gaps and quirks
 
-- No `git_push` — must be run manually: `git push origin main` in WSL2 terminal
-- `git_log` was blocked in one session (likely a tool load order issue) — if unavailable, retry after `tool_search("git log")`
+- `git_push` unavailable — run manually: `git push origin main` in WSL2 terminal
+- `git_log` occasionally unavailable at session start due to tool load order — retry via `tool_search("git log")`
+- `git_diff_unstaged` returns empty for files written by Filesystem MCP even when content is on disk — stage explicitly by path rather than relying on status output
+- `git_status` can report false positive modified files (CRLF/LF artefact) — confirmed harmless by empty `git_diff`
+- **Correction workflow for bad staged diffs:** `git_reset` (unstages all without touching working tree) → fix on disk → `git_add` with explicit paths → `git_diff_staged` → `git_commit`
 
 ### Installation prerequisite
 
-Requires Claude Desktop Win32 installer (not Store). See `setup/filesystem-mcp-wsl2-setup.md`.
+Requires Claude Desktop Win32 installer (not Store). MSIX AppContainer sandbox silently
+blocks `wsl.exe` spawn — no MCP log entries are produced. Fix: uninstall Store version,
+install Win32 direct installer.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-03-20 |
+| Version      | 1.2        |
+| Last Updated | 2026-04-11 |
 | Status       | Draft      |

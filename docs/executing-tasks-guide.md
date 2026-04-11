@@ -64,8 +64,6 @@ flowchart TD
       S11[Step 11
       Refine + close]
 
-      STOP_P1[Stop
-      Not In Progress]
       STOP_P2[Stop
       Tool or task error]
       RETRY_CAP[Retry cap reached
@@ -78,8 +76,7 @@ flowchart TD
     end
   end
 
-  P1 -->|task found, In Progress| S1
-  P1 -->|status not In Progress| STOP_P1
+  P1 -->|task found| S1
   P1 -->|tool error or not found| STOP_P2
   P2 -->|no TASKS.md lookup| S2A
 
@@ -111,7 +108,7 @@ flowchart TD
   class P1,P2 primary
   class S1,S2A,S2B,S3,S6,S7,S8,S9,S11 secondary
   class S4A,S4B,S5,S10 tertiary
-  class STOP_P1,STOP_P2,RETRY_CAP ytbc
+  class STOP_P2,RETRY_CAP ytbc
   class OuterLoop primary_cluster
   class Main main
 ```
@@ -123,9 +120,9 @@ flowchart TD
 ### Step 1 — Extract task context (Path 1 only)
 
 Reads the TASK-XXX entry from TASKS.md. Requires fields: `description`, `scope`, `target`,
-`origin`. If the task is not found, not In Progress, or the read fails, the workflow stops
-with an explicit error. `scope` is used only for intent pre-fill at Step 2A — it is retired
-as a working field after Step 2A confirms and is not referenced in any downstream step.
+`origin`. If the task is not found or the read fails, the workflow stops with an explicit
+error. `scope` is used only for intent pre-fill at Step 2A — it is retired as a working
+field after Step 2A confirms and is not referenced in any downstream step.
 
 ### Step 2 — Intent formulation
 
@@ -289,7 +286,6 @@ to Step 11, and call `done task TASK-XXX`.
 
 | Gate | Location | Unblocking condition |
 | :--- | :--- | :--- |
-| Task status check | Step 1 | Task must be 🟡 In Progress |
 | Intent validation | Step 2A | All five blocking rules pass; assembled sentence validated against schema |
 | Intent + target confirmation | Step 2B | User submits Artifact 2 |
 | Scenario validation | Step 4a | Each scenario passes all blocking criteria; no correction pending |
@@ -315,6 +311,6 @@ to Step 11, and call `done task TASK-XXX`.
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.1 |
-| Last Updated | 2026-04-07 |
+| Version | 1.2 |
+| Last Updated | 2026-04-11 |
 | Status | Draft |
