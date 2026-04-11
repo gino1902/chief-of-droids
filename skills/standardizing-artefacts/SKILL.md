@@ -14,7 +14,7 @@ description: >
   instructions", "audit CLAUDE.md", "audit system prompt", "audit this file",
   "full audit <file>".
 ---
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
 
 # Standardizing Artefacts Skill
 
@@ -35,6 +35,9 @@ Audits Claude Desktop instruction files for deterministic execution risk. Owns t
 
 Probe: attempt `filesystem:read_text_file references/determinism-audit.md`.
 - Read succeeds → **Claude Desktop** — criteria loaded; proceed
+  After successful read: verify that block definitions B1, B2, B3, and B4 are all present
+  in the loaded content. If any block definition is absent: halt. Report:
+  "Audit criteria file incomplete — [block] definition absent. Audit cannot proceed."
 - Read fails → **Claude.ai** — Filesystem MCP unavailable
 
 Report before any other action:
@@ -87,11 +90,13 @@ If file matches no type: prepend to all block reports —
 **Trigger:** "audit <file>" | "check <file> for determinism" | "standardize <file>" |
 "review <file> for execution risks" | "audit project instructions" | "audit CLAUDE.md" |
 "audit system prompt" | "audit this file"
+If prompt contains `--full` flag: route to `audit <file> --full` workflow instead.
 
 **Steps:**
 
 1. Run Step 0 — environment detection; criteria loaded from Step 0 read result
 2. Read `references/audit-report-schema.md`
+   If read fails: halt. Report: "Report schema unavailable — cannot produce structured output. Audit cannot proceed."
 3. Resolve file input — detect mode; read; halt if unreadable
 4. Declare file type
 5. Execute block loop — B1 → B2 → B3 → B4:
@@ -120,6 +125,7 @@ Triggered when a block report contains one or more Blocking or Major violations.
 4. After write: re-read via `filesystem:read_text_file` — confirm write succeeded
    If write fails: halt. Report: "Write confirmation failed — B[n] fix not applied. Resolve before proceeding."
 5. If user rejects a specific fix: mark as deferred (note criterion ID). Proceed with remaining approved fixes.
+   Deferred criterion IDs are retained in context across all blocks for Final Summary aggregation.
 6. Proceed to B[n+1] using re-read file content
 
 **Final Summary** (produced after B4, including any B4 fix phase):
@@ -151,6 +157,7 @@ Workflow complete when Final Summary is produced and confirmed.
 
 1. Run Step 0 — environment detection; criteria loaded from Step 0 read result
 2. Read `references/audit-report-schema.md`
+   If read fails: halt. Report: "Report schema unavailable — cannot produce structured output. Audit cannot proceed."
 3. Resolve file input — detect mode; read; halt if unreadable
 4. Declare file type
 5. Evaluate all 33 criteria (B1→B4 sequence) against the file in a single pass
@@ -179,6 +186,6 @@ Prior audit output is not referenced.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-04-11 |
 | Status       | Draft      |
