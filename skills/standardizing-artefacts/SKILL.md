@@ -14,7 +14,7 @@ description: >
   instructions", "audit CLAUDE.md", "audit system prompt", "audit this file",
   "full audit <file>".
 ---
-<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
+<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
 
 # Standardizing Artefacts Skill
 
@@ -48,6 +48,7 @@ If Claude.ai detected: both reference files must be pasted inline by the user.
 Halt and state: "Audit cannot proceed — paste references/determinism-audit.md and
 references/audit-report-schema.md inline to continue."
 Do not proceed without criteria content.
+Reason: evaluating without criteria produces structurally valid but semantically empty reports — every criterion passes by default.
 
 ---
 
@@ -61,11 +62,14 @@ Detect delivery mode from the prompt before reading. State the detected mode.
 | Filename only, or "uploaded" | Upload | `bash_tool: cat /mnt/user-data/uploads/<filename>` |
 | File content present in prompt | Inline | Use content as-is — no read required |
 
+If no delivery mode signal is present: halt. Report: "File delivery mode unresolved — provide a file path, filename, or paste content inline."
+
 Tool note: `filesystem:write_file` uses the `content` parameter (not `file_text`).
 
 If file cannot be read (path not found, upload absent): halt.
 Report: "File unreadable — [mode] [path/filename]. Audit cannot proceed."
 Do not infer or fabricate file content.
+Reason: fabricated content produces criterion evaluations against a file that does not exist — every finding would be invalid.
 
 ---
 
@@ -79,9 +83,15 @@ Classify and state the file type before any criterion is applied:
 | CLAUDE.md | Markdown file; `#`-headed sections; session bootstrap context; injected as user message |
 | Routing template | Contains explicit conditional logic selecting behavior by task type |
 | System prompt fragment | Partial or full system prompt; may contain XML component tags |
+| SKILL.md | Markdown file; `##`-headed sections; YAML frontmatter block; declares workflows and reference files for agent skill routing |
 
 If file matches no type: prepend to all block reports —
 `Note: file type unrecognized — audited as Project Instructions.`
+
+When file type is SKILL.md: the following criteria do not apply —
+- STR-2 (XML component separation) — SKILL.md files use markdown by format convention
+- STR-5 (formatting consistency with output) — output is produced via reference files, not inline
+- EX-1 through EX-5 (worked examples) — examples are contained in reference files loaded on demand, not inline
 
 ---
 
@@ -102,8 +112,9 @@ If prompt contains `--full` flag: route to `audit <file> --full` workflow instea
 5. Execute block loop — B1 → B2 → B3 → B4:
    a. Read block definition and proceed rule from `references/determinism-audit.md`
    b. Evaluate all criteria in the block against **current file content**
-   c. Produce block violation report per schema in `references/audit-report-schema.md`
-   d. Apply proceed rule (see Proceed Rule table below)
+   c. Reason internally before producing the block report. Include only the structured report in output — do not surface reasoning steps.
+   d. Produce block violation report per schema in `references/audit-report-schema.md`
+   e. Apply proceed rule (see Proceed Rule table below)
 6. Produce Final Summary after B4
 
 **Proceed rule:**
@@ -125,7 +136,7 @@ Triggered when a block report contains one or more Blocking or Major violations.
 4. After write: re-read via `filesystem:read_text_file` — confirm write succeeded
    If write fails: halt. Report: "Write confirmation failed — B[n] fix not applied. Resolve before proceeding."
 5. If user rejects a specific fix: mark as deferred (note criterion ID). Proceed with remaining approved fixes.
-   Deferred criterion IDs are retained in context across all blocks for Final Summary aggregation.
+   Retain deferred criterion IDs in context across all blocks for Final Summary aggregation.
 6. Proceed to B[n+1] using re-read file content
 
 **Final Summary** (produced after B4, including any B4 fix phase):
@@ -161,6 +172,7 @@ Workflow complete when Final Summary is produced and confirmed.
 3. Resolve file input — detect mode; read; halt if unreadable
 4. Declare file type
 5. Evaluate all 33 criteria (B1→B4 sequence) against the file in a single pass
+   Reason internally before producing the report. Include only the structured report in output — do not surface reasoning steps.
 6. Produce complete violation report per schema in `references/audit-report-schema.md`
 7. Surface findings only — no fix phase; no file writes
 
@@ -173,6 +185,7 @@ To enter the fix phase after a --full audit: re-run as `audit <file>` (default m
 Each run is independent. No state is accumulated across runs.
 If the same file is audited twice, the second run starts from current file content.
 Prior audit output is not referenced.
+Reason: prior audit state introduces confirmation bias — the second run must evaluate the current file independently to surface genuine improvements or regressions.
 
 ---
 
@@ -186,6 +199,6 @@ Prior audit output is not referenced.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.4        |
 | Last Updated | 2026-04-11 |
 | Status       | Draft      |
