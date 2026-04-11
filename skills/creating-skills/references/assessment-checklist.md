@@ -1,4 +1,4 @@
-<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
 
 # Assessment Checklist
 
@@ -26,7 +26,6 @@ comparable skills; that is the role of `skill-sources.md` via the `enrich skill`
 - [ ] SKILL.md body under 500 lines — official limit; consider splitting longer content
   into reference files when approaching this limit (agentskills.io/specification)
 - [ ] Reference files declared explicitly with guidance on when to read them
-- [ ] Large reference files (>100 lines) have a table of contents
 - [ ] Multi-domain skills organise references by domain variant
 - [ ] References are one level deep from SKILL.md — no nested chains
 - [ ] No content Claude already knows — every line justified by token cost
