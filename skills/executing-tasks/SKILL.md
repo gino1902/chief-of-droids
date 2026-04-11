@@ -9,7 +9,7 @@ description: >
   'execute the complex task TASK-XXX'. Does NOT trigger on 'start TASK-XXX'
   alone — that belongs to managing-tasks.
 ---
-<!-- version: 1.35 | author: chief-of-droids workspace | last_updated: 2026-04-08 -->
+<!-- version: 1.36 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
 
 # Executing Tasks Skill
 
@@ -222,7 +222,19 @@ If read fails: `⚠️ composing-skills.md could not be read — surface to user
 Apply the decision table to confirmed intent and target. Follow the classification output
 format and ambiguity resolution rule from `references/composing-skills.md`.
 
-### Step 4a — Verification scenario (hard gate)
+### Step 3a — Load composing skills (hard gate)
+
+For each composing skill identified at Step 3, attempt `filesystem:read_text_file` on
+`skills/<skill-name>/SKILL.md`:
+- If all reads succeed, surface once in chat:
+  > "Composing skills loaded: [skill-a], [skill-b]"
+- If any read fails:
+  > `⚠️ Composing skill [name] could not be loaded — hard stop.`
+
+All steps from 4a onward are governed by the loaded composing skills. No further loading
+calls occur downstream.
+
+### Step 4a — Verification scenarios (hard gate)
 
 Read `references/verification-schema.md` before this step.
 If read fails: `⚠️ verification-schema.md could not be read — surface to user and stop before proceeding.`
@@ -230,24 +242,48 @@ If read fails: `⚠️ verification-schema.md could not be read — surface to u
 **Outer loop:** scenarios open the acceptance gate. No scenario may be dropped, merged,
 or reinterpreted in any downstream step without returning here for explicit user confirmation.
 
-Present the scenario format from `references/verification-schema.md` to the user and
-ask them to author scenarios. Include the field definitions inline so the user has
-them while authoring.
+#### Sub-step 4a.1 — Generation choice (elicit)
 
-**Submission protocol — one scenario at a time:**
-Scenarios are submitted and validated one at a time. After the user submits a scenario,
-validate it immediately against the criteria table in `references/verification-schema.md`.
-If validation passes, confirm acceptance and ask: "Add another scenario, or confirm the set is complete?"
-If validation fails, return the scenario with the specific field and issue identified —
-the user corrects and resubmits before any further scenarios are accepted. Do not accept
-a new scenario while a correction is pending.
+Render an elicit step with a single choice:
+- **A — Claude generates scenarios** from confirmed intent and task type
+- **B — I will define scenarios manually**
 
-If any Blocking criterion fails: surface the specific issue, return the scenario to the
-user for correction. Do not accept partial scenarios.
+Await user selection before proceeding.
 
-**Hard gate:** do not proceed to Step 4b until all scenarios pass validation and
-the user explicitly confirms the set is complete. Silence or partial response is
-not confirmation.
+#### Sub-step 4a.2 — Generate or prepare
+
+**Path A:** Using confirmed intent (Step 2B) and task type (Step 3), generate an initial
+set of scenarios conforming to the field definitions from `references/verification-schema.md`.
+Each scenario populates all required schema fields.
+
+**Path B:** No pre-population. Proceed directly to Sub-step 4a.3 with empty fields.
+
+#### Sub-step 4a.3 — Scenario artifact
+
+Render the scenario artifact. Field definitions from `references/verification-schema.md`
+govern all input fields.
+
+**Artifact structure:**
+- Header note (once): "Unchecked scenarios are excluded from acceptance criteria."
+- Per scenario: editable schema-conformant fields; checkbox (checked by default)
+- Path A: pre-populated rows with generated scenarios as editable fields
+- Path B: one empty scenario form
+- + button: always renders a new blank scenario form regardless of path
+
+#### Sub-step 4a.4 — Batch validation
+
+User submits the full scenario set. Claude validates and challenges all scenarios
+simultaneously against `references/verification-schema.md`.
+
+**Validation loop:**
+- If user overrides Claude's rejection: accept as-is → reload artifact with all scenarios
+  including overridden ones
+- If user corrects one or more scenarios: Claude challenges the corrections → loop continues
+  until user accepts → reload artifact with accepted corrections
+- Loop exits when all scenarios are accepted (by pass or override)
+
+**Hard gate:** do not proceed to Step 4b until all checked scenarios have cleared the
+validation loop and the user explicitly confirms the set is complete.
 
 ### Step 4b — Acceptance criteria (hard gate)
 
@@ -280,6 +316,11 @@ criteria from Step 4b.
 
 Do NOT enter Step 6 until the gate exits cleanly:
 condition = no new blocking issues in the last round AND user explicitly approves.
+
+On clean exit, surface exactly:
+> "Challenge complete. Proceed to plan authoring?"
+
+Await explicit confirmation before entering Step 6.
 
 ### Step 6 — Propose and approve plan
 
@@ -330,10 +371,9 @@ Do not proceed on partial approval.
 The QA suite produced here is the direct input to Step 10 (Verify).
 Do not author a separate verification checklist at Step 10.
 
-### Step 8 — Load composing skill(s)
+### Step 8 — QA Row Ownership Table
 
-Load each skill from the Composes With table matched in Step 3.
-State which skill governs each sub-task before entering the loop:
+State which composing skill governs each sub-task before entering the loop:
 > "Sub-task [N] governed by: [skill name]."
 
 **QA Row Ownership Table (produce before entering Step 9):**
@@ -479,6 +519,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.35        |
-| Last Updated | 2026-04-08  |
+| Version      | 1.36        |
+| Last Updated | 2026-04-11  |
 | Status       | Draft       |
