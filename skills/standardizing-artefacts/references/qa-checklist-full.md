@@ -1,11 +1,11 @@
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
 
 # QA Checklist — standardizing-artefacts (audit --full workflow)
 
 Governs: `standardizing-artefacts` skill — `audit <file> --full` (single-pass) workflow
 Format: table (Severity / Maps to / Item / Pass / Fail signal)
 Placement: Split — this file covers the `audit --full` workflow only
-Branch-exclusive ratio: 7 of 12 items are branch-specific (58%) — above 50% threshold; split placement correct
+Branch-exclusive ratio: all 7 items are exclusive to the `audit --full` workflow — split placement correct
 
 | Severity | Maps to | Item | Pass | Fail signal |
 |:---------|:--------|:-----|:-----|:------------|

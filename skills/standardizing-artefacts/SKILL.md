@@ -2,19 +2,20 @@
 name: standardizing-artefacts
 description: >
   Audits any Claude Desktop instruction file — Project Instructions, CLAUDE.md,
-  routing template, or system prompt fragment — for deterministic execution risks.
-  Runs 33 criteria across four structured blocks: Foundation (OBL+STR), Evidence
-  Layer (EX+RSN), Behavior Contract (BRN+OUT), and Deployment Gate (DEF+DSK).
-  For each block: audits the file, produces a structured violation report, proposes
-  fixes with an explicit per-block approval gate, applies approved fixes, re-reads
-  the file, then proceeds to the next block. Owns the fix phase. Produces a final
-  deployment readiness verdict. Also supports a single-pass full audit mode.
+  routing template, system prompt fragment, or SKILL.md — for deterministic
+  execution risks. Runs 33 criteria across four structured blocks: Foundation
+  (OBL+STR), Evidence Layer (EX+RSN), Behavior Contract (BRN+OUT), and
+  Deployment Gate (DEF+DSK). For each block: audits the file, produces a
+  structured violation report, proposes fixes with an explicit per-block approval
+  gate, applies approved fixes, re-reads the file, then proceeds to the next
+  block. Owns the fix phase. Produces a final deployment readiness verdict. Also
+  supports a single-pass full audit mode.
   Load when the user says: "audit <file>", "check <file> for determinism",
   "standardize <file>", "review <file> for execution risks", "audit project
   instructions", "audit CLAUDE.md", "audit system prompt", "audit this file",
   "full audit <file>".
 ---
-<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
+<!-- version: 1.5 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
 
 # Standardizing Artefacts Skill
 
@@ -114,7 +115,8 @@ If prompt contains `--full` flag: route to `audit <file> --full` workflow instea
    b. Evaluate all criteria in the block against **current file content**
    c. Reason internally before producing the block report. Include only the structured report in output — do not surface reasoning steps.
    d. Produce block violation report per schema in `references/audit-report-schema.md`
-   e. Apply proceed rule (see Proceed Rule table below)
+   e. Retain block passed/failed counts in context for Final Summary aggregation.
+   f. Apply proceed rule (see Proceed Rule table below)
 6. Produce Final Summary after B4
 
 **Proceed rule:**
@@ -182,9 +184,8 @@ To enter the fix phase after a --full audit: re-run as `audit <file>` (default m
 
 ## Cross-Run Behaviour
 
-Each run is independent. No state is accumulated across runs.
-If the same file is audited twice, the second run starts from current file content.
-Prior audit output is not referenced.
+Treat each run as independent. Do not accumulate state across runs.
+Start each run from current file content. Do not reference prior audit output.
 Reason: prior audit state introduces confirmation bias — the second run must evaluate the current file independently to surface genuine improvements or regressions.
 
 ---
@@ -199,6 +200,6 @@ Reason: prior audit state introduces confirmation bias — the second run must e
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.4        |
+| Version      | 1.5        |
 | Last Updated | 2026-04-11 |
 | Status       | Draft      |
