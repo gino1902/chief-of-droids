@@ -10,7 +10,7 @@ description: >
   "manage sessions", "analyse sessions", "prune sessions", "session hygiene",
   "what should I keep", "challenge memories", "check memories".
 ---
-<!-- version: 1.7 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
+<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-04-12 -->
 
 # Managing Sessions Skill
 
@@ -26,9 +26,9 @@ manual user action in the claude.ai UI.
 
 | Output | Path | Created when |
 | :--- | :--- | :--- |
-| Analysis findings | `/home/gino/workspace/.tasks/sessions-findings/` | Every confirmed run |
-| Session removal log | `/home/gino/workspace/.logs/sessions-removed/` | Only when sessions are confirmed for removal |
-| Sentinel | `/home/gino/workspace/.tasks/sessions-findings/sentinel.md` | Written/overwritten at end of every confirmed run |
+| Analysis findings | `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/sessions-findings/` | Every confirmed run |
+| Session removal log | `/Users/gilllesmourgues/Workspace/chief-of-droids/.logs/sessions-removed/` | Only when sessions are confirmed for removal |
+| Sentinel | `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/sessions-findings/sentinel.md` | Written/overwritten at end of every confirmed run |
 
 **Multi-project note:** This skill is shared across all workspace projects.
 Both output directories are centralised at workspace root — findings and
@@ -46,7 +46,7 @@ which condition is met and ask the user if they want to run the
 
 ## Sentinel File Format
 
-Path: `/home/gino/workspace/.tasks/sessions-findings/sentinel.md`
+Path: `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/sessions-findings/sentinel.md`
 
 ```markdown
 # Managing Sessions — Sentinel
@@ -112,8 +112,8 @@ filenames, headers, and memory challenge scope.
 1. Attempt to read the active repo-level `CLAUDE.md` via Filesystem tool.
    Resolution order:
    - If the session is routed to a named repo: read
-     `/home/gino/workspace/<repo>/CLAUDE.md`
-   - Otherwise: read `/home/gino/workspace/CLAUDE.md`
+     `/Users/gilllesmourgues/Workspace/chief-of-droids/<repo>/CLAUDE.md`
+   - Otherwise: read `/Users/gilllesmourgues/Workspace/chief-of-droids/CLAUDE.md`
 2. Extract project name from the file header (first `# ` heading or
    `## Scope` section). Use the heading text as the project identifier.
 3. If `CLAUDE.md` is unreadable or contains no identifiable project name:
@@ -173,8 +173,8 @@ Trigger: `manage sessions` | `analyse sessions` | `session hygiene` |
     - If content absent → reclassify `not-on-disk`
     - If file unreadable → classify `on-disk-unverified`
 11. Also check centralised docs files for prior cross-project captures:
-    - `/home/gino/workspace/docs/mcp-tool-quirks.md` (if it exists)
-    - `/home/gino/workspace/docs/system-prompt-changelog.md` (if it exists)
+    - `/Users/gilllesmourgues/Workspace/chief-of-droids/docs/mcp-tool-quirks.md` (if it exists)
+    - `/Users/gilllesmourgues/Workspace/chief-of-droids/docs/system-prompt-changelog.md` (if it exists)
     — A finding already in either file is `on-disk` regardless of source project
 12. Findings with no identifiable target file → classify `not-on-disk`
 
@@ -220,7 +220,7 @@ Trigger: called internally after user confirms analysis output
 Steps:
 1. Read `references/session-log-schema.md` via Filesystem tool
 2. Determine findings file path:
-   `/home/gino/workspace/.tasks/sessions-findings/YYYY-MM-DD-<project>-findings.md`
+   `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/sessions-findings/YYYY-MM-DD-<project>-findings.md`
    — If a file with this name already exists, append `-2`, `-3` etc.
      Never overwrite.
 3. Build findings file per **Findings schema** in `session-log-schema.md`:
@@ -243,7 +243,7 @@ recommendation results in zero sessions being removed.
 Steps:
 1. Read `references/session-log-schema.md` via Filesystem tool
 2. Determine removal log path:
-   `/home/gino/workspace/.logs/sessions-removed/YYYY-MM-DD-<project>-removed.md`
+   `/Users/gilllesmourgues/Workspace/chief-of-droids/.logs/sessions-removed/YYYY-MM-DD-<project>-removed.md`
    — If a file with this name already exists, append `-2`, `-3` etc.
      Never overwrite.
 3. Build removal log per **Removal log schema** in `session-log-schema.md`:
@@ -269,7 +269,7 @@ Steps:
    | last_run_project | <project> |
    ```
    Where `YYYY-MM-DD` is today's date and `<project>` is the resolved project name.
-2. Write (overwrite) `/home/gino/workspace/.tasks/sessions-findings/sentinel.md`
+2. Write (overwrite) `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/sessions-findings/sentinel.md`
    via Filesystem tool — this file is always overwritten, never appended.
 3. Report: `Sentinel updated: YYYY-MM-DD`
 
@@ -285,15 +285,15 @@ Steps:
 2. Read authoritative on-disk sources fresh — scope depends on active project:
 
    **Always read (workspace-level):**
-   - `/home/gino/workspace/CLAUDE.md`
-   - `/home/gino/workspace/TASKS.md`
-   - `/home/gino/workspace/skills/HOW-TO-TRIGGER.md`
-   - `/home/gino/workspace/skills/managing-tasks/SKILL.md`
-   - `/home/gino/workspace/skills/managing-sessions/SKILL.md`
+   - `/Users/gilllesmourgues/Workspace/chief-of-droids/CLAUDE.md`
+   - `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/TASKS.md`
+   - `/Users/gilllesmourgues/Workspace/chief-of-droids/skills/HOW-TO-TRIGGER.md`
+   - `/Users/gilllesmourgues/Workspace/chief-of-droids/skills/managing-tasks/SKILL.md`
+   - `/Users/gilllesmourgues/Workspace/chief-of-droids/skills/managing-sessions/SKILL.md`
 
    **Also read if project is repo-scoped (not workspace root):**
-   - `/home/gino/workspace/<project>/CLAUDE.md`
-   - `/home/gino/workspace/<project>/TASKS.md`
+   - `/Users/gilllesmourgues/Workspace/chief-of-droids/<project>/CLAUDE.md`
+   - `/Users/gilllesmourgues/Workspace/chief-of-droids/<project>/TASKS.md`
 
    **Also read if changed in current session:**
    - Any other skill SKILL.md written or changed in this session
@@ -364,6 +364,6 @@ Steps:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.7        |
-| Last Updated | 2026-03-28 |
+| Version      | 1.8        |
+| Last Updated | 2026-04-12 |
 | Status       | Draft      |

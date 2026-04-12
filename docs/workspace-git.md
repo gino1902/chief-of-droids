@@ -155,44 +155,38 @@ It exposes git operations as structured tool calls within Claude Desktop session
 | `git_checkout` | ✅ |
 | `git_create_branch` | ✅ |
 | `git_show` | ✅ |
-| `git_push` | ❌ not available — run manually in WSL2 |
+| `git_push` | ❌ not available — run manually in Terminal |
 
 ### Config entry
 
 ```json
 "git-workspace": {
-  "command": "wsl.exe",
-  "args": ["bash", "-c", "/home/gino/.local/bin/uvx mcp-server-git --repository /home/gino/workspace"]
+  "command": "/Users/gilllesmourgues/.local/bin/uvx",
+  "args": ["mcp-server-git", "--repository", "/Users/gilllesmourgues/Workspace/chief-of-droids"]
 }
 ```
 
 ### Operational rules (from CLAUDE.md `## Git`)
 
-- Default repo: `/home/gino/workspace`
+- Default repo: `/Users/gilllesmourgues/Workspace/chief-of-droids`
 - Stage by explicit file path array — never by directory
 - Run `git_diff_staged` as a mandatory gate before every commit
 - Commit message requires no approval — propose and commit directly after clean diff
 - Commit message format: `type(scope): description`
-- Push: `git_push` unavailable via MCP — always push manually from WSL2
+- Push: `git_push` unavailable via MCP — always push manually from Terminal
 
 ### Known gaps and quirks
 
-- `git_push` unavailable — run manually: `git push origin main` in WSL2 terminal
+- `git_push` unavailable — run manually: `git push origin main` in Terminal
 - `git_log` occasionally unavailable at session start due to tool load order — retry via `tool_search("git log")`
 - `git_diff_unstaged` returns empty for files written by Filesystem MCP even when content is on disk — stage explicitly by path rather than relying on status output
 - `git_status` can report false positive modified files (CRLF/LF artefact) — confirmed harmless by empty `git_diff`
 - **Correction workflow for bad staged diffs:** `git_reset` (unstages all without touching working tree) → fix on disk → `git_add` with explicit paths → `git_diff_staged` → `git_commit`
 
-### Installation prerequisite
-
-Requires Claude Desktop Win32 installer (not Store). MSIX AppContainer sandbox silently
-blocks `wsl.exe` spawn — no MCP log entries are produced. Fix: uninstall Store version,
-install Win32 direct installer.
-
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-04-11 |
+| Version      | 1.3        |
+| Last Updated | 2026-04-12 |
 | Status       | Draft      |

@@ -263,7 +263,7 @@ my-claude-fmk/
 
 Uploaded skills (ZIP → Customize > Skills) are not the only delivery mechanism for Claude Desktop. If the Filesystem MCP is connected, Claude can load skills directly from the repo — no upload, no ZIP, no toggle.
 
-This is the pattern used in this workspace: skill source files live in `my-claude-fmk/claude-desktop/skills/` and the system prompt instructs Claude to read them from that path.
+This is the pattern used in this workspace: skill source files live in `skills/` at the workspace root and the system prompt instructs Claude to read them from that path.
 
 ### How it works
 
@@ -273,7 +273,7 @@ Minimal system prompt snippet:
 
 ```xml
 <skills>
-Load workspace skills from: /home/[wsl-user]/workspace/my-claude-fmk/claude-desktop/skills/
+Load workspace skills from: /Users/gilllesmourgues/Workspace/chief-of-droids/skills/
 For each subdirectory, read SKILL.md and treat it as an available skill.
 Fallback if path is unavailable: notify the user, then proceed without skills.
 </skills>
@@ -306,7 +306,7 @@ Filesystem skills have no upload cycle. Edit the SKILL.md in your editor, save, 
 
 ```bash
 # Edit skill, then commit
-git add claude-desktop/skills/your-skill/SKILL.md
+git add skills/your-skill/SKILL.md
 git commit -m "skills: update your-skill — [reason]"
 git push origin main
 # Next Claude Desktop session: change is live
@@ -327,8 +327,8 @@ Claude's container (ephemeral)
 │
 ↓ Download / copy to local
 │
-Your Windows filesystem (durable)
-│  Your repo working tree, Downloads folder.
+Your local filesystem (durable)
+│  Your repo working tree.
 │  Survives session resets. Your ownership layer.
 │  Nothing is safe until it is here.
 │
@@ -380,9 +380,9 @@ GitHub repo (most durable)
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.1 |
-| Last Updated | 2026-03-26 |
+| Version | 1.2 |
+| Last Updated | 2026-04-12 |
 | Status | Final |
 
-*v1.0 — Restructured from skills-usage-guide.md (v2.0) and skills-guide.md (v1.0). Reorganised as playbook — procedural content only. Section order follows task execution sequence: commission → choose → describe → build → install → maintain. Description discipline elevated to standalone section (Section 3). Persistence model updated. SKILL.md anatomy removed — cross-reference to skills-reference.md. Companion doc header added.*
-*v1.1 — Version block bumped to reflect substantive changes made in prior session: Section 5 install paths updated (Customize > Skills); Section 6 workspace MCP pattern documented as primary delivery model for this workspace.*
+*v1.1 — Section 5 install paths updated (Customize > Skills); Section 6 workspace MCP pattern documented as primary delivery model for this workspace.*
+*v1.2 — Section 6: MCP snippet path updated to macOS workspace root; commit snippet path corrected to workspace skills path. Section 7: "Windows filesystem" updated to "local filesystem".*

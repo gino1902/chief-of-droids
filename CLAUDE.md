@@ -53,7 +53,7 @@ This workspace uses two MCP servers for content retrieval. They have similar ver
 
 | Tool | Server | Use for |
 | :--- | :--- | :--- |
-| `filesystem:read_text_file` | Filesystem MCP | Local file paths under `/home/gino/workspace/` |
+| `filesystem:read_text_file` | Filesystem MCP | Local file paths under `/Users/gilllesmourgues/Workspace/chief-of-droids/` |
 | `fetch` | mcp-server-fetch | External URLs (HTTP/HTTPS) |
 
 **Routing rule:** if the target is a URL → use `fetch`. If the target is a filesystem path → use `filesystem:read_text_file`. Never attempt a URL via Filesystem MCP or a local path via `fetch`.
@@ -124,7 +124,7 @@ precedence over this workspace default for sessions routed to that repo.
 
 ## Git
 
-- Default repo: `/home/gino/workspace`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/home/gino/workspace/<n>`; "all repos" → run across all repos
+- Default repo: `/Users/gilllesmourgues/Workspace/chief-of-droids`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/Users/gilllesmourgues/Workspace/chief-of-droids/<n>`; "all repos" → run across all repos
 - Stage by explicit file path array — never by directory (risk of sweeping untracked files from subdirectories)
 - **Mandatory commit gate — applies after every `filesystem:write_file` call without exception:**
   - Ask: "Do you want to commit?" — do not skip or pre-answer this question from context
@@ -135,7 +135,7 @@ precedence over this workspace default for sessions routed to that repo.
   - No → wait for next prompt
 - Commit message: propose and commit directly — no approval required
 - Commit message format: `type(scope): description`
-- Push: `git_push` unavailable via MCP — always push manually from WSL2
+- Push: `git_push` unavailable via MCP — always push manually from Terminal
 
 ---
 
@@ -151,7 +151,7 @@ Pattern: `my-claude-fmk/claude-desktop/context/prompt-maintenance.md` — four-s
 Run once, as the final step of reading this file. Do not repeat within the session.
 
 1. Call `recent_chats n=1` to get the most recent session's `updated_at`
-2. Read `/home/gino/workspace/.tasks/sessions-findings/sentinel.md`
+2. Read `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/sessions-findings/sentinel.md`
 3. Evaluate:
    - If sentinel file is absent → surface: `⚠️ Session hygiene: sentinel not found (first run)`
    - If `recent_chats[0].updated_at - sentinel.last_run_date > 10 days` → surface:
@@ -160,3 +160,6 @@ Run once, as the final step of reading this file. Do not repeat within the sessi
 4. If a condition was surfaced: ask once — "Run managing-sessions skill now?"
    - Yes → invoke managing-sessions skill
    - Any other response → proceed without running the skill
+
+
+---

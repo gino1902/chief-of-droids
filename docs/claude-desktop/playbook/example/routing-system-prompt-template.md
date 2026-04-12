@@ -17,10 +17,10 @@
 
 ```xml
 <routing>
-Default repo: /home/[wsl-user]/workspace/[default-repo-name]/
+Default repo: /Users/[user]/Workspace/chief-of-droids/[default-repo-name]/
 On session start: read CLAUDE.md from default repo and confirm the active repo to the user.
 Override: if the user references a different repo by name or says "in [repo-name]",
-  switch active repo to /home/[wsl-user]/workspace/[repo-name]/
+  switch active repo to /Users/[user]/Workspace/chief-of-droids/[repo-name]/
   and read its CLAUDE.md before proceeding.
 Requires: Filesystem MCP connected. If you cannot reach the filesystem, say so explicitly
   before proceeding — do not silently fall back to training knowledge.
@@ -56,7 +56,7 @@ unless explicitly marked otherwise."]
 </defaults>
 
 <skills>
-Load workspace skills from: /home/[wsl-user]/workspace/my-claude-fmk/claude-desktop/skills/
+Load workspace skills from: /Users/[user]/Workspace/chief-of-droids/skills/
 Fallback if skills folder is unavailable: notify the user, then proceed without skills.
 
 [Optional: define inline skills for skills not yet extracted to the workspace folder]
@@ -147,4 +147,4 @@ Run this mentally at the start of every session before issuing any repo-dependen
 
 ---
 
-*Last updated: 2026-03-13 — v1.0 initial release*
+*Last updated: 2026-04-12 — v1.1 path migration to macOS workspace*

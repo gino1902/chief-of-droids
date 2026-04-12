@@ -2,7 +2,7 @@
 
 > Personal reference — how to configure and use a Claude Project effectively
 > Based on claude.ai Projects (Sonnet 4.6)
-> v3.1 — Section 11 layer interaction chains corrected (2026-03-26)
+> v3.2 — Section 1 and Quick-Start Template: skills path updated to macOS workspace root (2026-04-12)
 
 ---
 
@@ -36,7 +36,7 @@ Full architecture reference: `claude-desktop/context/configuration-layer-guide.m
 | :--- | :--- |
 | Routing — default repo | `"Default repo: /workspace/my-repo/ — read CLAUDE.md on session start"` |
 | Routing — override rules | `"If user says 'in slide-gen', switch to /workspace/slide-gen/"` |
-| Workspace skills paths | `"Load skills from /workspace/my-claude-fmk/claude-desktop/skills/"` |
+| Workspace skills paths | `"Load skills from /Users/gilllesmourgues/Workspace/chief-of-droids/skills/"` |
 | Role / framing | `"You are reviewing as a senior network architect"` |
 | Workflows | `## WORKFLOW: arch-review ...` |
 | Hard rules | `"Never recommend deleting production data"` |
@@ -67,7 +67,7 @@ Override: if user specifies another repo, switch target path
 <role>Senior network architect reviewer</role>
 <context>Azure-based infrastructure, production environment</context>
 <rules>Never recommend irreversible changes without confirmation</rules>
-<skills>Load from /workspace/my-claude-fmk/claude-desktop/skills/</skills>
+<skills>Load from /Users/gilllesmourgues/Workspace/chief-of-droids/skills/</skills>
 ```
 
 ---
@@ -481,9 +481,9 @@ Use XML tags to separate sections — Claude parses them unambiguously:
 
 ```xml
 <routing>
-Default repo: /workspace/[repo-name]/
-On session start: read CLAUDE.md from default repo
-Override: if user says "in [other-repo]", switch to /workspace/[other-repo]/
+Default repo: /Users/gilllesmourgues/Workspace/chief-of-droids/[repo-name]/
+On session start: read CLAUDE.md from default repo and confirm the active repo to the user.
+Override: if user says "in [other-repo]", switch to /Users/gilllesmourgues/Workspace/chief-of-droids/[other-repo]/
 Note: routing requires Filesystem MCP to be connected
 </routing>
 
@@ -508,7 +508,7 @@ Note: routing requires Filesystem MCP to be connected
 </defaults>
 
 <skills>
-Load workspace skills from: /workspace/my-claude-fmk/claude-desktop/skills/
+Load workspace skills from: /Users/gilllesmourgues/Workspace/chief-of-droids/skills/
 [Or define inline: ## SKILL: [name] / Trigger: [when] / Steps: [numbered]]
 </skills>
 
@@ -538,8 +538,8 @@ Full worked examples are stored separately. Each example includes a system promp
 
 | Field        | Value      |
 |:------------ |:---------- |
-| Version      | 3.1        |
-| Last Updated | 2026-03-26 |
+| Version      | 3.2        |
+| Last Updated | 2026-04-12 |
 | Status       | Final      |
 
-*v3.1 — Section 11 "How they interact": single mixed chain replaced with two-axis model (content authority / derivation), consistent with context-layers-guide.md v2.3. System prompt axis clarified as separate. CLAUDE.md correctly removed from derivation chain.*
+*v3.2 — Section 1 "What belongs here" table: skills path updated to macOS workspace root. Quick-Start Template: routing and skills paths updated to macOS workspace root.*

@@ -1,4 +1,4 @@
-<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
+<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-04-12 -->
 
 # Memory Contradiction Rules
 
@@ -42,9 +42,10 @@ claude.ai Settings → Memory.
 
 **Check:** Does any memory claim reference a file path?
 **Against:** All path references in `CLAUDE.md`, skill files, and `docs/`.
-**Flag if:** Memory uses UNC path format (`\\wsl.localhost\...`) where
-on-disk sources require POSIX format (`/home/gino/workspace/...`).
-**Risk:** High — UNC paths fail silently in Filesystem MCP tool parameters.
+**Flag if:** Memory uses an old WSL2 path format (`/home/gino/workspace/...`) where
+on-disk sources now require the macOS path (`/Users/gilllesmourgues/Workspace/chief-of-droids/...`).
+Also flag if memory uses UNC path format (`\\wsl.localhost\...`).
+**Risk:** High — stale paths fail silently in Filesystem MCP tool parameters.
 
 ---
 
@@ -88,8 +89,8 @@ architectural approach?
 **Against:** `CLAUDE.md` version block date, skill file version blocks,
 `docs/` document version blocks.
 **Flag if:** Memory describes a design that was explicitly replaced in a
-later-dated on-disk version (e.g. early UNC-path-only assumption superseded
-by POSIX-path rule; pre-gerund skill names; old task schema format).
+later-dated on-disk version (e.g. WSL2 path patterns superseded by macOS paths;
+pre-gerund skill names; old task schema format).
 **Risk:** Medium — superseded decisions can re-surface as apparent alternatives
 and waste session time re-litigating settled choices.
 
@@ -99,10 +100,9 @@ and waste session time re-litigating settled choices.
 
 **Check:** Does any memory claim state that a file or document exists?
   (e.g. "mcp-tool-quirks.md exists", "system-prompt-changelog.md is current")
-**Against:** Filesystem directory listing of `docs/` and `my-claude-fmk/`.
+**Against:** Filesystem directory listing of `docs/` and relevant skill directories.
 **Flag if:** Memory references a file that does not exist on disk.
-**Risk:** Medium — skill workflows that depend on these files will fail;
-`what-to-capture.md` identifies both as known gaps as of 2026-03-28.
+**Risk:** Medium — skill workflows that depend on these files will fail.
 
 ---
 
@@ -150,6 +150,6 @@ Remove a rule when:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-03-28 |
+| Version      | 1.2        |
+| Last Updated | 2026-04-12 |
 | Status       | Draft      |

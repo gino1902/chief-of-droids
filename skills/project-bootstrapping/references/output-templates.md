@@ -1,4 +1,4 @@
-<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-03-25 -->
+<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-04-12 -->
 
 # Output Templates
 
@@ -49,7 +49,7 @@ FRAMING.md must pass the framing gate before CLAUDE.md is generated.
 | `[GOTCHAS]` | S6Q19 — if empty, insert placeholder comment |
 | `[WORKFLOWS]` | S6Q20 — if "none yet", omit workflows block |
 | `[TASKS]` | S7Q21 — format each line as a TASK-00N entry |
-| `[WSL_USER]` | Derive from known workspace path: `gino` |
+| `[USER]` | Derive from known workspace path: `gilllesmourgues` |
 | `[DATE]` | Today's date in YYYY-MM-DD format |
 
 ---
@@ -251,7 +251,7 @@ Every `.md` file written to disk must include a version block at the bottom:
 
 ```xml
 <routing>
-Default repo: /home/[WSL_USER]/workspace/[REPO_NAME]/
+Default repo: /Users/[USER]/Workspace/chief-of-droids/[REPO_NAME]/
 On session start:
   1. Read CLAUDE.md from default repo
   2. Read FRAMING.md from default repo — treat its objectives and constraints
@@ -259,7 +259,7 @@ On session start:
   3. Confirm active repo to the user
 [OTHER_REPOS_BLOCK — include only if S5Q15 is non-empty:
 Override: if the user references [OTHER_REPOS], switch active repo to
-  /home/[WSL_USER]/workspace/[OTHER_REPOS]/ and read its CLAUDE.md before proceeding.]
+  /Users/[USER]/Workspace/chief-of-droids/[OTHER_REPOS]/ and read its CLAUDE.md before proceeding.]
 Requires: Filesystem MCP connected. If you cannot reach the filesystem, say so
   explicitly before proceeding — do not silently fall back to training knowledge.
 </routing>
@@ -293,7 +293,7 @@ Stack: [STACK]
 </defaults>
 
 <skills>
-Load workspace skills from: /home/[WSL_USER]/workspace/skills/
+Load workspace skills from: /Users/[USER]/Workspace/chief-of-droids/skills/
 Before responding to any user prompt:
 1. Read HOW-TO-TRIGGER.md from the skills path above
 2. List which skills match the user's request

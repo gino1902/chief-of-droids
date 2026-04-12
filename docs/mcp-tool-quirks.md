@@ -49,10 +49,8 @@ path including all intermediate directories in one call. No need to call
 
 `git_diff_unstaged` (and `git_status`) do not surface files written by
 `filesystem:write_file` even when the content on disk is confirmed correct.
-This is a WSL2-specific issue: Filesystem MCP writes to the Linux path
-directly, bypassing the git index that `git-workspace` tracks. Workaround:
-stage files explicitly by path rather than relying on status output to confirm
-the change is tracked.
+Workaround: stage files explicitly by path rather than relying on status output
+to confirm the change is tracked.
 
 ---
 
@@ -80,12 +78,14 @@ tree) → fix the issue on disk → `git_add` with explicit file path array →
 
 ---
 
-## `bash_tool` — grep empty for WSL2 paths
+## `bash_tool` — grep empty for local paths (WSL2-era quirk)
 
-`bash_tool` grep commands return empty output when targeting files at WSL2
-paths (e.g. `/home/gino/workspace/...`) even when files exist and contain the
-pattern. Use `filesystem:search_files` with a `pattern` argument as the
-reliable fallback for post-write verification. Confirmed 2026-04-03.
+Originally confirmed on WSL2 paths (e.g. `/home/gino/workspace/...`): `bash_tool`
+grep commands returned empty output even when files existed and contained the
+pattern. Use `filesystem:search_files` with a `pattern` argument as the reliable
+fallback for post-write verification. Behaviour on macOS POSIX paths
+(`/Users/gilllesmourgues/Workspace/chief-of-droids/...`) not yet re-confirmed —
+treat as active until verified otherwise. Confirmed WSL2: 2026-04-03.
 
 ---
 
@@ -108,18 +108,21 @@ environment. Content is accessible via `web_search` querying
 
 ## MCP log — spawn-level failure diagnosis
 
-Absence of `[server-name]` entries in the MCP log
-(`%APPDATA%\Claude\logs\mcp-server-<key-name>.log`) means Claude Desktop never
+Absence of `[server-name]` entries in the MCP log means Claude Desktop never
 attempted to spawn that server — not that it crashed after starting. Root
 causes: JSON parse error in `claude_desktop_config.json`, or spawn blocked by
-AppContainer sandbox (MSIX install). Check the log file first; if no entries
-exist, the issue is pre-spawn. Fix: uninstall MSIX Store version, install Win32
-direct installer.
+a system-level constraint.
+
+Log location by platform:
+- macOS: `~/Library/Logs/Claude/mcp-server-<key-name>.log`
+- Windows: `%APPDATA%\Claude\logs\mcp-server-<key-name>.log`
+
+Check the log file first; if no entries exist, the issue is pre-spawn.
 
 ---
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.1        |
-| Last Updated | 2026-04-11 |
+| Version      | 1.2        |
+| Last Updated | 2026-04-12 |
 | Status       | Draft      |

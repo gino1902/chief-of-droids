@@ -292,7 +292,7 @@ the backlog. Say `start task TASK-001` to begin.
 | Form submits but no challenge report appears | `sendPrompt()` fired but message not parsed as bootstrap response | Type `parse answers` — Claude will re-process the last message |
 | Challenge flags a rule you disagree with | Rule is advisory (Minor) or a false positive | Type `skip` for Minor issues; type `override` with a brief reason for Major issues |
 | File write fails with path error | Repo name contains spaces or special characters | The challenge should have caught this — rename in the form and resubmit, or ask Claude to regenerate with the corrected repo name |
-| New project cannot find workspace skills | Skills path in generated system prompt is wrong | Verify `<skills>` block points to `/home/gino/workspace/skills/` — if it points to `my-claude-fmk/claude-desktop/skills/` the template was from a stale version; fix manually in Custom Instructions |
+| New project cannot find workspace skills | Skills path in generated system prompt is wrong | Verify `<skills>` block points to `/Users/gilllesmourgues/Workspace/chief-of-droids/skills/` — if it points to an old path, the template was from a stale version; fix manually in Custom Instructions |
 | CLAUDE.md in new project has build commands or lint rules | Answer to Section 3 or 4 contained code tooling | The challenge should have flagged this as Major; edit CLAUDE.md directly to remove and move to a Claude Code CLAUDE.md if needed |
 | Framing gate blocks on valid FRAMING.md | Gate criteria not met — re-read findings carefully | Run `fix all` to let Claude propose edits, or edit FRAMING.md directly and type `re-assess` |
 | `approve framing` refused despite fixing issues | Claude carrying stale assessment state | Type `re-assess` to force a fresh disk read before typing `approve framing` again |
@@ -364,6 +364,6 @@ Instructions updated manually.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-03-26 |
+| Version      | 1.2        |
+| Last Updated | 2026-04-12 |
 | Status       | Draft      |

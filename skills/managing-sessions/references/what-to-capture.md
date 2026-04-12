@@ -1,4 +1,4 @@
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-03-28 -->
+<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-04-12 -->
 
 # What to Capture
 
@@ -52,7 +52,7 @@ implement the rejected approach without knowing it was evaluated.
 ### 2. Tool Behaviour & MCP Quirks
 
 Confirmed failure modes, workarounds, and non-obvious behaviours of MCP tools,
-Claude Desktop, or the WSL2 environment — discovered through actual use, not
+Claude Desktop, or the macOS environment — discovered through actual use, not
 assumed from training knowledge.
 
 **Signal phrases:** "silently fails", "workaround", "use X instead of Y",
@@ -60,11 +60,9 @@ assumed from training knowledge.
 
 **search_query:** `"silently fails workaround path format MCP tool error"`
 
-**Capture if:** the quirk is not already in `docs/mcp-tool-quirks.md`
-(note: this file is a known gap as of 2026-03-28 — does not yet exist).
+**Capture if:** the quirk is not already in `docs/mcp-tool-quirks.md`.
 
-**On-disk verification target:** `/home/gino/workspace/docs/mcp-tool-quirks.md`
-— if file does not exist, all tool quirk findings are `not-on-disk` by default.
+**On-disk verification target:** `/Users/gilllesmourgues/Workspace/chief-of-droids/docs/mcp-tool-quirks.md`
 
 **Risk if missed:** future sessions repeat the same debugging cycles.
 
@@ -107,7 +105,7 @@ design questions that were raised but not answered.
 **Capture if:** the item does not appear in `TASKS.md` as a backlog entry.
 If it should be a task, compose with `managing-tasks` to add it.
 
-**On-disk verification target:** `/home/gino/workspace/TASKS.md` — read the
+**On-disk verification target:** `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/TASKS.md` — read the
 Backlog section and confirm the item is present as a TASK entry.
 
 **Risk if missed:** deferred decisions silently disappear and are later
@@ -149,12 +147,9 @@ change made is only recoverable from session history.
 **search_query:** `"system prompt rules added custom instructions defaults"`
 
 **Capture if:** the change is not already recorded in a versioned file.
-Write a new entry in `docs/system-prompt-changelog.md`
-(note: this file is a known gap as of 2026-03-28 — does not yet exist).
+Write a new entry in `docs/system-prompt-changelog.md`.
 
-**On-disk verification target:** `/home/gino/workspace/docs/system-prompt-changelog.md`
-— if file does not exist, all system prompt change findings are `not-on-disk`
-by default. This is the highest-risk gap in the workspace.
+**On-disk verification target:** `/Users/gilllesmourgues/Workspace/chief-of-droids/docs/system-prompt-changelog.md`
 
 **Risk if missed:** system prompt corruption or drift has no recovery point.
 
@@ -196,6 +191,6 @@ Update via `creating-skills` skill → `critique skill managing-sessions`.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-03-28 |
+| Version      | 1.3        |
+| Last Updated | 2026-04-12 |
 | Status       | Draft      |
