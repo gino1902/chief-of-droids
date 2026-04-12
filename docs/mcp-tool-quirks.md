@@ -78,6 +78,22 @@ tree) → fix the issue on disk → `git_add` with explicit file path array →
 
 ---
 
+## `git-workspace` MCP — unavailable in claude.ai sessions
+
+The `git-workspace` MCP server is a **local process** configured in
+`claude_desktop_config.json`. It spawns via `uvx` on the local machine as a
+child process of Claude Desktop. It is never available in claude.ai browser or
+app sessions — claude.ai cannot spawn local processes.
+
+Consequence: `git_add`, `git_diff_staged`, `git_commit`, and all other
+`git-workspace` tools return nothing from `tool_search` in a claude.ai session,
+even when the server is correctly configured and working in Claude Desktop.
+
+Workaround: run git operations from Claude Desktop, or directly from Terminal.
+Confirmed 2026-04-12.
+
+---
+
 ## `bash_tool` — grep empty for local paths (WSL2-era quirk)
 
 Originally confirmed on WSL2 paths (e.g. `/home/gino/workspace/...`): `bash_tool`
@@ -123,6 +139,6 @@ Check the log file first; if no entries exist, the issue is pre-spawn.
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.2        |
+| Version      | 1.3        |
 | Last Updated | 2026-04-12 |
 | Status       | Draft      |
