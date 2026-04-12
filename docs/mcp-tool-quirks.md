@@ -57,8 +57,10 @@ to confirm the change is tracked.
 ## `git_status` — false positive modified files
 
 `git_status` can report files as modified when `git_diff_unstaged` and
-`git_diff` against HEAD both return empty. This is a CRLF/LF artefact, not a
-real change. Confirmed by empty diff; safe to ignore.
+`git_diff` against HEAD both return empty. On macOS the typical cause is file
+mode bit changes (executable bit), not a content change. Confirmed by empty
+diff; safe to ignore. Run `git config core.fileMode false` in the repo if the
+issue is persistent.
 
 ---
 
@@ -94,14 +96,17 @@ Confirmed 2026-04-12.
 
 ---
 
-## `bash_tool` — grep empty for local paths (WSL2-era quirk)
+## `bash_tool` — cannot access local filesystem paths
 
-Originally confirmed on WSL2 paths (e.g. `/home/gino/workspace/...`): `bash_tool`
-grep commands returned empty output even when files existed and contained the
-pattern. Use `filesystem:search_files` with a `pattern` argument as the reliable
-fallback for post-write verification. Behaviour on macOS POSIX paths
-(`/Users/gilllesmourgues/Workspace/chief-of-droids/...`) not yet re-confirmed —
-treat as active until verified otherwise. Confirmed WSL2: 2026-04-03.
+`bash_tool` runs in a remote container, not on the local machine. It has no
+access to local paths (`/Users/gilllesmourgues/Workspace/...`) regardless of
+OS. Commands like `grep`, `cat`, or `ls` against local paths will silently
+return empty or fail.
+
+Use `filesystem:search_files` (with a `pattern` argument) for post-write
+verification and file searches against local paths. This is the correct tool
+for any operation that needs to inspect the local filesystem from within a
+claude.ai session.
 
 ---
 
@@ -139,6 +144,6 @@ Check the log file first; if no entries exist, the issue is pre-spawn.
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.3        |
+| Version      | 1.4        |
 | Last Updated | 2026-04-12 |
 | Status       | Draft      |
