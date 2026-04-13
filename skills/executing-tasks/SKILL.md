@@ -9,12 +9,12 @@ description: >
   'execute the complex task TASK-XXX'. Does NOT trigger on 'start TASK-XXX'
   alone — that belongs to managing-tasks.
 ---
-<!-- version: 1.36 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
+<!-- version: 1.39 | author: chief-of-droids workspace | last_updated: 2026-04-13 -->
 
 # Executing Tasks Skill
 
 Meta-skill that enforces a repeatable, quality-gated workflow for executing any
-workspace task. Orchestrates domain skills — does not implement domain logic itself.
+workspace task. Orchestrates composing skills — does not implement domain logic itself.
 
 **Scope:** Execution discipline only. State transitions belong to `managing-tasks`.
 Domain work belongs to the composing skill matched by the task-type classifier.
@@ -89,13 +89,16 @@ Task scope appearing self-evident, narrow, or verbatim is not a reason to skip i
 
 ## Outer Loop Workflow
 
-**ATDD double-loop structure:**
+### ATDD Loop Structure
+
 - **Outer loop (acceptance):** Steps 4a → 4b → 7 → 10. Opened at Step 4a; closed at
   Step 10 via the traceability matrix. A sub-task passing its inner loop does not
   constitute outer-loop acceptance.
 - **Inner loop (implementation):** Step 9 per sub-task. Governs implementation
   correctness for each unit of work. The outer loop closes only when all scenarios
   from Step 4a pass at Step 10.
+
+### TDD Inner-Loop Discipline
 
 **TDD inner-loop discipline (Red → Green → Refactor):**
 Step 9 enforces the TDD cycle at sub-task granularity, per owned QA row:
@@ -107,6 +110,8 @@ Step 9 enforces the TDD cycle at sub-task granularity, per owned QA row:
 The per-pattern inner loop in `references/subtask-patterns.md` encodes State-0 and
 Green annotations per task type.
 
+### Workflow State
+
 **Workflow state:** The artifacts produced at Steps 2A (confirmed intent), 2B (confirmed
 target), 4a (verification scenarios), 4b (acceptance criteria), 6 (approved plan), and 7
 (QA suite) are held in context for the remainder of the workflow. They are not written to
@@ -114,7 +119,14 @@ disk. If any downstream step references an artifact that appears missing (e.g. a
 session interruption): re-run from the step that produced it. Do not proceed with an
 unconfirmed artifact.
 
+On resumption after a mid-loop interruption in Step 9: identify the last sub-task with a
+confirmed State-0 and restart from that sub-task's Write phase. Do not re-run sub-tasks
+whose Inner-loop checklist was confirmed passing before the interruption.
+
 **Confidence Derivation Rule:** defined in `references/qa-schema.md`.
+
+Reason internally at each step before producing output. Do not surface reasoning steps
+in chat output unless a step explicitly instructs otherwise.
 
 ### Step 1 — Extract task context
 
@@ -125,6 +137,9 @@ if TASK-XXX found in prompt:
     attempt filesystem:read_text_file on target TASKS.md
     if tool error (not a parsed result):
         ⚠️ TASKS.md could not be read — tool error. Verify file path and MCP server status.
+        Stop.
+    if file is empty or contains no parseable task entries:
+        ⚠️ TASKS.md read succeeded but file appears empty or unparseable — verify file content.
         Stop.
     if TASK-XXX found in TASKS.md:
         extract description, scope, target, origin fields
@@ -137,7 +152,7 @@ else:
     proceed to Step 2 (Path 2 — prompt as intent source)
 ```
 
-No status check on task state. Hard stop only on tool read error or TASK-XXX not found.
+Do not check task state. Stop only on tool read error or TASK-XXX not found.
 
 ### Step 2 — Intent Formulation
 
@@ -180,9 +195,9 @@ validation rules from `references/intent-schema.md` before proceeding:
 
 Assemble: `"As [actor] I need to [action] so that [value]"`
 
-Validate the assembled sentence against `references/intent-schema.md` before rendering Artifact 2.
+Validate the intent sentence against `references/intent-schema.md` before rendering Artifact 2.
 
-**Scope retirement (Path 1):** scope is retired as a working field after the user confirms
+**Scope retirement (Path 1):** Retire scope as a working field after the user confirms
 the intent sentence. Do not reference it in any downstream step.
 
 #### Step 2B — Confirm intent and target (hard gate)
@@ -195,11 +210,14 @@ Before rendering Artifact 2, derive the target proposal:
 identify the primary noun object and map it to the most specific matching path in the
 workspace (skill file, reference file, repo-level doc, or component). Pre-fill with the
 inferred path. If confidence is low, append inline: `*(inferred — verify before confirming)*`
+Reason: target inference is low-confidence when the action clause maps to more than one
+plausible workspace path — appending the advisory prevents a wrong target propagating
+silently into downstream steps.
 
 Render **Artifact 2** — the confirm + target form:
 
 **Artifact 2 structure** (render as elicit form):
-- Intent sentence textarea: pre-filled with the assembled sentence from Step 2A; user may edit
+- Intent sentence textarea: pre-filled with the intent sentence from Step 2A; user may edit
 - Target textarea: pre-filled per derivation rule above; user may edit
 - Submit button: "Confirm intent"
 - Rendering note: Artifact 2 contains form elements — read `shared/elevate-theme/elevate-artifact.md`
@@ -221,6 +239,10 @@ If read fails: `⚠️ composing-skills.md could not be read — surface to user
 
 Apply the decision table to confirmed intent and target. Follow the classification output
 format and ambiguity resolution rule from `references/composing-skills.md`.
+
+If intent and target match no row in the decision table after applying the
+ambiguity-resolution rule: surface — "Classification unresolved — intent does not map to
+a known task type. Clarify intent or reclassify manually before proceeding." Stop.
 
 ### Step 3a — Load composing skills (hard gate)
 
@@ -280,7 +302,10 @@ simultaneously against `references/verification-schema.md`.
   including overridden ones
 - If user corrects one or more scenarios: Claude challenges the corrections → loop continues
   until user accepts → reload artifact with accepted corrections
-- Loop exits when all scenarios are accepted (by pass or override)
+- Loop exits when all scenarios are accepted (by pass or override).
+  Reason: user override is accepted because the user bears responsibility for scenario
+  completeness — blocking indefinitely on Claude's validation judgment would prevent a
+  user-defined scenario set from ever being confirmed.
 
 **Hard gate:** do not proceed to Step 4b until all checked scenarios have cleared the
 validation loop and the user explicitly confirms the set is complete.
@@ -347,13 +372,17 @@ For each sub-task from the Step 6 plan, verify:
 - Sub-task has a defined output
 
 If either check fails for any sub-task: return to Step 6 to revise the plan.
-Do not proceed to QA authoring with uncovered or output-less sub-tasks.
+Reason: uncovered sub-tasks indicate a plan authoring gap, not a QA authoring gap —
+the fix belongs at the plan level, not by expanding the QA suite to cover an unanchored sub-task.
 
 **Handoff rule:** expand each acceptance criterion from Step 4b into one or more
 full QA test rows. Do not author tests not traceable to a Step 4b criterion.
 Every test row must cite at least one S[N] from Step 4a in the Scenario column.
 A test row with no Scenario reference is invalid and must be removed or reassigned
 before the suite is confirmed.
+Reason: every QA row must trace to a confirmed acceptance scenario — a row without a
+scenario reference is either a phantom test or an authoring error; both corrupt the
+traceability matrix at Step 10.
 
 Use the QA suite row format and severity taxonomy from `references/qa-schema.md`.
 
@@ -400,8 +429,11 @@ Using the QA Row Ownership Table from Step 8, identify rows owned by this sub-ta
 For each owned row:
 - `code` or `file-write` type: run the assertion against the current system; confirm
   it returns fail. If any row already passes before changes begin, surface as a
-  State-0 anomaly — the sub-task may be redundant or the criterion may need revision.
+  State-0 anomaly — the sub-task is likely redundant, or the criterion requires revision.
   Resolve with the user before proceeding.
+  If the user confirms the row should pass at State-0 (pre-existing state is intentional):
+  accept as a confirmed pass, mark the row as State-0 exempt, document the exemption in
+  the Inner Loop QA Report, and proceed.
 - `doc`, `skill-authoring`, `framing`, or `research` type: record artifact-absent or
   section-absent as the fail state. One line per row. No execution required.
 
@@ -431,11 +463,16 @@ from `references/qa-schema.md`:
 **Refactor — per-sub-task (after confidence gate):**
 Immediately after confidence ≥ 95% is confirmed, apply a scoped Refactor pass:
 - Permitted: restructure for clarity, remove redundancy, improve naming — within this sub-task's output only.
+  Reason: refactor scope is bounded to presentation quality; changes that affect semantics or
+  inter-sub-task contracts belong in the Write phase, not the Refactor phase.
 - Prohibited: any change that touches outputs owned by another sub-task.
 
 After Refactor: re-run this sub-task's owned QA rows. All must still pass before advancing.
 If any row fails after Refactor: re-enter the Write phase for that row only; do not reset
 the confidence gate unless a new Blocking failure is introduced.
+Reason: Refactor touches presentation only; a Blocking failure introduced during Refactor
+indicates a semantic regression requiring a full Write/Test cycle restart, not a partial
+re-check of already-passing rows.
 
 After all sub-tasks complete, surface the Inner Loop QA Report (format defined in
 `references/subtask-patterns.md`) covering all sub-tasks:
@@ -519,6 +556,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.36        |
-| Last Updated | 2026-04-11  |
+| Version      | 1.39        |
+| Last Updated | 2026-04-13  |
 | Status       | Draft       |
