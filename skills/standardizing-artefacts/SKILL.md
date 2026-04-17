@@ -1,21 +1,23 @@
 ---
 name: standardizing-artefacts
 description: >
-  Audits any Claude Desktop instruction file — Project Instructions, CLAUDE.md,
-  routing template, system prompt fragment, or SKILL.md — for deterministic
-  execution risks. Runs 33 criteria across four structured blocks: Foundation
-  (OBL+STR), Evidence Layer (EX+RSN), Behavior Contract (BRN+OUT), and
-  Deployment Gate (DEF+DSK). For each block: audits the file, produces a
-  structured violation report, proposes fixes with an explicit per-block approval
-  gate, applies approved fixes, re-reads the file, then proceeds to the next
-  block. Owns the fix phase. Produces a final deployment readiness verdict. Also
-  supports a single-pass full audit mode.
+  Use this skill when you need to audit a Claude Desktop instruction file for
+  deterministic execution risks. Applies to Project Instructions, CLAUDE.md,
+  routing templates, system prompt fragments, and SKILL.md files. Runs 33
+  criteria across four structured blocks: Foundation (OBL+STR), Evidence Layer
+  (EX+RSN), Behavior Contract (BRN+OUT), and Deployment Gate (DEF+DSK). For
+  each block: audits the file, produces a structured violation report, proposes
+  fixes with an explicit per-block approval gate, applies approved fixes,
+  re-reads the file, then proceeds to the next block. Owns the fix phase.
+  Produces a final deployment readiness verdict. Also supports a single-pass
+  full audit mode.
   Load when the user says: "audit <file>", "check <file> for determinism",
   "standardize <file>", "review <file> for execution risks", "audit project
   instructions", "audit CLAUDE.md", "audit system prompt", "audit this file",
-  "full audit <file>".
+  "full audit <file>", or when a user pastes instruction file content and asks
+  whether it will execute predictably.
 ---
-<!-- version: 1.5 | author: chief-of-droids workspace | last_updated: 2026-04-11 -->
+<!-- version: 1.6 | author: chief-of-droids workspace | last_updated: 2026-04-17 -->
 
 # Standardizing Artefacts Skill
 
@@ -26,9 +28,9 @@ Audits Claude Desktop instruction files for deterministic execution risk. Owns t
 ## Reference Files
 
 - `references/determinism-audit.md` — 33 audit criteria in four blocks (B1–B4); read at Step 0
-- `references/audit-report-schema.md` — violation report output schema; read before first block report
-- `references/qa-checklist-audit.md` — QA checklist for the `audit` (block-by-block) workflow
-- `references/qa-checklist-full.md` — QA checklist for the `audit --full` (single-pass) workflow
+- `references/audit-report-schema.md` — violation report output schema; read at step 2 of both workflows before the first block report
+- `references/qa-checklist-audit.md` — QA checklist for the `audit` (block-by-block) workflow; read at step 3 of the `audit` workflow before executing any block
+- `references/qa-checklist-full.md` — QA checklist for the `audit --full` (single-pass) workflow; read at step 3 of the `audit --full` workflow before evaluating any criterion
 
 ---
 
@@ -72,6 +74,8 @@ Report: "File unreadable — [mode] [path/filename]. Audit cannot proceed."
 Do not infer or fabricate file content.
 Reason: fabricated content produces criterion evaluations against a file that does not exist — every finding would be invalid.
 
+**Partial read detection:** after reading the target file, check whether the returned content appears truncated — signs include mid-sentence endings, missing closing blocks, or character count significantly below expected file size. If truncation is suspected: halt. Report: "File content may be truncated — re-read with explicit head/tail counts or paste content inline before proceeding." Do not audit a partially read file.
+
 ---
 
 ## File Type Declaration
@@ -86,8 +90,9 @@ Classify and state the file type before any criterion is applied:
 | System prompt fragment | Partial or full system prompt; may contain XML component tags |
 | SKILL.md | Markdown file; `##`-headed sections; YAML frontmatter block; declares workflows and reference files for agent skill routing |
 
-If file matches no type: prepend to all block reports —
+If file matches no type: set type to Project Instructions and prepend to all block reports —
 `Note: file type unrecognized — audited as Project Instructions.`
+Apply all criteria applicable to Project Instructions. Do not skip criteria on the basis of unrecognized type.
 
 When file type is SKILL.md: the following criteria do not apply —
 - STR-2 (XML component separation) — SKILL.md files use markdown by format convention
@@ -100,7 +105,7 @@ When file type is SKILL.md: the following criteria do not apply —
 
 **Trigger:** "audit <file>" | "check <file> for determinism" | "standardize <file>" |
 "review <file> for execution risks" | "audit project instructions" | "audit CLAUDE.md" |
-"audit system prompt" | "audit this file"
+"audit system prompt" | "audit this file" | user pastes instruction content and asks if it will execute predictably
 If prompt contains `--full` flag: route to `audit <file> --full` workflow instead.
 
 **Steps:**
@@ -108,16 +113,19 @@ If prompt contains `--full` flag: route to `audit <file> --full` workflow instea
 1. Run Step 0 — environment detection; criteria loaded from Step 0 read result
 2. Read `references/audit-report-schema.md`
    If read fails: halt. Report: "Report schema unavailable — cannot produce structured output. Audit cannot proceed."
-3. Resolve file input — detect mode; read; halt if unreadable
-4. Declare file type
-5. Execute block loop — B1 → B2 → B3 → B4:
+3. Read `references/qa-checklist-audit.md`
+   If read fails: halt. Report: "QA checklist unavailable — audit cannot proceed without execution constraints."
+4. Resolve file input — detect mode; read; check for truncation; halt if unreadable or truncated
+5. Declare file type
+6. Initialise tally: `{ B1: {passed:0, failed:0}, B2: {passed:0, failed:0}, B3: {passed:0, failed:0}, B4: {passed:0, failed:0}, deferred: [] }` — update after each block; carry forward across fix phases
+7. Execute block loop — B1 → B2 → B3 → B4:
    a. Read block definition and proceed rule from `references/determinism-audit.md`
    b. Evaluate all criteria in the block against **current file content**
    c. Reason internally before producing the block report. Include only the structured report in output — do not surface reasoning steps.
    d. Produce block violation report per schema in `references/audit-report-schema.md`
-   e. Retain block passed/failed counts in context for Final Summary aggregation.
+   e. Update tally with block passed/failed counts
    f. Apply proceed rule (see Proceed Rule table below)
-6. Produce Final Summary after B4
+8. Produce Final Summary after B4
 
 **Proceed rule:**
 
@@ -135,11 +143,11 @@ Triggered when a block report contains one or more Blocking or Major violations.
    Quote current text (≤20 words). State exact replacement.
 2. Await explicit user approval before writing
 3. On approval: apply all approved fixes in a single `filesystem:write_file` call
-4. After write: re-read via `filesystem:read_text_file` — confirm write succeeded
-   If write fails: halt. Report: "Write confirmation failed — B[n] fix not applied. Resolve before proceeding."
-5. If user rejects a specific fix: mark as deferred (note criterion ID). Proceed with remaining approved fixes.
-   Retain deferred criterion IDs in context across all blocks for Final Summary aggregation.
-6. Proceed to B[n+1] using re-read file content
+4. After write: re-read via `filesystem:read_text_file` — confirm write succeeded and re-read content matches expected changes
+   If write fails or re-read content differs from expected: halt. Report: "Write confirmation failed — B[n] fix not applied. Resolve before proceeding."
+5. If user rejects a specific fix: mark as deferred — append criterion ID to tally `deferred` list. Proceed with remaining approved fixes.
+6. If the fix introduces content that may affect criteria in a later block: note the affected criterion IDs explicitly before proceeding to B[n+1]. Evaluate those criteria fresh against the rewritten content when their block is reached — do not assume they pass.
+7. Proceed to B[n+1] using re-read file content
 
 **Final Summary** (produced after B4, including any B4 fix phase):
 
@@ -171,14 +179,28 @@ Workflow complete when Final Summary is produced and confirmed.
 1. Run Step 0 — environment detection; criteria loaded from Step 0 read result
 2. Read `references/audit-report-schema.md`
    If read fails: halt. Report: "Report schema unavailable — cannot produce structured output. Audit cannot proceed."
-3. Resolve file input — detect mode; read; halt if unreadable
-4. Declare file type
-5. Evaluate all 33 criteria (B1→B4 sequence) against the file in a single pass
+3. Read `references/qa-checklist-full.md`
+   If read fails: halt. Report: "QA checklist unavailable — audit cannot proceed without execution constraints."
+4. Resolve file input — detect mode; read; check for truncation; halt if unreadable or truncated
+5. Declare file type
+6. Evaluate all 33 criteria (B1→B4 sequence) against the file in a single pass
    Reason internally before producing the report. Include only the structured report in output — do not surface reasoning steps.
-6. Produce complete violation report per schema in `references/audit-report-schema.md`
-7. Surface findings only — no fix phase; no file writes
+7. Produce complete violation report per schema in `references/audit-report-schema.md`
+8. Append quality signal to report:
+
+```
+Content completeness: [Complete — no truncation detected | Suspected truncation — findings may be incomplete; re-run after confirming full file content]
+```
+
+9. Surface findings only — no fix phase; no file writes
 
 To enter the fix phase after a --full audit: re-run as `audit <file>` (default mode).
+
+---
+
+## Tool Behaviour Notes
+
+`filesystem:read_text_file` may return truncated content on large files without explicit error. Signs of truncation: mid-sentence endings, missing closing sections, character count below expected. Always check after reading the target file. Known failure mode: silent truncation with no error returned — the only signal is content inspection.
 
 ---
 
@@ -200,6 +222,6 @@ Reason: prior audit state introduces confirmation bias — the second run must e
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.5        |
-| Last Updated | 2026-04-11 |
+| Version      | 1.6        |
+| Last Updated | 2026-04-17 |
 | Status       | Draft      |
