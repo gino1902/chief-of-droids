@@ -1,4 +1,4 @@
-<!-- version: 1.27 | author: chief-of-droids workspace | last_updated: 2026-04-13 -->
+<!-- version: 1.28 | author: chief-of-droids workspace | last_updated: 2026-04-17 -->
 
 # TASKS.md — workspace
 
@@ -29,6 +29,7 @@
 - TASK-053: Align system prompt fetch-verification rule with Desktop tool name | target: my-claude-fmk system prompt \<rules\> block | scope: current rule reads "never cite an external source unless its full content has been fetched and verified via web_fetch" — `web_fetch` is the claude.ai runtime tool name; in Claude Desktop sessions the equivalent tool is `fetch` (mcp-server-fetch); update rule to reference the correct tool per session context, or generalise to "fetch and verify via available fetch tool (web_fetch in claude.ai / fetch in Claude Desktop)"; no behavioural change, label and clarity only | origin: session:2026-04-03 "mcp-server-fetch evaluation and install"
 - TASK-054: Backfill references/qa-checklist.md for all remaining skills | target: workspace/skills/ | scope: creating-skills and executing-tasks received qa-checklist.md this session (2026-04-06); remaining skills without a QA checklist: managing-tasks, writing-docs, managing-sessions, architecting-data-platforms, reviewing-tech-claims, project-bootstrapping, analyzing-business-cases; for each: author qa-checklist.md using references/qa-template.md (created this session), apply placement decision rule, verify minimum coverage requirements, write to references/; assessment-checklist.md v1.6 now flags absence as Major — all remaining skills will fail critique on this item until backfilled | origin: session:2026-04-06 "QA checklist Level 3 pattern"
 - TASK-055: Critique and refactor executing-tasks skill | target: workspace/skills/executing-tasks/SKILL.md | scope: full assessment-checklist.md critique run against v1.23; findings challenged and resolved: W1 (Blocking — TASKS.md tool-error handling at Step 1), W2 (Major — workflow state declaration with context-held artifacts and recovery instruction), W4 (Major — QA suite rejection/revision path distinguishing criteria vs expansion objection), W5 (Minor — CLAUDE.md tool reference in Reference Files), W7 (Minor — classification fallback parenthetical in Step 3); W3 closed as non-issue (executing-tasks scope ends at test pass; managing-tasks hand-off is a user prompt, not a workflow step); F1 deferred as Minor (portability concern only); version bumped 1.23 → 1.24 | origin: session:2026-04-06 "Critique and refactor executing-tasks skill"
+- TASK-069: Migrate mcp-server-fetch and mcp-server-git from uvx to uv tool install | target: claude_desktop_config.json | scope: replace uvx invocations with installed binaries to eliminate stdout install noise at Claude Desktop launch (root cause of orange MCP indicator — TASK-068); run `uv tool install mcp-server-fetch` and `uv tool install mcp-server-git`; update config command fields to absolute binary paths; trade-off accepted: manual `uv tool upgrade` required for updates vs auto-latest via uvx | origin: session:2026-04-17 "critique skill standardizing-artifacts"
 
 ---
 
@@ -40,4 +41,4 @@
 
 ## ✅ Done
 
-*Last updated: 2026-04-13 — TASK-066 closed*
+*Last updated: 2026-04-17 — TASK-068 closed*
