@@ -4,14 +4,23 @@
 > all projects in the workspace. It is **read-only** — never modified from within
 > a project. Changes go through the `creating-skills` workflow only.
 
-Skills load automatically when Claude detects a matching signal. No slash command
-or explicit invocation is needed. This note lists the natural trigger for each skill.
+Load the matching skill when any trigger signal in this file is detected. No slash command or explicit invocation is required.
+
+Load every skill whose trigger signals match the user request. Read each matched SKILL.md in full before responding. If multiple skills match, load all of them before producing any output.
+
+If no skill trigger matches the user request, proceed without loading any skill — respond directly from CLAUDE.md context.
+
+If a signal is ambiguous between two or more skills, load all candidate skills.
+
+If this file is unreadable, notify the user and proceed without skill loading.
+
+**Routing mechanism:** Claude reads this file at session bootstrap via filesystem:read_text_file. Each match triggers an explicit read of the corresponding SKILL.md. No automatic loading occurs — every load is initiated by Claude from this file's signal list.
 
 ---
 
 ## managing-tasks
 
-Triggers on any task list read, write, or state transition request.
+Load this skill when the prompt contains any task list read, write, or state transition signal.
 
 **Read triggers:**
 - "show tasks"
@@ -26,7 +35,7 @@ Triggers on any task list read, write, or state transition request.
 - "update task TASK-XXX"
 - "bulk update tasks"
 
-Also triggers when the user asks to record, close, or transition any task by ID.
+Also load when the user asks to record, close, or transition any task by ID.
 
 ---
 
@@ -43,10 +52,11 @@ where `%` matches any text including empty string.
 
 **Opt-in trigger (secondary — after managing-tasks):**
 
-After `start TASK-XXX` transitions a task to 🟡 In Progress, Claude asks once:
+After `start TASK-XXX` transitions a task to 🟡 In Progress, ask once:
 > "TASK-XXX is now In Progress. Run executing-tasks workflow, or proceed directly?"
 
 This question fires unconditionally — task scope appearing self-evident is not a reason to skip it.
+Reason: the executing-tasks workflow is high-cost; confirming opt-in prevents accidental activation on simple task state transitions.
 
 **Does NOT trigger on:**
 - `start TASK-XXX` alone — that belongs to managing-tasks
@@ -76,7 +86,7 @@ This question fires unconditionally — task scope appearing self-evident is not
 
 ## managing-sessions
 
-Triggers on session history analysis, pruning recommendations, or memory hygiene.
+Load this skill when the prompt contains any session history analysis, pruning, or memory hygiene signal.
 
 **Explicit triggers:**
 - "manage sessions"
@@ -88,7 +98,7 @@ Triggers on session history analysis, pruning recommendations, or memory hygiene
 - "check memories"
 
 **Auto-trigger (system prompt rule):**
-During session bootstrap, if `recent_chats` returns ≥10 sessions, invoke this
+During session bootstrap, if `recent_chats` returns ≥10 sessions, load this
 skill before proceeding with any other work.
 
 **What it does:**
@@ -108,7 +118,7 @@ skill before proceeding with any other work.
 
 ## architecting-data-platforms
 
-Triggers on any data platform design, architecture, or assessment topic.
+Load this skill when the prompt contains any data platform design, architecture, or assessment signal.
 
 **Examples:**
 - "Design a medallion architecture for our HR data"
@@ -118,14 +128,14 @@ Triggers on any data platform design, architecture, or assessment topic.
 - "Review our ADRs"
 - "Help me build the cost model"
 
-Also triggers the gate check automatically when a phase completion signal is detected.
+Also load when a phase completion signal is detected.
 See `architecting-data-platforms/references/gate-activation.md` for details.
 
 ---
 
 ## reviewing-tech-claims
 
-Triggers on explicit verification qualifier in the prompt — not on topic alone.
+Load this skill only when an explicit verification qualifier appears in the prompt — not on topic alone.
 
 **Qualifying phrases:**
 - `technically verified`
@@ -138,14 +148,13 @@ Triggers on explicit verification qualifier in the prompt — not on topic alone
 - "Write a setup guide for the Filesystem MCP — technically verified"
 - "tech-checked: what is the correct mlflow.prophet.log_model signature?"
 
-Without one of these qualifiers, the skill does not load. Add the qualifier when
-accuracy against official documentation is required.
+Do not load this skill without one of these qualifiers. Add the qualifier when accuracy against official documentation is required.
 
 ---
 
 ## writing-docs
 
-Triggers on any request to produce a structured document, guide, brief, or report.
+Load this skill when the prompt contains any request to produce a structured document, guide, brief, or report.
 
 **Examples:**
 - "Write a requirements brief for use-case-1"
@@ -156,19 +165,16 @@ Triggers on any request to produce a structured document, guide, brief, or repor
 - "Turn these notes into a reference doc"
 - "Fix the formatting on this document"
 
-For `.md` output, Claude will additionally read
+For `.md` output, additionally read
 `writing-docs/references/markdown-formatting.md` before writing.
 
-For document type triggers (ADR, Requirements Brief, Runbook, Playbook), Claude will
-additionally read `writing-docs/references/templates.md` and copy the relevant template.
+For document type triggers (ADR, Requirements Brief, Runbook, Playbook), additionally read `writing-docs/references/templates.md` and copy the relevant template.
 
 ---
 
 ## creating-skills
 
-Triggers on any request to create, author, build, or define a new skill, critique
-or assess an existing one, enrich an existing one from catalog sources, identify
-skill gaps from session history, or add a new external source to the skill catalog.
+Load this skill when the prompt contains any request to create, author, build, or define a new skill; critique or assess an existing one; enrich an existing one from catalog sources; identify skill gaps from session history; or add a new external source to the skill catalog.
 
 **Triggers:**
 - `author skill <n>` — scaffold a new SKILL.md from a user description
@@ -178,7 +184,7 @@ skill gaps from session history, or add a new external source to the skill catal
 - `recommend skills` — analyse session findings to surface skill gaps
 - `add source: [URL]` — evaluate and add a new external source to `skill-sources.md`
 
-**Natural-language equivalents (also trigger this skill):**
+**Natural-language equivalents (also load this skill):**
 - "create a skill for..."
 - "I need a skill that..."
 - "build a skill for..."
@@ -225,7 +231,8 @@ These sources describe the Claude Code Agent Skills mechanism (VM-based, frontma
 
 ## analyzing-business-cases
 
-Explicit trigger only — does not auto-load.
+Explicit trigger only — do not load on topic alone.
+Reason: these skills execute multi-phase workflows with significant write operations — loading on topic ambiguity risks unintended execution.
 
 **Triggers:**
 - `build framing <project-name>` — scaffold a new FRAMING.md from a user prompt
@@ -241,7 +248,8 @@ Explicit trigger only — does not auto-load.
 
 ## project-bootstrapping
 
-Explicit trigger only — does not auto-load on topic alone.
+Explicit trigger only — do not load on topic alone.
+Reason: these skills execute multi-phase workflows with significant write operations — loading on topic ambiguity risks unintended execution.
 
 **Triggers:**
 - `bootstrap project` — start a new project from scratch (full 3-phase flow)
@@ -263,7 +271,8 @@ Explicit trigger only — does not auto-load on topic alone.
 
 ## standardizing-artefacts
 
-Explicit trigger only — does not auto-load on topic alone.
+Explicit trigger only — do not load on topic alone.
+Reason: these skills execute multi-phase workflows with significant write operations — loading on topic ambiguity risks unintended execution.
 
 **Triggers:**
 - `audit <file>` — block-by-block determinism audit of a single file; fix phase per block
@@ -297,10 +306,53 @@ Run both for a full quality check on a skill file.
 
 ---
 
+## brainstorming-ideas
+
+Load this skill when the user wants to explore a feature idea, frame a problem, or think through options before deciding what to build. Load proactively whenever requirements seem unclear or a decision is being explored — not only on explicit "brainstorm" mentions.
+
+**Explicit triggers:**
+- "let's brainstorm"
+- "brainstorm [topic]"
+- "help me think through [X]"
+- "I'm not sure what to build"
+- "what should we build"
+- "I have an idea for [X]"
+
+**Natural-language triggers:**
+- Vague or ambitious feature requests
+- Problems presented with multiple valid solutions
+- Prompts where the user is thinking out loud
+- Requests to explore or frame something before implementation
+
+**Examples:**
+- "Let's brainstorm a notification redesign"
+- "I'm not sure what to build for the reporting dashboard — help me think it through"
+- "What should we do about the onboarding flow?"
+- "Help me figure out what the search feature should do"
+
+**Does NOT trigger on:**
+- Implementation requests ("implement the CSV export button") → direct work, no brainstorm needed
+- Factual lookups ("what does the users table schema look like?") → direct answer
+- Scoped defect work ("define acceptance criteria for the login bug fix") → use `analyzing-business-cases` or proceed directly
+
+**What it does:**
+- Phase 0: resume check, domain classification (Software / Non-software / Neither), scope classification (Lightweight / Standard / Deep)
+- Phase 1: context scan + product pressure test + collaborative dialogue (one question at a time)
+- Phase 2: 2–3 concrete approaches with pros/cons and recommendation
+- Phase 3: write requirements document to `docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md`
+- Phase 4: handoff to planning, direct work, or save-and-stop
+
+Non-software domain branches to `references/universal-brainstorming.md` — facilitation-only, no requirements document.
+
+**Does NOT:**
+- Implement code — explicit scope boundary
+- Produce a plan — planning is a handoff output, not part of this skill
+
+---
+
 ## Combining skills
 
-Skills compose automatically. Claude loads all skills whose triggers match the
-request. Common combinations in this workspace:
+Skills compose automatically. Load all skills whose triggers match the request.
 
 | Task | Skills loaded |
 | :--- | :--- |
@@ -329,10 +381,13 @@ request. Common combinations in this workspace:
 | Session prune then identify skill gaps | `managing-sessions` + `creating-skills` |
 | Audit artefact determinism | `standardizing-artefacts` |
 | Audit artefact determinism + best-practice compliance | `standardizing-artefacts` + `creating-skills` |
+| Brainstorm a feature or decision before building | `brainstorming-ideas` |
+| Brainstorm then write a structured doc | `brainstorming-ideas` + `writing-docs` |
+| Frame a use case via brainstorm | `brainstorming-ideas` + `analyzing-business-cases` |
 
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.7         |
-| Last Updated | 2026-04-11  |
+| Version      | 1.11        |
+| Last Updated | 2026-04-18  |
 | Status       | Draft       |
