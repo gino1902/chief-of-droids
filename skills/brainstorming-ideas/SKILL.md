@@ -2,7 +2,7 @@
 name: brainstorming-ideas
 description: "Use this skill when the user wants to explore a feature idea, frame a problem, or think through options before deciding what to build. Triggers on: 'let's brainstorm', 'help me think through X', 'what should we build', 'I'm not sure what to build', vague or ambitious feature requests, problems with multiple valid solutions, and any prompt where requirements seem unclear or the user is thinking out loud. Trigger proactively whenever a decision is being explored or scope is ambiguous — even if the user does not explicitly say 'brainstorm'."
 ---
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-04-18 -->
+<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-04-19 -->
 <!-- source: EveryInc/compound-engineering-plugin (MIT License, Copyright (c) 2025 Every) -->
 
 # Brainstorm a Feature or Improvement
@@ -52,6 +52,7 @@ Should not trigger:
 - Phase 0.1 resume logic matches `*-requirements.md` glob — only files following that naming convention are detected
 - "Brief alignment" does not produce a file — if the user needs a record, they must say so explicitly
 - Phase 1.1 reads `CLAUDE.md` / `AGENTS.md` if present — these files may not exist; treat absence as no constraints, not a failure
+- Phase 3 pre-write editor is conditional: render only if a file write is planned. If Phase 3 skips the file, no editor artifact.
 
 ---
 
@@ -183,12 +184,50 @@ If one approach is clearly best, skip the menu and state it directly.
 
 **Step 3.1** — Read `references/requirements-capture.md`. Apply the template, formatting rules, and completeness checks from that file.
 
-**Step 3.2** — Write or update the requirements document only when the conversation produced durable decisions worth preserving.
+**Step 3.2 — Decide whether to write.**
+- If the conversation produced no durable decisions: skip document creation; summarise shared understanding in chat instead. Phase 3 ends. Do not render the editor.
+- If the user declines a document: capture key decisions as inline chat summary. Phase 3 ends. Do not render the editor.
+- Otherwise: proceed to Step 3.3 (pre-write editor).
+
+**Step 3.3 — Pre-write editor (mandatory when a write is planned).**
+
+Render an inline `visualize:show_widget` editor artifact containing the drafted requirements document. This replaces the old "display draft + confirm to write" inline chat pattern. The editor is the confirmation gate.
+
+Editor contract:
+- Textarea seeded with the full drafted markdown
+- Read-only target path header showing the exact filesystem destination
+- Buttons: `Reset to draft`, `Copy`, `Send back to Claude ↗`
+- Live character + byte counter
+- Warn banner when content ≥ 10,240 bytes (10 KB)
+- Hard-block the send button when content ≥ 40,960 bytes (40 KB) — surface "Too large to send; reduce content"
+- Use `visualize:show_widget` with host CSS variables (`var(--color-*)`) only — no Elevate branding, no hardcoded palette
+- The send payload must wrap the edited markdown between sentinels: `<<<EDITED_DOC_START>>>` on the line before the content, `<<<EDITED_DOC_END>>>` on the line after. No fenced code block wrapper. No other wrapper text.
+
+Example send payload:
+```
+Here is the edited requirements document. Write it to the target path.
+
+<<<EDITED_DOC_START>>>
+---
+date: YYYY-MM-DD
+topic: example
+---
+(...document body...)
+<<<EDITED_DOC_END>>>
+```
+
+**Step 3.4 — Receive and parse.**
+
+When the user's next message arrives after the editor is rendered:
+- Parse strictly between `<<<EDITED_DOC_START>>>` and `<<<EDITED_DOC_END>>>`
+- Exactly one pair must be present; both sentinels on their own lines
+- If sentinels are missing, duplicated, nested, or malformed: halt. Surface: "Editor payload malformed — expected exactly one `<<<EDITED_DOC_START>>>` … `<<<EDITED_DOC_END>>>` pair. Resend via editor or paste content directly."
+- On malformed payload, do not write. Re-render the editor seeded with the current draft.
+
+**Step 3.5 — Write.**
 - If updating (resume flag = yes): update the existing file; do not create a duplicate.
 - If creating: write to `docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md`. Create `docs/brainstorms/` via Filesystem MCP if it does not exist.
-- If no durable decisions: skip document creation; summarise shared understanding in chat instead.
-- If the write fails: surface the error and display the full requirements document in chat as fallback. Do not silently discard the output.
-- If user declines a document: capture key decisions as inline chat summary instead.
+- If the write fails: surface the error and display the parsed content in chat as fallback. Do not silently discard it.
 
 **Phase 3 output carried to Phase 4:** requirements document path (if written), or inline summary (if no document).
 
@@ -212,6 +251,6 @@ If one approach is clearly best, skip the menu and state it directly.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-04-18 |
+| Version      | 1.3        |
+| Last Updated | 2026-04-19 |
 | Status       | Draft      |

@@ -1,11 +1,11 @@
-<!-- version: 1.0 | author: chief-of-droids workspace | last_updated: 2026-04-18 -->
+<!-- version: 1.1 | author: chief-of-droids workspace | last_updated: 2026-04-19 -->
 
 # QA Checklist — brainstorming-ideas
 
 Governs: `brainstorming-ideas` skill
 Format: table (Severity / Maps to / Item / Pass / Fail signal)
 Placement: Unified
-Branch-exclusive ratio: 5 of 18 items are branch-specific (28%) — below 50% threshold; unified placement correct
+Branch-exclusive ratio: 7 of 20 items are branch-specific (35%) — below 50% threshold; unified placement correct
 
 | Severity | Maps to | Item | Pass | Fail signal |
 |:---------|:--------|:-----|:-----|:------------|
@@ -15,6 +15,8 @@ Branch-exclusive ratio: 5 of 18 items are branch-specific (28%) — below 50% th
 | Blocking | Phase 3 — reference file read | `references/requirements-capture.md` read before any requirements document is written | File content confirmed in context before Step 3.2 executes | Halt; surface: "requirements-capture.md unavailable — Phase 3 cannot proceed" |
 | Blocking | Phase 4 — reference file read | `references/handoff.md` read before next-step options are presented | File content confirmed in context before Step 4.1 executes | Halt; surface: "handoff.md unavailable — Phase 4 cannot proceed" |
 | Blocking | Phase 3 — write gate | No requirements document written without durable decisions from the brainstorm | Requirements document written only after Phase 1–2 dialogue has produced decisions worth preserving | Do not write; summarise in chat instead |
+| Blocking | Step 3.3 — pre-write editor rendered | When a file write is planned, a `visualize:show_widget` editor artifact is rendered before any `filesystem:write_file` call | Editor artifact present in the turn immediately preceding the write; no direct write after draft-in-chat confirmation | Halt; surface: "Pre-write editor not rendered — Phase 3 must render the editor when a write is planned" |
+| Blocking | Step 3.4 — sentinel parsing | Sentinel-delimited payload parsed strictly; malformed payloads rejected | Exactly one `<<<EDITED_DOC_START>>>` / `<<<EDITED_DOC_END>>>` pair on their own lines; content between them used verbatim | Halt; surface: "Editor payload malformed — expected exactly one sentinel pair. Resend via editor or paste content directly." Do not write. Re-render editor seeded with current draft. |
 | Blocking | Workflow completion | Workflow has an explicit completion state | Closing summary displayed (Done / Save and stop) OR user has begun planning or direct work in the session | Halt current phase; re-read Phase 4 handoff to identify which completion condition applies; surface the applicable condition to the user |
 | Major | Step 0.1 — resume path | Existing requirements document read before resuming | File content confirmed in context; user asked whether to continue or start fresh | Surface read error; ask user whether to start fresh |
 | Major | Step 0.3 — scope classification | Scope classified as Lightweight / Standard / Deep before Phase 1 begins | Scope label present in output or used to govern Phase 1 depth | Default to Standard; flag that scope defaulted |
@@ -25,5 +27,6 @@ Branch-exclusive ratio: 5 of 18 items are branch-specific (28%) — below 50% th
 | Major | Phase 2 → Phase 3 handoff | Chosen approach and key decisions carried to Phase 3 | Requirements document reflects approach chosen in Phase 2 | Surface: "Phase 2 output not captured — confirm chosen approach before writing requirements document" |
 | Major | Phase 3 — overwrite vs. create | Resume flag determines whether file is updated or created | Resume flag = yes → existing file updated, not duplicated. Resume flag = no → new file created at canonical path | Surface: "Resume flag ambiguous — confirm whether to update existing document or create new one" |
 | Major | Phase 3 — docs/brainstorms/ existence | Directory created before write if absent | Write does not fail due to missing directory | Surface: "docs/brainstorms/ absent — create via Filesystem MCP before writing" |
+| Major | Step 3.3 — size-limit enforcement in editor | Editor warns at 10 KB and hard-blocks send at 40 KB | Warn banner shown when payload ≥10,240 bytes; send button disabled when payload ≥40,960 bytes | Surface: "Editor size-limit enforcement missing — regenerate editor with warn + block thresholds" |
 | Minor | Step 1.1 — absent CLAUDE.md handling | Absent CLAUDE.md / AGENTS.md treated as no constraints, not an error | Workflow continues without surfacing an error when these files are not found | Note absence; proceed without constraints |
 | Minor | Context scan null result | Empty context scan result surfaced to user | "No existing context found — proceeding without constraints" present in output when scan yields nothing | Note absence; do not silently assume empty context means no relevant prior work |

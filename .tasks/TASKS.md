@@ -1,4 +1,4 @@
-<!-- version: 1.34 | author: chief-of-droids workspace | last_updated: 2026-04-18 -->
+<!-- version: 1.35 | author: chief-of-droids workspace | last_updated: 2026-04-19 -->
 
 # TASKS.md — workspace
 
@@ -43,4 +43,4 @@
 
 ## ✅ Done
 
-*Last updated: 2026-04-18 — TASK-073 closed*
+*Last updated: 2026-04-19 — TASK-074 + TASK-075 closed*
