@@ -12,7 +12,7 @@ description: >
   requests to "format this file", "format this diagram", or "format this document".
   Composes with: reviewing-tech-claims, pptx, docx, xlsx.
 ---
-<!-- version: 2.1 | author: chief-of-droids workspace | last_updated: 2026-03-29 -->
+<!-- version: 2.2 | author: chief-of-droids workspace | last_updated: 2026-04-28 -->
 
 # Writing Docs Skill
 
@@ -39,6 +39,12 @@ and audience calibration. It applies regardless of output format.
   HTML, React, or SVG; contains Elevate theme routing rules and color role table
 - `references/templates.md` — read when producing an ADR, Requirements Brief,
   Runbook, or Playbook; copy the relevant template and fill all `{placeholder}` fields
+- `references/template-corporate-chrome.md` — read when producing a `.docx` requiring
+  cover page, revision history, and remaining-issues sections; composes with a body template
+- `references/template-architecture-requirements.md` — read when producing system- or
+  container-level architecture requirements; composes with corporate-chrome
+- `references/qa-architecture-requirements.md` — auto-loaded by Step 8 when the
+  architecture-requirements body template is active
 - `references/qa-checklist.md` — read and run before proposing any output
 
 ---
@@ -49,9 +55,13 @@ Steps (run for any document authoring trigger):
 1. Identify document type, audience, and output format
 2. Use filesystem tool to read `references/doc-principles.md`
    — if unreadable, halt: `⚠️ doc-principles.md unreadable — cannot proceed`
-3. If document type is ADR, Requirements Brief, Runbook, or Playbook:
-   use filesystem tool to read `references/templates.md` and copy the relevant template
+3. If document type is ADR, Requirements Brief, Runbook, Playbook, or Architecture Requirements:
+   use filesystem tool to read `references/templates.md` (the index)
    — if unreadable, flag: `⚠️ templates.md unreadable — proceeding without template`
+   For Architecture Requirements, additionally read both:
+     - `references/template-corporate-chrome.md`
+     - `references/template-architecture-requirements.md`
+   For ADR / Requirements Brief / Runbook / Playbook, copy the relevant inline template from templates.md.
 4. If output format is `.md`:
    use filesystem tool to read `references/markdown-formatting.md`
    — if unreadable, flag: `⚠️ markdown-formatting.md unreadable — applying defaults`
@@ -75,6 +85,9 @@ Steps (run for any document authoring trigger):
 7. Author content — apply density, hierarchy, and versioning rules from doc-principles.md
 8. Use filesystem tool to read `references/qa-checklist.md` and run it before proposing output
    — if unreadable, flag: `⚠️ qa-checklist.md unreadable — run manual QA before proposing`
+   If body template `template-architecture-requirements.md` is in use:
+     additionally read `references/qa-architecture-requirements.md` and run its per-row criteria
+   — if unreadable, flag: `⚠️ qa-architecture-requirements.md unreadable — body QA skipped`
 
 ---
 

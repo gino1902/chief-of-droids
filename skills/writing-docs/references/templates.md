@@ -10,6 +10,8 @@ Apply formatting rules from `markdown-formatting.md` for `.md` output.
 2. [Requirements Brief](#requirements-brief)
 3. [Runbook](#runbook)
 4. [Playbook](#playbook)
+5. [Corporate Document Chrome](./template-corporate-chrome.md) — composable wrapper for `.docx` deliverables
+6. [Architecture Requirements](./template-architecture-requirements.md) — body schema; composes with chrome
 
 ---
 
@@ -306,3 +308,5 @@ Use a numbered list if sequence matters.}
 - **Runbook:** Steps must be operator-executable as written — no assumed context. Test each step before marking the runbook live.
 - **Version rule (all types):** No version = cannot serve as alignment evidence. Assign v1.0 at first draft; increment on any substantive change.
 - **Playbook:** Table of Contents is dynamic — update after all plays are finalized. Anchor format: `#play-{kebab-case-play-name}`. Introduction § *What is a Playbook?* is static boilerplate — do not rewrite per use case. Summary is dynamic — rewrite to describe this playbook's domain, plays, and audience. Order plays from most foundational to most advanced. Each play must be self-contained — readable without prior plays.
+- **Corporate Document Chrome:** Use for any `.docx` requiring versioned cover, revision history, and remaining-issues tracking. Pair with one body template inserted at the `<!-- BODY -->` slot. Chrome reserves sections 1–3 (TOC, Revision History, Remaining Issues) and section 5 (Appendix); body template owns section 4. TOC section is title + page break only; populate the TOC in Word after rendering.
+- **Architecture Requirements:** Body schema for system- and container-level architecture requirements. Always composes with Corporate Document Chrome. Sub-sections are fixed: Functional / Governance & Access / Observability / NFR. QA file `qa-architecture-requirements.md` activates automatically via SKILL.md Step 8.
