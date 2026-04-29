@@ -101,10 +101,10 @@ Authoritative source: `tokens.json` `typography` block. Summary below.
 | :---- | :---- | ---: | :----- |
 | Title | `tx1` | 22 pt | bold |
 | H1 | `tx1` | 16 pt | bold |
-| H2 | `tx1` | 13 pt | regular |
-| H3 | `tx1` | 11 pt | regular |
+| H2 | `tx1` | 13 pt | bold |
+| H3 | `tx1` | 11 pt | bold |
 
-All headings use `tx1`. Hierarchy = size + weight at H1 only. Brand color
+All headings use `tx1` and are bold. Hierarchy is size-driven. Brand color
 in headings is forbidden — readers misread it as a hyperlink.
 
 ### Body, Blockquote, Code
@@ -204,6 +204,6 @@ usage examples, and the complete two-layer model explanation.
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 2.1        |
+| Version      | 2.2        |
 | Last Updated | 2026-04-29 |
 | Status       | Draft      |
