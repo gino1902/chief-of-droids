@@ -47,9 +47,12 @@ Version:         {version_status} – {version_date}
 
 ## Running Header (page 2 onward)
 
-> Left: `[LOGO]` (small mark). Right: `{document_title}` in `dk2` (near-black navy). No red.
->
-> Suppressed on page 1 (cover).
+> Suppressed on page 1 (cover). No red.
+
+| Position | Content |
+| :------- | :------ |
+| Left     | Logo placeholder `[LOGO]` (small mark) |
+| Right    | Title placeholder `{document_title}` in `dk2` (near-black navy) |
 
 ## Running Footer (page 2 onward)
 
@@ -163,6 +166,6 @@ that is a separate section restart and not part of this chrome.
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.7        |
+| Version      | 1.8        |
 | Last Updated | 2026-04-29 |
 | Status       | Draft      |
