@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Elevate role-mapping snippet for .docx files.
+
+  Maps OOXML logical color roles (t1/t2/bg1/bg2) to physical clrScheme slots
+  per the Elevate role aliases declared in tokens.json:
+
+    tx1 (primary text)       → t1 → dark2  (dk2 = #0F0E2B)
+    tx2 (secondary text)     → t2 → accent2 (#6DA5FF)
+    bg1 (primary background) → bg1 → light2 (lt2 = #FFFAF0)
+    bg2 (secondary background) → bg2 → light1 (lt1 = #FFFFFF)
+
+  Insert this element as a child of <w:settings> in word/settings.xml.
+
+  Reference: ECMA-376 Part 4 §2.15.1.78 (clrSchemeMapping)
+  Attribute values are ST_ColorSchemeIndex (long forms: light1, light2,
+  dark1, dark2, accent1-6, hyperlink, followedHyperlink — NOT lt1/dk1/etc).
+
+  This file is a snippet, not a standalone OOXML part. Tools must read
+  the <w:clrSchemeMapping> element only and inject it into the document's
+  word/settings.xml inside the existing <w:settings> root.
+-->
+<w:clrSchemeMapping
+    xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    w:bg1="light2"
+    w:t1="dark2"
+    w:bg2="light1"
+    w:t2="accent2"
+    w:accent1="accent1"
+    w:accent2="accent2"
+    w:accent3="accent3"
+    w:accent4="accent4"
+    w:accent5="accent5"
+    w:accent6="accent6"
+    w:hyperlink="hyperlink"
+    w:followedHyperlink="followedHyperlink"/>

@@ -9,13 +9,33 @@
 
 | File | Format | Use with |
 | :--- | :----- | :------- |
-| `tokens.json` | JSON | Canonical source of truth — all colors + roles |
-| `theme1.xml` | OOXML XML | `.pptx`, `.docx`, `.xlsx` |
+| `tokens.json` | JSON | Canonical source of truth — colors + roles + typography + contrast pairs |
+| `theme1.xml` | OOXML XML | `.pptx`, `.docx`, `.xlsx` — clrScheme part |
+| `settings-clrSchemeMapping.xml` | OOXML XML snippet | `.docx` only — role mapping injected into `word/settings.xml` |
 | `elevate.css` | CSS | HTML, any web project |
 | `elevate-tokens.js` | ES module | React inline styles; Tailwind CSS v3 |
 | `elevate-tailwind-v4.css` | CSS (`@theme`) | Tailwind CSS v4 |
 | `elevate-mermaid.md` | Markdown | Mermaid diagrams — copy the init block |
+| `elevate-artifact.md` | Markdown | HTML / React artifacts with form elements — `applyAll()` pattern |
 | `README.md` | Markdown | This file |
+
+---
+
+## Two-layer model
+
+Elevate distinguishes between **palette tokens** (the canonical hex values, named
+to match OOXML slots) and **role aliases** (logical names authors and templates use).
+
+| Layer | Names | Where it lives | Purpose |
+| :---- | :---- | :------------- | :------ |
+| Palette | `dk1`, `lt1`, `dk2`, `lt2`, `accent1`–`accent6`, `hyperlink`, `followedHyperlink` | `theme1.xml` (Office), `tokens.json` (canonical) | Physical hex storage; OOXML-compatible names |
+| Roles | `tx1`, `tx2`, `tx3`, `bg1`, `bg2` (+ accents reused) | `tokens.json` (`roles` block), template references, generators | Logical author-facing names; what gets used in `var(--…)`, JSX, generator code |
+
+**OOXML never sees the role aliases.** `theme1.xml` carries only palette names.
+For `.docx`, the role-to-slot binding is materialised as a separate
+`<w:clrSchemeMapping>` element in `word/settings.xml` (see `settings-clrSchemeMapping.xml`).
+
+This is OOXML's native pattern (ECMA-376 Part 4 §2.15.1.78), not a workaround.
 
 ---
 
@@ -61,6 +81,37 @@ file. Office substitutes silently if the font is absent.
 
 ---
 
+## .docx only — injecting clrSchemeMapping
+
+For `.docx` files, the role aliases (`tx1`/`tx2`/`bg1`/`bg2`) are activated by
+inserting `<w:clrSchemeMapping>` into `word/settings.xml`. This step is
+**additional** to theme1.xml injection.
+
+```bash
+# Assume unpacked/ contains the unzipped .docx with theme1.xml already in place
+
+# 1. Copy the snippet content (the <w:clrSchemeMapping> element only)
+cat /path/to/elevate-theme/settings-clrSchemeMapping.xml
+
+# 2. Open unpacked/word/settings.xml and insert the <w:clrSchemeMapping>
+#    element as a direct child of <w:settings>. Order matters: place it
+#    after <w:zoom> if present, before <w:rsids>.
+
+# 3. Repack as usual
+cd unpacked/ && zip -r ../output.docx . && cd ..
+```
+
+**What this enables:** Word's built-in heading styles, theme-aware tables, and
+SmartArt resolve "primary text" / "primary background" through the mapping.
+Without it, those styles fall back to OOXML defaults (background1 = light1,
+text1 = dark1) and produce wrong colours.
+
+**Why `.docx` only:** PowerPoint and Excel use `<p:clrMap>` and analogous
+mechanisms with different attribute schemas. Adapt per format if needed; this
+file targets WordprocessingML only.
+
+---
+
 ## HTML / CSS
 
 ```html
@@ -71,14 +122,14 @@ Use semantic aliases, not raw palette tokens:
 
 ```css
 body {
-  background-color: var(--elevate-color-background);
-  color: var(--elevate-color-text);
+  background-color: var(--elevate-color-background);   /* bg1 */
+  color: var(--elevate-color-text);                    /* tx1 */
   font-family: var(--elevate-font-family);
 }
 
 .btn-primary {
-  background-color: var(--elevate-color-brand);
-  color: var(--elevate-lt1);
+  background-color: var(--elevate-color-brand);        /* accent1 */
+  color: var(--elevate-bg2);                           /* white */
 }
 
 a         { color: var(--elevate-color-link); }
@@ -94,13 +145,13 @@ import { elevateTokens } from './shared/elevate-theme/elevate-tokens.js';
 
 const styles = {
   container: {
-    backgroundColor: elevateTokens.color.background,
-    color: elevateTokens.color.text,
+    backgroundColor: elevateTokens.color.background,   // bg1
+    color: elevateTokens.color.text,                   // tx1
     fontFamily: elevateTokens.font.family,
   },
   button: {
-    backgroundColor: elevateTokens.color.brand,
-    color: elevateTokens.color.background,  // use elevate-lt1, not Tailwind 'white'
+    backgroundColor: elevateTokens.color.brand,        // accent1
+    color: elevateTokens.color.bg2,                    // white
   },
 };
 ```
@@ -123,11 +174,11 @@ module.exports = {
 };
 ```
 
-In JSX — use `text-elevate-lt1` for white, not Tailwind's built-in `text-white`:
+In JSX:
 
 ```jsx
-<div className="bg-elevate-background text-elevate-text">
-  <button className="bg-elevate-brand text-elevate-lt1 hover:bg-elevate-brand-light">
+<div className="bg-elevate-bg1 text-elevate-tx1">
+  <button className="bg-elevate-brand text-elevate-bg2 hover:bg-elevate-brand-light">
     Primary action
   </button>
   <a className="text-elevate-link visited:text-elevate-link-visited">
@@ -151,13 +202,10 @@ colors. Import `elevate-tailwind-v4.css` after the Tailwind import:
 Generated utility classes follow the `--color-elevate-*` namespace:
 
 ```jsx
-<div className="bg-elevate-background text-elevate-text font-elevate">
-  <button className="bg-elevate-brand text-elevate-lt1 hover:bg-elevate-brand-light">
+<div className="bg-elevate-bg1 text-elevate-tx1 font-elevate">
+  <button className="bg-elevate-brand text-elevate-bg2 hover:bg-elevate-brand-light">
     Primary action
   </button>
-  <a className="text-elevate-link visited:text-elevate-link-visited">
-    Link
-  </a>
 </div>
 ```
 
@@ -179,12 +227,12 @@ override rationale, and `classDef` examples for accent5/accent6.
     "primaryTextColor":   "#FFFFFF",
     "primaryBorderColor": "#0F0E2B",
     "secondaryColor":     "#6DA5FF",
-    "secondaryTextColor": "#000000",
+    "secondaryTextColor": "#0F0E2B",
     "tertiaryColor":      "#C5D8F6",
-    "tertiaryTextColor":  "#000000",
+    "tertiaryTextColor":  "#0F0E2B",
     "lineColor":          "#425F8B",
-    "textColor":          "#000000",
-    "background":         "#FFFFFF",
+    "textColor":          "#0F0E2B",
+    "background":         "#FFFAF0",
     "nodeBorder":         "#0F0E2B",
     "clusterBkg":         "#FFFAF0",
     "titleColor":         "#1F24E9",
@@ -207,14 +255,14 @@ Use CSS custom properties from `elevate.css`, or inline hex directly:
   <style>
     :root {
       --brand:  #1F24E9;
-      --text:   #000000;
-      --bg:     #FFFFFF;
-      --navy:   #0F0E2B;
-      --cream:  #FFFAF0;
+      --tx1:    #0F0E2B;
+      --bg1:    #FFFAF0;
+      --bg2:    #FFFFFF;
+      --accent4:#425F8B;
     }
     rect.primary { fill: var(--brand); }
-    rect.surface { fill: var(--cream); stroke: var(--navy); }
-    text { fill: var(--text); font-family: "TWK Everett Light", sans-serif; }
+    rect.surface { fill: var(--bg1); stroke: var(--accent4); }
+    text { fill: var(--tx1); font-family: "TWK Everett Light", sans-serif; }
   </style>
   <rect class="primary" x="10" y="10" width="200" height="80" rx="4"/>
   <text x="110" y="55" text-anchor="middle" fill="#FFFFFF">Label</text>
@@ -223,23 +271,148 @@ Use CSS custom properties from `elevate.css`, or inline hex directly:
 
 ---
 
-## Color role reference
+## Palette reference
+
+OOXML-compatible slot names. Used in `theme1.xml`. Authors should prefer the
+role aliases below for application use.
 
 | Token | Hex | Role / when to use |
 | :---- | :-- | :----------------- |
-| `dk1` | `#000000` | Body text, primary dark content |
-| `lt1` | `#FFFFFF` | Page / slide background |
-| `dk2` | `#0F0E2B` | Dark surfaces, section headers, borders |
-| `lt2` | `#FFFAF0` | Warm cream — cards, panels, cluster fills |
-| `accent1` | `#1F24E9` | Primary brand, CTAs, active states, links |
-| `accent2` | `#6DA5FF` | Secondary elements, hover states, visited links |
-| `accent3` | `#C5D8F6` | Tints, highlights, background washes |
-| `accent4` | `#425F8B` | Subdued UI — dividers, muted labels, edges |
-| `accent5` | `#6164EB` | Alternate accent — badges, tags, alternate nodes |
-| `accent6` | `#8E8FEC` | Soft accent — tooltips, light badges |
+| `dk1` | `#000000` | True black — structural ink only (gridlines, strokes); **not body text** |
+| `lt1` | `#FFFFFF` | Pure white — secondary background |
+| `dk2` | `#0F0E2B` | Near-black navy — text on light backgrounds (aliased as `tx1`) |
+| `lt2` | `#FFFAF0` | Warm cream — primary background (aliased as `bg1`) |
+| `accent1` | `#1F24E9` | Electric blue — primary brand fill (aliased as `tx3` for emphasis text) |
+| `accent2` | `#6DA5FF` | Sky blue — secondary fill (aliased as `tx2` for text on dark backgrounds) |
+| `accent3` | `#C5D8F6` | Ice blue — tints, code-block fills, banded table rows |
+| `accent4` | `#425F8B` | Steel blue (muted) — dividers, blockquote text |
+| `accent5` | `#6164EB` | Violet-blue — alternate accent for badges |
+| `accent6` | `#8E8FEC` | Periwinkle (soft) — soft accent for tooltips |
+
+## Role aliases reference
+
+Logical names. Used by templates, generators, and CSS aliases. Authors should
+reach for these first; use raw palette names only when the alias doesn't fit.
+
+| Role | Alias of | Hex | Use |
+| :--- | :------- | :-- | :-- |
+| `tx1` | `dk2` | `#0F0E2B` | Primary text — body, headings, table cells |
+| `tx2` | `accent2` | `#6DA5FF` | Secondary text — dark-fill contexts only |
+| `tx3` | `accent1` | `#1F24E9` | Tertiary text — restricted to titles, hyperlinks, CTAs, callouts |
+| `bg1` | `lt2` | `#FFFAF0` | Primary background — pages, slides, default canvas |
+| `bg2` | `lt1` | `#FFFFFF` | Secondary background — high-contrast cards, table data rows |
+
+---
+
+## Typography
+
+Canonical typography rules. Authoritative source: `tokens.json` `typography` block.
+
+### Headings
+
+| Level | Color | Size | Weight | Notes |
+| :---- | :---- | ---: | :----- | :---- |
+| Title | `tx1` | 22 pt | bold | Cover only — above H1 |
+| H1 | `tx1` | 16 pt | bold | Top-level section, numbered |
+| H2 | `tx1` | 13 pt | regular | Sub-section, numbered (e.g. 4.1) |
+| H3 | `tx1` | 11 pt | regular | Sub-sub-section, numbered (e.g. 4.1.1); extra left indent |
+
+Hierarchy is conveyed by **size + weight at H1 only**. Color is constant (`tx1`).
+Do not use `accent1`/`tx3` for headings — readers misread brand-colored
+headings as hyperlinks (WCAG 2.2 SC 1.4.1).
+
+### Body
+
+| Element | Color | Size | Weight |
+| :------ | :---- | ---: | :----- |
+| Paragraph | `tx1` | 11 pt | regular |
+| List item | `tx1` | 11 pt | regular |
+
+### Blockquote
+
+| Property | Value |
+| :------- | :---- |
+| Text color | `accent4` (`#425F8B` steel blue) |
+| Style | italic |
+| Weight | regular |
+| Size | 11 pt |
+| Left indent | small |
+| Border | none |
+
+Use for callouts, asides, indicative passages. Italic + indent provide non-color
+cues for distinguishing the block from body text — required by WCAG 2.2 SC 1.4.1.
+
+### Code block
+
+| Property | Value |
+| :------- | :---- |
+| Fill | `accent3` (`#C5D8F6` ice blue) |
+| Text color | `tx1` |
+| Font | monospace (`Cascadia Code`, `Consolas`, `Courier New`) |
+| Size | 10 pt |
+| Padding | block-level, full-width within text margins |
+| Border | none |
+
+### Inline code
+
+Same fill / text / font as code block; size matches surrounding text (11 pt).
+
+---
+
+## Tables
+
+Default table style. Matches Word's "Light Shading" behaviour when Elevate
+theme is applied.
+
+| Element | Token | Hex |
+| :------ | :---- | :-- |
+| Header fill | `accent2` | `#6DA5FF` |
+| Header text | `tx1` | `#0F0E2B` |
+| Data row fill | `bg2` | `#FFFFFF` |
+| Banded row fill | `accent3` | `#C5D8F6` |
+| Cell text (all rows) | `tx1` | `#0F0E2B` |
+| Borders | none | — |
+
+---
+
+## Contrast pairing rules
+
+Authoritative source: `tokens.json` `contrast_pairs` block. WCAG 2.2 SC 1.4.3
+(AA) requires ≥ 4.5:1 for normal text; ≥ 3:1 for large text.
+
+Quick reference — text colors allowed on each fill:
+
+| Fill | Allowed text | Forbidden text |
+| :--- | :----------- | :------------- |
+| `bg1` (`#FFFAF0`) | `tx1`, `tx3`, `accent4`, `accent5` | `tx2` (2.1:1 fail) |
+| `bg2` (`#FFFFFF`) | `tx1`, `tx3`, `accent4`, `accent5` | `tx2` (2.2:1 fail) |
+| `dk1` (`#000000`) | `tx2`, `bg1`, `bg2` | `tx1`, `tx3` |
+| `dk2` (`#0F0E2B`) | `tx2`, `bg1`, `bg2` | `tx1`, `tx3` |
+| `accent1` (`#1F24E9`) | `bg1`, `bg2` | `tx1`, `tx2`, `tx3` |
+| `accent2` (`#6DA5FF`) | `tx1` only | `tx2`, `tx3`, `bg1`, `bg2` |
+| `accent3` (`#C5D8F6`) | `tx1`, `tx3` | `tx2` (1.6:1 fail) |
+| `accent4` (`#425F8B`) | `bg1`, `bg2` | `tx1`, `tx2`, `tx3` |
+
+`tx2` is only legible on dark fills (`dk1`, `dk2`). Anywhere else it fails AA.
+`tx3` is restricted to titles, hyperlinks, CTAs, and callouts (see
+`text_role_constraints` in `tokens.json`).
+
+---
+
+## Element role constraints
+
+| Role | Allowed elements | Forbidden elements |
+| :--- | :--------------- | :----------------- |
+| `tx1` | body_paragraph, h1–h3, table_cell, caption, list_item | — |
+| `tx2` | text_on_dk1_fill, text_on_dk2_fill | text_on_bg1, text_on_bg2, text_on_accent3 |
+| `tx3` | cover_title, hyperlink, cta_button_text, callout_label | body_paragraph, h1–h3, table_cell, list_item |
+
+`tx3` rule: brand-color text must always pair with a non-color visual cue
+(underline for hyperlinks, button shape for CTAs, indent + italic for callouts).
+WCAG 2.2 SC 1.4.1 / G183.
 
 ---
 
 | Version | Last Updated | Status |
 | :------ | :----------- | :----- |
-| 1.1     | 2026-03-26   | Review |
+| 2.0     | 2026-04-28   | Draft  |

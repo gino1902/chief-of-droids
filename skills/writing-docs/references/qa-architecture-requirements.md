@@ -1,11 +1,12 @@
 # QA — Architecture Requirements
 
-> Loaded by writing-docs SKILL.md Step 8 when `template-architecture-requirements.md`
-> is in use. Executable quality gate before any output is proposed.
-
-## Activation
-
-This QA file activates when the body template in use is `template-architecture-requirements.md`.
+> **DEPRECATED 2026-04-29.** No longer auto-loaded by writing-docs. Migrates
+> alongside `template-architecture-requirements.md` to its owning authoring
+> skill (TBD). Until migration, reachable only by explicit user request when
+> the architecture-requirements body template is in use.
+>
+> Executable quality gate for the architecture-requirements body schema.
+> Per-row criteria for sub-sections 4.1–4.4.
 
 ## Per-row criteria
 
@@ -61,6 +62,6 @@ Removed: {N}
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.0        |
-| Last Updated | 2026-04-28 |
-| Status       | Draft      |
+| Version      | 1.1        |
+| Last Updated | 2026-04-29 |
+| Status       | Deprecated |

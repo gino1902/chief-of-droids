@@ -154,21 +154,43 @@ Do not load this skill without one of these qualifiers. Add the qualifier when a
 
 ## writing-docs
 
-Load this skill when the prompt contains any request to produce a structured document, guide, brief, or report.
+Load this skill when the user asks to **format, render, or produce** a document
+in a specific output format (`.md`, `.docx`, `.pptx`, `.xlsx`, HTML, React, SVG).
 
-**Examples:**
-- "Write a requirements brief for use-case-1"
-- "Document this workflow"
-- "Draft an ADR for the storage account design"
-- "Create a runbook for the forecasting pipeline"
-- "Write a playbook for our data ingestion practices"
-- "Turn these notes into a reference doc"
-- "Fix the formatting on this document"
+**This skill is the formatter and renderer.** It does not author content for
+specific document types (ADR, BDR, requirements, use cases, etc.) — those are
+owned by domain authoring skills (`architecting-data-platforms`,
+`analyzing-business-cases`). When both authoring and formatting are needed,
+both skills load via Anthropic description-driven multi-skill activation;
+Claude orchestrates.
 
-For `.md` output, additionally read
-`writing-docs/references/markdown-formatting.md` before writing.
+**Format / render triggers (load writing-docs):**
+- "render this as docx" / "render as a Word doc" / "produce a .docx"
+- "turn this into a markdown doc" / "format as markdown"
+- "format this document" / "fix the formatting" / "format this file"
+- "format this diagram" / "render this Mermaid"
+- "create an HTML page for this"
+- "produce a Word doc from…"
 
-For document type triggers (ADR, Requirements Brief, Runbook, Playbook), additionally read `writing-docs/references/templates.md` and copy the relevant template.
+**Doc-type authoring triggers (load the owning authoring skill, NOT writing-docs first):**
+- "write an ADR for X" → `architecting-data-platforms` (ADR authoring)
+- "write a BDR for X" → `analyzing-business-cases`
+- "write a use case" / "write an acceptance test" / "business requirement"
+  → `analyzing-business-cases`
+- "draft architecture requirements" → `architecting-data-platforms` or
+  `analyzing-business-cases` (TBD; both skills' descriptions should mention this)
+- "write a runbook / playbook" → no authoring skill yet — falls through to
+  writing-docs free-form
+
+When the user names both ("write an ADR and render it as docx"), both the
+authoring skill and writing-docs trigger.
+
+**For `.md` output**, additionally read `writing-docs/references/markdown-formatting.md`
+before writing.
+
+**For `.docx` output**, writing-docs always reads `template-corporate-chrome.md`
+(chrome wraps every `.docx` — no exceptions) and routes theme injection per
+`theme.md` (theme1.xml + settings-clrSchemeMapping.xml).
 
 ---
 
@@ -356,19 +378,22 @@ Skills compose automatically. Load all skills whose triggers match the request.
 
 | Task | Skills loaded |
 | :--- | :--- |
+| Render a doc as `.md` / `.docx` / `.pptx` / HTML / etc. | `writing-docs` |
+| Write an ADR | `architecting-data-platforms` (authoring) + `writing-docs` (rendering) |
+| Write a BDR / use case / acceptance test / business requirement | `analyzing-business-cases` (authoring) + `writing-docs` (rendering) |
 | Write a tech-verified architecture doc as `.md` | `architecting-data-platforms` + `reviewing-tech-claims` + `writing-docs` |
-| Document a phase deliverable | `writing-docs` |
+| Write a runbook (no authoring skill yet) | `writing-docs` (free-form body) |
+| Write a playbook (no authoring skill yet) | `writing-docs` (free-form body) |
+| Document a phase deliverable | `writing-docs` (rendering only) |
 | Verify a CLI command | `reviewing-tech-claims` |
 | Platform assessment | `architecting-data-platforms` |
-| Write a runbook with verified commands | `writing-docs` + `reviewing-tech-claims` |
-| Write a playbook | `writing-docs` |
 | Author or assess a skill | `creating-skills` |
 | Enrich a skill from catalog | `creating-skills` |
 | Identify skill gaps from session history | `creating-skills` |
 | Add a new source to skill catalog | `creating-skills` |
 | Frame or challenge a use case | `analyzing-business-cases` |
 | Frame a data platform use case | `analyzing-business-cases` + `architecting-data-platforms` |
-| Frame + write the document | `analyzing-business-cases` + `writing-docs` |
+| Frame + render the document | `analyzing-business-cases` + `writing-docs` |
 | Read, add, or transition tasks | `managing-tasks` |
 | Execute an existing task with quality workflow | `managing-tasks` + `executing-tasks` |
 | Execute a new task without a prior TASKS.md entry | `executing-tasks` + `managing-tasks` (at close) |
@@ -388,6 +413,6 @@ Skills compose automatically. Load all skills whose triggers match the request.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.11        |
-| Last Updated | 2026-04-18  |
+| Version      | 1.12        |
+| Last Updated | 2026-04-29  |
 | Status       | Draft       |

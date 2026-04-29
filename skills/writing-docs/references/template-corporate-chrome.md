@@ -1,21 +1,29 @@
 # Corporate Document Chrome
 
-> Composable wrapper for any corporate `.docx` deliverable. Provides cover page,
+> Wraps **every `.docx` output** produced via writing-docs. Provides cover page,
 > running header/footer, TOC, revision history, remaining issues, and appendix.
-> Body content is supplied by a body template (e.g. `template-architecture-requirements.md`)
-> inserted at the marked slot.
+> Body content is free-form by default — supplied either by the user or by the
+> output of a composing authoring skill (architecting-data-platforms,
+> analyzing-business-cases). A specific body template may be inserted at the
+> marked slot if explicitly requested.
 
 ## When to use
 
-Wraps any structured corporate document where reviewers expect a versioned cover,
-revision history, and outstanding-issue tracking. Pairs with one body template.
+Mandatory for every `.docx` rendered by writing-docs. No exceptions. Short docs
+render with the same chrome as long docs — Revision History gets one row,
+Remaining Issues stays empty when there are none. Reproducibility and reader
+consistency are the priorities.
 
 ## How to compose
 
 1. Copy this chrome verbatim.
-2. Choose a body template; insert its content at the `<!-- BODY -->` marker.
-3. Fill all `{placeholder}` fields.
-4. Render via writing-docs → composed `docx` skill (passes `theme1.xml`).
+2. Insert body content at the `<!-- BODY -->` marker. Body is free-form unless
+   the user explicitly references a body template (e.g.
+   `template-architecture-requirements.md`).
+3. Fill all `{placeholder}` fields per the **Placeholder derivation rules** below.
+4. Omit lines that map to optional placeholders when the source provides no value.
+5. Render via writing-docs → composed `docx` skill, which receives both
+   `theme1.xml` and `settings-clrSchemeMapping.xml` per `theme.md` routing.
 
 ## Cover Page
 
@@ -29,7 +37,7 @@ revision history, and outstanding-issue tracking. Pairs with one body template.
 {company_name}                           ← accent1, large
 {document_title}                         ← accent1, large
 
-Reference:       {reference}             ← dk1
+Reference:       {reference}             ← dk1, OPTIONAL — omit the entire line if no value
 Classification:  {classification} – {classification_label}
 Version:         {version_status} – {version_date}
 ```
@@ -81,24 +89,43 @@ Version:         {version_status} – {version_date}
 
 ---
 
+## Placeholder derivation rules
+
+> When mapping a source markdown document into this chrome, derive placeholder
+> values per the rules below. Do not invent values that the source does not
+> provide — for optional placeholders without a source value, omit the line.
+
+| Placeholder | Required | Derivation |
+| :--- | :--- | :--- |
+| `{company_name}` | yes | Author / organisation. Not derivable from source. |
+| `{document_title}` | yes | Source H1 with any trailing status suffix removed (e.g. ` - DRAFT`, ` - v1.0`, ` - FINAL`). Example: `# SQLI in 2028 - DRAFT` → `SQLI in 2028`. |
+| `{reference}` | **no** | Author-provided. **Omit the cover line entirely** if no value. Never invent. |
+| `{classification}` / `{classification_label}` | yes | Organisational policy (e.g. `C2` / `Restricted`). |
+| `{version_status}` | yes | Source H1 status suffix if present (`DRAFT`, `v1.0`, `FINAL`); else author-supplied. |
+| `{version_date}` | yes | Author / filename date prefix (e.g. `20260428_*` → `28/04/2026`). |
+| `{date}` | yes | Footer date — usually equals `{version_date}`. |
+| `{year}` | yes | Year component of `{date}`. |
+| `{body_section_title}` | yes | Provided by the body template (or, for free-form body, derived from the source H1). |
+| `{appendix_content}` | yes | Free-form. Empty if the document has no appendix. |
+
 ## Placeholder reference
 
 | Placeholder | Source | Example |
 | :--- | :--- | :--- |
 | `{company_name}` | author | `Company Name` |
-| `{document_title}` | author | `Data Platform Creation` |
-| `{reference}` | author | `Architecture Requirements` |
+| `{document_title}` | derived from source H1 (strip status suffix) | `Data Platform Creation` |
+| `{reference}` | author (optional) | `Architecture Requirements` — omit cover line if not provided |
 | `{classification}` | author | `C2` |
 | `{classification_label}` | author | `Restricted` |
-| `{version_status}` | author | `DRAFT` / `v1.0` / `FINAL` |
-| `{version_date}` | author | `22/04/2026` |
+| `{version_status}` | source H1 suffix or author | `DRAFT` / `v1.0` / `FINAL` |
+| `{version_date}` | author / filename | `22/04/2026` |
 | `{date}` | author (footer; usually = version_date) | `28/04/2026` |
-| `{year}` | author (footer; usually derived from date) | `2026` |
+| `{year}` | derived from date | `2026` |
 | `{body_section_title}` | body template | `System & Containers Level Requirements` |
 | `{appendix_content}` | author | free-form |
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.2        |
-| Last Updated | 2026-04-28 |
+| Version      | 1.4        |
+| Last Updated | 2026-04-29 |
 | Status       | Draft      |

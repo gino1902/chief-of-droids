@@ -1,8 +1,14 @@
 # Architecture Requirements — Body Template
 
+> **DEPRECATED 2026-04-29.** This body template is no longer auto-loaded by
+> writing-docs. It will migrate to the appropriate authoring skill
+> (architecting-data-platforms or analyzing-business-cases — ownership not yet
+> decided). Until migration, this file is reachable only by explicit user
+> request: "use the architecture-requirements body template".
+>
 > Body schema for system-and-container-level architecture requirement documents.
 > Composes with `template-corporate-chrome.md` at the chrome's `<!-- BODY -->` slot.
-> QA: `qa-architecture-requirements.md` is loaded automatically by writing-docs Step 8.
+> QA: `qa-architecture-requirements.md` (also deprecated, same migration path).
 
 ## When to use
 
@@ -56,6 +62,6 @@ a `.docx` reviewed by architects, business sponsors, and engineering leads.
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.0        |
-| Last Updated | 2026-04-28 |
-| Status       | Draft      |
+| Version      | 1.1        |
+| Last Updated | 2026-04-29 |
+| Status       | Deprecated |
