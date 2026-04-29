@@ -30,6 +30,9 @@ consistency are the priorities.
 > Simple cover on white. Background `lt1` (white). Title text in `accent1`
 > (electric blue). Metadata in `dk1` (black). No full-bleed; no banner; no logo
 > tile. Logo top-left as a small mark.
+>
+> **No header. No footer. No page number.** Header and footer chrome begin on
+> page 2 (first post-cover page — typically Table of Contents).
 
 ```cover
 [LOGO]
@@ -42,14 +45,18 @@ Classification:  {classification} – {classification_label}
 Version:         {version_status} – {version_date}
 ```
 
-## Running Header (every body page)
+## Running Header (page 2 onward)
 
 > Left: `[LOGO]` (small mark). Right: `{document_title}` in `dk2` (near-black navy). No red.
+>
+> Suppressed on page 1 (cover).
 
-## Running Footer (every body page)
+## Running Footer (page 2 onward)
 
 > Three-column layout. Renderer must use tab stops (left / centre / right) — not
 > a table. Word table cells have minimum height and render as empty boxes.
+>
+> Suppressed on page 1 (cover).
 
 | Position | Content |
 | :------- | :------ |
@@ -57,7 +64,26 @@ Version:         {version_status} – {version_date}
 | Centre   | `{version_status} – {date} – {classification} - {classification_label}` |
 | Right    | `{page_number}` |
 
-> Example: `© SQLI Group 2026` … `DRAFT – 29/04/2026 – C2 - Restricted` … `3`
+> Example: `© Company Name 2026` … `DRAFT – 29/04/2026 – C2 - Restricted` … `3`
+
+## Renderer notes — first-page suppression
+
+> Implementation guidance for the composed `docx` skill (or any other renderer).
+> The chrome contract is declarative: cover has no chrome; page 2 onward has
+> chrome. Renderers pick the technique.
+
+Word offers three patterns; the first is canonical:
+
+| Pattern | Mechanism | When to use |
+| :------ | :-------- | :---------- |
+| Different first page | `titlePg` flag on `<w:sectPr>` + empty `headers.first` / `footers.first` | Default — single section, simplest |
+| Section break after cover | Two sections; section 1 has no header/footer, section 2 has them | Cover needs different page setup (orientation, margins, paper size) |
+| Empty first-page chrome | Header/footer present but contain only an empty paragraph | Avoid — leaves a header/footer slot reserved on page 1 |
+
+**Page numbering convention:** cover counts as page 1; first body page (TOC)
+displays `2`. This matches Word's default behaviour with `titlePg`. If a
+"renumber from body" convention is required (cover unnumbered or `i`; TOC = `1`),
+that is a separate section restart and not part of this chrome.
 
 ---
 
@@ -122,7 +148,7 @@ Version:         {version_status} – {version_date}
 
 | Placeholder | Source | Example |
 | :--- | :--- | :--- |
-| `{company_name}` | author | `SQLI Group` |
+| `{company_name}` | author | `Company Name` |
 | `{document_title}` | derived from source H1 (strip status suffix) | `Data Platform Creation` |
 | `{reference}` | author (optional) | `Architecture Requirements` — omit cover line if not provided |
 | `{classification}` | author | `C2` |
@@ -137,6 +163,6 @@ Version:         {version_status} – {version_date}
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.5        |
+| Version      | 1.7        |
 | Last Updated | 2026-04-29 |
 | Status       | Draft      |
