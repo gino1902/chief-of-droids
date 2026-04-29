@@ -12,6 +12,8 @@
  *   module.exports = { theme: { extend: { colors: tailwindElevate } } };
  *
  * Font: TWK Everett Light — load via @font-face or a font provider at runtime.
+ *   Helvetica Neue is the second-position fallback — pre-installed on macOS,
+ *   visually closest to TWK Everett in the Swiss-grotesk family.
  *
  * Tailwind version note:
  *   tailwindElevate targets Tailwind CSS v3 (tailwind.config.js).
@@ -52,7 +54,7 @@ export const elevateTokens = {
     linkVisited:    elevateColors.accent2,
   },
   font: {
-    family: '"TWK Everett Light", system-ui, sans-serif',
+    family: '"TWK Everett Light", "Helvetica Neue", system-ui, sans-serif',
   },
 };
 
@@ -87,7 +89,7 @@ export const tailwindElevate = {
     'surface-dark':    elevateColors.dk2,
     brand:             elevateColors.accent1,
     'brand-light':     elevateColors.accent2,
-    'brand-lightest':  elevateColors.accent3,
+    'brand-lightest': elevateColors.accent3,
     'brand-muted':     elevateColors.accent4,
     'brand-alt':       elevateColors.accent5,
     'brand-soft':      elevateColors.accent6,

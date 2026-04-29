@@ -76,8 +76,17 @@ unpacked directory.
 `minorFont` to `TWK Everett Light`. Replace the `minorFont` `typeface` value
 with the chosen body weight before deploying to production files.
 
-**Font note:** TWK Everett Light must be installed on the machine opening the
-file. Office substitutes silently if the font is absent.
+**Font note (Office formats):** TWK Everett Light is a licensed commercial font
+and must be installed on the machine opening the file. Office (Word, PowerPoint,
+Excel) does **not** honour CSS-style fallback chains — when TWK Everett is
+absent, Word substitutes silently using its own logic (typically Calibri or
+Arial), regardless of what cascade is declared in `tokens.json` or `elevate.css`.
+
+The cascade chain (`TWK Everett Light, Helvetica Neue, system-ui, …`) only
+governs HTML / CSS / SVG / React renderings. For consistent `.docx` / `.pptx` /
+`.xlsx` rendering across machines without TWK Everett installed, the realistic
+options are: install the font on every target machine, or change `theme1.xml`
+to declare a freely available font as the primary.
 
 ---
 
@@ -94,8 +103,9 @@ inserting `<w:clrSchemeMapping>` into `word/settings.xml`. This step is
 cat /path/to/elevate-theme/settings-clrSchemeMapping.xml
 
 # 2. Open unpacked/word/settings.xml and insert the <w:clrSchemeMapping>
-#    element as a direct child of <w:settings>. Order matters: place it
-#    after <w:zoom> if present, before <w:rsids>.
+#    element as a direct child of <w:settings>. Order matters: place it after
+#    <w:compat> (CT_Settings sequence requires clrSchemeMapping late in the
+#    element order — inserting it as the first child fails schema validation).
 
 # 3. Repack as usual
 cd unpacked/ && zip -r ../output.docx . && cd ..
@@ -237,7 +247,7 @@ override rationale, and `classDef` examples for accent5/accent6.
     "clusterBkg":         "#FFFAF0",
     "titleColor":         "#1F24E9",
     "edgeLabelBackground":"#FFFAF0",
-    "fontFamily":         "TWK Everett Light, system-ui, sans-serif"
+    "fontFamily":         "TWK Everett Light, Helvetica Neue, system-ui, sans-serif"
   }
 }}%%
 flowchart LR
@@ -262,7 +272,7 @@ Use CSS custom properties from `elevate.css`, or inline hex directly:
     }
     rect.primary { fill: var(--brand); }
     rect.surface { fill: var(--bg1); stroke: var(--accent4); }
-    text { fill: var(--tx1); font-family: "TWK Everett Light", sans-serif; }
+    text { fill: var(--tx1); font-family: "TWK Everett Light", "Helvetica Neue", sans-serif; }
   </style>
   <rect class="primary" x="10" y="10" width="200" height="80" rx="4"/>
   <text x="110" y="55" text-anchor="middle" fill="#FFFFFF">Label</text>
@@ -307,6 +317,26 @@ reach for these first; use raw palette names only when the alias doesn't fit.
 ## Typography
 
 Canonical typography rules. Authoritative source: `tokens.json` `typography` block.
+
+### Font cascade
+
+Authoritative source: `tokens.json` → `typography.font_family.fallback_chain`.
+
+```
+TWK Everett Light, Helvetica Neue, system-ui, -apple-system, Arial, sans-serif
+```
+
+| Position | Font | Rationale |
+| :------- | :--- | :-------- |
+| 1 | TWK Everett Light | Brand primary — used when installed |
+| 2 | Helvetica Neue | macOS default fallback — closest visual match to Everett (same Swiss-grotesk family); pre-installed on every Mac |
+| 3 | system-ui | OS-native default |
+| 4 | -apple-system | older macOS / iOS Safari token |
+| 5 | Arial | Windows default |
+| 6 | sans-serif | universal final fallback |
+
+**Office formats (.docx / .pptx / .xlsx) do not honour this chain.** See the
+"Font note (Office formats)" section above.
 
 ### Headings
 
@@ -415,4 +445,4 @@ WCAG 2.2 SC 1.4.1 / G183.
 
 | Version | Last Updated | Status |
 | :------ | :----------- | :----- |
-| 2.0     | 2026-04-28   | Draft  |
+| 2.1     | 2026-04-29   | Draft  |

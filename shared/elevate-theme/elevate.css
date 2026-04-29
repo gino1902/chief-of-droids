@@ -12,6 +12,8 @@
  * Font: TWK Everett Light — licensed commercial font, must be loaded separately.
  *   Add a @font-face or @import declaration in your own stylesheet.
  *   This file declares the font-family token only; it does not load the font.
+ *   Helvetica Neue is the second-position fallback — pre-installed on macOS,
+ *   visually closest to TWK Everett in the Swiss-grotesk family.
  *
  * Hyperlink tokens: --elevate-color-link and --elevate-color-link-visited are
  *   semantic aliases pointing to accent1 and accent2. Named --elevate-hyperlink
@@ -51,5 +53,5 @@
   --elevate-color-link-visited:    var(--elevate-accent2);
 
   /* --- Typography --- */
-  --elevate-font-family: "TWK Everett Light", system-ui, sans-serif;
+  --elevate-font-family: "TWK Everett Light", "Helvetica Neue", system-ui, sans-serif;
 }

@@ -43,7 +43,7 @@ when emitting OOXML or hex.
 | Output format | Theme artifact(s) to pass | How to pass |
 | :------------ | :------------------------ | :---------- |
 | `.pptx` | `shared/elevate-theme/theme1.xml` | Instruct the pptx skill to inject into `ppt/theme/theme1.xml` |
-| `.docx` | `shared/elevate-theme/theme1.xml` **+** `shared/elevate-theme/settings-clrSchemeMapping.xml` | Inject theme1.xml into `word/theme/theme1.xml`. Inject the `<w:clrSchemeMapping>` element into `word/settings.xml` as a child of `<w:settings>`. Both required. |
+| `.docx` | `shared/elevate-theme/theme1.xml` **+** `shared/elevate-theme/settings-clrSchemeMapping.xml` | Inject theme1.xml into `word/theme/theme1.xml`. Inject the `<w:clrSchemeMapping>` element into `word/settings.xml` as a child of `<w:settings>`, **after `<w:compat>`** — CT_Settings sequence requires clrSchemeMapping late in the element order; first-child placement fails schema validation. Both required. |
 | `.xlsx` | `shared/elevate-theme/theme1.xml` | Instruct the xlsx skill to inject into `xl/theme/theme1.xml` |
 | HTML / CSS (no form elements) | `shared/elevate-theme/elevate.css` | Link or import; use `var(--elevate-*)` semantic aliases |
 | HTML / React (with form elements) | `shared/elevate-theme/elevate-artifact.md` | Read and apply `applyAll()` pattern — CSS vars prohibited on inputs |
@@ -171,10 +171,29 @@ WCAG 2.2 SC 1.4.1 + G183: brand-color text must pair with a non-color visual cue
 
 ## Font
 
-Theme font: **TWK Everett Light** (headings / majorFont), **TWK Everett Regular** (body / minorFont).
+Theme primary: **TWK Everett Light** (headings / majorFont), **TWK Everett Regular** (body / minorFont).
 Monospace: Cascadia Code, Consolas, Courier New (cascading fallback).
 Licensed commercial font — must be installed on the target machine.
-Declared in all theme artifacts; not embedded. Office and browsers substitute silently if absent.
+Declared in all theme artifacts; not embedded.
+
+**Cascade chain (HTML / CSS / SVG / React only):**
+
+```
+TWK Everett Light, Helvetica Neue, system-ui, -apple-system, Arial, sans-serif
+```
+
+Helvetica Neue sits in second position because it is the closest visual match
+to TWK Everett available pre-installed on macOS — same Swiss-grotesk family,
+comparable proportions and weight range. macOS users without TWK Everett
+installed render in Helvetica Neue automatically. Windows machines fall through
+to Arial.
+
+**Office formats (.docx / .pptx / .xlsx) do NOT honour this chain.** When TWK
+Everett is absent, Word, PowerPoint, and Excel substitute silently using their
+own logic (typically Calibri or Arial), regardless of what cascade is declared.
+The chain only governs HTML / CSS / SVG / React renderings. For consistent
+Office rendering across machines without TWK Everett, install the font on every
+target machine, or change `theme1.xml` to declare a freely available primary.
 
 ---
 
@@ -185,6 +204,6 @@ usage examples, and the complete two-layer model explanation.
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 2.0        |
-| Last Updated | 2026-04-28 |
+| Version      | 2.1        |
+| Last Updated | 2026-04-29 |
 | Status       | Draft      |
