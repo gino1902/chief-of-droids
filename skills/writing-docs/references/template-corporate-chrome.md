@@ -48,7 +48,16 @@ Version:         {version_status} – {version_date}
 
 ## Running Footer (every body page)
 
-> `© {company_name} {year} | {version_status} – {date} – {classification} - {classification_label} | {page_number}`
+> Three-column layout. Renderer must use tab stops (left / centre / right) — not
+> a table. Word table cells have minimum height and render as empty boxes.
+
+| Position | Content |
+| :------- | :------ |
+| Left     | `© {company_name} {year}` |
+| Centre   | `{version_status} – {date} – {classification} - {classification_label}` |
+| Right    | `{page_number}` |
+
+> Example: `© SQLI Group 2026` … `DRAFT – 29/04/2026 – C2 - Restricted` … `3`
 
 ---
 
@@ -105,6 +114,7 @@ Version:         {version_status} – {version_date}
 | `{version_date}` | yes | Author / filename date prefix (e.g. `20260428_*` → `28/04/2026`). |
 | `{date}` | yes | Footer date — usually equals `{version_date}`. |
 | `{year}` | yes | Year component of `{date}`. |
+| `{page_number}` | yes | Word `PAGE` field — auto-updated by Word per page. Renderer inserts the field, not a literal value. |
 | `{body_section_title}` | yes | Provided by the body template (or, for free-form body, derived from the source H1). |
 | `{appendix_content}` | yes | Free-form. Empty if the document has no appendix. |
 
@@ -112,7 +122,7 @@ Version:         {version_status} – {version_date}
 
 | Placeholder | Source | Example |
 | :--- | :--- | :--- |
-| `{company_name}` | author | `Company Name` |
+| `{company_name}` | author | `SQLI Group` |
 | `{document_title}` | derived from source H1 (strip status suffix) | `Data Platform Creation` |
 | `{reference}` | author (optional) | `Architecture Requirements` — omit cover line if not provided |
 | `{classification}` | author | `C2` |
@@ -121,11 +131,12 @@ Version:         {version_status} – {version_date}
 | `{version_date}` | author / filename | `22/04/2026` |
 | `{date}` | author (footer; usually = version_date) | `28/04/2026` |
 | `{year}` | derived from date | `2026` |
+| `{page_number}` | Word `PAGE` field | `3` |
 | `{body_section_title}` | body template | `System & Containers Level Requirements` |
 | `{appendix_content}` | author | free-form |
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.4        |
+| Version      | 1.5        |
 | Last Updated | 2026-04-29 |
 | Status       | Draft      |
