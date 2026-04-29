@@ -12,7 +12,7 @@ description: >
   requirements). Composes with: reviewing-tech-claims, pptx, docx, xlsx,
   architecting-data-platforms, analyzing-business-cases.
 ---
-<!-- version: 3.0 | author: chief-of-droids workspace | last_updated: 2026-04-29 -->
+<!-- version: 3.1 | author: chief-of-droids workspace | last_updated: 2026-04-29 -->
 
 # Writing Docs Skill
 
@@ -81,9 +81,27 @@ Steps run for any rendering trigger:
        fix all failures before displaying; emit Mermaid QA Report inline.
 
    **IF output format is `.pptx`, `.xlsx`, HTML, React, or SVG:**
-   - Theme handling per Step 4 only; no chrome.
+   - Theme handling per Step 5 only; no chrome.
 
-4. **Theme injection.** Use filesystem tool to read `references/theme.md`.
+4. **Placeholder confirmation gate (`.docx` only).**
+
+   The chrome requires placeholder values (`{company_name}`, `{classification}`,
+   `{version_status}`, etc.) that come from outside the source markdown.
+   Before rendering:
+
+   - Derive each placeholder per the rules in
+     `template-corporate-chrome.md` (Placeholder derivation rules table)
+   - Display the full mapping as a table to the user — every required
+     placeholder, its derived value, and its source (derived from H1 / from
+     filename / defaulted / omitted)
+   - Flag every defaulted value with `> 🔲 To be defined — awaiting user input`
+   - Wait for explicit user confirmation in the next message before
+     proceeding
+
+   Silent defaults for chrome placeholders are prohibited. A defaulted value
+   is not a confirmed value.
+
+5. **Theme injection.** Use filesystem tool to read `references/theme.md`.
 
    **IF output format is `.docx`:**
    - Pass two artifacts to the composed `docx` skill:
@@ -105,15 +123,15 @@ Steps run for any rendering trigger:
 
    — if theme.md unreadable, flag: `⚠️ theme.md unreadable — proceeding without theme`
 
-5. **Tech verification.** If the content contains version-sensitive technical
+6. **Tech verification.** If the content contains version-sensitive technical
    claims (CLI commands, API signatures, package names, install steps),
    verify against official documentation. Load `reviewing-tech-claims` as a
    composed skill — do not read its files directly.
 
-6. **Apply formatting** rules from doc-principles.md (density, hierarchy,
+7. **Apply formatting** rules from doc-principles.md (density, hierarchy,
    versioning) to the content received from the authoring skill or user.
 
-7. **QA gate.** Use filesystem tool to read `references/qa-checklist.md` and
+8. **QA gate.** Use filesystem tool to read `references/qa-checklist.md` and
    run it before proposing output.
    — if unreadable, flag: `⚠️ qa-checklist.md unreadable — run manual QA`
 
@@ -159,6 +177,10 @@ skills — Claude orchestrates.
 
 ## Migration Notes
 
+- v3.1 (2026-04-29) — added Step 4 placeholder confirmation gate for `.docx`
+  outputs; theme.md updated so H2/H3 are bold (consequence: heading hierarchy
+  is size-driven across all levels); template-corporate-chrome.md v1.8
+  reformats Running Header as a table mirroring the footer's style.
 - v3.0 (2026-04-29) — repositioned from "produces structured written output" to
   "formats and renders documents". Removed inline templates branch (ADR / Brief /
   Runbook / Playbook). Authoring skills now own document-type templates via
