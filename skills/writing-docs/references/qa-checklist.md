@@ -1,4 +1,4 @@
-<!-- version: 1.2 | author: chief-of-droids workspace | last_updated: 2026-04-07 -->
+<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-04-29 -->
 
 # Doc Writer QA Checklist
 
@@ -14,5 +14,6 @@ Run before proposing any document output.
 - [ ] Output format selected deliberately — not defaulted
 - [ ] If `.md`: `references/markdown-formatting.md` read and applied
 - [ ] If output format is docx / pptx / xlsx / HTML / React / SVG: `references/theme.md` read and Elevate theme artifact passed to composed format skill
+- [ ] If output format is `.docx`: placeholder derivation table displayed to the user AND user confirmed (or corrected) before rendering
 - [ ] If output format is HTML or React AND contains form elements (inputs, textareas, buttons, pill groups): `shared/elevate-theme/elevate-artifact.md` read and `applyAll()` inline style pattern applied — CSS custom properties on interactive elements are prohibited
 - [ ] If version-sensitive technical claims present: `reviewing-tech-claims` skill loaded and applied
