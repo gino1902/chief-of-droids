@@ -126,10 +126,21 @@ Default table style for `.docx` and HTML tables.
 | :------ | :--------- |
 | Header fill | `accent2` |
 | Header text | `tx1` |
-| Data row fill | `bg2` |
-| Banded row fill | `accent3` |
+| Data row fill | `accent3` (leads — first data row) |
+| Banded row fill | `bg2` (alternates after data row) |
 | Cell text | `tx1` |
-| Borders | none |
+| Borders | `0.5pt accent2 solid` (all sides + inner) |
+
+**Row order.** First data row uses `data_row_fill` (`accent3` ice blue); the
+row beneath uses `banded_row_fill` (`bg2` white); alternation continues for
+the rest of the table.
+
+**Borders are decorative.** The `accent2` border equals the header fill, so the
+header's bottom edge is intentionally invisible. Border-vs-fill contrast is
+~1.9:1 against `bg2` and ~1.4:1 against `accent3` — fails WCAG 2.2 SC 1.4.11
+(non-text contrast). Row distinction is carried by the alternating fills,
+not the borders. Do not cite this style as WCAG-compliant for non-text
+contrast.
 
 ---
 
@@ -204,6 +215,6 @@ usage examples, and the complete two-layer model explanation.
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 2.2        |
+| Version      | 2.3        |
 | Last Updated | 2026-04-29 |
 | Status       | Draft      |
