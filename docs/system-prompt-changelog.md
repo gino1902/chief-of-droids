@@ -80,8 +80,20 @@ Source: session "Git repository management setup" (2026-04-03), promoted from `.
 
 ---
 
+## 2026-04-30 — `<context>` block framing adjusted
+
+The architectural framing in the `<context>` block was revised. The original claim — "This project brings Claude Code discipline to Claude Desktop" — implied chief-of-droids approximates Claude Code's agent loop. That framing is inaccurate: the framework has no agent loop and does not attempt one.
+
+Replacement framing positions chief-of-droids as a model-in-the-loop governance framework for knowledge work: explicit routing via HOW-TO-TRIGGER.md, MCP-mediated filesystem access, and session hygiene make the execution contract visible and human-governed. The output layer (artifacts, diagrams, rendered documents) distinguishes it from terminal coding tools — it is not a Claude Code substitute but a distinct architecture optimised for structured knowledge work.
+
+Scope of change: `<context>` block opening sentence (manual edit in Project Instructions UI); userMemories entries 1 and 3; `docs/claude-desktop/context/context-layers-guide.md` Philosophy section (v2.3 → v2.4).
+
+Source: session "Claude Desktop vs Claude Code comparison" (2026-04-30).
+
+---
+
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.0        |
-| Last Updated | 2026-04-11 |
+| Version      | 1.1        |
+| Last Updated | 2026-04-30 |
 | Status       | Draft      |
