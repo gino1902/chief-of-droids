@@ -1,19 +1,17 @@
 # Context Layer Guide
 
 > How to use system prompt, CLAUDE.md, CONSTITUTION.md, and FRAMING.md
-> Version 2.3
+> Version 2.4
 
 ---
 
 ## Philosophy
 
-This architecture brings **Claude Code discipline to Claude Desktop** — routing, session
-initialisation, and filesystem access made explicit — plus the visual and interactive
-output layer Claude Code does not have: artifacts, diagrams, rendered documents.
+**chief-of-droids** is a model-in-the-loop governance framework for knowledge work on Claude Desktop. It makes the execution contract explicit — routing via `HOW-TO-TRIGGER.md`, filesystem access via Filesystem MCP, session hygiene via `managing-sessions` — and adds the output layer that terminal coding tools lack: artifacts, interactive widgets, diagrams, and rendered documents.
 
-Claude Code is optimised for codebases: it reads `CLAUDE.md` automatically, has native filesystem access, and operates as a terminal agent. What it does not have is a visual output layer. It produces text. Claude Desktop produces **artifacts, interactive widgets, diagrams, and rendered documents** — outputs that Claude Code cannot generate. This framework is built for knowledge work, documents, and structured deliverables where the visual and interactive output layer matters.
+Claude Desktop produces **artifacts, interactive widgets, diagrams, and rendered documents** — outputs that terminal coding tools cannot generate. What it lacks natively is a project execution contract: without explicit routing, session initialisation, and filesystem scope, each session starts from scratch and Claude's behaviour is unpredictable across sessions. This framework supplies that contract explicitly.
 
-The framework borrows Claude Code's project discipline and reconstructs it explicitly in Claude Desktop:
+Where Claude Code has these mechanisms natively, this framework has them explicitly:
 
 | Claude Code (native) | This framework (explicit) |
 |:---|:---|
@@ -318,8 +316,10 @@ When Claude is routed to another repo via an explicit override, the originating 
 
 | Field        | Value      |
 |:------------ |:---------- |
-| Version      | 2.3        |
-| Last Updated | 2026-03-26 |
+| Version      | 2.4        |
+| Last Updated | 2026-04-30 |
 | Status       | Final      |
+
+*v2.4 — Philosophy section rewritten: framing adjusted from "brings Claude Code discipline to Claude Desktop" to "model-in-the-loop governance framework for knowledge work". Comparison table preserved. Derivation language removed — chief-of-droids is a distinct architecture, not a reconstruction of Claude Code's discipline.*
 
 *v2.3 — Layer 4 FRAMING.md section: slide-gen use-case content removed; replaced with generic field descriptions. Derivation chain: CLAUDE.md removed — it has no derivation relationship with FRAMING.md or CONSTITUTION.md; clarifying note added.*
