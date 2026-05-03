@@ -3,6 +3,8 @@
 > How to use system prompt, CLAUDE.md, CONSTITUTION.md, and FRAMING.md
 > Version 2.4
 
+> ⚠️ **Deprecated 2026-05-03** — describes pre-migration architecture (single-environment, multi-project, CONSTITUTION.md-based, references deprecated sub-repos `my-claude-fmk` / `slide-gen` / `datawan` and the deprecated `prompt-maintenance.md`). Retained as historical reference until replaced by the dual-environment architecture documentation. Do not extend or cite as current guidance.
+
 ---
 
 ## Philosophy
@@ -143,7 +145,7 @@ flowchart
 - Project intent or goals → `FRAMING.md`
 - Repo-specific content of any kind — keep system prompts generic across repos
 
-**Maintenance note:** the system prompt is the most expensive layer to change — it governs all conversations in the project. Run a token audit (see `prompt-maintenance.md`) whenever routing rules or workflows change. Add a new repo to the routing table when a new repo is added to the workspace.
+**Maintenance note:** the system prompt is the most expensive layer to change — it governs all conversations in the project. Run a token audit whenever routing rules or workflows change. Add a new repo to the routing table when a new repo is added to the workspace.
 
 ---
 
@@ -304,21 +306,23 @@ When Claude is routed to another repo via an explicit override, the originating 
 
 1. Create the repo with a `CLAUDE.md` defining its output defaults
 2. Add the repo path to the routing table in each project's system prompt that needs to reach it
-3. Run a token audit on each updated system prompt (see `prompt-maintenance.md`)
+3. Run a token audit on each updated system prompt (methodology to be re-established — TASK-083)
 4. Verify Filesystem MCP has read/write access to the new repo path
 5. Test routing with a dry-run prompt before committing the system prompt change
 
 ---
 
-*Cross-reference: `prompt-maintenance.md` for token audit methodology. Each repo's `CLAUDE.md` for repo-level defaults.*
+*Cross-reference: each repo's `CLAUDE.md` for repo-level defaults.*
 
 ---
 
 | Field        | Value      |
 |:------------ |:---------- |
-| Version      | 2.4        |
-| Last Updated | 2026-04-30 |
-| Status       | Final      |
+| Version      | 2.5        |
+| Last Updated | 2026-05-03 |
+| Status       | Deprecated |
+
+*v2.5 — Deprecation tombstone added 2026-05-03. References to deprecated `prompt-maintenance.md` removed (2 inline + 1 footer cross-reference). Body retained for historical reference; replacement document forthcoming under dual-environment architecture migration.*
 
 *v2.4 — Philosophy section rewritten: framing adjusted from "brings Claude Code discipline to Claude Desktop" to "model-in-the-loop governance framework for knowledge work". Comparison table preserved. Derivation language removed — chief-of-droids is a distinct architecture, not a reconstruction of Claude Code's discipline.*
 
