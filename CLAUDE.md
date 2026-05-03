@@ -124,7 +124,7 @@ precedence over this workspace default for sessions routed to that repo.
 
 ## Git
 
-- Default repo: `/Users/gilllesmourgues/Workspace/chief-of-droids`; sub-repos: `my-claude-fmk` | `slide-gen` | `datawan` → `/Users/gilllesmourgues/Workspace/chief-of-droids/<n>`; "all repos" → run across all repos
+- Default repo: `/Users/gilllesmourgues/Workspace/chief-of-droids`; "all repos" → run across all repos
 - Stage by explicit file path array — never by directory (risk of sweeping untracked files from subdirectories)
 - **Mandatory commit gate — applies after every `filesystem:write_file` call without exception:**
   - Ask: "Do you want to commit?" — do not skip or pre-answer this question from context
@@ -141,8 +141,7 @@ precedence over this workspace default for sessions routed to that repo.
 
 ## Maintenance
 
-Run a token audit whenever a rule, workflow, or routing path is added to the system prompt.
-Pattern: `my-claude-fmk/claude-desktop/context/prompt-maintenance.md` — four-step workflow.
+Run a token audit whenever a rule, workflow, or routing path is added to the system prompt. Methodology to be re-established — TASK-083.
 
 ---
 
