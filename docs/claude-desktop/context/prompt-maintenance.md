@@ -1,1 +1,0 @@
-> ⚠️ **Deprecated 2026-05-03** — content removed. Replacement methodology to be re-established under dual-environment architecture; see TASK-083. Predecessor content preserved in git history at commits prior to 2026-05-03. Physical removal pending: `git rm` from Terminal.
