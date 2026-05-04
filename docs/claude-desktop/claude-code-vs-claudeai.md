@@ -6,6 +6,69 @@
 >
 > **Claude Desktop** in this document refers to Anthropic's MCP-enabled chat client app (macOS/Windows),
 > not the Claude Code Desktop app (a separate product that provides a GUI for Claude Code sessions).
+>
+> **Workspace-scoped reading:** §0 below adjusts the column semantics for chief-of-droids — claude.ai web is excluded; "Claude.ai" reads as Desktop chat; "Claude Desktop" splits into chat-tab and Cowork-tab where the distinction matters.
+
+---
+
+## 0. Workspace Scoping (chief-of-droids)
+
+In this workspace, the three-column comparison below is read with two adjustments:
+
+1. **claude.ai web is excluded.** chief-of-droids loads skills, reads `CLAUDE.md`, and writes deliverables via the Filesystem MCP — none of which exist on claude.ai web (cloud-brokered remote connectors only, per §10). Any row that reads "Claude.ai" should be read as **Desktop chat** for this workspace's purposes — same chat surface, plus local MCP.
+2. **"Claude Desktop" is two surfaces, not one.** The Desktop app exposes the **chat tab** (synchronous, MCP-driven — what chief-of-droids actually runs today) and the **Cowork tab** (agentic, autonomous, with optional scheduling and an "Act without asking" mode). Where rows below say `Cowork only:` or `Chat: … Cowork: …`, the split is the surface boundary that matters here.
+
+### Surface routing rule
+
+The routing axis is **gate density × autonomy need × gate type**, not stage-of-work.
+
+chief-of-droids carries gates today. **Verified:** the mandatory commit gate (`CLAUDE.md` §Git) fires after every `filesystem:write_file` — i.e. *post-write*. **Asserted but not freshly verified in this revision:** `executing-tasks` carries pre-work gates (intent confirmation, plan approval, per-subtask QA). The pre-work gate claim is taken from skill design intent and would benefit from a direct read before further reliance.
+
+Cowork's value proposition — *"describe an outcome, step away, and come back to finished work"* ([Get started with Claude Cowork](https://support.claude.com/en/articles/13345190-get-started-with-claude-cowork)) — is in tension with these gates, but the tension differs by gate type:
+
+| Gate type      | Example                                          | Behaviour in scheduled / unattended Cowork                                                                                             |
+| :------------- | :----------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- |
+| **Post-write** | Commit gate after every `write_file`             | *Inferred from gate timing — not empirically tested:* deliverable lands on disk before the prompt fires, run pauses at the prompt, user answers when they return. Recoverable. |
+| **Pre-work**   | Plan approval at start of `executing-tasks`      | Run blocks before producing output. Unattended scheduling is unusable.                                                                 |
+
+Cowork also exposes an **"Act without asking"** mode ([Use Claude Cowork safely](https://support.claude.com/en/articles/13364135-use-claude-cowork-safely)) which "works without pausing for approval between steps." Whether this mode also suppresses CLAUDE.md-instruction-driven prompts (like the commit gate) is **unverified** — see *Open empirical questions* below.
+
+### Routing matrix
+
+|                                                                     | Low autonomy need (one prompt, one answer) | High autonomy need (long, branching, scheduled)                                                            |
+| :------------------------------------------------------------------ | :----------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| **Pre-work gates present** (plan approval, intent confirmation)     | Desktop chat                               | Desktop chat — pre-work gates block scheduled runs from producing output                                   |
+| **Post-write gates only** (commit only)                             | Desktop chat — cheaper, no VM overhead     | Cowork acceptable — deliverable is produced; commit prompt is deferred until next user session *(unverified)* |
+| **Gate-free** (read-only, or gates explicitly relaxed for the run)  | Desktop chat — cheaper                     | **Cowork** — agentic loop earns its cost on multi-hop traversal, scheduled runs, hands-off batching        |
+
+### Stage-of-work mapping (informative, default-only)
+
+| Stage of work                                                                                          | Default surface                                                                          | Notes                                                                              |
+| :----------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| Single fact retrieval, single file inspection                                                          | Desktop chat                                                                             |                                                                                    |
+| Pre-formalisation thinking, rubber-ducking                                                             | Desktop chat                                                                             |                                                                                    |
+| Verifying a small set of specific claims                                                               | Desktop chat                                                                             |                                                                                    |
+| Multi-hop **read-only** traversal across the workspace                                                 | Cowork if traversal is large or autonomous planning matters; Desktop chat if the user wants to steer at each fork | Cowork's planning quality on this case is *unverified* in this workspace            |
+| Building a deliverable, post-write commit gate only                                                    | Desktop chat by default; Cowork acceptable for unattended runs *(behaviour unverified)*  |                                                                                    |
+| Running a chief-of-droids skill workflow with pre-work gates *(asserted default for `executing-tasks`)* | Desktop chat                                                                             | Pre-work gates block unattended runs                                                |
+| Long autonomous task with no gates invoked                                                             | Cowork                                                                                   |                                                                                    |
+| Recurring / scheduled work                                                                             | Cowork — gate-free workflows; *or* Claude Code with `acceptEdits` mode if the workflow has gates that can be relaxed | See §11–§12                                                                         |
+| Both surfaces could do the job, usage budget matters                                                   | Desktop chat                                                                             |                                                                                    |
+
+**Soft rule:** Default to Desktop chat. Move to Cowork when (a) the workflow is long-running or scheduled, *and* (b) gate density is post-write-only or zero, *and* (c) the autonomy or planning value justifies the usage premium.
+
+**Cost framing, verbatim from Anthropic:** *"Cowork consumes more usage than standard chat. Try using standard chat for simpler tasks and reserve Cowork for complex, multi-step work that benefits from file access."* For chief-of-droids specifically, "complex, multi-step" is a poor proxy — gate density is the better one.
+
+**Third path — Claude Code:** For scheduled or autonomous workflows where gates would otherwise block, Claude Code's permission-mode model (`acceptEdits`, `auto`, `bypassPermissions`, see §10) is more granular than Cowork's binary "Act without asking." If a chief-of-droids workflow needs to run unattended *and* you don't want to relax CLAUDE.md gates, porting the workflow to Claude Code with `acceptEdits` may be the right answer. See §11 (surfaces) and §12 (scheduling).
+
+### Open empirical questions
+
+The following claims in this section are **not verified** and would benefit from a one-shot test before further reliance:
+
+1. **Does "Act without asking" suppress CLAUDE.md-instruction-driven prompts?** The mode docs say it "works without pausing for approval between steps." Whether that includes the commit gate (a Claude-asks-the-user prompt instructed by CLAUDE.md) or only Cowork's native permission prompts is unstated. *Test:* run a scheduled Cowork session with "Act without asking" enabled against a workflow that triggers the commit gate; observe whether Claude pauses.
+2. **What does scheduled Cowork actually do at the commit gate?** The matrix above says "deliverable on disk, prompt pending." That's inferred from gate timing, not observed. *Test:* schedule a one-shot run that writes a small file, leave overnight, observe state in the morning.
+3. **Pre-work gate enumeration in chief-of-droids skills.** The claim that `executing-tasks` carries intent / plan / per-subtask QA gates is asserted from skill design intent, not freshly read in this revision. *Test:* read each skill's SKILL.md and tabulate gates by type (pre-work / mid-work / post-write).
+4. **Multi-hop read-only traversal — does Cowork actually beat Desktop chat?** The argument is theoretical (agentic loop > one-prompt-one-response). *Test:* same multi-file audit run twice, once in each surface, compare synthesis quality and number of user re-prompts.
 
 ---
 
@@ -315,7 +378,16 @@ Claude Code is no longer terminal-only. All surfaces share the same engine — `
 
 *Verified against docs.claude.com, code.claude.com, and support.claude.com — April 2026.*
 *✱ marks corrections or additions from prior version of this document.*
-*Last updated: 2026-04-06*
+*Last updated: 2026-05-04*
+
+*Changes from v1.6:*
+*— §0 revised: gate-type split (post-write vs pre-work); routing matrix expanded to three rows; "Act without asking" mode named with verification status; "every time" softened to default + three conditions; multi-hop read-only re-routed; Claude Code added as third path; *Open empirical questions* block added.*
+*— Verification status now explicit per-claim: Verified, Asserted-not-verified, Unverified.*
+
+*Changes from v1.5:*
+*— §0 added: workspace scoping rule for chief-of-droids; routing axis (gate density × autonomy need); stage-of-work mapping with Cowork / Desktop chat split.*
+*— Preamble: workspace-scoped reading note added.*
+*— Section numbering preserved; §1–§12 unchanged.*
 
 *Changes from v1.4:*
 *— §2: `--system-prompt` (replace) vs `--append-system-prompt` (append) distinguished. CLAUDE.md delivery-as-user-message row added.*
@@ -332,6 +404,6 @@ Claude Code is no longer terminal-only. All surfaces share the same engine — `
 
 | Field        | Value                  |
 |--------------|------------------------|
-| Version      | 1.5                    |
-| Last Updated | 2026-04-06             |
+| Version      | 1.7                    |
+| Last Updated | 2026-05-04             |
 | Status       | Review                 |
