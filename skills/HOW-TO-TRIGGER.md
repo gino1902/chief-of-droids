@@ -282,7 +282,7 @@ Reason: these skills execute multi-phase workflows with significant write operat
 **What it does:**
 - Phase 1: renders a multi-step form artifact to collect project intent
 - Phase 2: challenges answers against Claude best practices (blocking + advisory)
-- Phase 3: generates system prompt, CLAUDE.md, and TASKS.md artifacts; writes files via MCP
+- Phase 3: generates FRAMING.md scaffold, CLAUDE.md, and system prompt artifacts; writes FRAMING.md and CLAUDE.md via MCP
 
 **Does NOT trigger on:**
 - Requests to create a skill → use `creating-skills`
@@ -413,6 +413,6 @@ Skills compose automatically. Load all skills whose triggers match the request.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.12        |
-| Last Updated | 2026-04-29  |
+| Version      | 1.13        |
+| Last Updated | 2026-05-05  |
 | Status       | Draft       |
