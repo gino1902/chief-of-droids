@@ -7,7 +7,7 @@ Fifteen sections, always rendered. `N/A` if substrate signal absent.
 | 1 | Title + Purpose | — | Prose |
 | 2 | Scope | — | In/Out lists or `N/A` |
 | 3 | Actors & Consumers | — | Table |
-| 4 | Glossary | — | Definition list |
+| 4 | Glossary | — | Table |
 | 5 | Functional Requirements | `FR-NNN` | EARS |
 | 6 | Interface Requirements | `IR-IN-NNN` / `IR-OUT-NNN` | RFC 2119 + Event-driven EARS |
 | 7 | Data Requirements | `DR-NNN` / `TR-NNN` | Contract / Rule tables |
@@ -60,8 +60,13 @@ Direction values: `upstream`, `downstream`, `user`.
 ## §4 Glossary
 
 ```markdown
-**Term** — definition. *(auto-derived — verify)*
+| Term | Definition | Status |
+|:-----|:-----------|:-------|
+| term | definition | auto-derived — verify |
+| term | definition | substrate |
 ```
+
+One row per term. Status values: `auto-derived — verify` for auto-extracted terms; `substrate` for terms explicitly defined in the input.
 
 ---
 

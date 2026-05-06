@@ -44,12 +44,18 @@ The substrate-declared ID regex `\b(FR|CON|IR-IN|IR-OUT|IR|DR|TR|NFR|SEC|ERR|OBS
 
 ## Report format
 
-`report.md` structure:
+`<slug>-report.md` structure:
 
 ```
 # Report — <topic-slug>
 
-Roll-up: X blocking, Y warnings, Z info across 7 phases.
+## Summary
+
+| Severity | Resolved | Unresolved |
+|:---------|:--------:|:----------:|
+| Blocking |    N     |     M      |
+| Warning  |    N     |     M      |
+| Info     |    N     |    N/A     |
 
 ## Phase 0 — Pre-flight
 [BLOCKING] <description> → <remediation>
@@ -83,6 +89,12 @@ Outstanding: N blocking, M warnings, K info
 | Status       | Draft      |
 ```
 
+**Summary table rules:**
+
+- **Info** — always Resolved; Unresolved is always `N/A`.
+- **Warning** — Resolved if the finding has been treated and requires user verification only (e.g. auto-derived glossary entry, inferred scope signal). Unresolved if the artifact cannot be considered correct without further action.
+- **Blocking** — resolution rules not yet defined; populate Resolved and Unresolved from phase findings.
+
 Every phase section emits its closure line even when findings are zero:
 ```
 Outstanding: 0 blocking, 0 warnings, 0 info
@@ -106,7 +118,7 @@ Severity is purely diagnostic. It never gates writes. The user iterates based on
 
 | Type | Trigger | Behavior |
 |:--|:--|:--|
-| Hard fail | Unresolvable parse error, missing CLAUDE.md, invalid `Default repo:`, non-`.md` substrate, write error, unreadable reference file | Halt; stream error; no outputs written |
+| Hard fail | Unresolvable parse error, missing CLAUDE.md, non-`.md` substrate, write error, unreadable reference file | Halt; stream error; no outputs written |
 | Soft issue | Substrate gap, absent scope signal, defaulted assumption | Recorded in report; both files written at end |
 
 Hard-fail message (replaces current phase stream line):

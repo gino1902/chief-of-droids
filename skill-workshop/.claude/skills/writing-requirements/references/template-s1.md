@@ -7,7 +7,7 @@ Nine sections, always rendered. `N/A` if substrate signal absent.
 | 1 | Title + Purpose | — | Prose |
 | 2 | Scope | — | In/Out lists or `N/A` |
 | 3 | Actors & Consumers | — | Table |
-| 4 | Glossary | — | Definition list |
+| 4 | Glossary | — | Table |
 | 5 | Functional Requirements | `FR-NNN` | EARS |
 | 6 | Constraints | `FR-NNN` (continues FR sequence) | EARS |
 | 7 | Acceptance Criteria | — | Per-requirement |
@@ -54,10 +54,13 @@ Direction values: `upstream`, `downstream`, `user`.
 ## §4 Glossary
 
 ```markdown
-**Term** — definition. *(auto-derived — verify)*
+| Term | Definition | Status |
+|:-----|:-----------|:-------|
+| term | definition | auto-derived — verify |
+| term | definition | substrate |
 ```
 
-One entry per term. Auto-derived entries flagged with `(auto-derived — verify)`.
+One row per term. Status values: `auto-derived — verify` for auto-extracted terms; `substrate` for terms explicitly defined in the input.
 
 ---
 

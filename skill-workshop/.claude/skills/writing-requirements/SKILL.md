@@ -1,6 +1,6 @@
 ---
 name: writing-requirements
-description: Produces a structured requirements artifact (requirements.md) and diagnostic report (report.md) for one deployable component from a markdown substrate. Invoke as `writing-requirements <slug> from <path> --type generic|technical`. Use with --type generic for lightweight functional requirements: skill definitions, file format specs, pre-design tech objects, migration requirements. Use with --type technical for full requirements covering functional, interface, data, non-functional, security, error handling, and observability. Iterates statelessly: feed prior requirements.md as substrate to refine.
+description: Produces a structured requirements artifact and diagnostic report for one deployable component from a markdown substrate. Output files are written to `<CLAUDE.md parent dir>/requirements/<slug>/` and named `<slug>-requirements.md` and `<slug>-report.md`. Invoke as `writing-requirements <slug> from <path> --type generic|technical` — slug must not contain "requirement", "req", or "reqs". Use --type generic for lightweight functional requirements: skill definitions, file format specs, pre-design tech objects, migration requirements. Use --type technical for full requirements covering functional, interface, data, non-functional, security, error handling, and observability. Iterates statelessly: feed prior `<slug>-requirements.md` as substrate to refine.
 allowed-tools:
   - Read
   - Write
@@ -35,7 +35,7 @@ writing-requirements <topic-slug> from <path> --type generic|technical
 
 | Argument | Rule | On failure |
 |:--|:--|:--|
-| `<topic-slug>` | Matches `^[a-z0-9-]+$` | Hard-fail |
+| `<topic-slug>` | Matches `^[a-z0-9-]+$`; must not contain `requirement`, `req`, or `reqs` | Hard-fail |
 | `<path>` | Absolute or cwd-relative; quote if whitespace | Hard-fail if not found |
 | `--type` | `generic` or `technical`; required | Hard-fail if absent or unrecognized |
 | Substrate | Must be `.md` extension | Hard-fail |
@@ -63,8 +63,8 @@ Stream one header line per phase as it begins:
 → Phase 4 — Taxonomy hygiene
 → Phase 5 — Verification
 → Phase 6 — Format
-✓ Wrote requirements.md (v0.2)
-✓ Wrote report.md (v0.2)
+✓ Wrote <slug>-requirements.md (v0.2)
+✓ Wrote <slug>-report.md (v0.2)
 ```
 
 On hard-fail, replace the current phase line and stop:
@@ -83,13 +83,12 @@ On hard-fail, replace the current phase line and stop:
 | 0.2 | Validate slug against `^[a-z0-9-]+$` | Hard-fail |
 | 0.3 | Validate `--type` is `generic` or `technical` | Hard-fail |
 | 0.4 | Resolve input path; existence check | Hard-fail |
-| 0.5 | Walk from cwd to filesystem root; find first `CLAUDE.md` | Hard-fail if none |
-| 0.6 | Extract first `Default repo:` line; first backticked path; path existence check | Hard-fail if absent, malformed, or path missing |
-| 0.7 | Resolve output dir `<repo>/requirements/<slug>/`; create if absent | Hard-fail on permission error |
-| 0.8 | Read prior `requirements.md` if present (ID stability + version increment) | Warning if unreadable; treat as no-prior |
-| 0.9 | Read substrate file; reject non-`.md` extension | Hard-fail |
-| 0.10 | Read `references/conventions.md` | Hard-fail if unreadable |
-| 0.11 | Read `references/template-s1.md` or `references/template-s2.md` per `--type` | Hard-fail if unreadable |
+| 0.5 | Walk from cwd to filesystem root; find first `CLAUDE.md`; its parent directory is the repo root | Hard-fail if none found |
+| 0.6 | Resolve output dir `<repo root>/requirements/<slug>/`; create if absent | Hard-fail on permission error |
+| 0.7 | Read prior `<slug>-requirements.md` if present (ID stability + version increment) | Warning if unreadable; treat as no-prior |
+| 0.8 | Read substrate file; reject non-`.md` extension | Hard-fail |
+| 0.9 | Read `references/conventions.md` | Hard-fail if unreadable |
+| 0.10 | Read `references/template-s1.md` or `references/template-s2.md` per `--type` | Hard-fail if unreadable |
 
 ## Phase 1 — Framing
 
@@ -141,19 +140,19 @@ Outstanding: N blocking, M warnings, K info
 Follow `references/verification.md` for:
 
 - **§ Acceptance Criteria** — per-requirement derivation; Warning if no derivable AC exists
-- **§ Quality Criteria scorecard** — 7-criterion scoring per requirement
+- **§ Quality Criteria scorecard** — 5-criterion scoring per requirement
 
 ## Phase 6 — Format + write
 
 Apply format pass across all sections per active template. Add version block at bottom of both output files.
 
-**Version:** read from prior `requirements.md` if present; increment rightmost segment (`0.1 → 0.2`). Initial value: `0.1`. Status: always `Draft`. Last Updated: current date.
+**Version:** read from prior `<slug>-requirements.md` if present; increment rightmost segment (`0.1 → 0.2`). Initial value: `0.1`. Status: always `Draft`. Last Updated: current date.
 
-**Write order:** `requirements.md` first, then `report.md`.
+**Write order:** `<slug>-requirements.md` first, then `<slug>-report.md`.
 
 | Failure scenario | Behavior |
 |:--|:--|
-| `requirements.md` write fails | Abort; no `report.md` written; prior files intact |
-| `report.md` write fails after `requirements.md` succeeds | Surface hard-fail; prior `report.md` remains; user detects via version-block mismatch and re-runs |
+| `<slug>-requirements.md` write fails | Abort; no `<slug>-report.md` written; prior files intact |
+| `<slug>-report.md` write fails after `<slug>-requirements.md` succeeds | Surface hard-fail; prior `<slug>-report.md` remains; user detects via version-block mismatch and re-runs |
 
 Commit gate suppressed for this skill; user commits post-run.

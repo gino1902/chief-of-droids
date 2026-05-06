@@ -41,12 +41,27 @@ If no derivable AC exists for a requirement, emit Warning and render:
 
 ## Quality Criteria scorecard (§QC)
 
-Score each requirement against seven criteria. Render as a single table covering all requirements.
+Render a definitions block first, then the scorecard table.
+
+**Definitions block** (render verbatim in output):
 
 ```
-| Req ID  | Atomic | Unambiguous | Verifiable | Necessary | Feasible | Traceable | Bounded |
-|:--------|:------:|:-----------:|:----------:|:---------:|:--------:|:---------:|:-------:|
-| FR-001  |   ✓    |      ✓      |     ✓      |    N/A    |   N/A    |     ✓     |   N/A   |
+| Criterion   | Definition |
+|:------------|:-----------|
+| Atomic      | The requirement addresses exactly one behavior, constraint, or quality attribute. It contains a single modal verb (SHALL, MUST, SHOULD, MAY). |
+| Unambiguous | All terms used are defined in the Glossary or are universally understood. No term is open to more than one interpretation. |
+| Verifiable  | The requirement has at least one acceptance criterion — a condition that can be confirmed through testing, inspection, or measurement. |
+| Traceable   | The requirement carries a valid, unique identifier (`<CAT>-NNN`) that enables cross-referencing, impact analysis, and change tracking. |
+| Bounded     | For NFR-class requirements (NFR, OBS, SEC): the requirement specifies a quantitative threshold (value, time unit, percentage, or volume). N/A for all other requirement types. |
+```
+
+**Scorecard table** (follows immediately after definitions):
+
+```
+| Req ID  | Atomic | Unambiguous | Verifiable | Traceable | Bounded |
+|:--------|:------:|:-----------:|:----------:|:---------:|:-------:|
+| FR-001  |   ✓    |      ✓      |     ✓      |     ✓     |   N/A   |
+| NFR-001 |   ✓    |      ✓      |     ✓      |     ✓     |    ✓    |
 ```
 
 ---
@@ -76,16 +91,6 @@ Common words and RFC 2119 keywords are exempt from this check.
 - ✓ if a non-N/A AC entry exists for this Req ID
 - ✗ if AC entry is absent or marked `N/A`
 
-### Necessary
-**N/A for all requirements.**
-
-Cannot be determined without tracing to a source (stakeholder, regulation, use case). Mark `N/A` uniformly.
-
-### Feasible
-**N/A for all requirements.**
-
-Cannot be assessed without design and implementation context. Mark `N/A` uniformly.
-
 ### Traceable
 **Auto-scorable.**
 
@@ -93,12 +98,23 @@ Cannot be assessed without design and implementation context. Mark `N/A` uniform
 - ✗ if the ID is missing, malformed, or uses an unrecognized prefix
 
 ### Bounded
-**Heuristic — NFR-class requirements only.**
+**Heuristic — applies to NFR-class requirements only; N/A for all others.**
 
-Applies to: NFR, OBS, SEC entries that express a quality or SLA-type obligation.
+NFR-class: NFR, OBS, SEC when expressing a quality or SLA-type obligation.
 N/A for: FR, CON, ERR, IR, DR, TR.
 
-- ✓ if the statement or Measurement field contains a numeric value, time unit, percentage, or volume unit
-- ✗ if no quantitative signal is present where measurement is expected
+**How Bounded is evaluated:**
 
-Emit Warning for each ✗ on Bounded in NFR-class requirements.
+Step 1 — Identify whether the requirement is NFR-class. If not, mark `N/A` and stop.
+
+Step 2 — Scan the requirement statement and its Measurement field (if present) for a quantitative signal:
+- Numeric value (e.g. `200`, `99.9`, `10`)
+- Time unit (e.g. `ms`, `seconds`, `minutes`, `hours`, `days`)
+- Percentage (e.g. `%`, `percent`)
+- Volume or size unit (e.g. `MB`, `GB`, `requests`, `records`)
+
+Step 3 — Score:
+- ✓ if at least one quantitative signal is found
+- ✗ if none is found — the requirement is unbounded (e.g. "The system MUST respond quickly")
+
+Emit Warning for each ✗ on Bounded.
