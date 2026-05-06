@@ -10,8 +10,8 @@ allowed-tools:
 
 Produces two output files for one deployable component (container, service, module-as-container, app):
 
-- `requirements.md` — structured requirements artifact
-- `report.md` — per-phase diagnostic report
+- `<slug>-requirements.md` — structured requirements artifact
+- `<slug>-report.md` — per-phase diagnostic report
 
 Seven phases run sequentially in memory. No writes until Phase 6 completes.
 
@@ -33,13 +33,15 @@ Seven phases run sequentially in memory. No writes until Phase 6 completes.
 writing-requirements <topic-slug> from <path> --type generic|technical
 ```
 
+`<topic-slug>` is always the first token after the skill name, before the keyword `from`. It is user-supplied and entirely independent of the input filename — do not derive it from the input path.
+
 | Argument | Rule | On failure |
 |:--|:--|:--|
-| `<topic-slug>` | Matches `^[a-z0-9-]+$`; must not contain `requirement`, `req`, or `reqs` | Hard-fail |
-| `<path>` | Absolute or cwd-relative; quote if whitespace | Hard-fail if not found |
+| `<topic-slug>` | First token before `from`; matches `^[a-z0-9-]+$`; must not contain `requirement`, `req`, or `reqs` | Hard-fail |
+| `from` | Literal keyword separator; exactly one occurrence | Hard-fail if absent or duplicated |
+| `<path>` | Token immediately after `from`; absolute or cwd-relative; quote if whitespace | Hard-fail if not found |
 | `--type` | `generic` or `technical`; required | Hard-fail if absent or unrecognized |
 | Substrate | Must be `.md` extension | Hard-fail |
-| Ambiguous parse | Multiple `from` tokens or unresolvable args | Hard-fail with canonical pattern |
 
 ## Phase model
 
@@ -83,7 +85,7 @@ On hard-fail, replace the current phase line and stop:
 | 0.2 | Validate slug against `^[a-z0-9-]+$` | Hard-fail |
 | 0.3 | Validate `--type` is `generic` or `technical` | Hard-fail |
 | 0.4 | Resolve input path; existence check | Hard-fail |
-| 0.5 | Walk from cwd to filesystem root; find first `CLAUDE.md`; its parent directory is the repo root | Hard-fail if none found |
+| 0.5 | Check cwd for `CLAUDE.md` first; if absent, walk upward to filesystem root directory by directory; the parent directory of the first `CLAUDE.md` found is the repo root | Hard-fail if none found |
 | 0.6 | Resolve output dir `<repo root>/requirements/<slug>/`; create if absent | Hard-fail on permission error |
 | 0.7 | Read prior `<slug>-requirements.md` if present (ID stability + version increment) | Warning if unreadable; treat as no-prior |
 | 0.8 | Read substrate file; reject non-`.md` extension | Hard-fail |

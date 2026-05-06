@@ -2,6 +2,8 @@
 
 ## Status
 
+> ⚠️ Stale — verify before use. The skill has shipped under project scope at `skill-workshop/.claude/skills/writing-requirements/`, not the user-scope path described below. The Discovery and Distribution rows in §Runtime and discovery no longer reflect reality.
+
 Design phase complete. Refinement session 2026-05-05 consolidated 15 structural locks plus one pre-decision on folder layout. Nine items remain for in-draft resolution. Ready to draft `SKILL.md` in next session.
 
 ## Origin
