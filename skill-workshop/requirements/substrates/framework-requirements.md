@@ -1,8 +1,10 @@
 # Chief of Droids — Framework Requirements
 
-This document specifies the minimum requirements that any implementation of the Chief of Droids framework must satisfy. It describes WHAT the framework must do, not HOW. Concrete design choices — state substrate, file formats, automation hooks, version control system, transport mechanisms, identifier formats, schemas — are deliberately external to this document and may be evaluated against it.
+Chief-of-droids is a model-in-the-loop framework — governance-first and contract-explicit — where the model executes within defined boundaries set by the human architect.
+Governance and knowledge work sit in Claude Desktop. Execution sits mainly in Claude Code.
+The execution contract is made explicit via a routing layer, MCP filesystem access, session hygiene, and a handoff mechanism. Claude Desktop is leveraged for its rich output layer with ephemeral artefacts.
 
-The framework's purpose is to make the execution contract for knowledge and code work explicit and durable: every unit of work has a declared identity, an input contract, an output contract, an attributable history, and an explicit closure criterion. The framework operates today for a single human operator and is required to admit a future evolution to multiple operators without rewriting its artifact contracts.
+The framework's evolution purpose is to make the execution contract for knowledge and code work explicit and durable: every unit of work has a declared identity, an input contract, an output contract, an attributable history, and an explicit closure criterion. The framework operates today for a single human operator and is required to admit a future evolution to multiple operators without rewriting its artifact contracts.
 
 Requirements use RFC 2119 verbs (MUST / SHALL / MAY / MUST NOT). Every requirement satisfies the quality criteria stated in the final section.
 
