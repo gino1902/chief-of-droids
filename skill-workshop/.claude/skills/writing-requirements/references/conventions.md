@@ -58,9 +58,9 @@ The substrate-declared ID regex `\b(FR|CON|IR-IN|IR-OUT|IR|DR|TR|NFR|SEC|ERR|OBS
 | Info     |    N     |    N/A     |
 
 ## Phase 0 — Pre-flight
-[BLOCKING] <description> → <remediation>
-[WARNING] <description> → <remediation>
-[INFO] <description>
+- [BLOCKING] <description> → <remediation>
+- [WARNING] <description> → <remediation>
+- [INFO] <description>
 
 Outstanding: N blocking, M warnings, K info
 

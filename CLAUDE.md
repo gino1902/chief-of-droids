@@ -160,5 +160,10 @@ Run once, as the final step of reading this file. Do not repeat within the sessi
    - Yes → invoke managing-sessions skill
    - Any other response → proceed without running the skill
 
-
 ---
+
+| Field        | Value       |
+|--------------|-------------|
+| Version      | 1.0         |
+| Last Updated | 2026-05-12  |
+| Status       | Draft       |
