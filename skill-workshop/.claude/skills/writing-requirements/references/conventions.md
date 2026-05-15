@@ -74,8 +74,10 @@ The resulting `(category, sequence)` is deterministic for any fixed substrate te
 | Info     |    N     |    N/A     |
 
 ## Phase 0 — Pre-flight
-- [BLOCKING] <description> → <remediation>
-- [WARNING] <description> → <remediation>
+- [BLOCKING-UNRESOLVED] <description> → <remediation>
+- [BLOCKING-RESOLVED] <description> → <remediation>
+- [WARNING-UNRESOLVED] <description> → <remediation>
+- [WARNING-RESOLVED] <description> → <remediation>
 - [INFO] <description>
 
 Outstanding: N blocking, M warnings, K info
@@ -110,6 +112,22 @@ Outstanding: N blocking, M warnings, K info
 - **Info** — always Resolved; Unresolved is always `N/A`.
 - **Warning** — Resolved if the finding has been treated and requires user verification only (e.g. auto-derived glossary entry, inferred scope signal). Unresolved if the artifact cannot be considered correct without further action.
 - **Blocking** — resolution rules not yet defined; populate Resolved and Unresolved from phase findings.
+
+**Per-finding tag rules:**
+
+Every Blocking and Warning finding emitted in a phase section SHALL carry an explicit resolution state in its tag. The tag prefix encodes severity; the suffix encodes resolution.
+
+| Tag | Meaning |
+|:--|:--|
+| `[BLOCKING-RESOLVED]` | Blocking finding whose remediation has been applied within this pass |
+| `[BLOCKING-UNRESOLVED]` | Blocking finding that requires user action before the artifact is correct |
+| `[WARNING-RESOLVED]` | Warning that has been treated and requires user verification only (auto-derived glossary entry, inferred scope signal, default applied) |
+| `[WARNING-UNRESOLVED]` | Warning whose underlying gap or hygiene issue remains; artifact cannot be considered correct without further action |
+| `[INFO]` | Trace event; always implicitly resolved — no suffix |
+
+Bare `[BLOCKING]` or `[WARNING]` tags (without a `-RESOLVED` / `-UNRESOLVED` suffix) are not permitted on output.
+
+Counts in the §Summary table SHALL agree with the suffix tallies in phase sections: the number of `[<SEVERITY>-RESOLVED]` lines equals the Resolved column; the number of `[<SEVERITY>-UNRESOLVED]` lines equals the Unresolved column. The per-phase `Outstanding:` closure line counts unresolved findings only.
 
 Every phase section emits its closure line even when findings are zero:
 ```
