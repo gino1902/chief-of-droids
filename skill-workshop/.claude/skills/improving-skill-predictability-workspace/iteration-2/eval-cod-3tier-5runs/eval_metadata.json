@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "cod-3tier-5runs",
+  "prompt": "I have 5 output runs of the writing-requirements skill sitting in skill-workshop/requirements/chief-of-droids-3-tiers-upgrade-v01/ through -v05/. They all came from the substrate at skill-workshop/requirements/substrates/two-tier-architecture-design-notes.md. The skill itself is at skill-workshop/.claude/skills/writing-requirements/. Tell me how predictable these outputs are across the 5 runs, what the main sources of variance are, and what concrete changes to the writing-requirements skill would make the outputs more predictable.",
+  "assertions": []
+}

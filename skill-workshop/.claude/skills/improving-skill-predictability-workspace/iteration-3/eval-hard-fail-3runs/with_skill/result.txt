@@ -1,0 +1,5 @@
+phase_reached: 0
+outcome: hard_fail
+runs_detected: 3
+remediation_message: Provide at least 5 runs in `--outputs`; found 3.
+report_file_written: no

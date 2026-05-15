@@ -1,0 +1,4 @@
+phase_reached: 0
+outcome: hard_fail
+remediation_message: Provide a `--skill` path that contains a readable `SKILL.md` (skill directory or its SKILL.md file).
+report_file_written: no
