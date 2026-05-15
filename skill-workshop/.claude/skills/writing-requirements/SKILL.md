@@ -98,6 +98,9 @@ Read typology reference files per the table above, then produce:
 
 **§ Title + Purpose**
 Title: first H1 in substrate; fallback: first H2; fallback: frontmatter `title:`; fallback: slug + Warning.
+
+The slug fallback is permitted only when all three earlier fallbacks fail (no H1, no H2, no frontmatter `title:`). If the slug fallback fires, emit Warning in the report identifying the substrate as mis-shaped. Never humanise the slug — emit it verbatim (e.g. for slug `chief-of-droids-3-tiers-upgrade-v01`, the Title is exactly `chief-of-droids-3-tiers-upgrade-v01`, not `Chief-of-Droids 3-Tier Architecture Upgrade`). The Warning carries the signal that a human-readable title is missing from the substrate; do not synthesize one.
+
 Purpose: extract explicit purpose statement ("The purpose of…", "This component…", "This skill…"); if absent, infer from leading prose + Warning.
 
 **§ Scope**
@@ -112,11 +115,29 @@ Extract upstream/downstream systems and human roles. `N/A` + Warning if absent.
 
 Follow drafting rules in loaded typology reference files. All sections always render; `N/A` + Warning if substrate signal is absent for a section.
 
-**ID stability:** scan substrate for declared IDs matching `\b(FR|CON|IR-IN|IR-OUT|IR|DR|TR|NFR|SEC|ERR|OBS)-\d{3}\b`. Preserve matched IDs, attaching each to the nearest requirement-shaped block. Undeclared requirements get the next available sequence number per category.
+**ID stability:** scan substrate for declared IDs matching `\b(FR|CON|IR-IN|IR-OUT|IR|DR|TR|NFR|SEC|ERR|OBS)-\d{3}\b`. Preserve matched IDs, attaching each to the nearest requirement-shaped block. Undeclared requirements get the next available sequence number per category, assigned per the canonical ordering rule in `references/conventions.md` § "Canonical ordering for un-IDed substrate".
+
+**ERR coverage protocol (`--type technical` only):** for each FR drafted, classify the SHALL-action verb against the contract-shape matrix in `references/ears.md` § "Contract-shape coverage matrix". If the shape is Acquire / Mutate / Validate / Solicit / Transform-with-external-inputs, draft the paired ERR-NNN entry in the same Phase 2 pass. Do not defer to Phase 4 — Phase 4 only audits coverage, it does not draft. If an FR of mandatory-coverage shape is intentionally not paired with an ERR, attach an inline rationale to the FR entry: `(no ERR — rationale: <reason>)`. The rationale is the explicit opt-out; absent rationale + absent ERR is a Phase 4 Warning.
 
 ## Phase 3 — Vocabulary
 
-Auto-extract glossary candidates from substrate: technical nouns, domain-specific terms, acronyms, and terms used in requirements that are not self-evident. Render as §Glossary. Emit Warning for each auto-derived entry (user review required).
+Auto-extract glossary candidates by running the following mechanical rules in order against the substrate. Each rule produces zero or more candidates; the union forms the glossary candidate set.
+
+1. **Acronym rule** — every all-caps token of 2+ letters appearing in any requirement statement (e.g. `SHA`, `MCP`, `URI`).
+2. **Backtick rule** — every term wrapped in backticks in any requirement statement (e.g. `recent_chats[0].uri`, `chief-of-droids/CLAUDE.md`).
+3. **Capitalized noun phrase rule** — every capitalized multi-word noun phrase appearing in any requirement statement that is not a proper name and not a section heading reference (e.g. Project Instructions, Bootstrap Protocol, Resolved Skills Map).
+4. **Explicit substrate definition rule** — every term explicitly defined in the substrate via `"X is defined as"`, `"X refers to"`, or `"X: <definition>"` patterns.
+
+Entries from rules 1–3 are emitted with status `auto-derived — verify`. Entries from rule 4 are emitted with status `substrate`.
+
+**Stop-word list** — exclude the following universally-understood terms from extraction regardless of which rule matched. Adding a term requires editing this list.
+
+```
+JSON, XML, YAML, CSV, HTTP, HTTPS, URL, URI, UUID, UTF-8, ASCII, ISO-8601,
+SHA, MD5, TLS, SSL, API, CLI, GUI, SDK, OS, RAM, CPU, ID, IP
+```
+
+Emit Warning for each glossary entry (user review required regardless of source rule).
 
 ## Phase 4 — Taxonomy hygiene
 

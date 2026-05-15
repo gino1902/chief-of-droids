@@ -40,6 +40,22 @@
 **ID stability across iterations:**
 The substrate-declared ID regex `\b(FR|CON|IR-IN|IR-OUT|IR|DR|TR|NFR|SEC|ERR|OBS)-\d{3}\b` is scanned in Phase 2. Matched IDs are preserved on output, attached to the nearest requirement-shaped block. Free-form substrate without IDs starts fresh — ID stability is opt-in.
 
+### Canonical ordering for un-IDed substrate
+
+When the substrate carries no `<CAT>-NNN` IDs to preserve, assign IDs deterministically by this walk so that two agents running against the same substrate with the same `--type` produce the same ID-to-content map:
+
+1. Within each category section (FR, CON, IR-IN, IR-OUT, DR, TR, NFR, SEC, ERR, OBS), order requirements by the byte position of the first modal verb (`SHALL`, `MUST`, `SHOULD`, `MAY`) of the requirement-bearing sentence in the substrate file.
+2. If two candidate requirements share the same source sentence (compound substrate), split into atomic requirements and order by left-to-right token position of each split.
+3. If a substrate sentence forward-references a later sentence, the referenced sentence still takes its own byte-position rank — references do not reorder.
+4. Ties broken by alphabetical order of the SHALL-action verb lemma.
+
+**Exclusions from the byte-position walk:**
+- Modal verbs inside fenced code blocks (```` ``` ```` … ```` ``` ````) are not counted.
+- Modal verbs inside quoted strings ("…" or '…') used as examples or substrate references are not counted.
+- Modal verbs in section headings are not counted.
+
+The resulting `(category, sequence)` is deterministic for any fixed substrate text.
+
 ---
 
 ## Report format
@@ -140,6 +156,8 @@ Hard-fail message (replaces current phase stream line):
 | Any requirement section | `N/A` + Warning; section always renders |
 
 No `🔲 To be defined` scaffolding. `N/A` is the only placeholder.
+
+**N/A sections SHALL NOT carry requirement IDs.** When a category section (SEC, OBS, or any requirement category) is rendered as `N/A` because substrate is silent, render the section heading followed by a prose statement only — for example: `N/A — substrate silent on <category>. Warning emitted.` Do not emit `SEC-001`, `OBS-001`, or any other numeric requirement ID to carry the N/A. The section heading itself records the absence; allocating a numeric ID for an N/A pollutes the requirement-ID space and breaks the canonical-ordering invariant for downstream iterations. If a downstream consumer requires a section-level identifier for tooling, use the literal sentinel `SEC-NONE` or `OBS-NONE` — never a numeric ID.
 
 ---
 
