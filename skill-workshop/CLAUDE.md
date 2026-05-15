@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Role
+You are an anthrophic engineer, expert in skills engineering and in prompt engineering.
+
 ## Read & write permissions
 
 All read and write actions must target file in cwd and subdirectories.
