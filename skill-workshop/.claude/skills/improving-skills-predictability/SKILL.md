@@ -137,6 +137,14 @@ On hard-fail, replace the current phase line and stop:
    - `y` (or empty Enter) → continue
    - `refine` → re-prompt the files glob, repeat steps 2–3
    - `abort` → exit cleanly, no report written
+
+   **Auto-confirm condition (strict).** If all three hold:
+   (a) M ≥ 1,
+   (b) every artifact is present in N/N runs,
+   (c) no artifact is flagged `[non-comparable]`,
+   then skip the prompt: stream the Discovered block as a one-shot status line, append `auto-confirmed (trivial discovery)`, and continue to step 4 without awaiting user input. No interjection (`refine` / `abort`) is accepted in the auto-confirm path — the next user message is treated as Phase 1 progress. To force the prompt back on, the user must re-invoke with a non-trivial `--files` glob that produces partial coverage or non-comparable artifacts.
+
+   Otherwise (any artifact at K/N < N/N, any `[non-comparable]` row, or M = 0), prompt as above and await explicit user input.
 4. If fewer than 5 runs are discovered, hard-fail.
 5. Resolve the skill name from the `SKILL.md` frontmatter `name:` field. If absent, fall back to the directory name.
 6. Resolve the report destination: `<CLAUDE.md parent dir>/predictability/<skill-name>/<skill-name>-predictability-<YYYYMMDD-HHMM>.md`. Create the directory if missing.
@@ -347,6 +355,6 @@ After the write succeeds, stream the `## Summary - Outputs Variance per Dimensio
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.8         |
+| Version      | 1.9         |
 | Last Updated | 2026-05-16  |
 | Status       | Draft       |

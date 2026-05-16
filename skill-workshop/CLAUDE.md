@@ -13,7 +13,7 @@ This is a working repository.
 ## Read & write permissions
 
 All read and write actions must target file in cwd and subdirectories.
-Claude Code auto-allows `Read` for paths inside cwd.
+Claude Code auto-allows `Read` and `Write` for paths inside cwd.
 Extend `.claude/settings.local.json` if a path outside cwd is needed repeatedly.
 
 ## Auto-memory
