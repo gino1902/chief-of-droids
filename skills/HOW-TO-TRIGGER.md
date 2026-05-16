@@ -291,43 +291,6 @@ Reason: these skills execute multi-phase workflows with significant write operat
 
 ---
 
-## standardizing-artefacts
-
-Explicit trigger only — do not load on topic alone.
-Reason: these skills execute multi-phase workflows with significant write operations — loading on topic ambiguity risks unintended execution.
-
-**Triggers:**
-- `audit <file>` — block-by-block determinism audit of a single file; fix phase per block
-- `audit <file> --full` — single-pass audit across all 4 blocks; report only, no fix phase
-- `standardize <file>` — alias for `audit <file>`
-- `assess determinism <file>` — alias for `audit <file>`
-
-**What it does:**
-- Accepts a file path as input (filesystem path, uploaded file, or inline paste)
-- Identifies the artefact type (skill, functional-spec, technical-spec, use-case, acceptance-test, task-unit-test) and routes to the matching schema
-- Reads the schema for the identified type from `references/` — every recommendation must be grounded in a schema `req_id`
-- `audit <file>`: runs 4 blocks (B1 Foundation, B2 Evidence Layer, B3 Behavior Contract, B4 Deployment Gate) with per-block fix approval gates
-- `audit <file> --full`: runs all 33 criteria in one pass; produces report only — fix phase requires re-running as `audit <file>`
-- Does NOT check industry-standard structure, best-practice compliance, or suggest format changes unless a schema req_id requires it
-
-**Routing boundary vs `creating-skills`:**
-
-| | `standardizing-artefacts` | `creating-skills` |
-| :--- | :--- | :--- |
-| Assesses | Determinism — will an LLM execute this predictably? | Best-practice compliance — does this follow Anthropic/agentskills.io guidance? |
-| Output | Determinism compliance report + rewrite | Assessment finding table |
-| Owns fix phase? | Yes — rewrites the file | No — surfaces findings only |
-| Triggered by | `audit <file>`, `standardize <file>` | `critique skill <n>`, `assess all skills` |
-
-Run both for a full quality check on a skill file.
-
-**Does NOT trigger on:**
-- Requests to author a new skill → use `creating-skills`
-- Requests to assess best-practice compliance → use `creating-skills`
-- Requests without a file path or inline content — emits ERROR and stops
-
----
-
 ## brainstorming-ideas
 
 Load this skill when the user wants to explore a feature idea, frame a problem, or think through options before deciding what to build. Load proactively whenever requirements seem unclear or a decision is being explored — not only on explicit "brainstorm" mentions.
@@ -404,8 +367,6 @@ Skills compose automatically. Load all skills whose triggers match the request.
 | Capture session value then write a doc | `managing-sessions` + `writing-docs` |
 | Session prune surfaces open tasks | `managing-sessions` + `managing-tasks` |
 | Session prune then identify skill gaps | `managing-sessions` + `creating-skills` |
-| Audit artefact determinism | `standardizing-artefacts` |
-| Audit artefact determinism + best-practice compliance | `standardizing-artefacts` + `creating-skills` |
 | Brainstorm a feature or decision before building | `brainstorming-ideas` |
 | Brainstorm then write a structured doc | `brainstorming-ideas` + `writing-docs` |
 | Frame a use case via brainstorm | `brainstorming-ideas` + `analyzing-business-cases` |
@@ -413,6 +374,6 @@ Skills compose automatically. Load all skills whose triggers match the request.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.13        |
-| Last Updated | 2026-05-05  |
+| Version      | 1.14        |
+| Last Updated | 2026-05-16  |
 | Status       | Draft       |
