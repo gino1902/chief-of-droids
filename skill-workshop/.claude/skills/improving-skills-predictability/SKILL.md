@@ -35,9 +35,9 @@ improving-skills-predictability --outputs <dir> --skill <path> --substrate <path
 | `--outputs` | Directory containing ≥5 output runs. Each run is either a sibling subdirectory (e.g., `<slug>-v01/`, `<slug>-v02/`, …) or a flat set of files differentiated by a `v\d{2}` token in the basename | Interactive prompt |
 | `--skill` | Path to the analyzed skill. Accepts either the skill directory or its `SKILL.md` | Interactive prompt |
 | `--substrate` | Absolute or cwd-relative path to the substrate `.md` file that fed the runs | Interactive prompt |
-| `--files` | Comma-separated glob(s) selecting which files inside each run are compared (e.g., `*-requirements.md,*-report.md`). Default: `*.md`. Use to exclude drafts, notes, READMEs from the sweep | Skip — use default |
+| `--files` | Comma-separated glob(s) selecting which files inside each run are compared (e.g., `*-requirements.md,*-report.md`). Default: `*.md`. Use to exclude drafts, notes, READMEs from the sweep | Interactive prompt (empty response → default `*.md`) |
 
-If invoked without arguments, ask in this order: outputs dir → skill path → substrate path. Echo back the resolved triple before continuing. `--files` is never prompted; it falls back to `*.md` silently.
+If invoked without arguments, ask in this order: outputs dir → skill path → substrate path → files glob. For the files glob, an empty response keeps the default `*.md`. Echo back all four resolved values before continuing.
 
 ## Hard prerequisites
 
@@ -82,21 +82,27 @@ On hard-fail, replace the current phase line and stop:
 
 ## Phase 0 — Pre-flight
 
-1. Resolve the triple `(outputs_dir, skill_path, substrate_path)` from arguments or interactive prompts. Resolve `--files` if supplied; otherwise default to the single glob `*.md`.
+1. Resolve `(outputs_dir, skill_path, substrate_path, files_glob)` from arguments or interactive prompts. In interactive mode, an empty response to the `files_glob` prompt keeps the default `*.md`.
 2. Discover the runs and their file roles:
    - **Version-token regex (canonical):** `(?:^|-)v\d{2}(?=[-./]|$)`. A name "carries a version token" iff this regex finds a match.
    - **Run discovery:** if `outputs_dir` contains subdirectories whose names carry a version token, treat each such subdirectory as one run; within each run, the files to compare are those matching any `--files` glob. Otherwise, treat each file in `outputs_dir` matching any `--files` glob whose basename also carries a version token as one run.
    - **Role key:** for each comparable file, derive the role key by removing every version-token match from the basename (extension preserved) and collapsing any resulting `--` to `-`. Two files share a role iff their role keys are equal. Pair files across runs by role key.
-3. Echo the discovery before continuing, in this exact shape:
+   - **Comparability filter:** a role is **comparable** iff it is present in ≥ ⌈N/2⌉ runs (rounded up). Roles below threshold are marked `[non-comparable]` in the echo, excluded from every Phase 3 scoring pass, and listed once in the per-file deviation summary. Never silently dropped.
+3. Echo the discovery and ask the user to confirm, in this exact shape:
    ```
-   Discovered: <N> runs × <M> roles
+   Discovered: <N> runs × <M> roles (files glob: <glob>)
      Roles:
        - <role-key>  (present in K/N runs[, missing in vXX, vYY])
+       - <role-key>  [non-comparable: K/N < ⌈N/2⌉]
        ...
      Runs:
        v01 v02 ...
+
+   Proceed with these roles? [y / refine / abort]
    ```
-   The echo is informational, not a prompt — proceed without waiting.
+   - `y` (or empty Enter) → continue
+   - `refine` → re-prompt the files glob, repeat steps 2–3
+   - `abort` → exit cleanly, no report written
 4. If fewer than 5 runs are discovered, hard-fail.
 5. Resolve the skill name from the `SKILL.md` frontmatter `name:` field. If absent, fall back to the directory name.
 6. Resolve the report destination: `<CLAUDE.md parent dir>/predictability/<skill-name>/<skill-name>-predictability-<YYYYMMDD-HHMM>.md`. Create the directory if missing.
@@ -127,23 +133,25 @@ Each invariant is stored with its source span so the report can cite it.
 
 ## Phase 3 — Cross-output analysis
 
-Run six analyses across the N runs. Hold all results in memory; do not write until Phase 7.
+Run six analyses across the N runs, each applied per comparable role independently. Hold all results in memory; do not write until Phase 7.
 
 ### 3.1 Section structure fidelity
 
-For each file role, extract the ordered list of headings (level + text). Compute the longest common heading sequence across runs. Score = (matched headings / max heading count) averaged across runs. Note any demotions, promotions, or reorderings per run.
+For each comparable role, extract the ordered list of headings (level + text) from every run that carries the role. Compute the longest common heading sequence across runs for that role. Per-role score = (matched headings / max heading count) averaged across runs. Note any demotions, promotions, or reorderings per run. The dimension's top-line score is the minimum across comparable roles (worst-of); cite the worst role in the evidence cell.
 
 ### 3.2 Identifier alignment
 
-Detect identifiers using a generic regex over the analyzed outputs (default: `\b[A-Z]{1,5}-\d{2,4}\b`). For each identifier seen anywhere, compute:
+Detect identifiers using a generic regex over the analyzed outputs (default: `\b[A-Z]{1,5}-\d{2,4}\b`). Identifiers are scoped per role: an ID found in role R in some runs but absent from role R in others is a coverage gap in R, not in other roles. For each (role, identifier) pair, compute:
 
-- Coverage: in how many runs does this ID appear?
+- Coverage: in how many runs does this ID appear in this role?
 - Anchor stability: does the same ID label the same statement across runs (semantic match, not byte equality)?
 - Split/fold events: when one run's ID maps to two IDs in another run (or vice versa).
 
+Per-role identifier-alignment score is computed per `references/scoring.md`. The dimension's top-line score is the minimum across comparable roles; cite the worst role.
+
 ### 3.3 Substrate fidelity
 
-For each invariant from Phase 2, check whether each run carries it:
+For each invariant from Phase 2 and each comparable role, check whether each run's file in that role carries the invariant:
 
 - Domain concepts → semantic presence (allow paraphrase)
 - Schemas → field-set match; flag missing or added fields
@@ -151,17 +159,19 @@ For each invariant from Phase 2, check whether each run carries it:
 - Verbatim strings → byte-level verbatim
 - Policies / constraints → semantic presence + modality match (separate from Modality drift below, which is about identifiers)
 
+An invariant need not appear in every role — only in roles where the analyzed skill is expected to surface it. If no role in a run carries the invariant, mark it missing for that run. Score per (sub-dimension, role); the top-line per sub-dimension is the minimum across comparable roles.
+
 ### 3.4 Modality and surface drift
 
-For each aligned identifier, compare its modality keyword across runs (MUST/SHOULD/MAY/etc.). Flag mismatches. Also record surface drift on the statement text (clause changes that do not alter semantics but signal instability).
+For each (role, aligned identifier) pair, compare the modality keyword across runs (MUST/SHOULD/MAY/etc.). Flag mismatches. Also record surface drift on the statement text (clause changes that do not alter semantics but signal instability). Per-role modality score; top-line is the minimum across comparable roles.
 
 ### 3.5 Statement counts per category
 
-For each run, count the statements that fall into the detected output categories (whatever section labels exist — e.g., FR, CON, NFR, DR, glossary entries, acceptance items). Present as a wide table with one row per category and one column per run, with min/max/mean across runs.
+For each comparable role and each run, count the statements that fall into the detected output categories (whatever section labels exist — e.g., FR, CON, NFR, DR, glossary entries, acceptance items). Present as one wide table per role, with rows per category, columns per run, and min/max/mean across runs.
 
 ### 3.6 Naming framing
 
-Determine whether each run derives the topic name from the substrate or from a literal interpretation of the user-supplied slug. Heuristic: extract candidate names from the substrate (titles, key headings, glossary terms) and compare against the title/first heading of each run. Flag any run whose framing diverges from the substrate.
+For each comparable role, determine whether each run derives the topic name from the substrate or from a literal interpretation of the user-supplied slug. Heuristic: extract candidate names from the substrate (titles, key headings, glossary terms) and compare against the title/first heading of the file in that role. Flag any run whose framing diverges from the substrate. Per-role naming-framing score; top-line is the minimum across comparable roles.
 
 ### 3.7 Per-file deviation summary
 
@@ -171,26 +181,26 @@ For each run, write a 1–3 line summary of what is distinctive about it — at 
 
 Apply `references/scoring.md` to convert raw findings into per-dimension percentages. The rubric is intentionally coarse (multiples of 5) to avoid false precision.
 
-Top-line score table (always include, even if a row is N/A):
+Top-line score table (always include, even if a row is N/A). Score is the minimum across comparable roles (worst-of); `Worst role` names the role producing it (`all` if tied at the same value across all roles):
 
-| Dimension | Source | Score |
-|:--|:--|:--|
-| Section structure fidelity | 3.1 | % |
-| Identifier alignment | 3.2 | % |
-| Substrate fidelity — domain concepts | 3.3 | % |
-| Substrate fidelity — schemas | 3.3 | % |
-| Substrate fidelity — paths | 3.3 | % |
-| Substrate fidelity — verbatim strings | 3.3 | % |
-| Substrate fidelity — policies / constraints | 3.3 | % |
-| Modality and surface drift | 3.4 | % |
-| Naming framing | 3.6 | % |
+| Dimension | Source | Worst role | Score |
+|:--|:--|:--|:--|
+| Section structure fidelity | 3.1 | <role> | % |
+| Identifier alignment | 3.2 | <role> | % |
+| Substrate fidelity — domain concepts | 3.3 | <role> | % |
+| Substrate fidelity — schemas | 3.3 | <role> | % |
+| Substrate fidelity — paths | 3.3 | <role> | % |
+| Substrate fidelity — verbatim strings | 3.3 | <role> | % |
+| Substrate fidelity — policies / constraints | 3.3 | <role> | % |
+| Modality and surface drift | 3.4 | <role> | % |
+| Naming framing | 3.6 | <role> | % |
 
-Verdict at the bottom of the section. Two lines, both required:
+Verdict at the bottom of the section. Two lines, both required. Aggregates are computed per role first, then the verdict reports the worst-of-role value:
 
-> Overall predictability — current (measured):   Substance ≈ X · Structure ≈ Y · Naming ≈ Z
-> Overall predictability — projected (after recommendations, analytical): Substance ≈ X' · Structure ≈ Y' · Naming ≈ Z'
+> Overall predictability — current (measured, worst-of role):   Substance ≈ X · Structure ≈ Y · Naming ≈ Z
+> Overall predictability — projected (after recommendations, analytical, worst-of role): Substance ≈ X' · Structure ≈ Y' · Naming ≈ Z'
 
-Substance is the mean of all substrate-fidelity rows + identifier alignment. Structure is the structure-fidelity score. Naming is the naming-framing score.
+For each comparable role R: Substance(R) is the mean of all substrate-fidelity sub-dimension scores for R plus identifier alignment for R. Structure(R) is the structure-fidelity score for R. Naming(R) is the naming-framing score for R. The verdict line reports `min over R` for each. The per-role breakdown is rendered in the detail sections (see `references/report-template.md`).
 
 The projected line is computed in Phase 6.3 — leave its placeholder values during Phase 4 and fill them after ranking. Phase 5's draft must contain the placeholders so Phase 6.3 can substitute them.
 
@@ -289,7 +299,7 @@ The file must end with the version block required by the workspace CLAUDE.md.
 
 ## Operational notes
 
-- Stateless. Two consecutive runs on the same inputs may produce slightly different recommendation wording but identical scores within ±5 points. If scores differ by more than 5 points across consecutive runs on identical inputs, that itself is a finding worth reporting.
+- Stateless. Two consecutive runs on the same inputs may produce slightly different recommendation wording but identical scores within ±5 points per (dimension, role) cell. The top-line worst-of score may shift by more than 5 points only when the worst role flips between runs — call this out explicitly in the report when it happens. Differences beyond these tolerances are themselves a finding worth reporting.
 - The report is the only artifact. Do not modify the analyzed skill or its outputs.
 - The analytical projection is a projection, not a measurement. The report must state this explicitly in the `## Recommendations` preamble.
 - When the substrate is large (>2000 lines), summarize the invariant set in the report rather than enumerating; keep evidence citations to the most discriminating ones.
@@ -298,6 +308,6 @@ The file must end with the version block required by the workspace CLAUDE.md.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.3         |
+| Version      | 1.5         |
 | Last Updated | 2026-05-16  |
 | Status       | Draft       |
