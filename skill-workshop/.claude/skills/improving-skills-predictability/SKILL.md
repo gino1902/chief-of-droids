@@ -21,6 +21,7 @@ The skill is read-only on the analyzed skill and its outputs. It writes exactly 
 | `references/scoring.md` | Phase 4 | Always |
 | `references/invariant-extraction.md` | Phase 2 | Always |
 | `references/recommendations-catalog.md` | Phase 6 | Always |
+| `references/summary.md` | Phase 5 + Phase 7 close | Always |
 
 ## Invocation
 
@@ -53,7 +54,7 @@ Resolution order: `outputs → skill → substrate → files`. Each downstream s
 | `--outputs` | A directory holding ≥5 child dirs that share a slug prefix and each carry the v-token regex `(?:^|-)v\d{2}(?=[-./]|$)` | run count desc, then mtime desc |
 | `--skill` | Any directory containing a readable `SKILL.md` (search includes `.claude/skills/*/`) | name-match with outputs slug, else alpha |
 | `--substrate` | `.md` files near `outputs_dir` and inside any sibling `substrates/` dir whose basename shares ≥3 tokens with the outputs slug | token-overlap score desc |
-| `--files` | Shape-B glob set derived from the resolved outputs runs: one entry per detected role-key as `*-<role>.md`, plus the union of all roles, plus `*.md` | most-specific first, `*.md` last |
+| `--files` | Shape-B glob set derived from the resolved outputs runs: one entry per detected artifact-key as `*-<artifact>.md`, plus the union of all artifacts, plus `*.md` | most-specific first, `*.md` last |
 
 **UX by candidate count**
 
@@ -116,22 +117,22 @@ On hard-fail, replace the current phase line and stop:
    - **1a — parse provided args.** Accept any value passed on the command line as-is; no scan for those.
    - **1b — for each missing arg, scan + propose + confirm.** Walk cwd (depth ≤ 3, exclusions as specified in the Invocation section). Apply the per-argument candidate definition. Present candidates per the UX-by-candidate-count table. Resolve in order `outputs → skill → substrate → files` so each scan can use earlier resolutions. The user must confirm every proposed value; never auto-accept.
    - **1c — echo the four resolved values.** Print `outputs_dir`, `skill_path`, `substrate_path`, `files_glob` before continuing.
-2. Discover the runs and their file roles:
+2. Discover the runs and their artifacts:
    - **Version-token regex (canonical):** `(?:^|-)v\d{2}(?=[-./]|$)`. A name "carries a version token" iff this regex finds a match.
    - **Run discovery:** if `outputs_dir` contains subdirectories whose names carry a version token, treat each such subdirectory as one run; within each run, the files to compare are those matching any `--files` glob. Otherwise, treat each file in `outputs_dir` matching any `--files` glob whose basename also carries a version token as one run.
-   - **Role key:** for each comparable file, derive the role key by removing every version-token match from the basename (extension preserved) and collapsing any resulting `--` to `-`. Two files share a role iff their role keys are equal. Pair files across runs by role key.
-   - **Comparability filter:** a role is **comparable** iff it is present in ≥ ⌈N/2⌉ runs (rounded up). Roles below threshold are marked `[non-comparable]` in the echo, excluded from every Phase 3 scoring pass, and listed once in the per-file deviation summary. Never silently dropped.
+   - **Artifact key:** for each comparable file, derive the artifact key by removing every version-token match from the basename (extension preserved) and collapsing any resulting `--` to `-`. Two files share an artifact iff their artifact keys are equal. Pair files across runs by artifact key.
+   - **Comparability filter:** an artifact is **comparable** iff it is present in ≥ ⌈N/2⌉ runs (rounded up). Artifacts below threshold are marked `[non-comparable]` in the echo, excluded from every Phase 3 scoring pass, and listed once in the per-file deviation summary. Never silently dropped.
 3. Echo the discovery and ask the user to confirm, in this exact shape:
    ```
-   Discovered: <N> runs × <M> roles (files glob: <glob>)
-     Roles:
-       - <role-key>  (present in K/N runs[, missing in vXX, vYY])
-       - <role-key>  [non-comparable: K/N < ⌈N/2⌉]
+   Discovered: <N> runs × <M> artifacts (files glob: <glob>)
+     Artifacts:
+       - <artifact-key>  (present in K/N runs[, missing in vXX, vYY])
+       - <artifact-key>  [non-comparable: K/N < ⌈N/2⌉]
        ...
      Runs:
        v01 v02 ...
 
-   Proceed with these roles? [y / refine / abort]
+   Proceed with these artifacts? [y / refine / abort]
    ```
    - `y` (or empty Enter) → continue
    - `refine` → re-prompt the files glob, repeat steps 2–3
@@ -146,7 +147,7 @@ Read into memory only — no writes yet:
 
 - `SKILL.md` and every file referenced from it (table rows under "Reference files", template paths, examples). Resolve relative paths against the skill directory.
 - The substrate file.
-- For each run, every comparable artifact selected in Phase 0 (every file matching `--files`, default `*.md`). When a run contains multiple files, pair them across runs by the **role key** computed in Phase 0 (basename with all version-token matches removed and `--` collapsed) so that comparisons happen within file roles, not across roles.
+- For each run, every comparable artifact selected in Phase 0 (every file matching `--files`, default `*.md`). When a run contains multiple files, pair them across runs by the **artifact key** computed in Phase 0 (basename with all version-token matches removed and `--` collapsed) so that comparisons happen within each artifact, not across artifacts.
 
 If a run is missing a file that other runs have, do not abort — record it as a per-file deviation ("file missing in run vX") and continue.
 
@@ -166,25 +167,25 @@ Each invariant is stored with its source span so the report can cite it.
 
 ## Phase 3 — Cross-output analysis
 
-Run six analyses across the N runs, each applied per comparable role independently. Hold all results in memory; do not write until Phase 7.
+Run six analyses across the N runs, each applied per comparable artifact independently. Hold all results in memory; do not write until Phase 7.
 
 ### 3.1 Section structure fidelity
 
-For each comparable role, extract the ordered list of headings (level + text) from every run that carries the role. Compute the longest common heading sequence across runs for that role. Per-role score = (matched headings / max heading count) averaged across runs. Note any demotions, promotions, or reorderings per run. The dimension's top-line score is the minimum across comparable roles (worst-of); cite the worst role in the evidence cell.
+For each comparable artifact, extract the ordered list of headings (level + text) from every run that carries the artifact. Compute the longest common heading sequence across runs for that artifact. Per-artifact score = (matched headings / max heading count) averaged across runs. Note any demotions, promotions, or reorderings per run. The dimension's top-line score is the minimum across comparable artifacts (worst-of); cite the worst artifact in the evidence cell.
 
 ### 3.2 Identifier alignment
 
-Detect identifiers using a generic regex over the analyzed outputs (default: `\b[A-Z]{1,5}-\d{2,4}\b`). Identifiers are scoped per role: an ID found in role R in some runs but absent from role R in others is a coverage gap in R, not in other roles. For each (role, identifier) pair, compute:
+Detect identifiers using a generic regex over the analyzed outputs (default: `\b[A-Z]{1,5}-\d{2,4}\b`). Identifiers are scoped per artifact: an ID found in artifact R in some runs but absent from artifact R in others is a coverage gap in R, not in other artifacts. For each (artifact, identifier) pair, compute:
 
-- Coverage: in how many runs does this ID appear in this role?
+- Coverage: in how many runs does this ID appear in this artifact?
 - Anchor stability: does the same ID label the same statement across runs (semantic match, not byte equality)?
 - Split/fold events: when one run's ID maps to two IDs in another run (or vice versa).
 
-Per-role identifier-alignment score is computed per `references/scoring.md`. The dimension's top-line score is the minimum across comparable roles; cite the worst role.
+Per-artifact identifier-alignment score is computed per `references/scoring.md`. The dimension's top-line score is the minimum across comparable artifacts; cite the worst artifact.
 
 ### 3.3 Substrate fidelity
 
-For each invariant from Phase 2 and each comparable role, check whether each run's file in that role carries the invariant:
+For each invariant from Phase 2 and each comparable artifact, check whether each run's file in that artifact carries the invariant:
 
 - Domain concepts → semantic presence (allow paraphrase)
 - Schemas → field-set match; flag missing or added fields
@@ -192,19 +193,19 @@ For each invariant from Phase 2 and each comparable role, check whether each run
 - Verbatim strings → byte-level verbatim
 - Policies / constraints → semantic presence + modality match (separate from Modality drift below, which is about identifiers)
 
-An invariant need not appear in every role — only in roles where the analyzed skill is expected to surface it. If no role in a run carries the invariant, mark it missing for that run. Score per (sub-dimension, role); the top-line per sub-dimension is the minimum across comparable roles.
+An invariant need not appear in every artifact — only in artifacts where the analyzed skill is expected to surface it. If no artifact in a run carries the invariant, mark it missing for that run. Score per (sub-dimension, artifact); the top-line per sub-dimension is the minimum across comparable artifacts.
 
 ### 3.4 Modality and surface drift
 
-For each (role, aligned identifier) pair, compare the modality keyword across runs (MUST/SHOULD/MAY/etc.). Flag mismatches. Also record surface drift on the statement text (clause changes that do not alter semantics but signal instability). Per-role modality score; top-line is the minimum across comparable roles.
+For each (artifact, aligned identifier) pair, compare the modality keyword across runs (MUST/SHOULD/MAY/etc.). Flag mismatches. Also record surface drift on the statement text (clause changes that do not alter semantics but signal instability). Per-artifact modality score; top-line is the minimum across comparable artifacts.
 
 ### 3.5 Statement counts per category
 
-For each comparable role and each run, count the statements that fall into the detected output categories (whatever section labels exist — e.g., FR, CON, NFR, DR, glossary entries, acceptance items). Present as one wide table per role, with rows per category, columns per run, and min/max/mean across runs.
+For each comparable artifact and each run, count the statements that fall into the detected output categories (whatever section labels exist — e.g., FR, CON, NFR, DR, glossary entries, acceptance items). Present as one wide table per artifact, with rows per category, columns per run, and min/max/mean across runs.
 
 ### 3.6 Naming framing
 
-For each comparable role, determine whether each run derives the topic name from the substrate or from a literal interpretation of the user-supplied slug. Heuristic: extract candidate names from the substrate (titles, key headings, glossary terms) and compare against the title/first heading of the file in that role. Flag any run whose framing diverges from the substrate. Per-role naming-framing score; top-line is the minimum across comparable roles.
+For each comparable artifact, determine whether each run derives the topic name from the substrate or from a literal interpretation of the user-supplied slug. Heuristic: extract candidate names from the substrate (titles, key headings, glossary terms) and compare against the title/first heading of the file in that artifact. Flag any run whose framing diverges from the substrate. Per-artifact naming-framing score; top-line is the minimum across comparable artifacts.
 
 ### 3.7 Per-file deviation summary
 
@@ -214,26 +215,26 @@ For each run, write a 1–3 line summary of what is distinctive about it — at 
 
 Apply `references/scoring.md` to convert raw findings into per-dimension percentages. The rubric is intentionally coarse (multiples of 5) to avoid false precision.
 
-Top-line score table (always include, even if a row is N/A). Score is the minimum across comparable roles (worst-of); `Worst role` names the role producing it (`all` if tied at the same value across all roles):
+Top-line score table (always include, even if a row is N/A). Score is the minimum across comparable artifacts (worst-of); `Worst artifact` names the artifact producing it (`all` if tied at the same value across all artifacts):
 
-| Dimension | Source | Worst role | Score |
+| Dimension | Source | Worst artifact | Score |
 |:--|:--|:--|:--|
-| Section structure fidelity | 3.1 | <role> | % |
-| Identifier alignment | 3.2 | <role> | % |
-| Substrate fidelity — domain concepts | 3.3 | <role> | % |
-| Substrate fidelity — schemas | 3.3 | <role> | % |
-| Substrate fidelity — paths | 3.3 | <role> | % |
-| Substrate fidelity — verbatim strings | 3.3 | <role> | % |
-| Substrate fidelity — policies / constraints | 3.3 | <role> | % |
-| Modality and surface drift | 3.4 | <role> | % |
-| Naming framing | 3.6 | <role> | % |
+| Section structure fidelity | 3.1 | <artifact> | % |
+| Identifier alignment | 3.2 | <artifact> | % |
+| Substrate fidelity — domain concepts | 3.3 | <artifact> | % |
+| Substrate fidelity — schemas | 3.3 | <artifact> | % |
+| Substrate fidelity — paths | 3.3 | <artifact> | % |
+| Substrate fidelity — verbatim strings | 3.3 | <artifact> | % |
+| Substrate fidelity — policies / constraints | 3.3 | <artifact> | % |
+| Modality and surface drift | 3.4 | <artifact> | % |
+| Naming framing | 3.6 | <artifact> | % |
 
-Verdict at the bottom of the section. Two lines, both required. Aggregates are computed per role first, then the verdict reports the worst-of-role value:
+Verdict at the bottom of the section. Two lines, both required. Aggregates are computed per artifact first, then the verdict reports the worst-of-artifact value:
 
-> Overall predictability — current (measured, worst-of role):   Substance ≈ X · Structure ≈ Y · Naming ≈ Z
-> Overall predictability — projected (after recommendations, analytical, worst-of role): Substance ≈ X' · Structure ≈ Y' · Naming ≈ Z'
+> Overall predictability — current (measured, worst-of artifact):   Substance ≈ X · Structure ≈ Y · Naming ≈ Z
+> Overall predictability — projected (after recommendations, analytical, worst-of artifact): Substance ≈ X' · Structure ≈ Y' · Naming ≈ Z'
 
-For each comparable role R: Substance(R) is the mean of all substrate-fidelity sub-dimension scores for R plus identifier alignment for R. Structure(R) is the structure-fidelity score for R. Naming(R) is the naming-framing score for R. The verdict line reports `min over R` for each. The per-role breakdown is rendered in the detail sections (see `references/report-template.md`).
+For each comparable artifact R: Substance(R) is the mean of all substrate-fidelity sub-dimension scores for R plus identifier alignment for R. Structure(R) is the structure-fidelity score for R. Naming(R) is the naming-framing score for R. The verdict line reports `min over R` for each. The per-artifact breakdown is rendered in the detail sections (see `references/report-template.md`).
 
 The projected line is computed in Phase 6.3 — leave its placeholder values during Phase 4 and fill them after ranking. Phase 5's draft must contain the placeholders so Phase 6.3 can substitute them.
 
@@ -241,18 +242,19 @@ The projected line is computed in Phase 6.3 — leave its placeholder values dur
 
 Render the full report in memory using the exact template in `references/report-template.md`. Section order is fixed:
 
-1. `# <skill-name> predictability report`
-2. `## Top-line scores`
-3. `## Section structure fidelity`
-4. `## Identifier alignment`
-5. `## Substrate fidelity — invariants probed`
-6. `## Modality and surface drift`
-7. `## Statement counts per category`
-8. `## Naming framing finding`
-9. `## Per-file deviation summary`
-10. `## Predictability verdict`
-11. `## Recommendations` (populated in Phase 6)
-12. Version block
+1. `# <skill-name> predictability report` (plus the standard generated-metadata lines below the H1)
+2. `## Summary - Outputs Variance per Dimension` — rendered per `references/summary.md`. Body values for the `Projected` column are placeholders at this phase; Phase 6.3.5 substitutes the final projected values into both the Summary and the Predictability verdict before Phase 7 writes.
+3. `## Top-line scores`
+4. `## Section structure fidelity`
+5. `## Identifier alignment`
+6. `## Substrate fidelity — invariants probed`
+7. `## Modality and surface drift`
+8. `## Statement counts per category`
+9. `## Naming framing finding`
+10. `## Per-file deviation summary`
+11. `## Predictability verdict`
+12. `## Recommendations` (populated in Phase 6)
+13. Version block
 
 Every score must be accompanied by a one-sentence reading that cites concrete evidence (which run, which heading, which identifier). Numbers without evidence are not allowed.
 
@@ -308,7 +310,9 @@ Output the ranked list and write it to the `## Recommendations` section of the r
 
 After ranking, compute the projected per-dimension percentages by walking the recommendations and applying their lifts to the current scores (rules in `references/scoring.md` — Projected aggregates). From the updated per-dimension percentages, compute the projected Substance / Structure / Naming aggregates using the same formulas as the current state.
 
-Substitute the placeholder values in the `## Predictability verdict` section's projected line. Both verdict lines (current + projected) must appear in the final report.
+Substitute the placeholder values in two places before Phase 7 writes:
+- the `## Predictability verdict` section's projected line (both verdict lines, current + projected, must appear in the final report);
+- the `Projected` column of the `## Summary - Outputs Variance per Dimension` table, per the row→dimension mapping in `references/summary.md`. Comments cells that name a recommendation (e.g., `R-001 anchors IDs to substrate byte position`) are filled now, since the ranked IDs are finalised.
 
 A dimension currently at 100% stays at 100%. A dimension that no recommendation targets stays at its current score. Never project above 100%.
 
@@ -330,9 +334,11 @@ Write exactly one file:
 
 The file must end with the version block required by the workspace CLAUDE.md.
 
+After the write succeeds, stream the `## Summary - Outputs Variance per Dimension` block (table + model-attribution paragraph, per `references/summary.md`) to chat as the closing tokens of the run. The on-disk and chat renderings of the Summary are byte-identical; no other commentary appears between the `✓ Wrote …` line and the Summary block.
+
 ## Operational notes
 
-- Stateless. Two consecutive runs on the same inputs may produce slightly different recommendation wording but identical scores within ±5 points per (dimension, role) cell. The top-line worst-of score may shift by more than 5 points only when the worst role flips between runs — call this out explicitly in the report when it happens. Differences beyond these tolerances are themselves a finding worth reporting.
+- Stateless. Two consecutive runs on the same inputs may produce slightly different recommendation wording but identical scores within ±5 points per (dimension, artifact) cell. The top-line worst-of score may shift by more than 5 points only when the worst artifact flips between runs — call this out explicitly in the report when it happens. Differences beyond these tolerances are themselves a finding worth reporting.
 - The report is the only artifact. Do not modify the analyzed skill or its outputs.
 - The analytical projection is a projection, not a measurement. The report must state this explicitly in the `## Recommendations` preamble.
 - When the substrate is large (>2000 lines), summarize the invariant set in the report rather than enumerating; keep evidence citations to the most discriminating ones.
@@ -341,6 +347,6 @@ The file must end with the version block required by the workspace CLAUDE.md.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.6         |
+| Version      | 1.8         |
 | Last Updated | 2026-05-16  |
 | Status       | Draft       |
