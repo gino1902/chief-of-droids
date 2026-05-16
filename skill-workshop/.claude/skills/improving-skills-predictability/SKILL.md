@@ -24,7 +24,7 @@ The skill is read-only on the analyzed skill and its outputs. It writes exactly 
 
 ## Invocation
 
-Hybrid: arguments parsed when present, interactive prompts for anything missing.
+All four arguments are mandatory. Arguments provided on the command line are accepted as-is. For each missing argument, the skill scans cwd, ranks plausible candidates, and asks the user to confirm. No auto-accept — the user must confirm every proposed value even when there is a single high-confidence candidate.
 
 ```
 improving-skills-predictability --outputs <dir> --skill <path> --substrate <path> [--files <glob[,glob...]>]
@@ -32,12 +32,42 @@ improving-skills-predictability --outputs <dir> --skill <path> --substrate <path
 
 | Argument | Rule | On failure |
 |:--|:--|:--|
-| `--outputs` | Directory containing ≥5 output runs. Each run is either a sibling subdirectory (e.g., `<slug>-v01/`, `<slug>-v02/`, …) or a flat set of files differentiated by a `v\d{2}` token in the basename | Interactive prompt |
-| `--skill` | Path to the analyzed skill. Accepts either the skill directory or its `SKILL.md` | Interactive prompt |
-| `--substrate` | Absolute or cwd-relative path to the substrate `.md` file that fed the runs | Interactive prompt |
-| `--files` | Comma-separated glob(s) selecting which files inside each run are compared (e.g., `*-requirements.md,*-report.md`). Default: `*.md`. Use to exclude drafts, notes, READMEs from the sweep | Interactive prompt (empty response → default `*.md`) |
+| `--outputs` | Directory containing ≥5 output runs. Each run is either a sibling subdirectory (e.g., `<slug>-v01/`, `<slug>-v02/`, …) or a flat set of files differentiated by a `v\d{2}` token in the basename | Scan cwd, propose candidates, confirm |
+| `--skill` | Path to the analyzed skill. Accepts either the skill directory or its `SKILL.md` | Scan cwd, propose candidates, confirm |
+| `--substrate` | Absolute or cwd-relative path to the substrate `.md` file that fed the runs | Scan cwd, propose candidates, confirm |
+| `--files` | Comma-separated glob(s) selecting which files inside each run are compared (e.g., `*-requirements.md,*-report.md`). Use to exclude drafts, notes, READMEs from the sweep | Scan cwd, propose candidates, confirm |
 
-If invoked without arguments, ask in this order: outputs dir → skill path → substrate path → files glob. For the files glob, an empty response keeps the default `*.md`. Echo back all four resolved values before continuing.
+### Auto-proposal flow
+
+Resolution order: `outputs → skill → substrate → files`. Each downstream scan may use already-resolved values to narrow its candidate set (e.g., the substrate scan keys off the outputs slug; the files scan keys off the resolved outputs runs).
+
+**Scan boundaries**
+- Root: cwd
+- Max depth: 3 levels
+- Excludes: `.git/`, `node_modules/`, dotfiles except `.claude/skills/`
+
+**Per-argument candidate definition**
+
+| Argument | Candidate | Ranking |
+|:--|:--|:--|
+| `--outputs` | A directory holding ≥5 child dirs that share a slug prefix and each carry the v-token regex `(?:^|-)v\d{2}(?=[-./]|$)` | run count desc, then mtime desc |
+| `--skill` | Any directory containing a readable `SKILL.md` (search includes `.claude/skills/*/`) | name-match with outputs slug, else alpha |
+| `--substrate` | `.md` files near `outputs_dir` and inside any sibling `substrates/` dir whose basename shares ≥3 tokens with the outputs slug | token-overlap score desc |
+| `--files` | Shape-B glob set derived from the resolved outputs runs: one entry per detected role-key as `*-<role>.md`, plus the union of all roles, plus `*.md` | most-specific first, `*.md` last |
+
+**UX by candidate count**
+
+| Candidates found | UX |
+|:--|:--|
+| 0 | Free-text prompt (no proposal possible) |
+| 1 | Echo `proposed: <value>` and ask `y / refine / abort` |
+| 2–4 | `AskUserQuestion` with each candidate as an option (plus the automatic "Other" escape) |
+| 5+ | Top 4 plus an option labelled "show all" — selecting it re-renders the full list |
+
+- `refine` → re-run the scan; the user may supply a narrowing hint (e.g., a partial slug, a sub-path)
+- `abort` → exit cleanly, no report written
+
+Echo back all four resolved values before continuing.
 
 ## Hard prerequisites
 
@@ -61,7 +91,7 @@ If invoked without arguments, ask in this order: outputs dir → skill path → 
 Stream one header per phase as it begins:
 
 ```
-→ Phase 0 — Pre-flight
+→ Phase 0 — Pre-flight (scanned cwd, found <N> candidates across <missing args>)
 → Phase 1 — Ingest
 → Phase 2 — Invariant extraction
 → Phase 3 — Cross-output analysis
@@ -82,7 +112,10 @@ On hard-fail, replace the current phase line and stop:
 
 ## Phase 0 — Pre-flight
 
-1. Resolve `(outputs_dir, skill_path, substrate_path, files_glob)` from arguments or interactive prompts. In interactive mode, an empty response to the `files_glob` prompt keeps the default `*.md`.
+1. Resolve `(outputs_dir, skill_path, substrate_path, files_glob)`:
+   - **1a — parse provided args.** Accept any value passed on the command line as-is; no scan for those.
+   - **1b — for each missing arg, scan + propose + confirm.** Walk cwd (depth ≤ 3, exclusions as specified in the Invocation section). Apply the per-argument candidate definition. Present candidates per the UX-by-candidate-count table. Resolve in order `outputs → skill → substrate → files` so each scan can use earlier resolutions. The user must confirm every proposed value; never auto-accept.
+   - **1c — echo the four resolved values.** Print `outputs_dir`, `skill_path`, `substrate_path`, `files_glob` before continuing.
 2. Discover the runs and their file roles:
    - **Version-token regex (canonical):** `(?:^|-)v\d{2}(?=[-./]|$)`. A name "carries a version token" iff this regex finds a match.
    - **Run discovery:** if `outputs_dir` contains subdirectories whose names carry a version token, treat each such subdirectory as one run; within each run, the files to compare are those matching any `--files` glob. Otherwise, treat each file in `outputs_dir` matching any `--files` glob whose basename also carries a version token as one run.
@@ -308,6 +341,6 @@ The file must end with the version block required by the workspace CLAUDE.md.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.5         |
+| Version      | 1.6         |
 | Last Updated | 2026-05-16  |
 | Status       | Draft       |
