@@ -162,6 +162,7 @@ For each run, list 1–3 lines per artifact. At minimum, one line per (dimension
 - Rationale: [which observed deviations it would have prevented]
 - Projected effect: prevented [A], partial [B], unaffected [C], regressed [D]
 - Risk: [one sentence]
+- Dependencies / Overlap: [type] with R-XXX — [one-sentence relationship]; [type] with R-YYY — [one-sentence]   ·   or exactly `independent` if no interaction with any other R
 
 ### R-002 — …
 
@@ -169,6 +170,6 @@ For each run, list 1–3 lines per artifact. At minimum, one line per (dimension
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.2         |
+| Version      | 1.3         |
 | Last Updated | 2026-05-16  |
 | Status       | Draft       |

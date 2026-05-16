@@ -92,6 +92,23 @@ Do not include a recommendation that:
 - Trades a structural property the substrate explicitly varies on (e.g., the substrate itself uses different wordings for the same idea — runs reflecting that variance are doing the right thing).
 - Has a projected lift of less than +5 points across all dimensions combined.
 
+## Annotating dependencies and overlaps
+
+After the ranked list is finalised in Phase 6.3, every recommendation must carry a `Dependencies / Overlap` line as its last body bullet. The line names other recommendation IDs and one of six relationship types — chosen by inspecting whether the recommendations interact at scoring time, share a target dimension, or push against each other.
+
+| Type | When to use it | One-line example |
+|:--|:--|:--|
+| `requires` | R-B's projected lift presumes R-A is applied (the lift was computed against the deviations R-A would have removed) | `requires R-001 — R-002's +5 pts on Identifier is additive only after R-001 closes the FR-005 fold` |
+| `additive` | R-A and R-B both target the same (dimension, artifact) cell; lifts compound (clamp at 100%) | `additive with R-002 — both target Identifier alignment on the requirements artifact; lifts sum to +35 pts` |
+| `overlaps` | R-A and R-B address overlapping drift sets; combined lift is less than the naive sum | `overlaps with R-003 — both touch NFR-001 surface drift; combined lift < +20 pts because two of the deviations are the same evidence` |
+| `supersedes` | R-A's rule fully subsumes R-B's; emitting both is redundant | `supersedes R-004 — R-001's verbatim-pin rule already enforces R-004's narrower "pin numeric thresholds" case` |
+| `tension` | R-A and R-B push against each other; applying both narrows or reverses one's lift | `tension with R-005 — R-005 widens ERR coverage while R-002's no-fold rule constrains ID assignment; the constraint can force ERR-NNN gaps` |
+| `independent` | No relationship to any other R in the ranked list | `independent` |
+
+Formatting rule: the `Dependencies / Overlap` line is rendered after `Risk` and consists of zero or more `<type> with R-XXX — <one-sentence relationship>` clauses separated by `; `, or exactly the literal `independent`. Do not combine `independent` with any other clause.
+
+The annotation does not change scores or ranks. It is a reader's aid — it lets a skill-author see, at a glance, whether dropping R-N from an implementation push would cascade through the projected aggregates of others.
+
 ## Substrate-agnostic statements, substrate-specific evidence
 
 A recommendation's `Statement` field must read as a rule the skill can apply to any future substrate, not as a transcription of the analyzed substrate. Substrate-specific content belongs in `Rationale` (which deviations it would have prevented) and in cited evidence — not in the rule itself.

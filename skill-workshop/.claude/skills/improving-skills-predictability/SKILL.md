@@ -324,13 +324,32 @@ Substitute the placeholder values in two places before Phase 7 writes:
 
 A dimension currently at 100% stays at 100%. A dimension that no recommendation targets stays at its current score. Never project above 100%.
 
-### 6.4 User confirmation
+### 6.4 Dependency annotation
 
-Before writing the report, surface the ranked recommendations to the user and ask:
+For each ranked recommendation, scan the others and emit one `Dependencies / Overlap` line citing the related IDs and the relationship type. The line is rendered as the last bullet of the recommendation body (after `Risk`).
 
-> "Keep all N recommendations in the report, drop some, or edit any?"
+| Type | Meaning |
+|:--|:--|
+| `requires` | This R's projected lift assumes another R is also applied |
+| `additive` | Same dimension; lifts compound (clamped at 100%) |
+| `overlaps` | Partially same drift; combined lift < sum of individual lifts |
+| `supersedes` | This R makes another redundant |
+| `tension` | This R pushes against another (applying both narrows or reverses one's lift) |
+| `independent` | No interaction with any other R |
 
-Apply the user's response. The user's edits are absorbed silently; do not annotate the report with "user-modified".
+Format:
+
+```
+- Dependencies / Overlap: <type> with R-XXX — <one-sentence relationship>; <type> with R-YYY — <one-sentence>
+```
+
+If no relationship to any other R, emit exactly:
+
+```
+- Dependencies / Overlap: independent
+```
+
+The annotation is a static pass over the ranked list — it does not change scores, ranks, or the projected aggregates already finalised in 6.3 / 6.3.5. No user gate. Phase 7 fires immediately after the last recommendation is annotated.
 
 ## Phase 7 — Write
 
@@ -355,6 +374,6 @@ After the write succeeds, stream the `## Summary - Outputs Variance per Dimensio
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.9         |
+| Version      | 1.10        |
 | Last Updated | 2026-05-16  |
 | Status       | Draft       |
