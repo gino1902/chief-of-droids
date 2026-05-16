@@ -25,7 +25,10 @@ The skill is read-only on the analyzed skill and its outputs. It writes exactly 
 
 ## Invocation
 
-All four arguments are mandatory. Arguments provided on the command line are accepted as-is. For each missing argument, the skill scans cwd, ranks plausible candidates, and asks the user to confirm. No auto-accept — the user must confirm every proposed value even when there is a single high-confidence candidate.
+All four arguments are mandatory. The skill follows two paths depending on how the user invokes it:
+
+- **Fast path** — every argument is provided on the command line and passes lightweight validation. Echo the resolved values and proceed; no per-argument user gate fires. The discovered-artifacts auto-confirm rule in Phase 0 step 3 may still suppress the only remaining gate, yielding a fully gate-free run.
+- **Gated path** — any argument is missing, or any provided argument fails validation. For each such argument the skill scans cwd, ranks plausible candidates, and asks the user to confirm. No auto-accept — the user must confirm every proposed value even when there is a single high-confidence candidate. Arguments that were provided and passed validation are not re-proposed.
 
 ```
 improving-skills-predictability --outputs <dir> --skill <path> --substrate <path> [--files <glob[,glob...]>]
@@ -114,9 +117,19 @@ On hard-fail, replace the current phase line and stop:
 ## Phase 0 — Pre-flight
 
 1. Resolve `(outputs_dir, skill_path, substrate_path, files_glob)`:
-   - **1a — parse provided args.** Accept any value passed on the command line as-is; no scan for those.
-   - **1b — for each missing arg, scan + propose + confirm.** Walk cwd (depth ≤ 3, exclusions as specified in the Invocation section). Apply the per-argument candidate definition. Present candidates per the UX-by-candidate-count table. Resolve in order `outputs → skill → substrate → files` so each scan can use earlier resolutions. The user must confirm every proposed value; never auto-accept.
-   - **1c — echo the four resolved values.** Print `outputs_dir`, `skill_path`, `substrate_path`, `files_glob` before continuing.
+   - **1a — parse provided args.** Read every value passed on the command line.
+   - **1b — fast-path validation (only when all four args are provided inline).** Validate each provided value against the rules below. If **all four pass**, skip 1c entirely and jump to 1d — no per-argument gate fires. If **any fail**, mark only the failing arg(s) as unresolved and fall through to 1c for those; provided args that passed stay as-is and are not re-proposed.
+
+     | Argument | Validation |
+     |:--|:--|
+     | `--outputs` | Path exists, is a directory, is readable |
+     | `--skill` | Path exists and resolves to a readable `SKILL.md` (either a directory containing one, or the file itself) |
+     | `--substrate` | Path exists, is a regular file, is readable as UTF-8 text |
+     | `--files` | Parses as a non-empty comma-separated list of glob patterns; each pattern is syntactically valid |
+
+     Semantic coverage (≥5 runs, ≥1 comparable artifact, glob actually matches files in `outputs_dir`) is checked by run discovery in step 2 and the hard-fail in step 4 — not here. If discovery in step 2 produces 0 comparable artifacts or fewer than 5 runs after a fast-path resolve, fall back to the gated `refine` prompt in step 3 (do not auto-confirm).
+   - **1c — for each unresolved arg, scan + propose + confirm.** Walk cwd (depth ≤ 3, exclusions as specified in the Invocation section). Apply the per-argument candidate definition. Present candidates per the UX-by-candidate-count table. Resolve in order `outputs → skill → substrate → files` so each scan can use earlier resolutions. The user must confirm every proposed value; never auto-accept.
+   - **1d — echo the four resolved values.** Print `outputs_dir`, `skill_path`, `substrate_path`, `files_glob` before continuing. On the fast path, append the literal tag `fast-path` to the echo line.
 2. Discover the runs and their artifacts:
    - **Version-token regex (canonical):** `(?:^|-)v\d{2}(?=[-./]|$)`. A name "carries a version token" iff this regex finds a match.
    - **Run discovery:** if `outputs_dir` contains subdirectories whose names carry a version token, treat each such subdirectory as one run; within each run, the files to compare are those matching any `--files` glob. Otherwise, treat each file in `outputs_dir` matching any `--files` glob whose basename also carries a version token as one run.
@@ -374,6 +387,6 @@ After the write succeeds, stream the `## Summary - Outputs Variance per Dimensio
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.10        |
+| Version      | 1.11        |
 | Last Updated | 2026-05-16  |
 | Status       | Draft       |
