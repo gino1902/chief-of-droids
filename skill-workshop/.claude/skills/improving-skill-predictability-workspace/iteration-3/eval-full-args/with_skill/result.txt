@@ -1,3 +1,0 @@
-report_path: /Users/gilllesmourgues/Workspace/chief-of-droids/skill-workshop/.claude/skills/improving-skill-predictability-workspace/iteration-3/eval-full-args/with_skill/outputs/writing-requirements-predictability-report.md
-interactive_prompts_shown: no
-runs_detected: 5

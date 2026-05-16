@@ -1,4 +1,0 @@
-phase_reached: 0
-outcome: hard_fail
-remediation_message: Provide a readable substrate `.md` file path in `--substrate`; the given path does not exist.
-report_file_written: no

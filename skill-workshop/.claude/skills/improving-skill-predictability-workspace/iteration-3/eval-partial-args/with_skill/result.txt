@@ -1,4 +1,0 @@
-report_path: /Users/gilllesmourgues/Workspace/chief-of-droids/skill-workshop/.claude/skills/improving-skill-predictability-workspace/iteration-3/eval-partial-args/with_skill/outputs/writing-requirements-predictability-report.md
-prompt_order: skill, substrate
-runs_detected: 5
-resolved_triple: outputs=/Users/gilllesmourgues/Workspace/chief-of-droids/skill-workshop/requirements, skill=/Users/gilllesmourgues/Workspace/chief-of-droids/skill-workshop/.claude/skills/writing-requirements, substrate=/Users/gilllesmourgues/Workspace/chief-of-droids/skill-workshop/requirements/substrates/two-tier-architecture-design-notes.md
