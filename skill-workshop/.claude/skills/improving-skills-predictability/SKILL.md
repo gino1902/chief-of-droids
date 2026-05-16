@@ -1,5 +1,5 @@
 ---
-name: improving-skill-predictability
+name: improving-skills-predictability
 description: Measures the output predictability of a Claude skill across multiple runs on a shared substrate and produces stress-tested recommendations to reduce variance. Use this skill whenever the user wants to audit how consistent a skill's outputs are run-to-run, compare N versioned outputs (e.g., `<slug>-v01` through `<slug>-vNN`) against the substrate that produced them, diagnose where a skill drifts (structure, identifiers, modality, verbatim invariants, naming), or get prioritized recommendations to harden the skill's prompt. Required inputs are the outputs directory (≥5 runs), the skill being analyzed, and the substrate file. Output is a single markdown report under `<CLAUDE.md parent dir>/predictability/<skill-name>/`. Generic — not limited to requirements-style outputs.
 allowed-tools:
   - Read
@@ -7,7 +7,7 @@ allowed-tools:
   - Bash
 ---
 
-# improving-skill-predictability
+# improving-skills-predictability
 
 QA assistant for skill engineering. Given N runs of the same skill on the same substrate, it quantifies how predictable the outputs are along several dimensions, produces a single markdown report, and ranks stress-tested recommendations by projected predictability lift.
 
@@ -27,16 +27,17 @@ The skill is read-only on the analyzed skill and its outputs. It writes exactly 
 Hybrid: arguments parsed when present, interactive prompts for anything missing.
 
 ```
-improving-skill-predictability --outputs <dir> --skill <path> --substrate <path>
+improving-skills-predictability --outputs <dir> --skill <path> --substrate <path> [--files <glob[,glob...]>]
 ```
 
 | Argument | Rule | On failure |
 |:--|:--|:--|
-| `--outputs` | Directory containing ≥5 output runs. Each run is either a sibling subdirectory (e.g., `<slug>-v01/`, `<slug>-v02/`, …) or a flat set of `.md` files differentiated by a trailing `v\d{2}` token | Interactive prompt |
+| `--outputs` | Directory containing ≥5 output runs. Each run is either a sibling subdirectory (e.g., `<slug>-v01/`, `<slug>-v02/`, …) or a flat set of files differentiated by a `v\d{2}` token in the basename | Interactive prompt |
 | `--skill` | Path to the analyzed skill. Accepts either the skill directory or its `SKILL.md` | Interactive prompt |
 | `--substrate` | Absolute or cwd-relative path to the substrate `.md` file that fed the runs | Interactive prompt |
+| `--files` | Comma-separated glob(s) selecting which files inside each run are compared (e.g., `*-requirements.md,*-report.md`). Default: `*.md`. Use to exclude drafts, notes, READMEs from the sweep | Skip — use default |
 
-If invoked without arguments, ask in this order: outputs dir → skill path → substrate path. Echo back the resolved triple before continuing.
+If invoked without arguments, ask in this order: outputs dir → skill path → substrate path. Echo back the resolved triple before continuing. `--files` is never prompted; it falls back to `*.md` silently.
 
 ## Hard prerequisites
 
@@ -81,13 +82,24 @@ On hard-fail, replace the current phase line and stop:
 
 ## Phase 0 — Pre-flight
 
-1. Resolve the triple `(outputs_dir, skill_path, substrate_path)` from arguments or interactive prompts.
-2. Discover the runs:
-   - If `outputs_dir` contains subdirectories matching `*v\d{2}*`, treat each as one run; expect each run to hold the file(s) to compare (default: every `.md` file inside).
-   - Otherwise, treat each `*.md` file in `outputs_dir` whose name carries a `v\d{2}` token as one run.
-3. If fewer than 5 runs are discovered, hard-fail.
-4. Resolve the skill name from the `SKILL.md` frontmatter `name:` field. If absent, fall back to the directory name.
-5. Resolve the report destination: `<CLAUDE.md parent dir>/predictability/<skill-name>/<skill-name>-predictability-<YYYYMMDD-HHMM>.md`. Create the directory if missing.
+1. Resolve the triple `(outputs_dir, skill_path, substrate_path)` from arguments or interactive prompts. Resolve `--files` if supplied; otherwise default to the single glob `*.md`.
+2. Discover the runs and their file roles:
+   - **Version-token regex (canonical):** `(?:^|-)v\d{2}(?=[-./]|$)`. A name "carries a version token" iff this regex finds a match.
+   - **Run discovery:** if `outputs_dir` contains subdirectories whose names carry a version token, treat each such subdirectory as one run; within each run, the files to compare are those matching any `--files` glob. Otherwise, treat each file in `outputs_dir` matching any `--files` glob whose basename also carries a version token as one run.
+   - **Role key:** for each comparable file, derive the role key by removing every version-token match from the basename (extension preserved) and collapsing any resulting `--` to `-`. Two files share a role iff their role keys are equal. Pair files across runs by role key.
+3. Echo the discovery before continuing, in this exact shape:
+   ```
+   Discovered: <N> runs × <M> roles
+     Roles:
+       - <role-key>  (present in K/N runs[, missing in vXX, vYY])
+       ...
+     Runs:
+       v01 v02 ...
+   ```
+   The echo is informational, not a prompt — proceed without waiting.
+4. If fewer than 5 runs are discovered, hard-fail.
+5. Resolve the skill name from the `SKILL.md` frontmatter `name:` field. If absent, fall back to the directory name.
+6. Resolve the report destination: `<CLAUDE.md parent dir>/predictability/<skill-name>/<skill-name>-predictability-<YYYYMMDD-HHMM>.md`. Create the directory if missing.
 
 ## Phase 1 — Ingest
 
@@ -95,7 +107,7 @@ Read into memory only — no writes yet:
 
 - `SKILL.md` and every file referenced from it (table rows under "Reference files", template paths, examples). Resolve relative paths against the skill directory.
 - The substrate file.
-- For each run, every comparable artifact (default: all `.md` files in the run). When a run contains multiple files, pair them across runs by basename (strip the version token) so that comparisons happen within file roles, not across roles.
+- For each run, every comparable artifact selected in Phase 0 (every file matching `--files`, default `*.md`). When a run contains multiple files, pair them across runs by the **role key** computed in Phase 0 (basename with all version-token matches removed and `--` collapsed) so that comparisons happen within file roles, not across roles.
 
 If a run is missing a file that other runs have, do not abort — record it as a per-file deviation ("file missing in run vX") and continue.
 
@@ -286,6 +298,6 @@ The file must end with the version block required by the workspace CLAUDE.md.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.2         |
-| Last Updated | 2026-05-15  |
+| Version      | 1.3         |
+| Last Updated | 2026-05-16  |
 | Status       | Draft       |
