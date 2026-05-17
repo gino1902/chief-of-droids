@@ -1,6 +1,15 @@
 #!/bin/bash
-# PreToolUse hook: emit cached Anthropic skill-authoring docs as additionalContext
-# when /skill-creator is about to run. Refreshes the cache inline if older than 7 days.
+# Hook handler for /skill-creator: emit cached Anthropic skill-authoring docs as
+# additionalContext. Wired to both PreToolUse(Skill) and UserPromptExpansion in
+# settings.json. Echoes the event name back so Claude Code accepts the output for
+# whichever event invoked it. Refreshes the cache inline if older than 7 days.
+
+HOOK_INPUT=$(cat)
+HOOK_EVENT=$(printf '%s' "$HOOK_INPUT" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("hook_event_name","PreToolUse"))' 2>/dev/null)
+[ -z "$HOOK_EVENT" ] && HOOK_EVENT="PreToolUse"
+
+# Lightweight visibility: one line per fire. Truncate with `: > /tmp/skill-creator-hook.log`.
+echo "$(date -Iseconds) fired (event=$HOOK_EVENT)" >> /tmp/skill-creator-hook.log
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CACHE_DIR="$SCRIPT_DIR/../cache/skill-docs"
@@ -19,12 +28,13 @@ fi
 CONTENT=$(cat "$CACHE_DIR"/*.md 2>/dev/null)
 [ -z "$CONTENT" ] && exit 0
 
-printf '%s' "$CONTENT" | python3 -c '
-import json, sys
+HOOK_EVENT="$HOOK_EVENT" printf '%s' "$CONTENT" | HOOK_EVENT="$HOOK_EVENT" python3 -c '
+import json, sys, os
 content = sys.stdin.read()
+event = os.environ.get("HOOK_EVENT","PreToolUse")
 print(json.dumps({
     "hookSpecificOutput": {
-        "hookEventName": "PreToolUse",
+        "hookEventName": event,
         "additionalContext": "## Fresh Claude Code skill-authoring docs (cached locally, refreshed every 7 days)\n\n" + content
     }
 }))'

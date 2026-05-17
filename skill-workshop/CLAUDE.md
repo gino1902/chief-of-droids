@@ -18,13 +18,15 @@ Extend `.claude/settings.local.json` if a path outside cwd is needed repeatedly.
 
 ## Skill-creator doc freshness
 
-When `/skill-creator` is invoked, a `PreToolUse` hook (matcher `Skill`, condition `Skill(skill-creator*)`) emits the latest Anthropic skill-authoring docs as `additionalContext` so the model sees them in-context before the skill runs. Sources: `skills.md`, `best-practices.md`, `features-overview.md` from `code.claude.com`.
+When `/skill-creator` is invoked, a hook injects the latest Anthropic skill-authoring docs as `additionalContext`. Two hook entries cover both invocation paths: `UserPromptExpansion` (matcher `skill-creator:skill-creator`) for user-typed slash commands, and `PreToolUse` (matcher `Skill`, condition `Skill(skill-creator*)`) for model-driven calls. Sources: `skills.md`, `best-practices.md`, `features-overview.md` from `code.claude.com`.
 
-Cache: `.claude/cache/skill-docs/` (gitignored). Refresh policy: hook fetches via `curl` only when the primary doc is older than 7 days; otherwise reads from disk. Force a refresh anytime with `bash .claude/scripts/refresh-skill-docs.sh`.
+The payload is ~108 KB. Claude Code persists large `additionalContext` to a session-scoped file under `tool-results/` and inlines a 2 KB preview + the file path — the model `Read`s the file when it needs the full docs, so ~28K tokens don't hit every turn.
+
+Cache: `.claude/cache/skill-docs/` (gitignored). Refresh policy: `curl` only when older than 7 days. Force a refresh: `bash .claude/scripts/refresh-skill-docs.sh`.
 
 Scripts:
 - `.claude/scripts/refresh-skill-docs.sh` — fetcher
-- `.claude/hooks/inject-skill-docs.sh` — stale-check + emit `additionalContext` JSON
+- `.claude/hooks/inject-skill-docs.sh` — stale-check + emit JSON (dynamic `hookEventName`); one-line diagnostic at `/tmp/skill-creator-hook.log`
 
 ## Auto-memory
 
