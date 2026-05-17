@@ -8,12 +8,11 @@ description: >
   Contract (BRN+OUT), Agent & Tool Discipline (TOOL+AGT), Deployment Gate
   (DEF+DSK+ENV+VER). Two decoupled workflows: `audit` produces a structured
   violation report; `fix` consumes a report and applies approved fixes via Edit.
-  Default audit mode is single-pass; `--by-block` opt-in produces five
-  sequential block reports. Target environments supported: claude-code,
-  claude-desktop, both. Use when the user says "audit this prompt", "review
-  this artifact for prompting quality", "check this SKILL.md", "improve this
-  CLAUDE.md", "fix this artifact using <audit-report>", or pastes prompting
-  content and asks whether it follows best practices.
+  Target environments supported: claude-code, claude-desktop, both. Use when
+  the user says "audit this prompt", "review this artifact for prompting
+  quality", "check this SKILL.md", "improve this CLAUDE.md", "fix this artifact
+  using <audit-report>", or pastes prompting content and asks whether it
+  follows best practices.
 ---
 
 <!-- target-environment: claude-code | target-model: claude-opus-4-7 | snapshot-ref: 2026-05-17 -->
@@ -68,10 +67,29 @@ If the file is >2000 lines: read in chunks using `Read` with explicit `offset` a
 
 ---
 
-## Workflow: `audit <artifact>` — single-pass (default)
+## Report destination
+
+Every audit workflow writes its report to disk. Resolve the destination at audit start.
+
+| Artifact source | Destination directory | Report stem |
+|:----------------|:----------------------|:------------|
+| On-disk, filename is `SKILL.md` or `CLAUDE.md` | parent directory of the artifact | parent directory name |
+| On-disk, any other filename | parent directory of the artifact | artifact filename without extension |
+| Inline (no on-disk path) | requires explicit `--out <dir>` argument | requires explicit `--stem <name>` argument |
+
+Filename: `<report-stem>-audit-<YYYYMMDD-HHMM>.md` using local time at write.
+
+If the source is inline and `--out` is absent: halt. Report: "Report destination unresolved — inline artifact requires --out <dir> and --stem <name>."
+
+If the destination directory is not writable: halt. Report: "Report destination not writable — [path]. Audit cannot proceed."
+
+The report file must end with the version block defined in `audit-report-schema.md`.
+
+---
+
+## Workflow: `audit <artifact>`
 
 **Trigger:** "audit X", "review X for prompting quality", "check X against best practices", "audit this artifact", or user pastes prompting content and asks whether it follows best practices.
-If the prompt contains `--by-block`: route to the `audit <artifact> --by-block` workflow.
 
 **Steps:**
 
@@ -88,27 +106,11 @@ If the prompt contains `--by-block`: route to the `audit <artifact> --by-block` 
 5. Evaluate all 41 criteria (B1 → B5 sequence) against the artifact in a single pass.
    Reason internally before producing the report. Include only the structured report in output.
 6. Produce the report per `audit-report-schema.md`.
-7. Surface findings only. Do not write to the artifact. Do not propose fixes inline.
+7. Resolve the destination per `Report destination`.
+8. Write the report to `<destination-dir>/<report-stem>-audit-<YYYYMMDD-HHMM>.md` using `Write`. Leave the audited artifact unchanged. Do not propose fixes inline.
+9. Echo the absolute report path in chat as the closing line of the run. Do not re-render the full report in chat.
 
-To apply fixes after an audit: invoke the `fix` workflow with the audit report.
-
----
-
-## Workflow: `audit <artifact> --by-block` — block-by-block
-
-**Trigger:** `audit <artifact> --by-block`, "audit X block by block", "incremental audit", or when the artifact is long enough that the user wants per-block intermediate reports.
-
-**Steps:**
-
-1. Steps 1–4 as in the single-pass workflow.
-2. Execute block loop — B1 → B2 → B3 → B4 → B5:
-   - Read the block definition from `audit-criteria.md`.
-   - Evaluate all criteria in the block against the artifact.
-   - Produce a Block Report per the schema's Block Report Variant.
-   - Apply the block's Proceed rule: surface the report; auto-proceed to the next block. No fix phase in this workflow.
-3. After B5, produce the Final Summary per the schema.
-
-Like the single-pass workflow, this workflow performs no writes. To apply fixes, invoke the `fix` workflow with the Final Summary or per-block reports.
+To apply fixes after an audit: invoke the `fix` workflow with the report path produced in step 8.
 
 ---
 
@@ -141,6 +143,6 @@ Reason: prior audit state introduces confirmation bias — each audit must evalu
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.2        |
 | Last Updated | 2026-05-17 |
 | Status       | Draft      |

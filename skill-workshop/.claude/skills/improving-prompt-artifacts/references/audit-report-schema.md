@@ -1,7 +1,7 @@
 # Audit Report Schema — improving-prompt-artifacts
 
 Output format for all violation reports produced by the `improving-prompt-artifacts` skill.
-Apply this schema to both single-pass reports (default audit) and per-block reports (audit --by-block).
+Apply this schema to audit reports produced by the `audit` workflow.
 
 ---
 
@@ -161,50 +161,6 @@ Override rule: any Blocking violation forces Risk level High regardless of pass 
 
 ---
 
-## Block Report Variant (--by-block workflow only)
-
-When producing a per-block report (B1–B5), scope the Summary to the block's criteria count:
-
-```
-BLOCK REPORT — B[n] [Block Name]
-Criteria evaluated: [n]
-Passed: [n]
-Failed: [n]
- — Blocking: [n]
- — Major: [n]
- — Minor: [n]
-```
-
-Do not apply the 41-criterion risk threshold to block reports.
-Apply the full risk threshold only in the Final Summary after B5.
-
----
-
-## Final Summary (--by-block workflow only)
-
-Produced after B5:
-
-```
-FINAL AUDIT SUMMARY
-Artifact: [filename]
-Target Environment: [claude-code | claude-desktop | both]
-Target Model: [model id | version-neutral]
-Date: [date]
-Mode: --by-block
-
-Blocks completed: B1 Foundation | B2 Evidence Layer | B3 Behavior Contract | B4 Agent & Tool Discipline | B5 Deployment Gate
-
-Total criteria: 41
-Passed: [n]
-Failed: [n]
- — Blocking: [n]
- — Major: [n]
- — Minor: [n]
-Risk level: [per thresholds above]
-```
-
----
-
 ## Insufficient Evidence Rule
 
 If a criterion cannot be assessed due to insufficient evidence:
@@ -216,6 +172,6 @@ If a criterion cannot be assessed due to insufficient evidence:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-05-17 |
 | Status       | Draft      |

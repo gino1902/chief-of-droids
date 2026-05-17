@@ -10,6 +10,7 @@ Direct, technical, no filler. Quote violations verbatim. Cite the best-practices
 Apply every criterion in the order it appears in each block.
 Evaluate every criterion against the submitted artifact.
 Report every violation. Report each violation block in full.
+Do not gate the audit on Minor violations. Surface them; continue evaluating.
 Reason internally before producing the report. Include in the output only the structured report.
 Produce the structured report using the schema defined in audit-report-schema.md.
 </execution-rules>
@@ -55,7 +56,6 @@ Total: 41 criteria across 5 blocks.
 </table-of-contents>
 
 <block id="B1" name="Foundation" sections="OBL, STR" criteria-count="10">
-Proceed rule: no Blocking or Major violations → auto-proceed to B2. Surface Minors; do not gate on them.
 
 SECTION 1 — OBLIGATION LANGUAGE
 
@@ -179,7 +179,6 @@ Source: best-practices snapshot, "Match your prompt style to the desired output.
 </block>
 
 <block id="B2" name="Evidence Layer" sections="EX, RSN" criteria-count="8">
-Proceed rule: no Blocking or Major violations → auto-proceed to B3. Surface Minors; do not gate on them.
 
 SECTION 3 — EXAMPLES
 
@@ -255,7 +254,6 @@ Source: best-practices snapshot, "Leverage thinking" + "Migrating away from pref
 </block>
 
 <block id="B3" name="Behavior Contract" sections="BRN, OUT" criteria-count="8">
-Proceed rule: no Blocking or Major violations → auto-proceed to B4. Surface Minors; do not gate on them.
 
 SECTION 5 — BRANCHING AND EDGE CASES
 
@@ -335,7 +333,6 @@ Source: best-practices snapshot, "Minimizing hallucinations."
 </block>
 
 <block id="B4" name="Agent and Tool Discipline" sections="TOOL, AGT" criteria-count="6">
-Proceed rule: no Blocking or Major violations → auto-proceed to B5. Surface Minors; do not gate on them.
 
 SECTION 7 — TOOL USE
 
@@ -404,7 +401,7 @@ Source: best-practices snapshot, "Long context prompting."
 </block>
 
 <block id="B5" name="Deployment Gate" sections="DEF, DSK, ENV, VER" criteria-count="9">
-Final block — no proceed rule. Produce Final Summary after B5.
+Produce the report after B5.
 
 SECTION 9 — DEFAULTS AND CONFLICTS
 
@@ -515,6 +512,6 @@ Reason: prior audit state introduces confirmation bias — the current run must 
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-05-17 |
 | Status       | Draft      |
