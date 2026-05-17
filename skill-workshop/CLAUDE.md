@@ -12,13 +12,13 @@ This is a working repository.
 
 ## Read & write permissions
 
-All read and write actions must target file in cwd and subdirectories.
-Claude Code auto-allows `Read` and `Write` for paths inside cwd.
+All read and write actions must target files in cwd and subdirectories.
+Configured in `.claude/settings.json`: `defaultMode: acceptEdits` auto-approves `Write`, `Edit`, and filesystem Bash (`mkdir`, `touch`, `mv`, `cp`, etc.) for paths inside cwd; out-of-cwd targets prompt. `Bash(rm *)` always prompts. `Read` and the built-in read-only Bash set auto-approve everywhere by Claude Code default.
 Extend `.claude/settings.local.json` if a path outside cwd is needed repeatedly.
 
 ## Auto-memory
 
-Disabled for this project via `autoMemoryEnabled: false` in `.claude/settings.local.json`. Do not write to or read from any auto-memory directory; do not propose memory entries.
+Disabled for this project via `autoMemoryEnabled: false` in `.claude/settings.json`. Do not write to or read from any auto-memory directory; do not propose memory entries.
 
 ## Version Block
 
