@@ -9,10 +9,13 @@ allowed-tools:
 
 # improving-skills-predictability
 
+<role>
 QA assistant for skill engineering. Given N runs of the same skill on the same substrate, it quantifies how predictable the outputs are along several dimensions, produces a single markdown report, and ranks stress-tested recommendations by projected predictability lift.
 
 The skill is read-only on the analyzed skill and its outputs. It writes exactly one file: the report.
+</role>
 
+<reference-files>
 ## Reference files
 
 | File | Load at | Condition |
@@ -22,13 +25,15 @@ The skill is read-only on the analyzed skill and its outputs. It writes exactly 
 | `references/invariant-extraction.md` | Phase 2 | Always |
 | `references/recommendations-catalog.md` | Phase 6 | Always |
 | `references/summary.md` | Phase 5 + Phase 7 close | Always |
+</reference-files>
 
+<invocation>
 ## Invocation
 
 All four arguments are mandatory. The skill follows two paths depending on how the user invokes it:
 
 - **Fast path** — every argument is provided on the command line and passes lightweight validation. Echo the resolved values and proceed; no per-argument user gate fires. The discovered-artifacts auto-confirm rule in Phase 0 step 3 may still suppress the only remaining gate, yielding a fully gate-free run.
-- **Gated path** — any argument is missing, or any provided argument fails validation. For each such argument the skill scans cwd, ranks plausible candidates, and asks the user to confirm. No auto-accept — the user must confirm every proposed value even when there is a single high-confidence candidate. Arguments that were provided and passed validation are not re-proposed.
+- **Gated path** — any argument is missing, or any provided argument fails validation. For each such argument the skill scans cwd, ranks plausible candidates, and asks the user to confirm. No auto-accept — the user must confirm every proposed value even when there is a single high-confidence candidate. Reason: argument resolution is the load-bearing input to every downstream phase; a wrong argument silently degrades every score. The cost of a manual confirmation is low; the cost of a wrong-argument run is the entire report. Arguments that were provided and passed validation are not re-proposed.
 
 ```
 improving-skills-predictability --outputs <dir> --skill <path> --substrate <path> [--files <glob[,glob...]>]
@@ -72,13 +77,17 @@ Resolution order: `outputs → skill → substrate → files`. Each downstream s
 - `abort` → exit cleanly, no report written
 
 Echo back all four resolved values before continuing.
+</invocation>
 
+<prerequisites>
 ## Hard prerequisites
 
 - ≥ 5 distinct output runs are required. Fewer runs cannot produce a meaningful predictability signal — hard-fail with remediation: "Provide at least 5 runs in `--outputs`; found N."
 - The substrate must be readable as text. Hard-fail otherwise.
 - The skill path must contain a readable `SKILL.md`. Hard-fail otherwise.
+</prerequisites>
 
+<phase-model>
 ## Phase model
 
 | Phase | Name | Produced |
@@ -113,7 +122,9 @@ On hard-fail, replace the current phase line and stop:
   context: <relevant path or arg>
   remediation: <one-line suggestion>
 ```
+</phase-model>
 
+<instructions>
 ## Phase 0 — Pre-flight
 
 1. Resolve `(outputs_dir, skill_path, substrate_path, files_glob)`:
@@ -132,9 +143,36 @@ On hard-fail, replace the current phase line and stop:
    - **1d — echo the four resolved values.** Print `outputs_dir`, `skill_path`, `substrate_path`, `files_glob` before continuing. On the fast path, append the literal tag `fast-path` to the echo line.
 2. Discover the runs and their artifacts:
    - **Version-token regex (canonical):** `(?:^|-)v\d{2}(?=[-./]|$)`. A name "carries a version token" iff this regex finds a match.
+
+     Worked examples — version-token regex:
+     ```
+     v01-spec.md       → matches `v01`  (start-of-string + `-` after)
+     spec-v02.md       → matches `-v02` (preceded by `-`, followed by `.`)
+     spec-v01-draft.md → matches `-v01` (preceded by `-`, followed by `-`)
+     specv01.md        → no match (regex requires `(?:^|-)` — no leading dash)
+     spec-v1.md        → no match (regex requires exactly two digits)
+     spec-v100.md      → no match (regex requires `(?=[-./]|$)` — `0` after `v10` fails lookahead)
+     ```
    - **Run discovery:** if `outputs_dir` contains subdirectories whose names carry a version token, treat each such subdirectory as one run; within each run, the files to compare are those matching any `--files` glob. Otherwise, treat each file in `outputs_dir` matching any `--files` glob whose basename also carries a version token as one run.
    - **Artifact key:** for each comparable file, derive the artifact key by removing every version-token match from the basename (extension preserved) and collapsing any resulting `--` to `-`. Two files share an artifact iff their artifact keys are equal. Pair files across runs by artifact key.
-   - **Comparability filter:** an artifact is **comparable** iff it is present in ≥ ⌈N/2⌉ runs (rounded up). Artifacts below threshold are marked `[non-comparable]` in the echo, excluded from every Phase 3 scoring pass, and listed once in the per-file deviation summary. Never silently dropped.
+
+     Worked examples — artifact-key derivation:
+     ```
+     slug-v01--requirements.md   → strip `-v01` → slug--requirements.md → collapse `--` → slug-requirements.md
+     slug-v01-design.md          → strip `-v01` → slug-design.md (no `--` to collapse)
+     notes-v02.md                → strip `-v02` → notes.md (no `--` to collapse)
+     changelog.md                → no version-token match → changelog.md (unchanged)
+     ```
+   - **Comparability filter:** an artifact is **comparable** iff it is present in ≥ ⌈N/2⌉ runs (rounded up). Artifacts below threshold are marked `[non-comparable]` in the echo, excluded from every Phase 3 scoring pass, and listed once in the per-file deviation summary. Never silently dropped. Reason: artifacts appearing in fewer than half the runs more likely reflect skill output variance than stable behavior; including them would attribute noise to drift. Ceil-rounding (vs floor) preserves this ≥50% floor for odd N — without ceil, ⌊5/2⌋=2 would mark 40% coverage as comparable.
+
+     Worked examples — comparability filter:
+     ```
+     N=5, K=2 → ⌈5/2⌉=3, 2<3  → non-comparable
+     N=5, K=3 → ⌈5/2⌉=3, 3≥3  → comparable (at threshold)
+     N=5, K=4 → ⌈5/2⌉=3, 4≥3  → comparable (above threshold)
+     N=6, K=3 → ⌈6/2⌉=3, 3≥3  → comparable (even-N case)
+     N=7, K=3 → ⌈7/2⌉=4, 3<4  → non-comparable (odd-N below threshold)
+     ```
 3. Echo the discovery and ask the user to confirm, in this exact shape:
    ```
    Discovered: <N> runs × <M> artifacts (files glob: <glob>)
@@ -147,6 +185,52 @@ On hard-fail, replace the current phase line and stop:
 
    Proceed with these artifacts? [y / refine / abort]
    ```
+
+   Examples (each shows the Discovered block under a different coverage state):
+
+   ```
+   Full coverage (auto-confirm path):
+     Discovered: 6 runs × 3 artifacts (files glob: *.md)
+       Artifacts:
+         - changelog.md  (present in 6/6 runs)
+         - design.md     (present in 6/6 runs)
+         - notes.md      (present in 6/6 runs)
+       Runs:
+         v01 v02 v03 v04 v05 v06
+     auto-confirmed (trivial discovery)
+
+   Partial coverage, mixed file types (gate fires):
+     Discovered: 5 runs × 2 artifacts (files glob: *.json,*.md)
+       Artifacts:
+         - schema.json   (present in 5/5 runs)
+         - readme.md     (present in 3/5 runs, missing in v02, v04)
+       Runs:
+         v01 v02 v03 v04 v05
+
+     Proceed with these artifacts? [y / refine / abort]
+
+   Mixed state — some comparable, some not (gate fires):
+     Discovered: 6 runs × 3 artifacts (files glob: *.md)
+       Artifacts:
+         - api-spec.md   (present in 6/6 runs)
+         - tests.md      (present in 4/6 runs, missing in v03, v05)
+         - notes.md      [non-comparable: 2/6 < ⌈6/2⌉]
+       Runs:
+         v01 v02 v03 v04 v05 v06
+
+     Proceed with these artifacts? [y / refine / abort]
+
+   All non-comparable (gate fires):
+     Discovered: 7 runs × 2 artifacts (files glob: *.md)
+       Artifacts:
+         - scratchpad.md  [non-comparable: 3/7 < ⌈7/2⌉]
+         - draft.md       [non-comparable: 2/7 < ⌈7/2⌉]
+       Runs:
+         v01 v02 v03 v04 v05 v06 v07
+
+     Proceed with these artifacts? [y / refine / abort]
+   ```
+
    - `y` (or empty Enter) → continue
    - `refine` → re-prompt the files glob, repeat steps 2–3
    - `abort` → exit cleanly, no report written
@@ -157,6 +241,14 @@ On hard-fail, replace the current phase line and stop:
    (c) no artifact is flagged `[non-comparable]`,
    then skip the prompt: stream the Discovered block as a one-shot status line, append `auto-confirmed (trivial discovery)`, and continue to step 4 without awaiting user input. No interjection (`refine` / `abort`) is accepted in the auto-confirm path — the next user message is treated as Phase 1 progress. To force the prompt back on, the user must re-invoke with a non-trivial `--files` glob that produces partial coverage or non-comparable artifacts.
 
+   Worked examples — auto-confirm evaluation:
+   ```
+   (a) M=2, (b) all artifacts present in 5/5 runs, (c) no [non-comparable]    → all three hold  → auto-confirm
+   (a) M=2, (b) one artifact present in 3/5 runs, (c) no [non-comparable]     → (b) fails       → gate fires
+   (a) M=2, (b) all 5/5, (c) one artifact flagged [non-comparable]            → (c) fails       → gate fires
+   (a) M=0                                                                    → (a) fails       → gate fires
+   ```
+
    Otherwise (any artifact at K/N < N/N, any `[non-comparable]` row, or M = 0), prompt as above and await explicit user input.
 4. If fewer than 5 runs are discovered, hard-fail.
 5. Resolve the skill name from the `SKILL.md` frontmatter `name:` field. If absent, fall back to the directory name.
@@ -164,7 +256,9 @@ On hard-fail, replace the current phase line and stop:
 
 ## Phase 1 — Ingest
 
-Read into memory only — no writes yet:
+Read into memory only:
+
+Tool-call discipline: read the analyzed skill's `SKILL.md` first — its "Reference files" table and inline references list the auxiliaries to load. Once those paths are resolved, issue all remaining `Read` calls — (i) auxiliary files listed in the table, (ii) the substrate, (iii) every run-artifact file — as a single parallel batch. None of these reads narrows any of the others.
 
 - `SKILL.md` and every file referenced from it (table rows under "Reference files", template paths, examples). Resolve relative paths against the skill directory.
 - The substrate file.
@@ -188,7 +282,7 @@ Each invariant is stored with its source span so the report can cite it.
 
 ## Phase 3 — Cross-output analysis
 
-Run six analyses across the N runs, each applied per comparable artifact independently. Hold all results in memory; do not write until Phase 7.
+Run six analyses across the N runs, each applied per comparable artifact independently. Hold all results in memory until Phase 7.
 
 ### 3.1 Section structure fidelity
 
@@ -236,7 +330,7 @@ For each run, write a 1–3 line summary of what is distinctive about it — at 
 
 Apply `references/scoring.md` to convert raw findings into per-dimension percentages. The rubric is intentionally coarse (multiples of 5) to avoid false precision.
 
-Top-line score table (always include, even if a row is N/A). Score is the minimum across comparable artifacts (worst-of); `Worst artifact` names the artifact producing it (`all` if tied at the same value across all artifacts):
+Top-line score table (always include, even if a row is N/A). Score is the minimum across comparable artifacts (worst-of); `Worst artifact` names the artifact producing it (`all` if tied at the same value across all artifacts). Reason: averaging masks a single-artifact regression behind better-performing peers; worst-of surfaces the artifact that constrains the skill's predictability — exactly the artifact a fix should target.
 
 | Dimension | Source | Worst artifact | Score |
 |:--|:--|:--|:--|
@@ -277,7 +371,7 @@ Render the full report in memory using the exact template in `references/report-
 12. `## Recommendations` (populated in Phase 6)
 13. Version block
 
-Every score must be accompanied by a one-sentence reading that cites concrete evidence (which run, which heading, which identifier). Numbers without evidence are not allowed.
+Every score must be accompanied by a one-sentence reading that cites concrete evidence (which run, which heading, which identifier). Every number must cite concrete evidence.
 
 ## Phase 6 — Recommendations & stress test
 
@@ -327,6 +421,46 @@ Output the ranked list and write it to the `## Recommendations` section of the r
 - Risk: …
 ```
 
+Examples (each shows the shape of one entry; `R-NNN` / `R-MMM` / `R-PPP` are placeholders for the rank position assigned in Phase 6.3 — not cross-references between these examples):
+
+```
+High-lift, independent:
+### R-NNN — Pin the discovery-confirm prompt to a literal     [projected lift: +35 pts]
+- Targets: Section structure fidelity, Naming framing
+- Statement: In the analyzed skill, replace the free-form confirmation instruction at the end of the discovery phase with the verbatim literal `Confirm and proceed? [y / n]`. Every run must emit this string unchanged.
+- Rationale: 3/5 runs paraphrased the confirmation ("Continue?", "Ready to proceed?"), which caused downstream section headers to drift in two of those runs.
+- Projected effect: prevented 3, partial 0, unaffected 0, regressed 0
+- Risk: low — verbatim pin removes a degree of freedom that produced no observed value.
+- Dependencies / Overlap: independent
+
+Low-lift, narrow scope:
+### R-NNN — Pin the partial-match status label     [projected lift: +5 pts]
+- Targets: Section structure fidelity
+- Statement: In the analyzed skill, render the partial-match status as the literal token `[partial: K/N]` on every output row. No paraphrase.
+- Rationale: 1/5 runs varied the label ("incomplete (3/5)"), producing a minor downstream table-rendering drift.
+- Projected effect: prevented 1, partial 0, unaffected 4, regressed 0
+- Risk: none.
+- Dependencies / Overlap: additive with R-MMM — both pin verbatim labels in the analyzed skill's output schema; combined lifts compound (clamped at 100%).
+
+Zero-lift after stress test (kept for transparency):
+### R-NNN — Require summary titles to mirror the substrate's primary heading     [projected lift: +0 pts]
+- Targets: Naming framing
+- Statement: In the analyzed skill, require the title of each summary section to derive from the substrate's primary heading; reject paraphrased titles.
+- Rationale: 2/5 runs used a paraphrased summary title, scoring this dimension at 60%. Phase 6.2 stress test: every observed paraphrase was driven by an upstream substrate-reading step that re-summarised the heading before this rule could apply; constraining the summary title would not have intercepted any of them.
+- Projected effect: prevented 0, partial 0, unaffected 2, regressed 0
+- Risk: medium — adds a hard constraint that may conflict with legitimate substrate-rewording needs.
+- Dependencies / Overlap: independent
+
+Dependency-laden:
+### R-NNN — Render the fast-path preconditions as an explicit conjunction     [projected lift: +10 pts]
+- Targets: Section structure fidelity
+- Statement: In the analyzed skill's fast-path block, replace the bullet list of preconditions with a single AND-joined sentence: "If conditions A, B, and C all hold, take the fast path; otherwise fall through to the default branch."
+- Rationale: 2/5 runs evaluated the preconditions disjunctively, taking the fast path when only one condition held.
+- Projected effect: prevented 2, partial 0, unaffected 0, regressed 0
+- Risk: low — the AND-joined sentence reduces flexibility but matches the observed intent of the bullet list.
+- Dependencies / Overlap: requires R-MMM — R-MMM defines the default branch this R falls through to; supersedes R-PPP — R-PPP partially overlaps by tightening only one of the three preconditions.
+```
+
 ### 6.3.5 Projected aggregate
 
 After ranking, compute the projected per-dimension percentages by walking the recommendations and applying their lifts to the current scores (rules in `references/scoring.md` — Projected aggregates). From the updated per-dimension percentages, compute the projected Substance / Structure / Naming aggregates using the same formulas as the current state.
@@ -335,7 +469,7 @@ Substitute the placeholder values in two places before Phase 7 writes:
 - the `## Predictability verdict` section's projected line (both verdict lines, current + projected, must appear in the final report);
 - the `Projected` column of the `## Summary - Outputs Variance per Dimension` table, per the row→dimension mapping in `references/summary.md`. Comments cells that name a recommendation (e.g., `R-001 anchors IDs to substrate byte position`) are filled now, since the ranked IDs are finalised.
 
-A dimension currently at 100% stays at 100%. A dimension that no recommendation targets stays at its current score. Never project above 100%.
+A dimension currently at 100% stays at 100%. A dimension that no recommendation targets stays at its current score. Never project above 100%. Reason: lifts compound under the `additive` dependency type, but predictability is bounded at 100% by definition; projections above 100% would represent over-correction (more drift removed than observed) — a claim the analytical projection cannot legitimately make.
 
 ### 6.4 Dependency annotation
 
@@ -375,18 +509,29 @@ Write exactly one file:
 The file must end with the version block required by the workspace CLAUDE.md.
 
 After the write succeeds, stream the `## Summary - Outputs Variance per Dimension` block (table + model-attribution paragraph, per `references/summary.md`) to chat as the closing tokens of the run. The on-disk and chat renderings of the Summary are byte-identical; no other commentary appears between the `✓ Wrote …` line and the Summary block.
+</instructions>
 
+<operational-notes>
 ## Operational notes
 
-- Stateless. Two consecutive runs on the same inputs may produce slightly different recommendation wording but identical scores within ±5 points per (dimension, artifact) cell. The top-line worst-of score may shift by more than 5 points only when the worst artifact flips between runs — call this out explicitly in the report when it happens. Differences beyond these tolerances are themselves a finding worth reporting.
+- Stateless. Two consecutive runs on the same inputs may produce slightly different recommendation wording but identical scores within ±5 points per (dimension, artifact) cell. Reason: the scoring rubric is intentionally coarse (multiples of 5 — see Phase 4); a single rubric step is the noise floor that two stateless runs may produce on identical inputs. Drift beyond this band signals genuine analytical instability. The top-line worst-of score may shift by more than 5 points only when the worst artifact flips between runs — call this out explicitly in the report when it happens. Differences beyond these tolerances are themselves a finding worth reporting.
 - The report is the only artifact. Do not modify the analyzed skill or its outputs.
 - The analytical projection is a projection, not a measurement. The report must state this explicitly in the `## Recommendations` preamble.
 - When the substrate is large (>2000 lines), summarize the invariant set in the report rather than enumerating; keep evidence citations to the most discriminating ones.
 - All numbers in the report are evidence-backed. A score with no evidence row is treated as a hard-fail in Phase 4.
 - No scratch work in the output. The final report must not contain self-correction notes such as `(check)`, `(verify)`, `(TODO)`, `(unsure)`, parenthetical hedges directed at the reader, or any other in-line marker of analytical doubt. Either resolve the uncertainty before writing, or surface it as a one-sentence note in the relevant section. The reader is not a reviewer of the analyst's thinking — only of the result.
+</operational-notes>
+
+| Field                | Value                            |
+|----------------------|----------------------------------|
+| Target Model         | claude-opus-4-7                  |
+| Target Environment   | claude-code                      |
+| Best-Practices Ref   | 2026-05-17 snapshot              |
+| Last Revised         | 2026-05-18                       |
+| Revision Source      | improving-prompt-artifacts skill |
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.11        |
-| Last Updated | 2026-05-16  |
+| Version      | 1.13        |
+| Last Updated | 2026-05-18  |
 | Status       | Draft       |
