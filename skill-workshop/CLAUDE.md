@@ -16,6 +16,16 @@ All read and write actions must target files in cwd and subdirectories.
 Configured in `.claude/settings.json`: `defaultMode: acceptEdits` auto-approves `Write`, `Edit`, and filesystem Bash (`mkdir`, `touch`, `mv`, `cp`, etc.) for paths inside cwd; out-of-cwd targets prompt. `Bash(rm *)` always prompts. `Read` and the built-in read-only Bash set auto-approve everywhere by Claude Code default.
 Extend `.claude/settings.local.json` if a path outside cwd is needed repeatedly.
 
+## Skill-creator doc freshness
+
+When `/skill-creator` is invoked, a `PreToolUse` hook (matcher `Skill`, condition `Skill(skill-creator*)`) emits the latest Anthropic skill-authoring docs as `additionalContext` so the model sees them in-context before the skill runs. Sources: `skills.md`, `best-practices.md`, `features-overview.md` from `code.claude.com`.
+
+Cache: `.claude/cache/skill-docs/` (gitignored). Refresh policy: hook fetches via `curl` only when the primary doc is older than 7 days; otherwise reads from disk. Force a refresh anytime with `bash .claude/scripts/refresh-skill-docs.sh`.
+
+Scripts:
+- `.claude/scripts/refresh-skill-docs.sh` — fetcher
+- `.claude/hooks/inject-skill-docs.sh` — stale-check + emit `additionalContext` JSON
+
 ## Auto-memory
 
 Disabled for this project via `autoMemoryEnabled: false` in `.claude/settings.json`. Do not write to or read from any auto-memory directory; do not propose memory entries.
