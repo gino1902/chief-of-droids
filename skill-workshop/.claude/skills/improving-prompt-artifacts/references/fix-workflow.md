@@ -9,6 +9,8 @@ Consumes a prior audit report. Proposes fixes per violation. Awaits per-violatio
 Do not propose fixes for criteria not in the supplied audit report.
 Do not apply any fix without explicit user approval for that specific fix.
 Use `Edit` for targeted text replacements. Use `Write` only for full-file structural rewrites with explicit user approval.
+`Edit` and `Write` calls during this run target `target-artifact` only. If a fix appears to require modifying a different file, halt and report — do not write. Reason: the audit report scopes the fix run; writing outside the scoped artifact is a silent regression on an unrelated file.
+Surface every iteration of each fix proposal in chat along with its self-challenge notes — iter-1, iter-2, iter-3, and any further iterations triggered by a Drifting verdict. The `y/n` prompt appears only after the trajectory verdict is surfaced. Reason: user visibility into the refinement steps lets the reviewer verify the self-challenge actually happened — without it, the iteration loop becomes internal handwaving the user cannot audit.
 After all approved fixes are applied, append or update the revision metadata block (criterion VER-2).
 Do not re-run the audit at the end of the fix workflow — that is a separate invocation.
 </execution-rules>
@@ -32,20 +34,57 @@ If Target Model or Target Environment cannot be inferred and is not in the audit
 
 ## Workflow steps
 
-1. **Read inputs.** Read the artifact (`Read` tool) and the audit report. Confirm both are parseable.
+1. **Read inputs.** Read the artifact (`Read` tool) and the audit report. Confirm both are parseable. Extract the `Artifact:` path from the audit report header and bind it as `target-artifact` for the whole run. Every `Edit` and `Write` call during this fix run must target `target-artifact` verbatim. If the user-supplied artifact path differs from the report's `Artifact:` line, halt and surface the mismatch — do not proceed.
 
 2. **Filter violations.** Build a fix queue containing only Blocking and Major violations from the report. Surface Minor violations to the user as "skipped — re-run audit and request inclusion if you want these fixed."
 
 3. **For each violation in the queue:**
-   1. State the criterion ID, severity, and finding.
-   2. Quote the current text (≤20 words).
-   3. State the exact proposed replacement.
-   4. Cite the best-practices section that supports the fix, or "in-house" if criterion is in-house.
-   5. Await one of three explicit user responses:
-      - `approve` — proceed with this fix
-      - `reject` — skip this fix; mark as deferred
-      - `edit <new text>` — accept a user-supplied replacement instead of the proposal
-   6. Do not batch approvals across multiple violations. One approval per fix.
+   1. Display the violation block verbatim from the audit report — the full block exactly as it appears in the report file (criterion ID, Severity, Finding, Location, Citation, Fix). Do not paraphrase, summarize, or restate. Reason: paraphrase drifts wording across runs; the report file is the canonical text the user reviewed.
+   2. **Iteration 1 — draft.** Propose a first concrete replacement (the exact text that would land in `target-artifact`, plus insertion location).
+   3. **Self-challenge — iteration 1.** Audit the iter-1 proposal on two axes:
+      - **Fix-intent** — does it address exactly the violation's `Fix:` line, no more no less? Flag scope creep (extra edge cases, unrelated rules, prose expansion).
+      - **Predictability-intent** — does it reduce run-to-run variance in `target-artifact`'s runtime behaviour? See `## Predictability intent` below for the surfaces to test against.
+   4. **Iteration 2 — revise.** Propose a second concrete replacement that addresses the challenges from step 3. Show the iter-2 text in full.
+   5. **Self-challenge — iteration 2.** Re-audit on the same two axes. Flag any remaining drift on either axis.
+   6. **Iteration 3 — revise.** Propose a third concrete replacement that addresses the challenges from step 5. Show the iter-3 text in full.
+   7. **Self-challenge — iteration 3.** Audit on the same two axes. Iter-3 is not exempt from challenge.
+   8. **Trajectory analysis.** Analyse the three drafts as a set and assign one of three verdicts. Surface the verdict explicitly before any user prompt.
+      - **Stable** — iter-3 self-challenge passes both axes AND iter-2 and iter-3 share the same insertion location, the same structural shape, and the same set of named surfaces being added. Differences are wording polish only.
+      - **Drifting** — iter-3 self-challenge fails on at least one axis, but the trajectory iter-1 → iter-2 → iter-3 shows convergence (each iteration removes prior failures or stabilises at least one of: insertion location, structural shape, named surfaces).
+      - **Divergent** — the three structural attributes (insertion location, structural shape, set of named surfaces) do not stabilise across iter-2/iter-3, OR each iteration introduces a new variance surface its predecessor did not.
+   9. **Branch on verdict.**
+      - **Stable** → surface iter-3 + the trajectory verdict and ask: `Proceed (y/n)?`. On `y`, apply iter-3 text via `Edit` (or `Write` per the structural-rewrite rule in `<execution-rules>`), targeting `target-artifact`. On `n`, skip this fix; mark as deferred.
+      - **Drifting** → run iter-N+1, self-challenge it, re-analyse the trajectory across all iterations to date. Cap at iter-5. If iter-5 still drifts, fall through to **Divergent**.
+      - **Divergent** → surface every iteration produced + a one-sentence divergence diagnosis (which structural attribute did not stabilise, or which new variance surface each iteration introduced) + the recommendation "no change to `target-artifact` for this violation; the fix may be ill-posed for this artifact." Ask: `Proceed with no-change (y/n)?`. On `y`, skip this fix; mark as deferred-by-divergence. On `n`, halt this violation and surface: "Provide a steer for the next iteration." The user's steer becomes input to iter-N+1, which restarts the loop with the steer recorded.
+   10. Do not ask any `y/n` before the verdict is reached. The user approves only the convergence outcome, not an individual draft. Reason: surfaced iterations that invite approval invite premature commitment; the loop exists to push past the first plausible draft, and the verdict is the user's signal that the loop converged.
+   11. Do not batch approvals across multiple violations. One `y/n` per fix.
+
+**Surface format for each iteration** — show the iteration in this shape:
+
+```
+**Iteration <N>**
+Proposed replacement text:
+  <verbatim text that would be inserted/edited in target-artifact>
+
+Insertion location:
+  <quoted anchor from target-artifact, ≤30 words, or "new block at end of <section>">
+
+Self-challenge:
+  Fix-intent: <pass | fail — reason>
+  Predictability-intent: <pass | fail — reason>
+```
+
+After the last iteration, surface the trajectory verdict in this shape:
+
+```
+**Trajectory verdict: <Stable | Drifting | Divergent>**
+Insertion location stabilised: <yes | no — detail>
+Structural shape stabilised: <yes | no — detail>
+Named surfaces stabilised: <yes | no — detail>
+New variance surfaces introduced by latest iteration: <none | list>
+```
+
+Then prompt per the branch rules in sub-step 9.
 
 4. **Apply each approved fix.** Use `Edit` per fix. Preserve the rest of the file. If a fix requires structural rewrite (e.g. STR-1 section split, STR-2 XML restructure), surface this explicitly and request `Write` approval before applying.
 
@@ -83,6 +122,26 @@ If Target Model or Target Environment cannot be inferred and is not in the audit
 
 ---
 
+## Predictability intent
+
+A fix proposal passes the predictability-intent check when it does not introduce, and where possible removes, the following variance surfaces in `target-artifact`:
+
+| Surface | Failure shape |
+|:--------|:--------------|
+| Modal verbs in hard rules | `should`, `may`, `might`, `could`, `would` used where the rule must execute deterministically. Imperative or `must` required. |
+| Hedging qualifiers | `usually`, `typically`, `generally`, `often`, `normally`, `in most cases` in a hard rule. |
+| Ambiguous fallback | A branch without an explicit catch-all, or a fallback whose target output is not pinned. |
+| Unbounded output | Length, item count, or section count left open where a bound is needed to constrain variance. |
+| Missing Reason clause | A non-obvious rule without a Reason clause that encodes intent (not restatement). |
+| Synonym drift | Two terms used interchangeably for the same concept inside `target-artifact`. |
+| Implied scope | Effort, depth, or completeness left to the model to infer. |
+| Negative framing where positive form is unambiguous | `do not return X` where `return only Y` would have been clearer. |
+| Dangling reference | "standard format", "usual approach", or any pointer to behavior not defined inline or in a resolvable reference. |
+
+A proposal that adds one of these surfaces fails the predictability check even if it satisfies the fix-intent. A proposal that removes a surface that was not in the audit report's `Fix:` line still passes — incidental predictability gains are welcome; incidental scope creep on fix-intent is not.
+
+---
+
 ## Tool selection
 
 | Operation | Tool | Notes |
@@ -102,7 +161,7 @@ If Target Model or Target Environment cannot be inferred and is not in the audit
 | `Edit` fails (old_string not unique) | Surface the failure; ask user whether to apply with more surrounding context or skip this fix |
 | `Edit` fails (old_string not found) | The artifact has changed since audit; halt and recommend re-audit |
 | Audit report references criterion IDs not in audit-criteria.md | Surface as "stale report — re-run audit before applying fixes" |
-| User provides ambiguous response to a fix proposal | Re-ask: "Respond `approve`, `reject`, or `edit <text>`. No other response is processed." |
+| User provides ambiguous response to a fix proposal | Re-ask: "Respond `y` or `n`. No other response is processed." |
 
 ---
 
@@ -114,6 +173,6 @@ Fix runs are independent. A fix workflow consumes one audit report and produces 
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-05-17 |
+| Version      | 1.2        |
+| Last Updated | 2026-05-18 |
 | Status       | Draft      |
