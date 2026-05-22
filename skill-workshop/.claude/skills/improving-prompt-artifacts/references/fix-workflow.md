@@ -133,6 +133,7 @@ A fix proposal passes the predictability-intent check when it does not introduce
 | Ambiguous fallback | A branch without an explicit catch-all, or a fallback whose target output is not pinned. |
 | Unbounded output | Length, item count, or section count left open where a bound is needed to constrain variance. |
 | Missing Reason clause | A non-obvious rule without a Reason clause that encodes intent (not restatement). |
+| Counterfactual Reason clause | A Reason clause whose stated principle, causal claim, or named consequence is contradicted by the artifact's own documented behaviour (failure-scenario tables, phase outputs, configuration in referenced files, or workspace conventions the artifact inherits). Failure-mode example: the Reason asserts atomicity but the artifact's own failure table permits a partial-write outcome. Test: pick the most specific claim in the Reason; can you find a sentence elsewhere in `target-artifact` that contradicts it? |
 | Synonym drift | Two terms used interchangeably for the same concept inside `target-artifact`. |
 | Implied scope | Effort, depth, or completeness left to the model to infer. |
 | Negative framing where positive form is unambiguous | `do not return X` where `return only Y` would have been clearer. |
