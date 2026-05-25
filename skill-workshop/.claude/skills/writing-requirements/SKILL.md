@@ -17,6 +17,8 @@ Produces two output files for one deployable component (container, service, modu
 
 Seven phases run sequentially in memory. No writes until Phase 6 completes. Reason: per-phase intermediate state is not shaped like the final output (e.g. Phase 1 produces only Title + Scope + Actors; Phase 2 adds requirement sections); writing per-phase would leave truncated requirements and report files on disk that downstream consumers could not distinguish from a completed run.
 
+**Conservative emission stance:** when substrate signal is absent or ambiguous, emit `N/A` + Warning and proceed. Synthesis, inference, and paraphrase are permitted only where a rule explicitly grants them (Purpose inference under §Title + Purpose is the sole current exception).
+
 <reference-files>
 
 | File | Load at | Condition |
@@ -46,6 +48,8 @@ writing-requirements <topic-slug> from <path> --type generic|technical
 | `<path>` | Token immediately after `from`; absolute or cwd-relative; quote if whitespace | Hard-fail if not found |
 | `--type` | `generic` or `technical`; required | Hard-fail if absent or unrecognized |
 | Substrate | Must be `.md` extension | Hard-fail |
+
+Reason — slug reserved tokens: the strings `requirement`, `req`, `reqs` collide with the output filename pattern `<slug>-requirements.md`. A slug like `payment-requirements` produces the self-referential filename `payment-requirements-requirements.md`.
 
 **Invocation examples**
 
@@ -105,6 +109,10 @@ On hard-fail, replace the current phase line and stop:
   remediation: <one-line suggestion>
 ```
 
+Reason internally between phase transitions. Emit only phase-header lines, hard-fail blocks, and the Phase 4 closure line per format spec. Do not include reasoning narration in output.
+
+**Action stance:** proactive. On invocation, execute Phase 0 through Phase 6 without intermediate clarification prompts. Ambiguity in substrate signal is resolved by emitting `N/A` + Warning per the conservative emission stance, not by halting for user input. Hard-fail conditions in Phase 0 are the sole grounds for halting.
+
 **Hard-fail examples**
 
 Phase 0.2 (invalid slug):
@@ -142,9 +150,13 @@ Phase 6 (write permission):
 | 0.5 | Check cwd for `CLAUDE.md` first; if absent, walk upward to filesystem root directory by directory; the parent directory of the first `CLAUDE.md` found is the repo root | Hard-fail if none found |
 | 0.6 | Resolve output dir `<repo root>/requirements/<slug>/`; create if absent | Hard-fail on permission error |
 | 0.7 | Read prior `<slug>-requirements.md` if present (ID stability + version increment) | Warning if unreadable; treat as no-prior |
-| 0.8 | Read substrate file; reject non-`.md` extension | Hard-fail |
+| 0.8 | Read substrate file; reject non-`.md` extension OR empty file (0 bytes) OR whitespace-only file | Hard-fail |
 | 0.9 | Read `references/conventions.md` | Hard-fail if unreadable |
 | 0.10 | Read `references/template-s1.md` or `references/template-s2.md` per `--type` | Hard-fail if unreadable |
+
+Reads in steps 0.7–0.10 are independent (no read depends on another's output). Issue them as parallel tool calls in a single response. Reason: serial execution wastes latency on independent I/O.
+
+Non-canonical IDs in substrate (wrong separator like `FR_001`; wrong digit width like `FR-0001`) are not matched by the Phase 2 ID regex and are treated as un-IDed; next-available-ID assignment proceeds and Phase 4 emits a Warning citing the unmatched pattern.
 
 </phase-0-preflight>
 
@@ -179,15 +191,60 @@ No H1, no H2, no frontmatter title → slug verbatim + Warning:
   Title: chief-of-droids-3-tiers-upgrade-v01
   Report: Warning — substrate has no H1/H2/frontmatter title; slug used verbatim.
 
-Purpose: extract explicit purpose statement ("The purpose of…", "This component…", "This skill…"); if absent, infer from leading prose + Warning.
+Purpose: extract explicit purpose statement ("The purpose of…", "This component…", "This skill…"); if absent, infer from leading prose + Warning. Reason: Purpose is rhetorical framing recoverable from leading prose without semantic loss; Title is an identifier where fabrication would mask substrate mis-shape.
+
+**Purpose inference example**
+
+Substrate leading prose (no explicit purpose statement):
+  "This document describes how the bootstrap protocol handshakes tokens between the auth service and the session store."
+
+Inferred Purpose: describe the bootstrap protocol's token handshake between the auth service and the session store.
+
+Report: Warning — no explicit purpose statement; inferred from leading prose.
 
 **§ Scope**
 In Scope: extract from positive language — "in scope", "covers", "handles", "responsible for".
 Out of Scope: extract from negation — "not handled", "outside this", "downstream", "upstream", "out of scope", "owned by".
 Each subsection: `N/A` + Warning if signal absent. No synthesis when signal is absent.
 
+**Scope extraction example**
+
+Sample paragraph from substrate:
+  "This component covers token validation and session lookup. Audit logging is in scope. Token issuance is owned by the upstream identity provider and is not handled here."
+
+Extraction:
+  In Scope: token validation; session lookup; audit logging
+  Out of Scope: token issuance (owned by upstream identity provider)
+
+**Scope edge-case — no scope signal**
+
+Sample paragraph from substrate:
+  "The component processes incoming requests using internal validation logic."
+
+Extraction:
+  In Scope: N/A (Warning — no positive-scope language found)
+  Out of Scope: N/A (Warning — no negation-scope language found)
+
 **§ Actors & Consumers**
 Extract upstream/downstream systems and human roles. `N/A` + Warning if absent.
+
+**Actors & Consumers extraction example**
+
+Sample paragraph from substrate:
+  "The user authenticates via the upstream identity provider. The auth service reads session data from the session store. The audit logger and the rate limiter consume the auth service's output."
+
+Extraction:
+  Upstream actors: user (human role); upstream identity provider; session store
+  Downstream consumers: audit logger; rate limiter
+
+**Actors edge-case — no actor signal**
+
+Sample paragraph from substrate:
+  "The component validates inputs and produces output records."
+
+Extraction:
+  Upstream actors: N/A (Warning — no upstream/role signal found)
+  Downstream consumers: N/A (Warning — no downstream signal found)
 
 </phase-1-framing>
 
@@ -218,11 +275,24 @@ Cross-version stability:
   current substrate: FR-001 (unchanged), FR-003 (modified), one new un-IDed requirement.
   output: FR-001 unchanged, FR-003 updated, new requirement → FR-002 only if FR-002 is unused in prior; else next available (FR-004).
 
-**ERR coverage protocol (`--type technical` only):** for each FR drafted, classify the SHALL-action verb against the contract-shape matrix in `references/ears.md` § "Contract-shape coverage matrix". If the shape is Acquire / Mutate / Validate / Solicit / Transform-with-external-inputs, draft the paired ERR-NNN entry in the same Phase 2 pass. Do not defer to Phase 4 — Phase 4 only audits coverage, it does not draft. If an FR of mandatory-coverage shape is intentionally not paired with an ERR, attach an inline rationale to the FR entry: `(no ERR — rationale: <reason>)`. The rationale is the explicit opt-out; absent rationale + absent ERR is a Phase 4 Warning.
+**ERR coverage protocol (`--type technical` only):** for each FR drafted, classify the SHALL-action verb against the contract-shape matrix in `references/ears.md` § "Contract-shape coverage matrix". If the shape is Acquire / Mutate / Validate / Solicit / Transform-with-external-inputs, draft the paired ERR-NNN entry in the same Phase 2 pass. Do not defer to Phase 4 — Phase 4 only audits coverage, it does not draft. If an FR of mandatory-coverage shape is intentionally not paired with an ERR, attach an inline rationale to the FR entry: `(no ERR — rationale: <reason>)`. The rationale is the explicit opt-out; absent rationale + absent ERR is a Phase 4 Warning. Reason: explicit rationale forces the engineer to acknowledge the coverage gap is intentional, preventing accidental ERR omission from passing silently as a deliberate choice.
 
-**ERR opt-out rationale example**
+**ERR opt-out rationale examples**
 
-FR-008 The system shall validate that the input slug matches `^[a-z0-9-]+$`. (no ERR — rationale: Phase 0.2 hard-fail covers the invalid-slug surface; user does not reach the FR layer with a non-conforming slug)
+Validate-shape FR with rationale:
+  FR-XXX The system shall validate that the input slug matches `^[a-z0-9-]+$`. (no ERR — rationale: Phase 0.2 hard-fail covers the invalid-slug surface; user does not reach the FR layer with a non-conforming slug)
+
+Mutate-shape FR with rationale:
+  FR-XXX The system shall persist the verified token to the session store. (no ERR — rationale: persistence failures surface at the infrastructure layer below the FR layer; the FR assumes the store is reachable)
+
+Acquire-shape FR with rationale:
+  FR-XXX The system shall fetch the upstream policy document on session start. (no ERR — rationale: fetch failures fall through to a documented fallback document; absence of the resource is not a session-blocking condition)
+
+Acquire-shape FR with neither ERR nor rationale (Phase 4 Warning):
+  FR-XXX The system shall fetch the upstream policy document on session start.
+  (no paired ERR; no rationale attached)
+  Phase 4 emission:
+    Warning — FR-XXX is Acquire-shape but has no paired ERR and no opt-out rationale.
 
 </phase-2-drafting>
 
@@ -259,12 +329,39 @@ Resulting glossary entries:
   Bootstrap Protocol — auto-derived — verify
   Resolved Skills Map — auto-derived — verify
 
+**Glossary edge-case — all stop-word paragraph**
+
+Sample paragraph from substrate:
+  "The system reads JSON over HTTPS using the SDK and validates against the schema via the CLI."
+
+Rules firing:
+  Rule 1 (Acronym) → JSON, HTTPS, SDK, CLI
+  Rules 2–4: (none)
+
+Stop-word filter applied:
+  JSON, HTTPS, SDK, CLI all dropped (all in stop-word list)
+
+Resulting glossary entries: (none — §Glossary renders as N/A + Warning per the Phase 2 "all sections always render" rule)
+
+**Glossary edge-case — substrate-defined term (rule 4 firing)**
+
+Sample paragraph from substrate:
+  "Bootstrap Token: the opaque string emitted by the auth handshake; identifies the session."
+
+Rules firing:
+  Rule 4 (Explicit substrate definition) → Bootstrap Token
+
+Resulting glossary entry:
+  Bootstrap Token — substrate
+
 **Stop-word list** — exclude the following universally-understood terms from extraction regardless of which rule matched. Adding a term requires editing this list.
 
 ```
 JSON, XML, YAML, CSV, HTTP, HTTPS, URL, URI, UUID, UTF-8, ASCII, ISO-8601,
 SHA, MD5, TLS, SSL, API, CLI, GUI, SDK, OS, RAM, CPU, ID, IP
 ```
+
+Reason: the list is part of the artifact's audit trail — every addition surfaces in git history. A mutable runtime list would change extraction behavior silently between runs, with no record of what changed.
 
 Emit Warning for each glossary entry (user review required regardless of source rule).
 
@@ -301,6 +398,26 @@ Phase 4 emission:
   Warning — FR category: declared IDs FR-001, FR-007; sequence gap detected (FR-002..FR-006 absent).
   Outstanding: 0 blocking, 1 warning, 0 info
 
+**Edge-case example — duplicate ID**
+
+Substrate excerpt:
+  FR-XXX The system shall accept user input.
+  FR-XXX The system shall validate input format.
+
+Phase 4 emission:
+  Warning — FR category: duplicate ID FR-XXX attached to two distinct requirement-shaped blocks.
+  Outstanding: 0 blocking, 1 warning, 0 info
+
+**Edge-case example — term missing from §Glossary**
+
+Substrate excerpt:
+  FR-XXX The system shall extract the Bootstrap Token from the request header.
+  Glossary: (Bootstrap Token absent)
+
+Phase 4 emission:
+  Warning — term "Bootstrap Token" used in FR-XXX is absent from §Glossary.
+  Outstanding: 0 blocking, 1 warning, 0 info
+
 </phase-4-taxonomy>
 
 <phase-5-verification>
@@ -312,6 +429,20 @@ Follow `references/verification.md` for:
 - **§ Acceptance Criteria** — per-requirement derivation; Warning if no derivable AC exists
 - **§ Quality Criteria scorecard** — 5-criterion scoring per requirement
 
+**AC derivation example**
+
+Per-requirement AC derivation (format authority: `references/verification.md`; the shape below is illustrative only):
+  FR-XXX The system shall validate that the input slug matches `^[a-z0-9-]+$`.
+  Derived AC (illustrative):
+    slug "user-auth" → pass
+    slug "user_auth" → fail (underscore not in [a-z0-9-])
+    slug "User-Auth" → fail (uppercase not in [a-z0-9-])
+
+Missing-AC case:
+  FR-XXX The system shall be robust under load.
+  Derivation: no measurable predicate; AC cannot be derived.
+  Report: Warning — FR-XXX has no derivable AC.
+
 </phase-5-verification>
 
 <phase-6-format-write>
@@ -320,7 +451,16 @@ Follow `references/verification.md` for:
 
 Apply format pass across all sections per active template. Add version block at bottom of both output files.
 
-**Version:** read from prior `<slug>-requirements.md` if present; increment rightmost segment (`0.1 → 0.2`). Initial value: `0.1`. Status: always `Draft`. Last Updated: current date.
+**Version:** read from prior `<slug>-requirements.md` if present; increment rightmost segment (`0.1 → 0.2`). Initial value: `0.1`. Status: always `Draft`. Last Updated: current date. Reason — Status always Draft: outputs are iteratively re-submitted as substrate to refine the next pass; Final status is set by the user post-review, never by the skill.
+
+**Version increment chain**
+
+  No prior `<slug>-requirements.md` on disk:
+    Version: 0.1 (initial)
+  Prior file at version 0.1:
+    Version: 0.2 (rightmost segment incremented)
+  Prior file at version 0.2:
+    Version: 0.3
 
 **Write order:** `<slug>-requirements.md` first, then `<slug>-report.md`. Reason: `<slug>-requirements.md` is the user-facing deliverable; `<slug>-report.md` is its diagnostic. Writing the diagnostic first would let a successful report appear on disk before its referent deliverable existed, misleading any user who inspects the requirements file to confirm the run's outcome.
 
@@ -338,5 +478,5 @@ Commit gate suppressed for this skill; user commits post-run. Reason: this skill
 | Target Model         | claude-opus-4-7                      |
 | Target Environment   | claude-code                          |
 | Best-Practices Ref   | 2026-05-17 snapshot                  |
-| Last Revised         | 2026-05-22                           |
+| Last Revised         | 2026-05-26                           |
 | Revision Source      | improving-prompt-artifacts skill     |
