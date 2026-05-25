@@ -54,21 +54,26 @@ Plus a `raw/` directory for immutable source files, and subdirectories
 
 ---
 
-## Invariant — `raw/` write rule
+## Invariant — `raw/` access rule
 
-`raw/` is user-write-only. Claude never creates, modifies, or deletes files in
+`raw/` is closed to Claude by default. Two narrow exceptions:
+
+**Read exception** — On ingest, Claude reads exactly the one source file named
+in the trigger. No directory listing, no reads of sibling files, no scanning of
+`raw/` for any purpose.
+
+**Write exception** — None. Claude never creates, modifies, or deletes files in
 `raw/`. Once the user has placed a file in `raw/`, the file content is
 immutable. Renames or removals, if needed, are user actions.
 
-Claude may read from `raw/` freely (the ingest pipeline depends on it). Claude
-may also stage and commit user-placed `raw/` files as part of an ingest commit,
-since `git add` records state without modifying file content. Whether `raw/`
-files are committed by the user before ingest or by Claude as part of the
-ingest commit is parked (O.10).
+Git operations: Claude may stage and commit user-placed `raw/` files as part
+of an ingest commit, since `git add` records state without modifying file
+content. Whether `raw/` files are committed by the user before ingest or by
+Claude as part of the ingest commit is parked (O.10).
 
 This rule applies only to `raw/`. The wiki side (pages + `index.md` + `log.md`)
-has the inverse rule: Claude writes via the ingest pipeline; no Obsidian
-hand-edits (see B.6).
+has the inverse rule: Claude reads and writes freely via the ingest pipeline;
+no Obsidian hand-edits (see B.6).
 
 ---
 
@@ -118,9 +123,9 @@ flag set when "newer wins" suggests `do not add`.
 
 ```
 1. User places source S in raw/ (Claude does not write to raw/)
-2. User triggers ingest
+2. User triggers ingest, naming S
 3. Wiki lock acquired (refuse if another report is pending)
-4. Claude reads S from raw/, analyses content
+4. Claude reads S (and only S) from raw/, analyses content
 5. Claude identifies candidate target pages, reads each, applies policies
    (newer-wins, replace/supersede/coexist, do-not-add)
 6. Claude emits Report artefact (4 tables + editable log entry)
@@ -254,7 +259,8 @@ places that carry per-source metadata.
 
 Correction path is **full re-ingest of the source**:
 
-1. User triggers re-ingest of the source file.
+1. User triggers re-ingest of the source file (by name; per the `raw/` access
+   rule, Claude reads only the named file).
 2. Claude re-reads the immutable raw file.
 3. Claude re-extracts `source_title` and `issued_date`.
 4. Claude greps citing pages (those with the source filename in their `sources[]`).
@@ -301,7 +307,7 @@ Prioritize accuracy, freshness, structure, reuse, and long-term maintainability 
 | R.1 | `Depends on` is Claude-declared — apply-time dangling check is only as good as Claude's declaration. Mitigation candidate: post-apply integrity scan (out of scope). |
 | R.2 | Section-attribution italic-line format and footnote-definition format are fragile; relies on strict pipeline adherence and not being hand-edited. Elevated since the sidecar layer is gone — these lines plus front-matter `sources[]` are the only metadata carriers. |
 | R.3 | Front-matter `sources[]` denormalization can drift across pages (different titles or dates for the same `source_file`). Cross-page consistency lint at apply (O.5) is the planned mitigation. |
-| R.4 | "Convention only" enforcement of ingest-only writes (B.6, B.8) is willpower-dependent. Pre-ingest dirty-tree check is a candidate future tripwire if discipline slips. |
+| R.4 | "Convention only" enforcement of the `raw/` access rule (B.6, B.8) is willpower-dependent — covers both the read constraint (only the named file per ingest, no listing or sibling reads) and the write constraint (no writes ever). Pre-ingest dirty-tree check is a candidate future tripwire if discipline slips. |
 | R.5 | File format is informational only — inferred from filename extension. No policy distinction by format. Manual notes, PDFs, transcripts, etc. all flow through the same ingest pipeline; user judgment handles the cases where format matters. |
 | R.6 | Re-ingest (for source-metadata correction) may surface unrelated content changes — user must reject rows they don't want. Mildly annoying; accepted trade-off. |
 | R.7 | The framing case where "newer wins" is wrong (primary sources, foundational texts, historical records) — surfaced in Table 3 dates column for user override; defaults still favor newer. |
@@ -361,11 +367,12 @@ acknowledge the state, and continue from the chosen open item.
 | :--- | :--- | :--- | :--- |
 | — | v1.0 | 2026-05-22 | Initial requirements doc — three sub-problems resolved; source-summary page type dropped; sidecar-YAML pattern introduced for source metadata. |
 | v1.0 | v1.1 | 2026-05-25 | Sidecar layer dropped entirely; per-source metadata denormalized to page front-matter. Front-matter `sources[]` schema: `source_file`, `source_title`, `issued_date`, `ingested_date`. New invariant: `raw/` is user-write-only. Section-attribution syntax extended with inline `"source_title"`. Claim-level attribution via markdown footnote syntax added. Pipeline step 5 (read affected pages) made explicit. Trust posture rewritten around front-matter as canonical. O.5 reframed; O.8, O.9, O.10 added. R.5 reframed; R.8 added. FRAMING.md path updated to `wiki-data/requirements/FRAMING.md` (file moved). |
+| v1.1 | v1.2 | 2026-05-25 | `raw/` invariant renamed write rule → **access rule** and rewritten as closed-by-default with two narrow exceptions: read on ingest (only the named file — no listing, no sibling reads, no scans) and no write exception. R.4 expanded to cover both read and write constraints under convention-only enforcement. Pipeline step 2 names S explicitly; step 4 emphasises "and only S". Trust posture step 1 references the access rule. |
 
 ---
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.1 |
+| Version | 1.2 |
 | Last Updated | 2026-05-25 |
 | Status | Draft |
