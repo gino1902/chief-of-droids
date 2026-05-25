@@ -66,10 +66,17 @@ in the trigger. No directory listing, no reads of sibling files, no scanning of
 `raw/`. Once the user has placed a file in `raw/`, the file content is
 immutable. Renames or removals, if needed, are user actions.
 
-Git operations: Claude may stage and commit user-placed `raw/` files as part
-of an ingest commit, since `git add` records state without modifying file
-content. Whether `raw/` files are committed by the user before ingest or by
-Claude as part of the ingest commit is parked (O.10).
+**Git posture** — `raw/` is not tracked. The wiki repo's `.gitignore` excludes
+`raw/`. Implications:
+
+- Wiki commits cite raw filenames but the source files have no git presence.
+  A fresh clone has dangling citations until `raw/` is restored out-of-band.
+- The wiki is single-machine in posture; `raw/` backup is the user's
+  responsibility outside this framework.
+- Git history records when a page first cited a source (via `ingested_date` on
+  the page's front-matter), not when the source itself arrived in `raw/`.
+- At every ingest start, Claude echoes a reminder of this posture to the user
+  (see pipeline step 3).
 
 This rule applies only to `raw/`. The wiki side (pages + `index.md` + `log.md`)
 has the inverse rule: Claude reads and writes freely via the ingest pipeline;
@@ -122,32 +129,40 @@ flag set when "newer wins" suggests `do not add`.
 **Pipeline:**
 
 ```
-1. User places source S in raw/ (Claude does not write to raw/)
+1. User places source S in raw/ (Claude does not write to raw/; raw/ is gitignored)
 2. User triggers ingest, naming S
-3. Wiki lock acquired (refuse if another report is pending)
-4. Claude reads S (and only S) from raw/, analyses content
-5. Claude identifies candidate target pages, reads each, applies policies
+3. Claude echoes raw/ posture reminder:
+   "Note: raw/ is not under git. Source file 'S' exists only on your local
+    disk. Ensure it is backed up separately if you rely on it."
+   (Echoed every ingest.)
+4. Wiki lock acquired (refuse if another report is pending)
+5. Claude reads S (and only S) from raw/, analyses content
+6. Claude identifies candidate target pages, reads each, applies policies
    (newer-wins, replace/supersede/coexist, do-not-add)
-6. Claude emits Report artefact (4 tables + editable log entry)
-7. User reviews row-by-row: approve / edit / reject
-8. On Apply:
+7. Claude emits Report artefact (4 tables + editable log entry)
+8. User reviews row-by-row: approve / edit / reject
+9. On Apply:
    a. Dangling-reference check across approved rows
    b. If inconsistent → block, user resolves
    c. If clean → mutate wiki (pages + index.md + log.md), git commit,
       release lock
-9. Cancel: release lock, no mutations
+10. Cancel: release lock, no mutations
 ```
+
+**Operationalization deferred to ingest skill (TBD).** The `log.md` entry
+schema (O.2) and the `index.md` generation mechanics (O.1) are seeded in this
+doc and finalized in the skill. See Backlog cross-references.
 
 ### B. Versioning substrate
 
 | # | Decision |
 | :--- | :--- |
 | B.1 | Architecture: markdown-first (provisional; revisit triggers logged below). |
-| B.2 | Versioning mechanism: git. Wiki folder is a git repo. |
+| B.2 | Versioning mechanism: git. Wiki folder is a git repo. `raw/` is gitignored (see Invariant). |
 | B.3 | Commit granularity: one commit per applied report (atomic, clean log). |
 | B.4 | Commit message: auto-generated subject line + `log.md` entry body. |
 | B.5 | Ingest serialization: a report must be applied (committed) or cancelled before the next ingest can start. Commit = lock release. |
-| B.6 | Hand-edits via Obsidian: not supported on the wiki side. Ingest-only writes. (`raw/` has the inverse rule — see Invariant section: user-only writes.) |
+| B.6 | Hand-edits via Obsidian: not supported on the wiki side. Ingest-only writes. (`raw/` has the inverse rule — see Invariant section: user-only writes; ungitted.) |
 | B.7 | Correction path (wiki side): full ingest for everything (including typos). For per-source metadata corrections, see Trust posture below. |
 | B.8 | Enforcement: convention only, documented. No file-system locks, no git hooks. |
 
@@ -163,7 +178,7 @@ flag set when "newer wins" suggests `do not add`.
 | :--- | :--- |
 | C.1 | Page typology: 3 types — `entity`, `concept`, `synthesis`. Source-summary page type dropped in v1.0 (replaced by inline citation + denormalized front-matter; no sidecar layer as of v1.1). |
 | C.2 | Page typology is loose: Claude assigns at ingest based on source content and existing wiki shape; user overrides via report. |
-| C.3 | Sources live in `raw/` as immutable files. `raw/` is user-write-only (see Invariant section). No sidecar layer; per-source metadata is denormalized onto every citing page's front-matter. |
+| C.3 | Sources live in `raw/` as immutable files. `raw/` is user-write-only and ungitted (see Invariant section). No sidecar layer; per-source metadata is denormalized onto every citing page's front-matter. |
 | C.4 | Citation links resolve directly to raw files: `[[musk-bio.pdf]]`. Obsidian backlinks work natively. |
 | C.5 | Universal page shape: YAML front-matter + flexible markdown body using H2/H3 conventions. H1 = page title (front-matter `title` mirrors). |
 | C.6 | Provenance: section-level attribution. Italic line `*Sources: [[source_file]] "source_title"*` immediately after each heading (section / subsection / sub-subsection). Multiple sources comma-separated. Child sections inherit parent sources unless overridden. For **claim-level** attribution where no heading anchors the citation, use markdown footnote syntax: `[^id]` inline after the claim sentence, with definitions `[^id]: [[source_file]] "source_title"` at the end of the containing section. Footnote ID scoping is parked (O.8). |
@@ -220,8 +235,9 @@ The Model S launched in 2012[^musk-2012-modelS].
 [^musk-2012-modelS]: [[musk-bio.pdf]] "Elon Musk Biography"
 ```
 
-`raw/` source files are immutable. `raw/` is user-write-only (see Invariant
-section). All per-source metadata lives on the citing pages' front-matter.
+`raw/` source files are immutable. `raw/` is user-write-only and ungitted
+(see Invariant section). All per-source metadata lives on the citing pages'
+front-matter.
 
 ### Entity definition (canonical text for requirements)
 
@@ -237,7 +253,7 @@ section). All per-source metadata lives on the citing pages' front-matter.
 > existing entity/concept page, or as synthesis pages if cross-source
 > synthesis exists.
 
-### index.md schema
+### index.md schema (seed — operationalization deferred to ingest skill)
 
 | Aspect | Decision |
 | :--- | :--- |
@@ -246,7 +262,10 @@ section). All per-source metadata lives on the citing pages' front-matter.
 | Grouping | By `tags` (multi-category via tags). A page tagged with N tags appears under N groups. |
 | `aliases` | Not surfaced in `index.md`; remains in page front-matter only |
 | Canonical source | Page front-matter. `index.md` is regenerated, not hand-edited |
-| Generation timing | At each `Apply` of an ingest report (open mechanism — see Open items) |
+| Generation timing | At each `Apply` of an ingest report (skill-side mechanics) |
+
+Open mechanics (trigger plumbing, exact markdown shape, multi-tag grouping
+render) are finalized in the ingest skill.
 
 ### Source-metadata corrections — Trust posture
 
@@ -283,20 +302,20 @@ Prioritize accuracy, freshness, structure, reuse, and long-term maintainability 
 
 ---
 
-## Open items (deferred)
+## Open items
 
-| # | Item | Notes |
-| :--- | :--- | :--- |
-| O.1 | `index.md` generation mechanics | Triggered when, by what, markdown shape, multi-tag grouping rendering |
-| O.2 | `log.md` entry schema | Date, source, row counts, references — shape of the editable preview in report |
-| O.3 | `overview.md` | Scope, generation, maintenance |
-| O.4 | Subdirectory structure under wiki root | Categorization layout for pages |
-| O.5 | Cross-page front-matter `sources[]` consistency lint at apply | Every citing page should agree on (`source_title`, `issued_date`) for the same `source_file`. Mismatches block apply and surface for user resolution. Also extends to inline citation-line title strings vs front-matter `source_title`. |
-| O.6 | Naming-collision handling | When Claude proposes a slug that already exists (suffix? disambiguator? user prompt?) |
-| O.7 | Section-attribution and footnote parser strictness | How strict the `*Sources: [[a]] "Title"*` and `[^id]: [[a]] "Title"` formats must be; malformed-line handling. Elevated importance because the section-attribution / footnote lines are now the only inline carriers of source-title. |
-| O.8 | Footnote ID scoping | Page-scoped or section-scoped? ID format convention (e.g. `[^musk-2012-modelS]`). Where footnote definitions live (end of containing section vs end of page). |
-| O.9 | Inline title vs front-matter title divergence | If the inline title and front-matter `source_title` for the same `source_file` ever differ on the same page, which one wins? Lint surfaces; resolution is user-side at apply time. |
-| O.10 | `raw/` git lifecycle | User commits `raw/` files separately before ingest, or Claude stages-and-commits them as part of the ingest commit. |
+| # | Item | Status | Notes |
+| :--- | :--- | :--- | :--- |
+| O.1 | `index.md` generation mechanics | Deferred to ingest skill | Trigger, generator, markdown shape, multi-tag grouping render. Seed spec retained under section C; finalized in skill. |
+| O.2 | `log.md` entry schema | Deferred to ingest skill | Date, source, row counts, references; shape of editable preview in report. Seeded under A.5; finalized in skill. |
+| O.3 | `overview.md` | Deferred to overview skill | Scope, generation, maintenance. No spec fragments in this doc — skill starts from scratch. |
+| O.4 | Subdirectory structure under wiki root | Deferred (later) | Categorization layout for pages. |
+| O.5 | Cross-page front-matter `sources[]` consistency lint at apply | Open | Every citing page should agree on (`source_title`, `issued_date`) for the same `source_file`. Mismatches block apply and surface for user resolution. Also extends to inline citation-line title strings vs front-matter `source_title`. |
+| O.6 | Naming-collision handling | Open | When Claude proposes a slug that already exists (suffix? disambiguator? user prompt?) |
+| O.7 | Section-attribution and footnote parser strictness | Open | How strict the `*Sources: [[a]] "Title"*` and `[^id]: [[a]] "Title"` formats must be; malformed-line handling. Elevated importance because the section-attribution / footnote lines are now the only inline carriers of source-title. |
+| O.8 | Footnote ID scoping | Open | Page-scoped or section-scoped? ID format convention (e.g. `[^musk-2012-modelS]`). Where footnote definitions live (end of containing section vs end of page). |
+| O.9 | Inline title vs front-matter title divergence | Open | If the inline title and front-matter `source_title` for the same `source_file` ever differ on the same page, which one wins? Lint surfaces; resolution is user-side at apply time. |
+| O.10 | `raw/` git lifecycle | **Resolved** | `raw/` is gitignored. Question collapses. See Invariant — Git posture. |
 
 ---
 
@@ -307,11 +326,12 @@ Prioritize accuracy, freshness, structure, reuse, and long-term maintainability 
 | R.1 | `Depends on` is Claude-declared — apply-time dangling check is only as good as Claude's declaration. Mitigation candidate: post-apply integrity scan (out of scope). |
 | R.2 | Section-attribution italic-line format and footnote-definition format are fragile; relies on strict pipeline adherence and not being hand-edited. Elevated since the sidecar layer is gone — these lines plus front-matter `sources[]` are the only metadata carriers. |
 | R.3 | Front-matter `sources[]` denormalization can drift across pages (different titles or dates for the same `source_file`). Cross-page consistency lint at apply (O.5) is the planned mitigation. |
-| R.4 | "Convention only" enforcement of the `raw/` access rule (B.6, B.8) is willpower-dependent — covers both the read constraint (only the named file per ingest, no listing or sibling reads) and the write constraint (no writes ever). Pre-ingest dirty-tree check is a candidate future tripwire if discipline slips. |
+| R.4 | "Convention only" enforcement of the `raw/` access rule (B.6, B.8) is willpower-dependent — covers both the read constraint (only the named file per ingest, no listing or sibling reads) and the write constraint (no writes ever). `raw/` being ungitted means git is not even a passive witness if discipline slips. Pre-ingest dirty-tree check is a candidate future tripwire. |
 | R.5 | File format is informational only — inferred from filename extension. No policy distinction by format. Manual notes, PDFs, transcripts, etc. all flow through the same ingest pipeline; user judgment handles the cases where format matters. |
 | R.6 | Re-ingest (for source-metadata correction) may surface unrelated content changes — user must reject rows they don't want. Mildly annoying; accepted trade-off. |
 | R.7 | The framing case where "newer wins" is wrong (primary sources, foundational texts, historical records) — surfaced in Table 3 dates column for user override; defaults still favor newer. |
 | R.8 | Inline citation-line title and front-matter `source_title` for the same `source_file` can diverge on the same page (typo in one but not the other). Lint at apply (O.5 extension) is the mitigation. |
+| R.9 | `raw/` ungitted → no portability. A fresh clone has dangling citations until `raw/` is restored out-of-band. Single-machine posture assumed. Every-ingest echo (pipeline step 3) keeps this visible to the user. |
 
 ---
 
@@ -342,7 +362,8 @@ Mitigation: This is a real constraint. The pattern works best for personal/team 
 | Task / file | Relationship to this work |
 | :--- | :--- |
 | `wiki-data/requirements/FRAMING.md` | Source framing for this brainstorm. This document grounds the framing into operational design. Three of the original "Next steps to discuss" items (sources format, categories, tools) are substantially covered. Two remain: `overview.md`, and subdirectory structure. |
-| Ingest skill (TBD) | The Sub-problem A pipeline needs to be encoded as a skill (`ingesting-sources` or similar). Report artefact rendering, row-level approval, apply mechanics — all skill territory. Extraction of `source_title` and `issued_date` from raw content is part of the pipeline contract. |
+| Ingest skill (TBD) | The Sub-problem A pipeline needs to be encoded as a skill (`ingesting-sources` or similar). Report artefact rendering, row-level approval, apply mechanics — all skill territory. Extraction of `source_title` and `issued_date` from raw content is part of the pipeline contract. **Absorbs operationalization of `index.md` generation (O.1) and `log.md` entry schema (O.2); seeds for both retained in this doc.** |
+| Overview skill (TBD) | Owns `overview.md` scope, generation, and maintenance (O.3). No spec seeds in this doc — skill starts from scratch. |
 | `managing-tasks` skill | Each Apply produces a git commit; managing-tasks writes are pre-approved per CLAUDE.md. Tasks created during ingest (e.g. "review O.5 lint") flow through normal task hygiene. |
 
 ---
@@ -353,7 +374,9 @@ Open a new session in the Chief of Droids Claude Desktop project, then prompt:
 
 > Resume the wiki framework brainstorm. Read
 > `wiki-data/requirements/2026-05-22-wiki-framework-requirements.md`.
-> Pick up at the next open item (start with O.1 — index.md generation mechanics).
+> Pick up at the next active open item (O.5 — cross-page consistency lint —
+> is a natural next; O.6–O.9 are smaller and also open). O.1, O.2, O.3 have
+> moved out to skill scope; O.4 deferred; O.10 resolved.
 > Use brainstorming-ideas skill in resume mode.
 
 The brainstorming-ideas skill Phase 0 resume check will find this file,
@@ -368,11 +391,12 @@ acknowledge the state, and continue from the chosen open item.
 | — | v1.0 | 2026-05-22 | Initial requirements doc — three sub-problems resolved; source-summary page type dropped; sidecar-YAML pattern introduced for source metadata. |
 | v1.0 | v1.1 | 2026-05-25 | Sidecar layer dropped entirely; per-source metadata denormalized to page front-matter. Front-matter `sources[]` schema: `source_file`, `source_title`, `issued_date`, `ingested_date`. New invariant: `raw/` is user-write-only. Section-attribution syntax extended with inline `"source_title"`. Claim-level attribution via markdown footnote syntax added. Pipeline step 5 (read affected pages) made explicit. Trust posture rewritten around front-matter as canonical. O.5 reframed; O.8, O.9, O.10 added. R.5 reframed; R.8 added. FRAMING.md path updated to `wiki-data/requirements/FRAMING.md` (file moved). |
 | v1.1 | v1.2 | 2026-05-25 | `raw/` invariant renamed write rule → **access rule** and rewritten as closed-by-default with two narrow exceptions: read on ingest (only the named file — no listing, no sibling reads, no scans) and no write exception. R.4 expanded to cover both read and write constraints under convention-only enforcement. Pipeline step 2 names S explicitly; step 4 emphasises "and only S". Trust posture step 1 references the access rule. |
+| v1.2 | v1.3 | 2026-05-25 | `raw/` git posture defined: untracked (gitignored). Every-ingest echo of the posture added as pipeline step 3 (subsequent steps renumbered). O.10 resolved (collapsed by ungitted `raw/`). O.1 and O.2 deferred to ingest skill; spec fragments retained as skill seeds and annotated in-doc. O.3 deferred to a new overview skill (added to Backlog). O.4 marked deferred (later). R.4 expanded: ungitted `raw/` removes git as passive witness. R.9 added: portability lost on clone; every-ingest echo keeps it visible. Open items table gained a Status column. Resume hint updated. |
 
 ---
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.2 |
+| Version | 1.3 |
 | Last Updated | 2026-05-25 |
 | Status | Draft |
