@@ -6,33 +6,34 @@
 
 ## Hook
 
-A plan you can't test is a plan you can't trust. This recipe fixes the dependency design shape, ships per-task BDD and three suite-level rollups that verify your DAG, your exit criteria, and your critical path.
+A plan you want be executed by agents must be a plan you trust solid. This recipe fixes the dependency design shape, , ships per-task BDD and three suite-level rollups that verify your DAG, your exit criteria, and your critical path.
 
 ## When to trigger
 
-- A pattern source (paper, article, formal description) exists and constrains the deliverable's shape
+- A documented planning pattern (paper, standard, established practice) exists and constrains the deliverable's shape
 - A concrete requirements doc exists that can serve as a test fixture for the recipe
 - The user expects a *reusable* artifact, not a one-off plan
-- The pattern carries enough force (decomposition rules, variations, named tradeoffs) to define recipe sections
 - The user tolerates strict prescriptiveness (mandatory fields, no optional structure)
 
-**Don't trigger when:** the pattern source is too thin to constrain (then the example would have to supply structure); only one application is foreseen (recipe overhead unjustified); the user wants a plan, not a recipe; the example dominates the pattern's force (e.g. applying Task Graph to a 3-task project — overhead wins).
+**Don't trigger when:** the pattern source is too thin to constrain (then the requirements doc would have to supply structure); only one application is foreseen (recipe overhead unjustified); the user wants a plan, not a recipe; the example dominates the pattern's force (e.g. applying Task Graph to a 3-task project — overhead wins).
 
 ## Why it matters
 
-The naive flow is example-first: read the requirements, build a plan, retrofit a "method" afterward. That produces an example-shaped recipe — fits one project, leaks for the next. The pattern-first flow inverts this: the pattern dictates section structure, mandatory fields, and verification scenarios before any example content is admitted. The example then exercises the recipe as a black box. If the recipe survives, it is reusable. If it fails on the example, the recipe is patched — never the example. The play is self-supporting for the *pattern and recipe* (both distilled inline below); the *example* is paired by reference and not duplicated.
+The naive flow is example-first: read the requirements, build a plan, retrofit a "method" afterward. That produces a project-shaped recipe — fits one project, leaks for the next. The pattern-first flow inverts this: the pattern dictates section structure, mandatory fields, and verification scenarios before any example content is admitted. The example then exercises the recipe as a black box — if it survives, the recipe is reusable; if it fails, patch the recipe, never the example.
+
+Because the plan is executed by an agent — a skill, subagent, or claude.md-scoped session running inside Claude Code — prescriptiveness is the lever for predictability. Every task's mandatory contract (fields, BDD, granularity, antecedents) leaves no interpretive gap for the agent to fill with hallucination, omission, or off-path improvisation.
 
 ---
 
 ### Problem
 
-How to express parallelism for a static collection of atomic tasks with dependencies, executing efficiently — in parallel where possible, serially where required — given that tasks may have variable sizes and multiple input/output dependencies, and form a directed acyclic graph (DAG)?
+How to structure an implementation plan as a static collection of atomic work items with dependencies, executing efficiently — in parallel where independent work can proceed concurrently, serially where prior work must complete first — given that tasks may have variable sizes and multiple input/output dependencies, and form a directed acyclic graph (DAG)?
 
 ### Context
 
-Tasks with antecedents may only start when all their antecedents have completed. Antecedent results are passed to dependents *on completion* — data does not stream during execution. The graph is acyclic: dependencies are one-way, no task imposes a further dependency on its antecedents.
+Tasks with antecedents may only start when all their antecedents have completed. Handoffs happen *on completion* — partial progress doesn't stream between tasks. The graph is acyclic.
 
-Task graphs are defined statically at design time. Conditional tasks (executing on outcome of an antecedent) are allowed. *Even in variation-mode (graph defined at run time), the task graph does not evolve during execution — tasks do not create other dependent tasks.* All tasks and dependencies of the graph are known prior to execution.
+Implementation plans are authored statically at planning time and *do not evolve once work begins* — tasks do not spawn new dependent tasks during execution. Conditional tasks (executing based on an antecedent's outcome — e.g. "do X if review fails") are pre-declared in the plan.
 
 ### Forces
 
@@ -40,23 +41,23 @@ Task graphs are defined statically at design time. Conditional tasks (executing 
 
 | Force | Tension |
 | :--- | :--- |
-| Task Graph vs Other patterns | Pipeline / Divide-and-Conquer may be simpler and offer automatic load balancing |
-| Variable vs Uniform task size | Uniform = harder to design but more efficient; mixed sizes ⇒ overall time dominated by the largest task |
-| Large vs Small tasks | Very small tasks ⇒ overhead dominates work; very large tasks ⇒ insufficient parallelism |
-| Problem size vs Graph overhead | The problem must be large enough to justify the cost of graph construction |
-| Compile-time vs Run-time defined graphs | Compile-time = simpler but less applicable; run-time = more parallelism, higher complexity |
+| Task Graph vs Other patterns | Linear waterfall or recursive decomposition (epic→story→task) may be simpler and self-distribute the workload |
+| Variable vs Uniform task size | Uniform-sized tasks easier to schedule and parallelize; mixed sizes ⇒ critical path dominated by the longest task |
+| Large vs Small tasks | Very small tasks ⇒ planning overhead dominates real work; very large tasks ⇒ blocks parallelism |
+| Project size vs Plan overhead | Project must be large enough to justify the planning overhead of building the DAG |
+| Hardcoded plan vs Per-project plan | Hardcoded template = simpler but less applicable across projects; per-project plan from a recipe = more flexible, higher authoring complexity |
 
 **Implementation** *(operate below the plan-authoring layer; not directly mapped in the recipe)*
 
 | Force | Tension |
 | :--- | :--- |
-| Task breakdown vs Hardware capacity | More tasks than PEs enables load balancing; far fewer than PEs leaves silicon idle |
-| Task granularity vs Startup & communication overhead | Coarse-grained tasks reduce overhead but worsen load balance |
-| Task granularity vs Startup latency | Same trade-off, viewed from PE-startup cost |
+| Task breakdown vs Agent capacity | More tasks than concurrent agent slots enables scheduling; far fewer leaves capacity idle |
+| Task granularity vs Context-loading & handoff overhead | Coarse-grained tasks reduce context-switching cost but worsen workload balance |
+| Task granularity vs Agent startup latency | Same trade-off, viewed from per-invocation cost (skill activation, subagent spin-up) |
 
 ### Solution
 
-Break the computation into atomic tasks with explicit dependencies. The acyclic property removes deadlock risk *(provided the tasks are truly atomic)*. Hidden dependencies may cause deadlocks or races, so *every* dependency must be made explicit.
+Break the work into atomic tasks with explicit dependencies. The acyclic property removes deadlock risk *(provided the tasks are truly atomic — no circular blockers)*. Hidden dependencies may cause blockers or rework, so *every* dependency must be made explicit in the plan.
 
 Berkeley names three sub-patterns for breakdown (from *Patterns for Parallel Programming*, Ch 3):
 
@@ -66,23 +67,23 @@ Berkeley names three sub-patterns for breakdown (from *Patterns for Parallel Pro
 
 And one for assessment:
 
-- **Design Evaluation** — Apply per candidate graph to assess fitness against (1) PE count and task-overhead trade-off, (2) data passing and granularity in light of communication latency, and (3) simplicity vs flexibility vs efficiency. May yield multiple iterations across alternative graphs.
+- **Design Evaluation** — Apply per candidate plan to assess fitness against (1) agent capacity and task-overhead trade-off, (2) handoffs and task granularity in light of coordination cost, and (3) simplicity vs flexibility vs efficiency. May yield multiple iterations across alternative plans.
 
 #### Solution components (separate from forces)
 
-- **Load Balancing.** The pattern does *not* load-balance inherently. Load is determined by the critical path through the slowest tasks. Bottleneck removal is the programmer's responsibility: either (a) break a slow task into multiple parallel-eligible tasks on the graph at planning time, or (b) parallelize the task internally without changing graph topology.
-- **Sharing Data.** Either explicit data-passing antecedent→dependent, or control-flow synchronization on shared data. Implementation-level; not mapped to the recipe.
-- **Error Handling.** Each task handles its own errors; framework aggregates as appropriate. Implementation-level; not mapped.
+- **Workload Balancing.** The plan does *not* balance load inherently. Load is determined by the critical path through the slowest tasks. Bottleneck removal is the planner's responsibility: either (a) break a slow task into multiple parallel-eligible tasks at planning time, or (b) parallelize the task internally — spin up multiple agent instances — without changing plan topology.
+- **Handoffs.** Either explicit deliverable handoff antecedent→dependent (artifact passed at completion), or control-flow synchronization on a shared artifact (review/approval gates). Execution-level concern; not mapped to the recipe.
+- **Risk Handling.** Each task handles its own risks/failures; the project framework aggregates as appropriate (status reporting, escalation). Execution-level concern; not mapped.
 
 ### Variations
 
-Run-time graphs: the graph is constructed at run time from input. The task graph *still does not evolve during execution* — conditional tasks and their conditions are pre-declared. Run-time variation increases applicability at the cost of complexity.
+The recipe operates in Berkeley's *per-project variation* (Berkeley's term: 'run-time-defined-graph') — plan structure pinned by the recipe, per-project content supplied at planning time. See §Context for the invariants.
 
 ### Figure 3 — wavefront example (distilled)
 
 A 2-D wavefront calculation on a grid of variable size. Each cell `(m, n)` depends on `(m-1, n)` and `(m, n-1)`. The dependency pattern is fixed at design time; the grid size `M × N` is only known at run time.
 
-Dependencies form anti-diagonals — within an anti-diagonal, tasks are mutually independent and parallel-eligible. *Anti-diagonals are commonly called "waves" in parallel-programming usage; Berkeley uses "wavefront" for the calculation but does not formally name the cohorts.*
+Dependencies form anti-diagonals — within an anti-diagonal, tasks are mutually independent and parallel-eligible.
 
 ```
 Wave 0:  (0,0)
@@ -106,8 +107,8 @@ Wave number = `m + n`. Peak parallelism = `min(M, N) + 1`, reached at wave `min(
 | Known dependency pattern + run-time-determined instance count | Variations + Fig 3 | Plan declares antecedents at authoring; per-project task count emerges per application |
 | Variable vs Uniform task size | Forces (universal) | Mandatory `{S, M, L}` granularity tag per task |
 | Task granularity vs Startup overhead (force family) | Forces (implementation) | `L` tasks flagged for resolution per Load Balancing |
-| Critical path through slowest tasks | Solution > Load Balancing | Mandatory identification (granularity-weighted) in the plan |
-| Bottleneck removal (graph-split OR internal-parallel) | Solution > Load Balancing | Per-`L`-task decomposition note specifying which option applies |
+| Critical path through slowest tasks | Solution > Workload Balancing | Mandatory identification (granularity-weighted) in the plan |
+| Bottleneck removal (graph-split OR internal-parallel) | Solution > Workload Balancing | Per-`L`-task decomposition note specifying which option applies |
 | Task Decomposition / Group / Order | Solution | Recipe §D steps 2–4, verbatim |
 | Design Evaluation (evaluate-then-revise loop) | Solution | Recipe §D step 9 inspiration; criteria differ (recipe = requirement coverage, not hardware fit); ≥ 2 count is workspace-empirical |
 | Wavefront cohorts (Fig 3 anti-diagonals) | Variations + Fig 3 | Mandatory wave annotation as a separate plan section ("wave" = convention) |
@@ -154,7 +155,7 @@ Every task carries **all** fields below. A missing field is a defect.
 | `Examples` | At least one concrete worked snippet (yaml / md / shell / mermaid). |
 | `Acceptance criteria` | One or more `Given / When / Then` BDD rows. |
 | `Out of scope` | Explicit no's — what the task does **not** do. |
-| `Granularity` | `S` (≤ ½ day), `M` (½–2 days), `L` (> 2 days). `L` triggers a decomposition note declaring resolution: **(a)** graph-level split into multiple parallel-eligible tasks at planning time, OR **(b)** internal-parallel execution as a single task (multi-phase). Per Berkeley §Solution > Load Balancing. **Graph topology does not evolve at run time.** |
+| `Granularity` | `S` (≤ ½ day), `M` (½–2 days), `L` (> 2 days). `L` triggers a decomposition note declaring resolution: **(a)** graph-level split into multiple parallel-eligible tasks at planning time, OR **(b)** internal-parallel execution as a single task (multi-phase). Per Berkeley §Solution > Workload Balancing. **Graph topology does not evolve at run time.** |
 
 ### §C — BDD Test Suite Template
 
@@ -198,7 +199,7 @@ Scenario: Critical path is traversable
 4. **Order Tasks** *(Berkeley)* — for each task, name its antecedents from the artifact list. Mark wave number: **0** if no antecedents; otherwise **max(wave of antecedents) + 1**. *(For Fig 3, this yields wave(m,n) = m + n.)*
 5. **Granularity pass** — flag any `L` task; resolve per §B Granularity option (a) or (b).
 6. **Critical path** — find the longest cumulative-granularity chain.
-7. **Bottleneck callouts** — any `L` task on the critical path is a primary decomposition candidate (Berkeley §Solution > Load Balancing).
+7. **Bottleneck callouts** — any `L` task on the critical path is a primary decomposition candidate (Berkeley §Solution > Workload Balancing).
 8. **BDD pass** — author per-task scenarios; verify the three rollups hold.
 9. **Challenge pass** *(silent, ≥ 2 iterations)* — borrows the evaluate-then-revise loop from Berkeley *Design Evaluation*; the criteria differ (Berkeley = hardware fit; recipe = requirement coverage + risk consumption). The ≥ 2 count is workspace-empirical. Re-read against requirements; verify every requirement decision and residual risk is consumed by a task or explicitly out-of-scope.
 
@@ -268,6 +269,7 @@ Pairs with: `docs/conventions/play-format.md` (structural spec for plays) · `wi
 9. **Carry risks from upstream with a "where addressed" column.** Every upstream R.x must map to a plan task or be re-declared as residual. Traceability.
 10. **Path proposal + explicit user confirmation before directory creation.** Workspace rule honored. Saved a regenerate cycle for the wrong path.
 11. **Embed → audit → re-audit → measure drift → lock when substantive drift hits zero.** Self-supporting embedding is necessary but not sufficient; each embed needs a source-audit pass to catch misattribution before it ossifies; drift between revisions across (structural, substantive, precision, length) dimensions is the stability signal; *lock when one full pass yields zero substantive issues*. Precision drift below the lock threshold is asymptotic noise and out-of-band.
+12. **Prescribe for predictability when execution is agentic.** The recipe's mandatory fields, BDD, and granularity tags exist not for aesthetic discipline but because agent execution drifts without a prescriptive contract. Every field that's not mandatory becomes an interpretive gap; every interpretive gap is a hallucination opportunity. Lock the contract; let the agent fill the content.
 
 ---
 
@@ -288,7 +290,7 @@ How strict the recipe pins each structural element.
 | Out-of-scope per task | Mandatory field | Implicit by absence | Mandatory |
 | Suite-level rollups | Exactly three named scenarios | "At least one" | Exactly three |
 
-**Meta-observation:** strict on the *shape* of the task record and the verification suite; flexible on the *content* of each field. The recipe says you must have 11 fields, says nothing about how big a task should be, what tools to use, or what domain to apply it in. The shape is universal; the substance is per-project.
+**Meta-observation:** prescriptive on shape, flexible on content — and the split is governed by *agent execution*. Shape leaves no interpretive room (predictability); content is per-project so the agent earns its keep there. Shape is the architect's lever for determinism; content is where agent autonomy is welcome.
 
 ### T2. Compile-time vs Run-time decomposition
 
@@ -379,7 +381,7 @@ Also breaks if the example is too small for the pattern's overhead. Berkeley's o
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.5 |
+| Version | 1.8 |
 | Last Updated | 2026-05-25 |
-| Status | **Locked** (substantive drift = 0 achieved at this revision; precision residual is out-of-band) |
+| Status | **Locked** for Berkeley conceptual fidelity (forces, solution components, invariants). v1.6 added agent-execution rationale; v1.7 adapted §Source vocabulary to project planning + corrected agent characterization; v1.8 is a clarity pass on residual jargon (planning-pattern phrasing, per-project variation framing, project-shaped recipe, self-distribute workload; drops Fig 3 terminology caveat). Surface vocabulary planning-native; Berkeley structure preserved. |
 | Pairs with | `wiki-data/plans/2026-05-25-wiki-framework-implementation-plan.md` (first applied plan, the example fixture) · `docs/conventions/play-format.md` (structural spec for plays) |
