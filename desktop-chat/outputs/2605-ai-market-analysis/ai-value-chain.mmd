@@ -1,0 +1,40 @@
+%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}, "flowchart": {"defaultRenderer": "elk"}}}%%
+
+flowchart TD
+  classDef main              fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
+  classDef primary           fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
+  classDef secondary         fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
+  classDef tertiary          fill:#C5D8F6,color:#000000,stroke:#425F8B
+  classDef primary_cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
+  classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#6DA5FF
+  classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B,stroke-dasharray:5
+  linkStyle default color:#0F0E2B
+
+  subgraph Main
+    A(Energy)
+    B(Data Center)
+    C(Chips)
+    D(Cloud)
+    E(Models)
+    F(Data Orchestrator)
+    G(Agent Orchestrator)
+    H(Business Workflow)
+    I(Enterprise Operations)
+    J((Economic
+    Value))
+  end
+
+  A -->|Power| B
+  B -->|Host| C
+  C -->|Compute| D
+  D -->|Provision| E
+  E -->|Infer| F
+  F -->|Contextualize| G
+  G -->|Automate| H
+  H -->|Optimize| I
+  I -->|Generate| J
+
+  class A,B,C,D tertiary
+  class E,F,G,H,I secondary
+  class J primary
+  class Main main
