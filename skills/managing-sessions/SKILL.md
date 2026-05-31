@@ -10,7 +10,7 @@ description: >
   "manage sessions", "analyse sessions", "prune sessions", "session hygiene",
   "what should I keep", "challenge memories", "check memories".
 ---
-<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-04-12 -->
+<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-05-31 -->
 
 # Managing Sessions Skill
 
@@ -113,7 +113,7 @@ filenames, headers, and memory challenge scope.
    Resolution order:
    - If the session is routed to a named repo: read
      `/Users/gilllesmourgues/Workspace/chief-of-droids/<repo>/CLAUDE.md`
-   - Otherwise: read `/Users/gilllesmourgues/Workspace/chief-of-droids/CLAUDE.md`
+   - Otherwise: read `/Users/gilllesmourgues/Workspace/chief-of-droids/desktop-chat/CLAUDE.md`
 2. Extract project name from the file header (first `# ` heading or
    `## Scope` section). Use the heading text as the project identifier.
 3. If `CLAUDE.md` is unreadable or contains no identifiable project name:
@@ -285,7 +285,7 @@ Steps:
 2. Read authoritative on-disk sources fresh — scope depends on active project:
 
    **Always read (workspace-level):**
-   - `/Users/gilllesmourgues/Workspace/chief-of-droids/CLAUDE.md`
+   - `/Users/gilllesmourgues/Workspace/chief-of-droids/desktop-chat/CLAUDE.md`
    - `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/TASKS.md`
    - `/Users/gilllesmourgues/Workspace/chief-of-droids/skills/HOW-TO-TRIGGER.md`
    - `/Users/gilllesmourgues/Workspace/chief-of-droids/skills/managing-tasks/SKILL.md`
@@ -364,6 +364,6 @@ Steps:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.8        |
-| Last Updated | 2026-04-12 |
+| Version      | 1.9        |
+| Last Updated | 2026-05-31 |
 | Status       | Draft      |

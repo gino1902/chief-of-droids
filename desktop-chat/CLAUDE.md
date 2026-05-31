@@ -1,10 +1,12 @@
-# CLAUDE.md — workspace
+# CLAUDE.md — desktop-chat
 
 ---
 
 ## Scope
 
-Applies to all repos in this workspace unless a repo-level CLAUDE.md overrides these defaults.
+Applies to Claude Desktop sessions for the chief-of-droids project.
+Primary working directory for all Desktop sessions: `/Users/gilllesmourgues/Workspace/chief-of-droids/desktop-chat/`
+All temp files, output files, and session artefacts default to this directory.
 
 ---
 
@@ -106,19 +108,15 @@ When applying official Anthropic documentation (via `reviewing-tech-claims` or a
 
 ## Task Management
 
-Default TASKS.md for this workspace context: `workspace/.tasks/TASKS.md`
-
-This applies when the active Claude Desktop project operates at workspace scope —
-i.e. its work spans multiple repos or the shared skills library rather than a
-single named repo.
+Default TASKS.md for this desktop-chat context: `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/TASKS.md`
 
 Override precedence (highest to lowest):
 1. Explicit path in the user's prompt — e.g. "add task to slide-gen" → `workspace/slide-gen/TASKS.md`
-2. This CLAUDE.md default — `workspace/.tasks/TASKS.md`
+2. This CLAUDE.md default — `/Users/gilllesmourgues/Workspace/chief-of-droids/.tasks/TASKS.md`
 3. Schema fallback — `<repo-root>/TASKS.md` relative to the active default repo
 
 Repo-level CLAUDE.md files may declare their own default. That declaration takes
-precedence over this workspace default for sessions routed to that repo.
+precedence over this default for sessions routed to that repo.
 
 ---
 
@@ -164,6 +162,6 @@ Run once, as the final step of reading this file. Do not repeat within the sessi
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.0         |
-| Last Updated | 2026-05-12  |
+| Version      | 1.1         |
+| Last Updated | 2026-05-31  |
 | Status       | Draft       |
