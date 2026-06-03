@@ -4,9 +4,9 @@ description: >
   Senior-level data platform architecture guidance covering Databricks,
   Azure, governance, and cost. Applies proactively for any data platform
   design, architecture trade-off, governance, cost, or Databricks/Azure
-  configuration task. Composes with: reviewing-tech-claims, writing-docs.
+  configuration task. Composes with: reviewing-tech-claims, editing-docs.
 ---
-<!-- version: 1.8 | author: chief-of-droids workspace | last_updated: 2026-03-19 -->
+<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
 
 # Architecting Data Platforms Skill
 
@@ -78,7 +78,7 @@ Before producing any output containing version-sensitive claims, load the
 | Skill | When |
 | :--- | :--- |
 | `reviewing-tech-claims` | Any output containing version-sensitive claims (Databricks, Azure, MLflow, Prophet) — load as composed skill |
-| `writing-docs` | When output is a structured document or .md file |
+| `editing-docs` | When output is a structured document or .md file |
 | `analyzing-business-cases` | When use case framing and platform architecture are both in scope |
 
 ---

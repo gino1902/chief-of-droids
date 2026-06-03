@@ -6,9 +6,9 @@ description: >
   ready-to-use artefacts: an empty FRAMING.md scaffold, a CLAUDE.md, and a system prompt.
   Use when the user says "bootstrap project", "new project", "create project",
   "scaffold project", or "set up a new Claude project".
-  NOT for modifying existing projects — use managing-tasks or writing-docs instead.
+  NOT for modifying existing projects — use managing-tasks or editing-docs instead.
 ---
-<!-- version: 2.0 | author: chief-of-droids workspace | last_updated: 2026-05-05 -->
+<!-- version: 2.1 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
 
 # Project Bootstrapping Skill
 
@@ -206,4 +206,4 @@ After all three artefacts are delivered, provide next-step instructions:
 | Skill | When |
 | :--- | :--- |
 | `managing-tasks` | After bootstrap — user may want to define tasks before starting work |
-| `writing-docs` | If user requests additional project documentation beyond the bootstrap artefacts |
+| `editing-docs` | If user requests additional project documentation beyond the bootstrap artefacts |

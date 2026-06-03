@@ -152,43 +152,53 @@ Do not load this skill without one of these qualifiers. Add the qualifier when a
 
 ---
 
-## writing-docs
+## editing-docs
 
-Load this skill when the user asks to **format, render, or produce** a document
-in a specific output format (`.md`, `.docx`, `.pptx`, `.xlsx`, HTML, React, SVG).
+Load this skill when the user asks to **format, render, produce, or shape** a
+document in a specific output format (`.md`, `.docx`, `.pptx`, `.xlsx`, HTML,
+React, SVG), or to generate or format meeting minutes.
 
-**This skill is the formatter and renderer.** It does not author content for
-specific document types (ADR, BDR, requirements, use cases, etc.) — those are
-owned by domain authoring skills (`architecting-data-platforms`,
-`analyzing-business-cases`). When both authoring and formatting are needed,
-both skills load via Anthropic description-driven multi-skill activation;
-Claude orchestrates.
+**This skill is the expression layer.** It expresses substance authored
+elsewhere across five concerns: mapping to a defined structure, formatting
+against styles and colours, tone for the audience, verbosity, and reading
+efficiency. It does not author substance for specific document types (ADR, BDR,
+requirements, use cases, etc.) — those are owned by domain authoring skills
+(`architecting-data-platforms`, `analyzing-business-cases`). Per-document-type
+expression rules live in `references/` templates, never in the skill body. When
+both authoring and expression are needed, both skills load via Anthropic
+description-driven multi-skill activation; Claude orchestrates.
 
-**Format / render triggers (load writing-docs):**
+**Format / render / express triggers (load editing-docs):**
 - "render this as docx" / "render as a Word doc" / "produce a .docx"
 - "turn this into a markdown doc" / "format as markdown"
 - "format this document" / "fix the formatting" / "format this file"
 - "format this diagram" / "render this Mermaid"
 - "create an HTML page for this"
 - "produce a Word doc from…"
+- "generate meeting minutes" / "format as minutes" / "turn these notes into minutes"
 
-**Doc-type authoring triggers (load the owning authoring skill, NOT writing-docs first):**
+**Doc-type authoring triggers (load the owning authoring skill, NOT editing-docs first):**
 - "write an ADR for X" → `architecting-data-platforms` (ADR authoring)
 - "write a BDR for X" → `analyzing-business-cases`
 - "write a use case" / "write an acceptance test" / "business requirement"
   → `analyzing-business-cases`
 - "draft architecture requirements" → `architecting-data-platforms` or
   `analyzing-business-cases` (TBD; both skills' descriptions should mention this)
-- "write a runbook / playbook" → no authoring skill yet — falls through to
-  writing-docs free-form
+- "write a runbook / playbook" → no authoring skill yet — expressed free-form
+  by editing-docs
+
+**Ownerless types with an expression template:** meeting minutes has no authoring
+skill but does have an expression template (`references/60s-meeting-minutes.md`),
+so it routes to editing-docs and is expressed against that template, not
+free-form.
 
 When the user names both ("write an ADR and render it as docx"), both the
-authoring skill and writing-docs trigger.
+authoring skill and editing-docs trigger.
 
-**For `.md` output**, additionally read `writing-docs/references/markdown-formatting.md`
+**For `.md` output**, additionally read `editing-docs/references/markdown-formatting.md`
 before writing.
 
-**For `.docx` output**, writing-docs always reads `template-corporate-chrome.md`
+**For `.docx` output**, editing-docs always reads `template-corporate-chrome.md`
 (chrome wraps every `.docx` — no exceptions) and routes theme injection per
 `theme.md` (theme1.xml + settings-clrSchemeMapping.xml).
 
@@ -224,7 +234,7 @@ Load this skill when the prompt contains any request to create, author, build, o
 
 **Examples:**
 - "author skill data-quality"
-- "critique skill writing-docs"
+- "critique skill editing-docs"
 - "enrich skill managing-tasks"
 - "assess all skills"
 - "I need to create a skill to manage tasks"
@@ -341,13 +351,14 @@ Skills compose automatically. Load all skills whose triggers match the request.
 
 | Task | Skills loaded |
 | :--- | :--- |
-| Render a doc as `.md` / `.docx` / `.pptx` / HTML / etc. | `writing-docs` |
-| Write an ADR | `architecting-data-platforms` (authoring) + `writing-docs` (rendering) |
-| Write a BDR / use case / acceptance test / business requirement | `analyzing-business-cases` (authoring) + `writing-docs` (rendering) |
-| Write a tech-verified architecture doc as `.md` | `architecting-data-platforms` + `reviewing-tech-claims` + `writing-docs` |
-| Write a runbook (no authoring skill yet) | `writing-docs` (free-form body) |
-| Write a playbook (no authoring skill yet) | `writing-docs` (free-form body) |
-| Document a phase deliverable | `writing-docs` (rendering only) |
+| Render or express a doc as `.md` / `.docx` / `.pptx` / HTML / etc. | `editing-docs` |
+| Generate or format meeting minutes | `editing-docs` |
+| Write an ADR | `architecting-data-platforms` (authoring) + `editing-docs` (rendering) |
+| Write a BDR / use case / acceptance test / business requirement | `analyzing-business-cases` (authoring) + `editing-docs` (rendering) |
+| Write a tech-verified architecture doc as `.md` | `architecting-data-platforms` + `reviewing-tech-claims` + `editing-docs` |
+| Write a runbook (no authoring skill yet) | `editing-docs` (free-form body) |
+| Write a playbook (no authoring skill yet) | `editing-docs` (free-form body) |
+| Document a phase deliverable | `editing-docs` (rendering only) |
 | Verify a CLI command | `reviewing-tech-claims` |
 | Platform assessment | `architecting-data-platforms` |
 | Author or assess a skill | `creating-skills` |
@@ -356,24 +367,24 @@ Skills compose automatically. Load all skills whose triggers match the request.
 | Add a new source to skill catalog | `creating-skills` |
 | Frame or challenge a use case | `analyzing-business-cases` |
 | Frame a data platform use case | `analyzing-business-cases` + `architecting-data-platforms` |
-| Frame + render the document | `analyzing-business-cases` + `writing-docs` |
+| Frame + render the document | `analyzing-business-cases` + `editing-docs` |
 | Read, add, or transition tasks | `managing-tasks` |
 | Execute an existing task with quality workflow | `managing-tasks` + `executing-tasks` |
 | Execute a new task without a prior TASKS.md entry | `executing-tasks` + `managing-tasks` (at close) |
 | Execute a skill-authoring task | `managing-tasks` + `executing-tasks` + `creating-skills` |
-| Execute a doc task | `managing-tasks` + `executing-tasks` + `writing-docs` |
+| Execute a doc task | `managing-tasks` + `executing-tasks` + `editing-docs` |
 | Bootstrap a new Claude Desktop project | `project-bootstrapping` |
 | Analyse, prune, or audit session history | `managing-sessions` |
-| Capture session value then write a doc | `managing-sessions` + `writing-docs` |
+| Capture session value then write a doc | `managing-sessions` + `editing-docs` |
 | Session prune surfaces open tasks | `managing-sessions` + `managing-tasks` |
 | Session prune then identify skill gaps | `managing-sessions` + `creating-skills` |
 | Brainstorm a feature or decision before building | `brainstorming-ideas` |
-| Brainstorm then write a structured doc | `brainstorming-ideas` + `writing-docs` |
+| Brainstorm then write a structured doc | `brainstorming-ideas` + `editing-docs` |
 | Frame a use case via brainstorm | `brainstorming-ideas` + `analyzing-business-cases` |
 
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.14        |
-| Last Updated | 2026-05-16  |
+| Version      | 1.15        |
+| Last Updated | 2026-06-03  |
 | Status       | Draft       |

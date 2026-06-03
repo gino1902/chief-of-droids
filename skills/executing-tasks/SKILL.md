@@ -9,7 +9,7 @@ description: >
   'execute the complex task TASK-XXX'. Does NOT trigger on 'start TASK-XXX'
   alone — that belongs to managing-tasks.
 ---
-<!-- version: 1.39 | author: chief-of-droids workspace | last_updated: 2026-04-13 -->
+<!-- version: 1.40 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
 
 # Executing Tasks Skill
 
@@ -548,7 +548,7 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 | Skill | When | Sub-tasks governed |
 | :--- | :--- | :--- |
 | `managing-tasks` | Always — task context source (Path 1) and state close (both paths) | Step 1 read (Path 1), Step 11 done (Path 1) / add+done (Path 2) |
-| `writing-docs` | Task type = doc | Step 9 inner loop: doc pattern |
+| `editing-docs` | Task type = doc | Step 9 inner loop: doc pattern |
 | `creating-skills` | Task type = skill-authoring | Step 9 inner loop: skill pattern |
 | `reviewing-tech-claims` | Any type where confirmed intent contains "verified" or "tech-checked" | Step 9: verification sub-tasks |
 | `architecting-data-platforms` | Task type = research, target involves data platform | Step 9 inner loop: research pattern |
@@ -556,6 +556,6 @@ from the `add task` confirmation, skip to Step 11, and call `done task TASK-XXX`
 
 | Field        | Value       |
 |:-------------|:------------|
-| Version      | 1.39        |
-| Last Updated | 2026-04-13  |
+| Version      | 1.40        |
+| Last Updated | 2026-06-03  |
 | Status       | Draft       |

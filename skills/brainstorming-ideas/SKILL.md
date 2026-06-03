@@ -2,7 +2,7 @@
 name: brainstorming-ideas
 description: "Use this skill when the user wants to explore a feature idea, frame a problem, or think through options before deciding what to build. Triggers on: 'let's brainstorm', 'help me think through X', 'what should we build', 'I'm not sure what to build', vague or ambitious feature requests, problems with multiple valid solutions, and any prompt where requirements seem unclear or the user is thinking out loud. Trigger proactively whenever a decision is being explored or scope is ambiguous — even if the user does not explicitly say 'brainstorm'."
 ---
-<!-- version: 1.3 | author: chief-of-droids workspace | last_updated: 2026-04-19 -->
+<!-- version: 1.4 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
 <!-- source: EveryInc/compound-engineering-plugin (MIT License, Copyright (c) 2025 Every) -->
 
 # Brainstorm a Feature or Improvement
@@ -245,12 +245,12 @@ When the user's next message arrives after the editor is rendered:
 
 | Skill | When |
 |:------|:-----|
-| `writing-docs` | When the requirements document warrants structured doc formatting or a standalone deliverable |
+| `editing-docs` | When the requirements document warrants structured doc formatting or a standalone deliverable |
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
-| Last Updated | 2026-04-19 |
+| Version      | 1.4        |
+| Last Updated | 2026-06-03 |
 | Status       | Draft      |

@@ -17,7 +17,7 @@ description: >
   skill sources", "add [URL] to the skills catalog", "evaluate [URL] as a
   skill source".
 ---
-<!-- version: 2.9 | author: chief-of-droids workspace | last_updated: 2026-04-06 -->
+<!-- version: 2.10 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
 
 # Creating Skills Skill
 
@@ -396,7 +396,7 @@ Output: new row added to `references/skill-sources.md` (on approval); rejected s
 
 | Skill | When |
 | :--- | :--- |
-| `writing-docs` | When authoring reference files or structured documentation alongside a new skill |
+| `editing-docs` | When authoring reference files or structured documentation alongside a new skill |
 
 ---
 
@@ -444,6 +444,6 @@ Output: new row added to `references/skill-sources.md` (on approval); rejected s
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 2.9        |
-| Last Updated | 2026-04-06 |
+| Version      | 2.10       |
+| Last Updated | 2026-06-03 |
 | Status       | Draft      |

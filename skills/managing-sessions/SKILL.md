@@ -10,7 +10,7 @@ description: >
   "manage sessions", "analyse sessions", "prune sessions", "session hygiene",
   "what should I keep", "challenge memories", "check memories".
 ---
-<!-- version: 1.9 | author: chief-of-droids workspace | last_updated: 2026-05-31 -->
+<!-- version: 1.10 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
 
 # Managing Sessions Skill
 
@@ -334,7 +334,7 @@ Steps:
 | Skill | When |
 | :--- | :--- |
 | `managing-tasks` | When a session finding surfaces an untracked task or open item |
-| `writing-docs` | When net-new findings warrant a new reference doc (e.g. `mcp-tool-quirks.md`) |
+| `editing-docs` | When net-new findings warrant a new reference doc (e.g. `mcp-tool-quirks.md`) |
 
 ---
 
@@ -364,6 +364,6 @@ Steps:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.9        |
-| Last Updated | 2026-05-31 |
+| Version      | 1.10       |
+| Last Updated | 2026-06-03 |
 | Status       | Draft      |
