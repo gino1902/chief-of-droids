@@ -110,29 +110,20 @@ matches more than one row, take the topmost row. Process facts top-down.
 
 ### `./CLAUDE.local.md`
 
-- Same syntax as CLAUDE.md. Within its directory it is concatenated after
-  `CLAUDE.md`, so its content appears later in context. Later position biases
-  resolution but does not hard-override earlier content.
+- Same syntax as CLAUDE.md. Within its directory it is concatenated after `CLAUDE.md`, so its content appears later in context. Later position biases resolution but does not hard-override earlier content.
 - Add to `.gitignore` in the same operation that writes the file.
-- Never store secret values. Reference environment variable names if path
-  context is needed.
-- Across worktrees: a gitignored `CLAUDE.local.md` only exists in the worktree
-  where you created it. To share personal instructions across worktrees,
-  import from `~/.claude/` instead: `@~/.claude/my-project-overrides.md`.
+- Never store secret values. Reference environment variable names if path context is needed.
+- Across worktrees: a gitignored `CLAUDE.local.md` only exists in the worktree where you created it. To share personal instructions across worktrees, import from `~/.claude/` instead: `@~/.claude/my-project-overrides.md`.
 
 ### `./.claude/rules/{topic}.md`
 
 > Verify against
 > `code.claude.com/docs/en/memory#organize-rules-with-claude/rules/`.
 
-- One topic per file. Descriptive name: `testing.md`, `security.md`,
-  `api-design.md`. Subdirectories allowed (`frontend/`, `backend/`).
-- Without frontmatter: loads at launch with the same priority as
-  `.claude/CLAUDE.md`.
-- With `paths:` frontmatter: loads only when Claude reads files matching the
-  glob. This is the primary mechanism to keep startup context small.
-- `paths:` accepts a YAML list or comma-separated string. Brace expansion
-  works:
+- One topic per file. Descriptive name: `testing.md`, `security.md`, `api-design.md`. Subdirectories allowed (`frontend/`, `backend/`).
+- Without frontmatter: loads at launch with the same priority as `.claude/CLAUDE.md`.
+- With `paths:` frontmatter: loads only when Claude reads files matching the glob. This is the primary mechanism to keep startup context small.
+- `paths:` accepts a YAML list or comma-separated string. Brace expansion works:
 
   ```markdown
   ---
@@ -142,24 +133,17 @@ matches more than one row, take the topmost row. Process facts top-down.
   ---
   ```
 
-- User-level rules live in `~/.claude/rules/` and apply to every project;
-  project rules take precedence.
-- Symlinks are supported — useful for sharing a rule set across repos
-  (`ln -s ~/shared/security.md .claude/rules/security.md`).
+- User-level rules live in `~/.claude/rules/` and apply to every project; project rules take precedence.
+- Symlinks are supported — useful for sharing a rule set across repos (`ln -s ~/shared/security.md .claude/rules/security.md`).
 
 ### `./.claude/skills/{slug}/SKILL.md`
 
 > Verify field names and limits against `code.claude.com/docs/en/skills`
 > before finalizing frontmatter.
 
-- Extract a procedure to a skill when it is (a) multi-step, (b) not needed in
-  every session, (c) reusable across triggers. A skill at
-  `.claude/skills/foo/SKILL.md` is invocable as `/foo`.
-- Target ≤ 500 lines per SKILL.md; move reference material to supporting
-  files in the skill directory.
-- Skills can be composed: a subagent's `skills:` frontmatter field preloads
-  multiple skills into its context. Use this when one workflow needs several
-  skills loaded together.
+- Extract a procedure to a skill when it is (a) multi-step, (b) not needed in every session, (c) reusable across triggers. A skill at `.claude/skills/foo/SKILL.md` is invocable as `/foo`.
+- Target ≤ 500 lines per SKILL.md; move reference material to supporting files in the skill directory.
+- Skills can be composed: a subagent's `skills:` frontmatter field preloads multiple skills into its context. Use this when one workflow needs several skills loaded together.
 - Frontmatter fields routing-relevant to configuration decisions:
 
   | Field | Use |
@@ -172,30 +156,18 @@ matches more than one row, take the topmost row. Process facts top-down.
   | `paths` | Glob patterns (comma-separated string or YAML list) limiting auto-activation to matching files. |
   | `context: fork` (+ `agent`) | Run the skill body in an isolated subagent context (e.g. `Explore`, `Plan`, custom). |
 
-- Combined `description` + `when_to_use` is truncated at **1,536 characters**
-  in the skill listing (configurable via `maxSkillDescriptionChars`). The
-  listing budget itself scales at 1% of the model's context window
-  (configurable via `skillListingBudgetFraction`); on overflow, least-used
-  skills lose their descriptions first.
-- A skill that performs a destructive action must set
-  `disable-model-invocation: true`. Prose warnings are not enforcement.
+- Combined `description` + `when_to_use` is truncated at **1,536 characters** in the skill listing (configurable via `maxSkillDescriptionChars`). The listing budget itself scales at 1% of the model's context window (configurable via `skillListingBudgetFraction`); on overflow, least-used skills lose their descriptions first.
+- A skill that performs a destructive action must set `disable-model-invocation: true`. Prose warnings are not enforcement.
 
 ### `./.claude/settings.json`
 
 > Verify key paths against `code.claude.com/docs/en/settings`.
 
 - `permissions.deny`: blocking list (commands, file paths, tools, MCP actions).
-- `permissions.ask`: prompt-before-running list. Evaluated between `deny` and
-  `allow`; first match wins.
+- `permissions.ask`: prompt-before-running list. Evaluated between `deny` and `allow`; first match wins.
 - `permissions.allow`: pre-approved list (no user prompt).
-- `permissions.defaultMode`: behaviour when no allow/ask/deny rule matches.
-  Values: `default` (prompt), `acceptEdits` (auto-approve edits, prompt
-  otherwise), `plan` (require plan acceptance), `auto` (classifier-based
-  approval — **ignored** in project/local settings as of v2.1.142, set only in
-  `~/.claude/settings.json`), `dontAsk` (silent allow), `bypassPermissions`
-  (skip all checks). Explicit `deny` always wins regardless of mode.
-- `sandbox.enabled`: enforce filesystem isolation when the framing names
-  destructive risk.
+- `permissions.defaultMode`: behaviour when no allow/ask/deny rule matches. Values: `default` (prompt), `acceptEdits` (auto-approve edits, prompt otherwise), `plan` (require plan acceptance), `auto` (classifier-based approval — **ignored** in project/local settings as of v2.1.142, set only in `~/.claude/settings.json`), `dontAsk` (silent allow), `bypassPermissions` (skip all checks). Explicit `deny` always wins regardless of mode.
+- `sandbox.enabled`: enforce filesystem isolation when the framing names destructive risk.
 - `forceLoginMethod` / `forceLoginOrgUUID`: lock the session to a specific
   authentication method (e.g. Claude.ai vs. Anthropic API key) and/or
   organization UUID. `forceLoginOrgUUID` accepts a string or string array.
