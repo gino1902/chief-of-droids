@@ -1,28 +1,27 @@
 # SQLI strategic plan 2030, AI operations and delivery workshop, summary
 
-| Date | Attendees | Framing question |
-| :--- | :--- | :--- |
-| 2026-06-03 | to be completed | By 2028, what capabilities must be in place for our delivery and operations model to become truly AI-native and differentiated |
+Date: 2026-06-03
+Attendees: Patrick Ameye, Benoit Iacono, Phanara Sok, Graeme Paskins, Mehdi Sijelmassi, Joan Mondy, David Ellis, Guillaume Clement, RIDOUAN DAHBI, Solen Santos, Cedric Boullier, Erwan Le Duff, Josep Sole
+Framing question: By 2028, what capabilities must be in place for our delivery and operations model to become truly AI-native and differentiated
 
 This workshop intended to explore attendees' ideas and the issues they encountered. The purpose was not to take decisions.
 
 ## At a glance
 
-Where attendees converge:
-
+Where attendees converged:
 - AI reshapes the delivery value chain role by role, and the human stays the gate, use AI but do not trust AI.
 - Consumption is an architecture choice, prefer script automation, then a local LLM, then a cloud LLM.
 - Deep client business knowledge is the hedge against AI erasing our lower-value activities, pointing SQLI toward consulting.
 - One operations platform should carry shared enterprise data and workflows as the backbone, a minimal mandatory core with room for local adaptation.
 - The loudest issue, scattered POCs with no visibility, reinvention, and no way to diffuse what works.
 
-What remains to solve (different profiles in the room)
-
+What remains to solve
 | Open fork | Where it stands |
 | :--- | :--- |
 | SQLI identity | Industrial delivery factory execution against consulting depth and value-oriented, unresolved |
 | Experimentation | Having POCs bloom everywhere, uncoordinated (today's situation) against consolidate and diffuse, unresolved |
 | Orchestration shape | One core orchestrator with client context against one per service nature (run, build, integration), unresolved |
+
 
 ## Delivery centres
 
@@ -97,4 +96,4 @@ These are study and analysis tracks, not assigned work.
 | Consumption architecture | Validate the script, local LLM, cloud LLM layering and model its cost by delivery context |
 | Commercial model | Whether to move from day-based to value-based pricing, parked in the workshop |
 
-*Version 0.1, Draft, 2026-06-04. Relates to sqli-strategic-plan-2030-ai-operations-delivery-ws.xlsx.*
+*Version 1.0, Final, 2026-06-04. Relates to sqli-strategic-plan-2030-ai-operations-delivery-ws.xlsx.*
