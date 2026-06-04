@@ -77,7 +77,7 @@ the workspace history.
 ### Examples
 
 ```
-skills/writing-docs: add qa-checklist v1.1  [ref: slide-gen]
+skills/editing-docs: add qa-checklist v1.1  [ref: slide-gen]
 skills/managing-tasks: bump to v1.5 — write authority rules
 skills: update HOW-TO-TRIGGER.md — add project-bootstrapping triggers
 CLAUDE.md: add task-manager default TASKS.md path
@@ -187,6 +187,6 @@ It exposes git operations as structured tool calls within Claude Desktop session
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
-| Last Updated | 2026-04-12 |
+| Version      | 1.4        |
+| Last Updated | 2026-06-03 |
 | Status       | Draft      |

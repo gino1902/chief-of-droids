@@ -287,7 +287,7 @@ that is the checklist working correctly.
 
 | Item | Convention |
 | :--- | :--- |
-| Skill folder name | Gerund form: `managing-sessions`, `writing-docs`, `creating-skills` |
+| Skill folder name | Gerund form: `managing-sessions`, `editing-docs`, `creating-skills` |
 | SKILL.md frontmatter `name` | Same as folder name — lowercase, hyphens, max 64 chars |
 | Reference files | `references/<noun>.md` — one concept per file |
 | Output files (findings) | `.tasks/sessions-findings/YYYY-MM-DD-<project>-<type>.md` |
@@ -318,6 +318,6 @@ What made it work:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.5        |
-| Last Updated | 2026-03-31 |
+| Version      | 1.6        |
+| Last Updated | 2026-06-03 |
 | Status       | Final      |
