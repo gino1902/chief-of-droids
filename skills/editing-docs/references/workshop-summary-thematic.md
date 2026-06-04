@@ -1,6 +1,6 @@
-# Template, diagnostic workshop summary, thematic spine
+# Template, exploratory workshop summary, thematic spine
 
-Expression template for a workshop summary on a thematic spine, diagnostic mode.
+Expression template for a workshop summary on a thematic spine, exploratory mode.
 This serves a workshop run to surface ideas, issues, facts, risks and
 clarifications, not to take decisions. A decision-meeting is expressed elsewhere,
 through the meeting-minutes template, never through this one. A workshop summary
@@ -36,7 +36,7 @@ Map the two inputs onto this structure, in this order:
 
 Pull the ideas, issues and open forks from the room notes, and the convergence
 and tension from the preparation analysis. Never record a decision, an owner or
-a commitment the room did not make, the diagnostic mode has no slot for them by
+a commitment the room did not make, the exploratory mode has no slot for them by
 design. A theme with no room notes carries `🔲 To be defined`, it is never
 back-filled from the preparation half.
 
@@ -56,7 +56,7 @@ back-filled from the preparation half.
 
 ## Tone
 
-Neutral, factual, diagnostic. The reader is a sponsor or a theme owner. The
+Neutral, factual, exploratory. The reader is a sponsor or a theme owner. The
 preparation line states what was found, the room block states what was raised.
 No narration of the discussion, no hedging, and no decisions or commitments the
 room did not make.
@@ -116,4 +116,4 @@ In the room:
 *Version 1.0, Draft, YYYY-MM-DD. Relates to <preparation analysis or source sheet>.*
 ```
 
-*Version 1.1, Draft, 2026-06-04.*
+*Version 1.2, Draft, 2026-06-04.*
