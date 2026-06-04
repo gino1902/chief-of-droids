@@ -1,4 +1,4 @@
-<!-- version: 3.0 | author: chief-of-droids workspace | last_updated: 2026-06-04 -->
+<!-- version: 3.1 | author: chief-of-droids workspace | last_updated: 2026-06-04 -->
 
 # Editing Docs QA Checklist
 
@@ -14,8 +14,8 @@ non-derivable house contract.
 
 - [ ] `references/doc-principles.md` read before expressing.
 - [ ] Substance came from an authoring skill or the user, not invented here.
-- [ ] If a document-type template exists, it was read and applied (minutes maps
-  to `references/60s-meeting-minutes.md`).
+- [ ] If a document-type template exists for the type, it was read and applied
+  (see the document-type templates in SKILL.md Reference Files).
 - [ ] Output format selected deliberately, not defaulted.
 - [ ] If `.md`: `references/markdown-formatting.md` read and applied.
 - [ ] If output is `.docx`, `.pptx`, `.xlsx`, HTML, React, or SVG:

@@ -3,6 +3,13 @@
 History moved out of `SKILL.md` to keep the skill body lean. The body carries
 instruction only; this file carries history.
 
+- v4.1 (2026-06-04) — wired the workshop-summary (thematic spine) expression
+  template. Added triggers and the Combining-skills row in HOW-TO-TRIGGER.md
+  (1.16), listed the template in Reference Files, and generalised the two
+  single-example phrasings (SKILL Step 3, qa-checklist gate, now 3.1) from the
+  minutes-only example to the template list, so adding the next type touches one
+  list, not three call sites. The template requires two inputs, a preparation
+  analysis and room notes; if only raw notes exist, minutes is the correct route.
 - v4.0 (2026-06-04) — cut craft-teaching weight and the surfaced generic-QA
   loop. Removed workflow Step 10 (QA report shown to the reader): a self-graded
   generic-writing rubric on every deliverable was noise for the reader and

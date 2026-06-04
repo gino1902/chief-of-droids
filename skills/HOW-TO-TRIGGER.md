@@ -176,6 +176,7 @@ description-driven multi-skill activation; Claude orchestrates.
 - "create an HTML page for this"
 - "produce a Word doc from…"
 - "generate meeting minutes" / "format as minutes" / "turn these notes into minutes"
+- "workshop summary" / "summarise the workshop" / "thematic workshop summary"
 
 **Doc-type authoring triggers (load the owning authoring skill, NOT editing-docs first):**
 - "write an ADR for X" → `architecting-data-platforms` (ADR authoring)
@@ -187,10 +188,13 @@ description-driven multi-skill activation; Claude orchestrates.
 - "write a runbook / playbook" → no authoring skill yet — expressed free-form
   by editing-docs
 
-**Ownerless types with an expression template:** meeting minutes has no authoring
-skill but does have an expression template (`references/60s-meeting-minutes.md`),
-so it routes to editing-docs and is expressed against that template, not
-free-form.
+**Ownerless types with an expression template:** some document types have no
+authoring skill but do have an expression template, so they route to editing-docs
+and are expressed against the template, not free-form. Current templates:
+- meeting minutes → `references/60s-meeting-minutes.md`
+- workshop summary (thematic spine) → `references/workshop-summary-thematic.md`.
+  Requires two inputs, a preparation analysis and room notes. If only raw notes
+  exist, route to meeting minutes instead.
 
 When the user names both ("write an ADR and render it as docx"), both the
 authoring skill and editing-docs trigger.
@@ -353,6 +357,7 @@ Skills compose automatically. Load all skills whose triggers match the request.
 | :--- | :--- |
 | Render or express a doc as `.md` / `.docx` / `.pptx` / HTML / etc. | `editing-docs` |
 | Generate or format meeting minutes | `editing-docs` |
+| Generate a workshop summary (preparation analysis + room notes) | `editing-docs` |
 | Write an ADR | `architecting-data-platforms` (authoring) + `editing-docs` (rendering) |
 | Write a BDR / use case / acceptance test / business requirement | `analyzing-business-cases` (authoring) + `editing-docs` (rendering) |
 | Write a tech-verified architecture doc as `.md` | `architecting-data-platforms` + `reviewing-tech-claims` + `editing-docs` |
@@ -385,6 +390,9 @@ Skills compose automatically. Load all skills whose triggers match the request.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.15        |
-| Last Updated | 2026-06-03  |
+| Version      | 1.16        |
+| Last Updated | 2026-06-04  |
 | Status       | Draft       |
+
+
+---

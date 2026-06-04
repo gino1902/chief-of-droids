@@ -15,7 +15,7 @@ description: >
   Composes with: reviewing-tech-claims, pptx, docx, xlsx,
   architecting-data-platforms, analyzing-business-cases.
 ---
-<!-- version: 4.0 | author: chief-of-droids workspace | last_updated: 2026-06-04 -->
+<!-- version: 4.1 | author: chief-of-droids workspace | last_updated: 2026-06-04 -->
 
 # Editing Docs Skill
 
@@ -49,6 +49,9 @@ Document-type expression templates:
 
 - `references/60s-meeting-minutes.md`, read when the document is meeting minutes.
   Carries the five concerns for a 60-second minutes read.
+- `references/workshop-summary-thematic.md`, read when the document is a workshop
+  summary on a thematic spine. Expresses two inputs, a preparation analysis and
+  room notes, against the five concerns. Requires both.
 
 Format-mechanism references:
 
@@ -71,10 +74,10 @@ Format-mechanism references:
    output format.
 2. Read `references/doc-principles.md` for the general expression defaults. If
    unreadable, halt: `⚠️ doc-principles.md unreadable, cannot proceed`.
-3. Document-type routing. If a template exists for the type (minutes maps to
-   `60s-meeting-minutes.md`), read it. It governs mapping, tone, verbosity,
-   reading efficiency, and any type-specific formatting. If no template exists
-   (runbook, playbook), express free-form against doc-principles.
+3. Document-type routing. If a template exists for the type, read it (see the
+   document-type templates in Reference Files). It governs mapping, tone,
+   verbosity, reading efficiency, and any type-specific formatting. If no template
+   exists (runbook, playbook), express free-form against doc-principles.
 4. Format routing.
    - `.md`: read `markdown-formatting.md`, and `mermaid.md` if the output
      contains diagrams. Run the mermaid QA checklist and fix all failures before
@@ -106,6 +109,7 @@ Format-mechanism references:
 - "Turn these notes into a markdown doc"
 - "Generate meeting minutes from these notes"
 - "Format this as minutes"
+- "Summarise this workshop"
 - "Fix the formatting on this file"
 - "Create an HTML page for this content"
 
