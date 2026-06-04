@@ -2,8 +2,9 @@
 
 Expression template for a workshop summary on a thematic spine, exploratory mode.
 This serves a workshop run to surface ideas, issues, facts, risks and
-clarifications, not to take decisions. A decision-meeting is expressed elsewhere,
-through the meeting-minutes template, never through this one. A workshop summary
+clarifications, not to take decisions. A decision meeting is expressed elsewhere,
+through the `decision-meeting` template, and general meeting outcomes through
+`60s-meeting-minutes`, never through this one. A workshop summary
 has no owning authoring skill, so editing-docs expresses it directly from two
 inputs against this template: the preparation analysis (the convergence, tension
 and affinity clusters produced before the room met) and the workshop discussion
@@ -116,4 +117,4 @@ In the room:
 *Version 1.0, Draft, YYYY-MM-DD. Relates to <preparation analysis or source sheet>.*
 ```
 
-*Version 1.2, Draft, 2026-06-04.*
+*Version 1.3, Draft, 2026-06-04.*

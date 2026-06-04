@@ -3,6 +3,18 @@
 History moved out of `SKILL.md` to keep the skill body lean. The body carries
 instruction only; this file carries history.
 
+- v4.2 (2026-06-04) — wired the decision-meeting expression template, which had
+  been committed as a file but referenced nowhere. Listed it in Reference Files,
+  added a meeting-type disambiguation rule to workflow Step 3 (decision-meeting
+  for meetings run to decide with prepared inputs, workshop-summary-thematic for
+  exploratory, 60s-meeting-minutes for general outcomes), added trigger phrases
+  to the SKILL description and Trigger Examples, and registered it in
+  HOW-TO-TRIGGER.md (ownerless-template list and quick-reference table). Fixed
+  the stale back-reference in workshop-summary-thematic.md (v1.3), which still
+  routed decision meetings to the minutes template instead of decision-meeting.
+  Swept the residual writing-docs naming in template-corporate-chrome.md (v1.9)
+  and the authoring wording in doc-principles.md left over from the v3.3 rename,
+  and added html and react to the SKILL frontmatter composes line.
 - v4.1 (2026-06-04) — wired the workshop-summary (thematic spine) expression
   template. Added triggers and the Combining-skills row in HOW-TO-TRIGGER.md
   (1.16), listed the template in Reference Files, and generalised the two

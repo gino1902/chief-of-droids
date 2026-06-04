@@ -1,6 +1,6 @@
 # Corporate Document Chrome
 
-> Wraps **every `.docx` output** produced via writing-docs. Provides cover page,
+> Wraps **every `.docx` output** produced via editing-docs. Provides cover page,
 > running header/footer, TOC, revision history, remaining issues, and appendix.
 > Body content is free-form by default — supplied either by the user or by the
 > output of a composing authoring skill (architecting-data-platforms,
@@ -9,7 +9,7 @@
 
 ## When to use
 
-Mandatory for every `.docx` rendered by writing-docs. No exceptions. Short docs
+Mandatory for every `.docx` rendered by editing-docs. No exceptions. Short docs
 render with the same chrome as long docs — Revision History gets one row,
 Remaining Issues stays empty when there are none. Reproducibility and reader
 consistency are the priorities.
@@ -22,7 +22,7 @@ consistency are the priorities.
    `template-architecture-requirements.md`).
 3. Fill all `{placeholder}` fields per the **Placeholder derivation rules** below.
 4. Omit lines that map to optional placeholders when the source provides no value.
-5. Render via writing-docs → composed `docx` skill, which receives both
+5. Render via editing-docs → composed `docx` skill, which receives both
    `theme1.xml` and `settings-clrSchemeMapping.xml` per `theme.md` routing.
 
 ## Cover Page
@@ -166,6 +166,6 @@ that is a separate section restart and not part of this chrome.
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 1.8        |
-| Last Updated | 2026-04-29 |
+| Version      | 1.9        |
+| Last Updated | 2026-06-04 |
 | Status       | Draft      |

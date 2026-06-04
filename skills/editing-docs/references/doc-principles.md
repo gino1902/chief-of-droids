@@ -1,6 +1,6 @@
 # Doc Principles Reference
 
-Read this file before any document authoring task.
+Read this file before any document expression task.
 
 ---
 

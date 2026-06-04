@@ -177,6 +177,7 @@ description-driven multi-skill activation; Claude orchestrates.
 - "produce a Word doc from…"
 - "generate meeting minutes" / "format as minutes" / "turn these notes into minutes"
 - "workshop summary" / "summarise the workshop" / "thematic workshop summary"
+- "format as a decision record" / "write up the decision meeting"
 
 **Doc-type authoring triggers (load the owning authoring skill, NOT editing-docs first):**
 - "write an ADR for X" → `architecting-data-platforms` (ADR authoring)
@@ -191,10 +192,16 @@ description-driven multi-skill activation; Claude orchestrates.
 **Ownerless types with an expression template:** some document types have no
 authoring skill but do have an expression template, so they route to editing-docs
 and are expressed against the template, not free-form. Current templates:
-- meeting minutes → `references/60s-meeting-minutes.md`
+- meeting minutes → `references/60s-meeting-minutes.md`, for general meeting
+  outcomes from raw notes.
 - workshop summary (thematic spine) → `references/workshop-summary-thematic.md`.
   Requires two inputs, a preparation analysis and room notes. If only raw notes
   exist, route to meeting minutes instead.
+- decision meeting → `references/decision-meeting.md`, when the meeting was run to
+  decide (align on a diagnostic, work a solution, agree execution) and a
+  diagnostic or solution was prepared in linked files. If the meeting was
+  exploratory, route to workshop summary. If it just took general outcomes,
+  route to meeting minutes.
 
 When the user names both ("write an ADR and render it as docx"), both the
 authoring skill and editing-docs trigger.
@@ -358,6 +365,7 @@ Skills compose automatically. Load all skills whose triggers match the request.
 | Render or express a doc as `.md` / `.docx` / `.pptx` / HTML / etc. | `editing-docs` |
 | Generate or format meeting minutes | `editing-docs` |
 | Generate a workshop summary (preparation analysis + room notes) | `editing-docs` |
+| Record a decision meeting (diagnostic / solution / execution) | `editing-docs` |
 | Write an ADR | `architecting-data-platforms` (authoring) + `editing-docs` (rendering) |
 | Write a BDR / use case / acceptance test / business requirement | `analyzing-business-cases` (authoring) + `editing-docs` (rendering) |
 | Write a tech-verified architecture doc as `.md` | `architecting-data-platforms` + `reviewing-tech-claims` + `editing-docs` |

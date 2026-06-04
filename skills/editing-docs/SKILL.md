@@ -4,18 +4,19 @@ description: >
   Expression layer for documents. ALWAYS invoke this skill when the user asks to
   format, render, produce, edit, or shape a document in `.md`, `.docx`, `.pptx`,
   `.xlsx`, HTML, React, or SVG, or to "format this", "render as docx", "turn
-  this into a document", "generate meeting minutes", "format as minutes", or any
-  equivalent. This skill expresses substance authored elsewhere. It maps content
+  this into a document", "generate meeting minutes", "format as minutes",
+  "format as a decision record", or any equivalent. This skill expresses
+  substance authored elsewhere. It maps content
   to a defined structure, formats against best-practice styles and colours, sets
   tone for the audience, tunes verbosity, and optimises reading efficiency. It
   does not author substance. Substance is owned by domain skills
   (architecting-data-platforms for ADRs, analyzing-business-cases for BDRs, use
   cases, acceptance tests, business requirements). Every per-document-type
   expression rule lives in a `references/` template, never in this body.
-  Composes with: reviewing-tech-claims, pptx, docx, xlsx,
+  Composes with: reviewing-tech-claims, pptx, docx, xlsx, html, react,
   architecting-data-platforms, analyzing-business-cases.
 ---
-<!-- version: 4.1 | author: chief-of-droids workspace | last_updated: 2026-06-04 -->
+<!-- version: 4.2 | author: chief-of-droids workspace | last_updated: 2026-06-04 -->
 
 # Editing Docs Skill
 
@@ -52,6 +53,9 @@ Document-type expression templates:
 - `references/workshop-summary-thematic.md`, read when the document is a workshop
   summary on a thematic spine. Expresses two inputs, a preparation analysis and
   room notes, against the five concerns. Requires both.
+- `references/decision-meeting.md`, read when the document records a meeting run
+  to decide: to align on a diagnostic, work a solution, or agree its execution.
+  References the prepared issue, risk and solution files, never reproduces them.
 
 Format-mechanism references:
 
@@ -77,7 +81,12 @@ Format-mechanism references:
 3. Document-type routing. If a template exists for the type, read it (see the
    document-type templates in Reference Files). It governs mapping, tone,
    verbosity, reading efficiency, and any type-specific formatting. If no template
-   exists (runbook, playbook), express free-form against doc-principles.
+   exists (runbook, playbook), express free-form against doc-principles. For a
+   meeting, pick one of the three meeting templates: `decision-meeting.md` when
+   the meeting was run to decide and a diagnostic or solution was prepared in
+   linked files, `workshop-summary-thematic.md` when it was exploratory and took
+   no decisions (requires a preparation analysis and room notes), otherwise
+   `60s-meeting-minutes.md` for general meeting outcomes from raw notes.
 4. Format routing.
    - `.md`: read `markdown-formatting.md`, and `mermaid.md` if the output
      contains diagrams. Run the mermaid QA checklist and fix all failures before
@@ -109,6 +118,8 @@ Format-mechanism references:
 - "Turn these notes into a markdown doc"
 - "Generate meeting minutes from these notes"
 - "Format this as minutes"
+- "Format this as a decision record"
+- "Write up the decision meeting"
 - "Summarise this workshop"
 - "Fix the formatting on this file"
 - "Create an HTML page for this content"
