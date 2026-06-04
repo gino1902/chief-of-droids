@@ -15,7 +15,7 @@ description: >
   Composes with: reviewing-tech-claims, pptx, docx, xlsx,
   architecting-data-platforms, analyzing-business-cases.
 ---
-<!-- version: 3.3 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
+<!-- version: 3.4 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
 
 # Editing Docs Skill
 
@@ -71,13 +71,8 @@ Format-mechanism references:
 - `references/template-corporate-chrome.md`, read for every `.docx`, wraps the
   document with cover, header, footer, TOC, revision history, remaining issues,
   and appendix.
-- `references/qa-checklist.md`, read and run before proposing any output.
-
-Deprecated, these are substance rather than expression and will move to the
-owning authoring skill:
-
-- `references/template-architecture-requirements.md`
-- `references/qa-architecture-requirements.md`
+- `references/qa-checklist.md`, the five expression-quality criteria and the
+  process gates, run as the Step 9 gate and displayed as the Step 10 QA report.
 
 ## Workflow: express and render
 
@@ -111,6 +106,10 @@ owning authoring skill:
    structure, format, set tone, tune verbosity, optimise reading efficiency.
 9. QA gate. Read and run `references/qa-checklist.md` before proposing output. If
    unreadable, flag and run manual QA.
+10. QA report. After the artifact is delivered, display the QA report to the
+   reader: the five expression-quality criteria from `references/qa-checklist.md`,
+   each marked pass or flag with a one-line note. Step 9 is the internal gate;
+   this step makes the expression assessment visible alongside the deliverable.
 
 ## Trigger Examples
 
@@ -148,6 +147,16 @@ skills, Claude orchestrates.
 
 ## Migration Notes
 
+- v3.4 (2026-06-03) — revamped `references/qa-checklist.md` (v2.0) around five
+  expression-quality criteria (clarity and coherence, audience fit, consistency
+  and focus, readability and flow, requirements and shape met), adapted from the
+  Clemson University Writing Lab revision guidance and filtered to expression
+  only. Added workflow Step 10: display the QA report to the reader after the
+  artifact is delivered, not just run it as an internal gate. Removed the orphan
+  `evals.json` (no runner consumed it) and both deprecated substance references
+  (`template-architecture-requirements.md`, `qa-architecture-requirements.md`),
+  whose substance is owned by architecting-data-platforms. The deprecated block
+  is now empty and has been dropped.
 - v3.3 (2026-06-03) — renamed from `writing-docs` to `editing-docs`. The folder,
   the frontmatter name, the title, and the principle statement all move to the
   new name. Cross-references across the framework (HOW-TO-TRIGGER.md,
