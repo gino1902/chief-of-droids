@@ -99,7 +99,15 @@ Triggering
 
 ## On the VARIANT type
 
-VARIANT is a single column type that holds a whole JSON-like value (object, array, scalar, or nested mix) as a parsed binary structure, queryable in place. Three properties matter here. It is parsed, not text: the JSON is decoded once at write time into a typed binary encoding, so the string "42" and the number 42 stay distinguishable. It is accessed by path, like payload:customer.id with a cast such as ::int, and those reads are cheap because the parse already happened rather than on every query. It is schema-flexible, so one column absorbs differing and evolving record shapes with no table change, which is why schema evolution drops out of this design. The caveat under Pits to avoid still holds: VARIANT is a normalised parse, not the original bytes, so it gives the document faithfully and queryably, not the file byte for byte.
+VARIANT is a single column type that holds a whole JSON-like value (object, array, scalar, or nested mix) as a parsed binary structure, queryable in place. 
+
+Three properties matter here. It is parsed, not text: the JSON is decoded once at write time into a typed binary encoding, so the string "42" and the number 42 stay distinguishable. It is not the source file byte for byte. 
+
+It is accessed by path, like payload:customer.id with a cast such as ::int, and those reads are cheap because the parse already happened rather than on every query. 
+
+It is schema-flexible, so one column absorbs differing and evolving record shapes with no table change, which is why schema evolution drops out of this design. 
+
+The caveat under Pits to avoid still holds: VARIANT is a normalised parse, not the original bytes, so it gives the document faithfully and queryably, not the file byte for byte.
 
 ## Reference implementation
 
