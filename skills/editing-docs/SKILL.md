@@ -15,43 +15,33 @@ description: >
   Composes with: reviewing-tech-claims, pptx, docx, xlsx,
   architecting-data-platforms, analyzing-business-cases.
 ---
-<!-- version: 3.4 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
+<!-- version: 4.0 | author: chief-of-droids workspace | last_updated: 2026-06-04 -->
 
 # Editing Docs Skill
 
-## Anchoring principle
+## What this skill does
 
-editing-docs is the expression layer. The substance of a document, its facts,
-decisions, and arguments, is authored elsewhere, by a domain authoring skill or
-by the user. This skill takes that substance and expresses it. It never invents
-or authors substance.
+editing-docs is the expression layer. It takes substance authored elsewhere, by
+a domain authoring skill or by the user, and expresses it. It never authors
+substance.
 
-Expression is five concerns, and nothing else:
+Expression covers five concerns, handled together rather than as a sequence:
+mapping content to a defined structure, formatting against house styles and
+colours, tone for the audience, verbosity, and reading efficiency.
 
-1. Mapping, fitting the content to a defined structure.
-2. Formatting, against best practice, styles, and colours.
-3. Tone, set for the intended audience.
-4. Verbosity, tuned to the need.
-5. Reading efficiency, optimised for how fast the reader must absorb it.
+## Routing: two axes
 
-## Where the expression rules live
+Per-type expression rules never live in this body. They live in a `references/`
+template, one per document type. Adding a type means adding a template, not
+editing this skill.
 
-The five concerns are never specified per document type in this body. They live
-in a template in `references/`, one template per document type. The minutes type
-lives in `references/60s-meeting-minutes.md`. Adding a document type means adding
-a template, not editing this skill. This keeps the body lean and the per-type
-rules in one place.
+A request resolves on two independent axes:
 
-Two reference axes are kept separate.
-
-- Document-type templates carry mapping, tone, verbosity, reading efficiency,
-  and any type-specific formatting, for one document type.
-- Format-mechanism references carry the rendering machinery for one output
-  format, the markdown rules, the theme and colours, the docx chrome, and
-  Mermaid.
-
-A request resolves on both axes. The document type selects a template, if one
-exists. The output format selects the rendering machinery.
+- Document type selects a template, if one exists (minutes maps to
+  `60s-meeting-minutes.md`). No template means free-form against
+  `doc-principles.md`.
+- Output format selects the rendering machinery: the markdown rules, the theme
+  and colours, the docx chrome, and Mermaid.
 
 ## Reference Files
 
@@ -71,8 +61,8 @@ Format-mechanism references:
 - `references/template-corporate-chrome.md`, read for every `.docx`, wraps the
   document with cover, header, footer, TOC, revision history, remaining issues,
   and appendix.
-- `references/qa-checklist.md`, the five expression-quality criteria and the
-  process gates, run as the Step 9 gate and displayed as the Step 10 QA report.
+- `references/qa-checklist.md`, the process gates, run as the internal Step 9
+  gate before proposing output.
 
 ## Workflow: express and render
 
@@ -102,14 +92,12 @@ Format-mechanism references:
 7. Tech verification. If the content carries version-sensitive technical claims
    (CLI commands, API signatures, package names, install steps), compose
    `reviewing-tech-claims`. Do not read its files directly.
-8. Apply expression in order, per the template and the principles: map to
-   structure, format, set tone, tune verbosity, optimise reading efficiency.
-9. QA gate. Read and run `references/qa-checklist.md` before proposing output. If
+8. Apply expression: map to structure, format, set tone, tune verbosity,
+   optimise reading efficiency. These are concurrent concerns, not an ordered
+   pipeline.
+9. QA gate. Read and run the process gates in `references/qa-checklist.md` before
+   proposing output. This is an internal gate, not surfaced to the reader. If
    unreadable, flag and run manual QA.
-10. QA report. After the artifact is delivered, display the QA report to the
-   reader: the five expression-quality criteria from `references/qa-checklist.md`,
-   each marked pass or flag with a one-line note. Step 9 is the internal gate;
-   this step makes the expression assessment visible alongside the deliverable.
 
 ## Trigger Examples
 
@@ -145,39 +133,6 @@ skills, Claude orchestrates.
 | `html` | Output format is HTML, pass `elevate.css` |
 | `react` | Output format is React, pass `elevate-tokens.js` or `elevate-tailwind-v4.css` |
 
-## Migration Notes
+## Changelog
 
-- v3.4 (2026-06-03) — revamped `references/qa-checklist.md` (v2.0) around five
-  expression-quality criteria (clarity and coherence, audience fit, consistency
-  and focus, readability and flow, requirements and shape met), adapted from the
-  Clemson University Writing Lab revision guidance and filtered to expression
-  only. Added workflow Step 10: display the QA report to the reader after the
-  artifact is delivered, not just run it as an internal gate. Removed the orphan
-  `evals.json` (no runner consumed it) and both deprecated substance references
-  (`template-architecture-requirements.md`, `qa-architecture-requirements.md`),
-  whose substance is owned by architecting-data-platforms. The deprecated block
-  is now empty and has been dropped.
-- v3.3 (2026-06-03) — renamed from `writing-docs` to `editing-docs`. The folder,
-  the frontmatter name, the title, and the principle statement all move to the
-  new name. Cross-references across the framework (HOW-TO-TRIGGER.md,
-  creating-skills, CLAUDE.md, and other skills' Composes With sections) still
-  point to the old name and must be swept before routing is consistent.
-- v3.2 (2026-06-03) — reanchored as the expression layer, with five named
-  concerns: mapping, formatting, tone, verbosity, reading efficiency. Per-type
-  expression rules now live in `references/` templates, the first being
-  `60s-meeting-minutes.md`. This is distinct from the v3.0 removal of substance
-  templates: v3.0 removed templates owned by authoring skills (ADR, BDR); v3.2
-  introduces expression templates, which carry no substance, only how a type is
-  expressed. Added meeting-minutes triggers.
-- v3.1 (2026-04-29) — added Step 4 placeholder confirmation gate for `.docx`
-  outputs; theme.md updated so H2/H3 are bold (consequence: heading hierarchy
-  is size-driven across all levels); template-corporate-chrome.md v1.8
-  reformats Running Header as a table mirroring the footer's style.
-- v3.0 (2026-04-29) — repositioned from "produces structured written output" to
-  "formats and renders documents". Removed inline templates branch (ADR / Brief /
-  Runbook / Playbook). Authoring skills now own document-type substance via
-  description-driven activation. `templates.md` deleted from references.
-  `template-architecture-requirements.md` and `qa-architecture-requirements.md`
-  marked deprecated; will migrate to authoring skills.
-- v2.2 (2026-04-28) — chrome + arch-req body templates added.
-- v2.1 — pptx/docx/xlsx/HTML/React/SVG theme routing.
+See `CHANGELOG.md`.

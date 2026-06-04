@@ -1,36 +1,16 @@
-<!-- version: 2.0 | author: chief-of-droids workspace | last_updated: 2026-06-03 -->
+<!-- version: 3.0 | author: chief-of-droids workspace | last_updated: 2026-06-04 -->
 
 # Editing Docs QA Checklist
 
-Run as the gate before proposing any output (workflow Step 9). The five
-expression-quality criteria below are also the QA report shown to the reader
-after the artifact is delivered (workflow Step 10), each marked pass or flag
-with a one-line note.
+Run the process gates below before proposing any output (workflow Step 9).
+Mechanical checks that must hold regardless of document type. This is an internal
+gate. Do not surface it to the reader.
 
-## Expression quality
-
-The five criteria the expression layer is accountable for. Each maps to one of
-the skill's concerns. Adapted from the Clemson University Writing Lab revision
-guidance (source below), filtered to expression only, with its substance
-criteria (evidence quality, argument strength) excluded.
-
-- [ ] **Clarity and coherence** (mapping): ideas land in a logical order, each
-  section connects to the next, and no passage is ambiguous.
-- [ ] **Audience fit** (tone): the document is pitched for the intended reader
-  and is clear for that reader specifically.
-- [ ] **Consistency and focus** (formatting, verbosity): style, tone, and
-  formatting are consistent throughout, and tangential content is cut so nothing
-  distracts from the central message.
-- [ ] **Readability and flow** (reading efficiency): sentences and paragraphs
-  read smoothly, nothing is awkward or stilted, and the document is scannable at
-  the speed its type demands.
-- [ ] **Requirements and shape met** (formatting, mapping): format, length, and
-  structural requirements are satisfied, the opening states the point, and the
-  close lands it.
+Expression quality (clarity, audience fit, focus, readability, shape) is native
+to the model and is no longer checked here. The gate enforces only the
+non-derivable house contract.
 
 ## Process gates
-
-Mechanical checks that must hold regardless of document type.
 
 - [ ] `references/doc-principles.md` read before expressing.
 - [ ] Substance came from an authoring skill or the user, not invented here.
@@ -50,9 +30,3 @@ Mechanical checks that must hold regardless of document type.
 - [ ] If version-sensitive technical claims are present: `reviewing-tech-claims`
   loaded and applied.
 - [ ] Version block present on any document that will be referenced.
-
-## Source
-
-Expression criteria adapted from the Clemson University Writing Lab, "Revising
-Your Drafts":
-https://www.clemson.edu/centers-institutes/writing/writing-resources/writing-resources/revising.html
