@@ -1,6 +1,6 @@
 ---
 name: improving-skills-predictability
-description: Measures the output predictability of a Claude skill across multiple runs on a shared substrate and produces stress-tested recommendations to reduce variance. Use this skill whenever the user wants to audit how consistent a skill's outputs are run-to-run, compare N versioned outputs (e.g., `<slug>-v01` through `<slug>-vNN`) against the substrate that produced them, diagnose where a skill drifts (structure, identifiers, modality, verbatim invariants, naming), or get prioritized recommendations to harden the skill's prompt. Required inputs are the outputs directory (≥5 runs), the skill being analyzed, and the substrate file. Output is a single markdown report under `<CLAUDE.md parent dir>/predictability/<skill-name>/`. Generic — not limited to requirements-style outputs.
+description: Measures the output predictability of a Claude skill across multiple runs on a shared substrate and produces stress-tested recommendations to reduce variance. Use this skill whenever the user wants to audit how consistent a skill's outputs are run-to-run, compare N versioned outputs (e.g., `<slug>-v01` through `<slug>-vNN`) against the substrate that produced them, diagnose where a skill drifts (structure, identifiers, modality, verbatim invariants, naming), or get prioritized recommendations to harden the skill's prompt. Required inputs are the outputs directory (≥5 runs), the skill being analyzed, and the substrate file. Output is a single markdown report under `<CLAUDE.md parent dir>/outputs/predictability/<skill-name>/`. Generic — not limited to requirements-style outputs.
 allowed-tools:
   - Read
   - Write
@@ -252,7 +252,7 @@ On hard-fail, replace the current phase line and stop:
    Otherwise (any artifact at K/N < N/N, any `[non-comparable]` row, or M = 0), prompt as above and await explicit user input.
 4. If fewer than 5 runs are discovered, hard-fail.
 5. Resolve the skill name from the `SKILL.md` frontmatter `name:` field. If absent, fall back to the directory name.
-6. Resolve the report destination: `<CLAUDE.md parent dir>/predictability/<skill-name>/<skill-name>-predictability-<YYYYMMDD-HHMM>.md`. Create the directory if missing.
+6. Resolve the report destination: `<CLAUDE.md parent dir>/outputs/predictability/<skill-name>/<skill-name>-predictability-<YYYYMMDD-HHMM>.md`. Create the directory if missing.
 
 ## Phase 1 — Ingest
 
@@ -503,7 +503,7 @@ The annotation is a static pass over the ranked list — it does not change scor
 Write exactly one file:
 
 ```
-<CLAUDE.md parent dir>/predictability/<skill-name>/<skill-name>-predictability-<YYYYMMDD-HHMM>.md
+<CLAUDE.md parent dir>/outputs/predictability/<skill-name>/<skill-name>-predictability-<YYYYMMDD-HHMM>.md
 ```
 
 The file must end with the version block required by the workspace CLAUDE.md.

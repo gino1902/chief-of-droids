@@ -1,0 +1,129 @@
+{
+  "article": {
+    "title": "Tesla in 10 Charts: How the Business Works, Visualized (2026)",
+    "author": "Daniel Pereira",
+    "published_date": "2026-05-28",
+    "publisher": "The Business Model Analyst",
+    "category": "Companies in charts",
+    "subject_company": "Tesla",
+    "section_count": 11,
+    "chart_count_claimed": 10,
+    "chart_images_read": 3
+  },
+  "sections": [
+    "Introduction",
+    "1. Tesla Business Model Snapshot",
+    "2. Tesla Revenue Breakdown",
+    "3. Tesla Business Model Flywheel",
+    "4. Tesla SWOT Analysis",
+    "5. Tesla PESTLE Analysis",
+    "6. Tesla Competitive Landscape",
+    "7. Tesla Value Chain",
+    "8. Tesla Customer Segments",
+    "9. Tesla Strategic Risks",
+    "10. Tesla Future Growth Map",
+    "Conclusion"
+  ],
+  "financials": {
+    "fiscal_year": 2025,
+    "currency": "USD",
+    "unit": "billions",
+    "total_revenue": 94.827,
+    "segments": [
+      {
+        "segment": "Automotive + Services/Other",
+        "value": 82.056,
+        "share_percent": 86.5
+      },
+      {
+        "segment": "Energy Generation & Storage",
+        "value": 12.771,
+        "share_percent": 13.5
+      }
+    ],
+    "energy_segment_growth_driver": ["higher Megapack deployments", "higher Powerwall deployments"]
+  },
+  "charts": {
+    "chart_1_business_model_snapshot": {
+      "title": "Tesla Business Model Snapshot",
+      "subtitle": "How Tesla connects vehicles, software, energy, infrastructure, and customer relationships.",
+      "type": "hub-and-spoke diagram",
+      "center_hub": "Tesla Business Model",
+      "nodes": [
+        {"number": 1, "label": "Vehicle Sales & Leasing", "detail": "EV sales, leasing, used vehicles, and automotive services."},
+        {"number": 2, "label": "Energy Products", "detail": "Powerwall, Megapack, solar, and storage solutions."},
+        {"number": 3, "label": "Services & Extras", "detail": "Paid Supercharging, insurance, maintenance, parts, merchandise, and software features."},
+        {"number": 4, "label": "Direct Customer Relationship", "detail": "Website, app, stores, and delivery centers; more control over pricing and experience."},
+        {"number": 5, "label": "Strategic Assets", "detail": "Brand, factories, battery technology, software, charging network, and vehicle data."},
+        {"number": 6, "label": "Key Takeaway", "detail": "Tesla combines vehicles, software, energy, infrastructure, and direct customer relationships."}
+      ],
+      "footer_icons": ["Battery", "Software License", "Factory", "Data Cloud", "Home Energy Storage"]
+    },
+    "chart_business_overview_header": {
+      "title": "Tesla in charts business overview",
+      "type": "decorative AI illustration",
+      "data": "none (no numeric content)",
+      "elements_depicted": ["silver Tesla-style sedan", "holographic dashboard graphics", "bar charts", "line graphs", "pie charts", "world map", "battery cabinets", "server racks", "charging stations", "solar panel"]
+    },
+    "chart_3_revenue_breakdown_2025": {
+      "title": "Tesla Revenue Breakdown: Still Automotive-Led.",
+      "type": "donut chart with callout panel",
+      "center_label": "2025 Total Revenue $94.827B",
+      "donut_legend": ["Automotive", "Energy Storage", "Charging", "Growth"],
+      "segments": [
+        {"label": "Automotive + Services/Other", "value_usd_billions": 82.056, "percent": 86.5},
+        {"label": "Energy Generation & Storage", "value_usd_billions": 12.771, "percent": 13.5}
+      ],
+      "callout": {
+        "total_revenue_2025_usd_billions": 94.827,
+        "core_business": "vehicles and related services",
+        "growth_pillar": "energy storage",
+        "future_expansion": ["energy", "charging", "software", "services"]
+      },
+      "banner": "Tesla remains automotive-led today, but energy is becoming an increasingly important growth pillar."
+    }
+  },
+  "business_model": {
+    "core_activities": ["design", "manufacture", "sale", "leasing of electric vehicles", "energy generation", "energy storage"],
+    "service_revenue_sources": ["paid Supercharging", "used vehicle sales", "non-warranty maintenance", "collision services", "automotive insurance", "parts", "merchandise", "software-related features"],
+    "sales_channels": ["website", "app", "stores", "delivery centers"],
+    "connected_assets": ["brand", "factories", "battery technology", "software", "charging infrastructure", "vehicle data", "energy products (Megapack, Powerwall)"]
+  },
+  "flywheel_loop": [
+    "brand awareness creates vehicle demand",
+    "vehicle sales increase cars on the road",
+    "more cars generate customer data, software feedback, charging usage, service interactions",
+    "insights improve software, customer experience, ecosystem",
+    "Supercharger network, OTA updates, software features increase customer loyalty",
+    "customer loyalty strengthens brand and supports future demand"
+  ],
+  "swot": {
+    "strengths": ["global brand", "EV leadership", "software capabilities", "Supercharger network", "direct sales model", "vertical integration"],
+    "weaknesses": ["high dependence on automotive revenue", "production complexity", "margin pressure", "reputation volatility", "challenge of scaling service capacity"],
+    "opportunities": ["energy storage", "software monetization", "autonomous driving", "fleet sales", "charging network monetization", "international expansion"],
+    "threats": ["EV price competition", "BYD and legacy automakers", "regulatory scrutiny", "supply chain risks", "pressure on profitability"]
+  },
+  "pestle": {
+    "political": ["EV subsidies", "trade policy", "tariffs", "regulation in US, Europe, China"],
+    "economic": ["interest rates", "consumer purchasing power", "battery material costs", "price competition"],
+    "social": ["shift toward sustainability and electric mobility", "brand perception affected by public controversy"],
+    "technological": ["battery innovation", "software", "AI", "autonomous driving", "manufacturing efficiency", "charging infrastructure"],
+    "legal": ["safety", "labor", "data", "autonomous features", "product claims"],
+    "environmental": ["decarbonization trends", "battery sourcing", "recycling", "supply chain sustainability"]
+  },
+  "competitors": ["BYD", "Volkswagen", "Toyota", "Hyundai/Kia", "Ford", "GM", "Rivian", "Lucid", "NIO"],
+  "competitor_categories": ["premium EV makers", "mass-market automakers", "Chinese EV companies", "traditional car manufacturers transitioning to electric"],
+  "value_chain_activities": ["vehicle design", "battery development", "manufacturing", "software development", "direct sales", "delivery", "charging", "service", "energy storage deployment"],
+  "customer_segments": {
+    "early_growth": ["premium buyers", "technology enthusiasts", "sustainability-focused consumers"],
+    "mass_market_models": ["Model 3", "Model Y"],
+    "energy_customers": {"home": "Powerwall", "utility_and_commercial": "Megapack"},
+    "broader_base": ["EV consumers", "software-oriented users", "energy customers", "charging users", "potential commercial mobility customers"]
+  },
+  "strategic_risks": ["EV price wars", "lower margins", "autonomous driving delays", "regulatory pressure", "supply chain constraints", "battery costs", "competition from Chinese and legacy automakers", "reputation volatility"],
+  "future_growth": {
+    "short_term": ["EV sales", "charging", "services", "energy storage"],
+    "long_term": ["autonomous driving", "robotaxi services", "AI", "robotics", "broader energy infrastructure"],
+    "key_question": "Whether Tesla can transform from an EV manufacturer into a broader technology and energy platform."
+  }
+}

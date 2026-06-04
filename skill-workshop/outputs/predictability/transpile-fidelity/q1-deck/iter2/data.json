@@ -1,0 +1,372 @@
+{
+  "document": {
+    "title": "Tesla Q1 2026 Update",
+    "pages": 31,
+    "currency": "USD",
+    "monetary_unit": "millions unless otherwise noted",
+    "webcast": {
+      "date": "2026-04-22",
+      "time": "4:30 p.m. CT",
+      "url": "ir.tesla.com"
+    },
+    "form_10k_filed": "2026-01-28"
+  },
+  "financial_summary": {
+    "unit": "USD millions, except percentages and per-share data",
+    "periods": ["Q1-2025", "Q2-2025", "Q3-2025", "Q4-2025", "Q1-2026"],
+    "metrics": {
+      "total_automotive_revenues": {"values": [13967, 16661, 21205, 17693, 16234], "yoy": "16%"},
+      "energy_generation_and_storage_revenue": {"values": [2730, 2789, 3415, 3837, 2408], "yoy": "-12%"},
+      "services_and_other_revenue": {"values": [2638, 3046, 3475, 3371, 3745], "yoy": "42%"},
+      "total_revenues": {"values": [19335, 22496, 28095, 24901, 22387], "yoy": "16%"},
+      "total_gross_profit": {"values": [3153, 3878, 5054, 5009, 4720], "yoy": "50%"},
+      "total_gaap_gross_margin": {"values": ["16.3%", "17.2%", "18.0%", "20.1%", "21.1%"], "yoy": "478 bp"},
+      "operating_expenses": {"values": [2754, 2955, 3430, 3600, 3779], "yoy": "37%"},
+      "income_from_operations": {"values": [399, 923, 1624, 1409, 941], "yoy": "136%"},
+      "operating_margin": {"values": ["2.1%", "4.1%", "5.8%", "5.7%", "4.2%"], "yoy": "214 bp"},
+      "adjusted_ebitda": {"values": [2814, 3401, 4227, 4154, 3668], "yoy": "30%"},
+      "adjusted_ebitda_margin": {"values": ["14.6%", "15.1%", "15.0%", "16.7%", "16.4%"], "yoy": "183 bp"},
+      "net_income_common_gaap": {"values": [409, 1172, 1373, 840, 477], "yoy": "17%"},
+      "net_income_common_non_gaap": {"values": [934, 1393, 1770, 1761, 1453], "yoy": "56%"},
+      "eps_diluted_gaap": {"values": [0.12, 0.33, 0.39, 0.24, 0.13], "yoy": "8%"},
+      "eps_diluted_non_gaap": {"values": [0.27, 0.40, 0.50, 0.50, 0.41], "yoy": "52%"},
+      "net_cash_from_operating_activities": {"values": [2156, 2540, 6238, 3813, 3937], "yoy": "83%"},
+      "capital_expenditures": {"values": [-1492, -2394, -2248, -2393, -2493], "yoy": "67%"},
+      "free_cash_flow": {"values": [664, 146, 3990, 1420, 1444], "yoy": "117%"},
+      "cash_cash_equivalents_and_st_investments": {"values": [36996, 36782, 41647, 44059, 44743], "yoy": "21%"}
+    }
+  },
+  "operational_summary": {
+    "periods": ["Q1-2025", "Q2-2025", "Q3-2025", "Q4-2025", "Q1-2026"],
+    "metrics": {
+      "model_3y_production": {"values": [345454, 396835, 435826, 422652, 394611], "yoy": "14%"},
+      "other_models_production": {"values": [17161, 13409, 11624, 11706, 13775], "yoy": "-20%"},
+      "total_production": {"values": [362615, 410244, 447450, 434358, 408386], "yoy": "13%"},
+      "model_3y_deliveries": {"values": [323800, 373728, 481166, 406585, 341893], "yoy": "6%"},
+      "other_models_deliveries": {"values": [12881, 10394, 15933, 11642, 16130], "yoy": "25%"},
+      "total_deliveries": {"values": [336681, 384122, 497099, 418227, 358023], "yoy": "6%"},
+      "deliveries_subject_to_operating_lease_accounting": {"values": [13721, 6670, 10230, 10996, 3430], "yoy": "-75%"},
+      "cumulative_deliveries_all_time_mil": {"values": [7.6, 8.0, 8.5, 8.9, 9.2], "yoy": "21%"},
+      "active_fsd_subscriptions_mil": {"values": [0.85, 0.95, 1.04, 1.10, 1.28], "yoy": "51%"},
+      "end_of_quarter_operating_lease_new_vehicle_count": {"values": [179930, 172882, 167163, 163075, 151991], "yoy": "-16%"},
+      "global_vehicle_inventory_days_of_supply": {"values": [22, 24, 10, 15, 27], "yoy": "23%"},
+      "storage_deployed_gwh": {"values": [10.4, 9.6, 12.5, 14.2, 8.8], "yoy": "-15%"},
+      "supercharger_stations": {"values": [7131, 7377, 7753, 8182, 8463], "yoy": "19%"},
+      "supercharger_connectors": {"values": [67316, 70228, 73817, 77682, 79918], "yoy": "19%"}
+    }
+  },
+  "installed_annual_manufacturing_capacity": {
+    "automotive": [
+      {"region": "California", "product": "Model 3 / Model Y", "capacity": ">550,000", "status": "Production"},
+      {"region": "Shanghai", "product": "Model 3 / Model Y", "capacity": ">950,000", "status": "Production"},
+      {"region": "Berlin", "product": "Model Y", "capacity": ">375,000", "status": "Production"},
+      {"region": "Texas", "product": "Model Y", "capacity": ">250,000", "status": "Production"},
+      {"region": "Texas", "product": "Cybertruck", "capacity": ">125,000", "status": "Production"},
+      {"region": "Texas", "product": "Cybercab", "capacity": "-", "status": "Pilot Production"},
+      {"region": "Nevada", "product": "Tesla Semi", "capacity": "-", "status": "Pilot Production"},
+      {"region": "TBD", "product": "Roadster", "capacity": "-", "status": "Design development"}
+    ],
+    "energy_generation_and_storage": [
+      {"region": "California", "product": "Megapack", "capacity": "40 GWh", "status": "Production"},
+      {"region": "Nevada", "product": "Powerwall", "capacity": ">6 GWh", "status": "Production"},
+      {"region": "Shanghai", "product": "Megapack", "capacity": "20 GWh", "status": "Production"},
+      {"region": "Texas", "product": "Megapack", "capacity": "-", "status": "Construction"}
+    ],
+    "robotics": [
+      {"region": "California", "product": "Optimus", "capacity": "-", "status": "Construction"},
+      {"region": "Texas", "product": "Optimus", "capacity": "-", "status": "Construction"}
+    ]
+  },
+  "installed_annual_capacity_supporting_infrastructure": {
+    "ai_training_compute": [
+      {"region": "Texas", "product": "Cortex 1", "capacity": ">100k H100e", "status": "Production"},
+      {"region": "Texas", "product": "Cortex 2", "capacity": ">130k H100e", "status": "Early Ramp"}
+    ],
+    "battery_manufacturing": [
+      {"region": "Nevada", "product": "LFP", "capacity": "7 GWh", "status": "Early Ramp"},
+      {"region": "Texas", "product": "4680", "capacity": "40 GWh", "status": "Production"},
+      {"region": "Texas", "product": "Cathode Materials", "capacity": "10 GWh", "status": "Early Ramp"},
+      {"region": "Texas", "product": "Lithium Refining", "capacity": "30 GWh", "status": "Early Ramp"}
+    ]
+  },
+  "robotaxi_coverage": [
+    {"state": "California", "metro": "SF Bay Area", "status": "Safety Driver"},
+    {"state": "Texas", "metro": "Austin", "status": "Ramping Unsupervised"},
+    {"state": "Texas", "metro": "Dallas", "status": "Ramping Unsupervised"},
+    {"state": "Texas", "metro": "Houston", "status": "Ramping Unsupervised"},
+    {"state": "Arizona", "metro": "Phoenix", "status": "Preparations Underway"},
+    {"state": "Florida", "metro": "Miami", "status": "Preparations Underway"},
+    {"state": "Florida", "metro": "Orlando", "status": "Preparations Underway"},
+    {"state": "Florida", "metro": "Tampa", "status": "Preparations Underway"},
+    {"state": "Nevada", "metro": "Las Vegas", "status": "Preparations Underway"}
+  ],
+  "charts": {
+    "ai_training_capacity_ramp": {
+      "page": 7,
+      "title": "Tesla AI Training Capacity Ramp (H100 equivalent GPUs)",
+      "type": "step area",
+      "x_axis": "Jun-2021 to Jun-2026 (quarterly)",
+      "series": {
+        "existing_capacity_approx": {
+          "note": "approximate read from step-line; near 0 through 2022",
+          "points": [
+            {"period": "Sep-2023", "value": 5000},
+            {"period": "Dec-2023", "value": 15000},
+            {"period": "Jun-2024", "value": 35000},
+            {"period": "Dec-2024", "value": 85000},
+            {"period": "Sep-2025", "value": 115000},
+            {"period": "Dec-2025", "value": 135000}
+          ]
+        },
+        "future_planned_capacity_approx": {
+          "points": [
+            {"period": "Mar-2026", "value": 275000},
+            {"period": "Jun-2026", "value": 275000}
+          ]
+        }
+      }
+    },
+    "cumulative_fsd_miles": {
+      "page": 8,
+      "title": "Cumulative Miles Driven with FSD (Supervised) (billions)",
+      "type": "stacked area",
+      "x_axis": "Sep-2021 to Mar-2026",
+      "series": {
+        "fsd_miles_v11_and_before_approx": {"end_value_billions": 1.0},
+        "fsd_miles_v12_and_beyond_approx": {"end_value_billions": 8.0},
+        "total_stack_approx_billions": 9.5
+      }
+    },
+    "cumulative_paid_robotaxi_miles": {
+      "page": 9,
+      "title": "Cumulative Paid Robotaxi Miles",
+      "type": "area",
+      "x_axis": "Jun-2025 to Mar-2026",
+      "series_approx": [
+        {"period": "Jun-2025", "value": 5000},
+        {"period": "Aug-2025", "value": 50000},
+        {"period": "Dec-2025", "value": 650000},
+        {"period": "Mar-2026", "value": 1700000}
+      ]
+    },
+    "key_metrics_quarterly": {
+      "page": 21,
+      "x_axis": ["2Q-2023","3Q-2023","4Q-2023","1Q-2024","2Q-2024","3Q-2024","4Q-2024","1Q-2025","2Q-2025","3Q-2025","4Q-2025","1Q-2026"],
+      "note": "values read approximately from bar charts",
+      "vehicle_deliveries_mil": [0.466, 0.435, 0.485, 0.387, 0.444, 0.463, 0.496, 0.337, 0.384, 0.497, 0.418, 0.358],
+      "operating_cash_flow_b": [3.1, 3.3, 4.4, 0.2, 3.6, 6.3, 4.8, 2.2, 2.5, 6.2, 3.8, 3.9],
+      "free_cash_flow_b": [1.0, 0.85, 2.1, -2.5, 1.3, 2.7, 2.0, 0.7, 0.15, 4.0, 1.4, 1.4],
+      "net_income_b": [2.7, 1.85, 7.9, 1.4, 1.4, 2.2, 2.1, 0.4, 1.2, 1.4, 0.85, 0.5],
+      "adjusted_ebitda_b": [4.65, 3.75, 4.0, 3.4, 3.7, 4.65, 4.35, 2.8, 3.4, 4.25, 4.15, 3.65]
+    },
+    "key_metrics_ttm": {
+      "page": 22,
+      "x_axis": ["2Q-2023","3Q-2023","4Q-2023","1Q-2024","2Q-2024","3Q-2024","4Q-2024","1Q-2025","2Q-2025","3Q-2025","4Q-2025","1Q-2026"],
+      "note": "values read approximately from bar charts",
+      "vehicle_deliveries_mil": [1.64, 1.73, 1.81, 1.77, 1.75, 1.78, 1.79, 1.74, 1.68, 1.72, 1.64, 1.66],
+      "operating_cash_flow_b": [13.9, 12.1, 13.2, 11.0, 11.5, 14.5, 14.9, 16.8, 15.7, 15.7, 14.7, 16.5],
+      "free_cash_flow_b": [6.2, 3.7, 4.4, 1.4, 1.7, 3.6, 3.6, 6.8, 5.6, 6.8, 6.2, 7.0],
+      "net_income_b": [12.2, 10.8, 15.0, 13.9, 12.6, 12.9, 7.1, 6.1, 5.8, 5.1, 3.8, 3.8],
+      "adjusted_ebitda_b": [19.3, 18.1, 16.6, 15.7, 14.8, 15.7, 16.1, 15.5, 15.2, 14.8, 14.6, 15.5]
+    }
+  },
+  "statement_of_operations": {
+    "unit": "USD millions or shares, except per-share data",
+    "periods": ["Q1-2025", "Q2-2025", "Q3-2025", "Q4-2025", "Q1-2026"],
+    "line_items": {
+      "automotive_sales": [12925, 15787, 20359, 16750, 15473],
+      "automotive_regulatory_credits": [595, 439, 417, 542, 380],
+      "automotive_leasing": [447, 435, 429, 401, 381],
+      "total_automotive_revenues": [13967, 16661, 21205, 17693, 16234],
+      "energy_generation_and_storage_revenue": [2730, 2789, 3415, 3837, 2408],
+      "services_and_other_revenue": [2638, 3046, 3475, 3371, 3745],
+      "total_revenues": [19335, 22496, 28095, 24901, 22387],
+      "cost_automotive_sales": [11461, 13567, 17365, 13874, 12616],
+      "cost_automotive_leasing": [239, 228, 225, 206, 196],
+      "total_automotive_cost_of_revenues": [11700, 13795, 17590, 14080, 12812],
+      "cost_energy_generation_and_storage": [1945, 1943, 2342, 2739, 1456],
+      "cost_services_and_other": [2537, 2880, 3109, 3073, 3399],
+      "total_cost_of_revenues": [16182, 18618, 23041, 19892, 17667],
+      "gross_profit": [3153, 3878, 5054, 5009, 4720],
+      "research_and_development": [1409, 1589, 1630, 1783, 1946],
+      "selling_general_and_administrative": [1251, 1366, 1562, 1655, 1833],
+      "restructuring_and_other": [94, null, 238, 162, null],
+      "total_operating_expenses": [2754, 2955, 3430, 3600, 3779],
+      "income_from_operations": [399, 923, 1624, 1409, 941],
+      "interest_income": [400, 392, 439, 449, 434],
+      "interest_expense": [-91, -86, -76, -85, -92],
+      "other_expense_income_net": [-119, 320, -28, -592, -535],
+      "income_before_income_taxes": [589, 1549, 1959, 1181, 748],
+      "provision_for_income_taxes": [169, 359, 570, 325, 257],
+      "net_income": [420, 1190, 1389, 856, 491],
+      "net_income_to_noncontrolling_interests": [11, 18, 16, 16, 14],
+      "net_income_attributable_to_common_stockholders": [409, 1172, 1373, 840, 477],
+      "eps_basic": [0.13, 0.36, 0.43, 0.26, 0.15],
+      "eps_diluted": [0.12, 0.33, 0.39, 0.24, 0.13],
+      "weighted_avg_shares_basic": [3218, 3223, 3227, 3231, 3234],
+      "weighted_avg_shares_diluted": [3521, 3519, 3526, 3539, 3538]
+    }
+  },
+  "balance_sheet": {
+    "unit": "USD millions",
+    "periods": ["31-Mar-25", "30-Jun-25", "30-Sep-25", "31-Dec-25", "31-Mar-26"],
+    "line_items": {
+      "cash_cash_equivalents_and_st_investments": [36996, 36782, 41647, 44059, 44743],
+      "accounts_receivable_net": [3782, 3838, 4703, 4576, 3959],
+      "inventory": [13706, 14570, 12276, 12392, 14434],
+      "prepaid_expenses_and_other_current_assets": [4905, 5943, 6027, 7615, 6612],
+      "total_current_assets": [59389, 61133, 64653, 68643, 69748],
+      "operating_lease_vehicles_net": [5477, 5230, 5019, 4912, 4530],
+      "energy_generation_and_storage_systems_net": [4855, 4788, 4673, 4604, 4565],
+      "property_plant_and_equipment_net": [37088, 38574, 39407, 40643, 43213],
+      "operating_lease_right_of_use_assets": [5330, 5633, 5783, 6027, 6332],
+      "digital_assets": [951, 1235, 1315, 1008, 786],
+      "deferred_tax_assets": [6687, 6721, 6637, 6925, 7060],
+      "other_non_current_assets": [5334, 5253, 6248, 5045, 7490],
+      "total_assets": [125111, 128567, 133735, 137806, 143724],
+      "accounts_payable": [13471, 13212, 12819, 13371, 14696],
+      "accrued_liabilities_and_other": [10802, 11519, 12791, 13279, 14554],
+      "deferred_revenue_current": [3243, 3237, 3756, 3424, 3441],
+      "current_portion_of_debt_and_finance_leases": [2237, 2040, 1924, 1640, 1447],
+      "total_current_liabilities": [29753, 30008, 31290, 31713, 34138],
+      "debt_and_finance_leases_net_of_current_portion": [5292, 5180, 5778, 6736, 7782],
+      "deferred_revenue_net_of_current_portion": [3610, 3764, 3746, 3631, 3847],
+      "other_long_term_liabilities": [11038, 11543, 12205, 12860, 13155],
+      "total_liabilities": [49693, 50495, 53019, 54940, 58922],
+      "redeemable_noncontrolling_interests": [62, 61, 59, 58, 57],
+      "total_stockholders_equity": [74653, 77314, 79970, 82139, 84116],
+      "noncontrolling_interests_in_subsidiaries": [703, 697, 687, 670, 629],
+      "total_liabilities_and_equity": [125111, 128567, 133735, 137806, 143724],
+      "non_recourse_debt": [7238, 6953, 7458, 8150, 9017],
+      "recourse_debt": [6, 3, 3, 3, 2],
+      "days_sales_outstanding": [19, 15, 14, 17, 17],
+      "days_payable_outstanding": [72, 65, 52, 61, 71]
+    }
+  },
+  "statement_of_cash_flows": {
+    "unit": "USD millions",
+    "periods": ["Q1-2025", "Q2-2025", "Q3-2025", "Q4-2025", "Q1-2026"],
+    "line_items": {
+      "net_income": [420, 1190, 1389, 856, 491],
+      "depreciation_amortization_impairment": [1447, 1433, 1625, 1643, 1590],
+      "stock_based_compensation": [573, 635, 663, 954, 1030],
+      "inventory_and_purchase_commitments_writedowns": [112, 136, 65, 49, 77],
+      "foreign_currency_transaction_loss_net": [30, 24, 106, 292, 287],
+      "deferred_income_taxes": [-43, 52, 225, -111, -136],
+      "non_cash_interest_and_other_operating": [46, 27, 162, 37, 1],
+      "digital_assets_loss_gain_net": [125, -284, -80, 307, 222],
+      "change_accounts_receivable": [630, -29, -907, 45, 561],
+      "change_inventory": [-1704, -703, 1991, -214, -2255],
+      "change_operating_lease_vehicles": [-76, 141, -11, -79, 174],
+      "change_prepaid_expenses_and_other_assets": [-419, -718, -1143, -901, 231],
+      "change_accounts_payable_accrued_and_other": [706, 627, 1646, 1397, 1401],
+      "change_deferred_revenue": [309, 9, 507, -462, 263],
+      "net_cash_from_operating_activities": [2156, 2540, 6238, 3813, 3937],
+      "capital_expenditures": [-1492, -2394, -2248, -2393, -2493],
+      "purchase_of_spacex_equity_investment": [0, 0, 0, 0, -2002],
+      "purchases_of_short_term_investments": [-6015, -7485, -11402, -12207, -8318],
+      "proceeds_from_maturities_of_st_investments": [5856, 6935, 9295, 8072, 7790],
+      "net_cash_used_in_investing_activities": [-1651, -2944, -4355, -6528, -5023],
+      "proceeds_from_issuances_of_debt": [625, 2425, 1182, 1354, 4331],
+      "repayments_of_debt": [-1301, -2828, -669, -748, -3530],
+      "debt_issuance_costs": [0, -1, -4, -1, 0],
+      "proceeds_from_stock_option_exercises_and_other": [313, 215, 512, 146, 361],
+      "principal_payments_on_finance_leases": [-48, -19, -18, -19, -18],
+      "proceeds_from_directors_in_shareholder_settlement": [277, 0, 0, 0, 0],
+      "payment_recovery_legal_fees_shareholder_settlement": [-176, 0, 0, 0, 98],
+      "distributions_to_noncontrolling_interests": [-22, -14, -20, -22, -70],
+      "net_cash_from_financing_activities": [-332, -222, 983, 710, 1172],
+      "effect_of_exchange_rate_changes": [40, 111, -17, 37, -47],
+      "net_increase_decrease_in_cash": [213, -515, 2849, -1968, 39],
+      "cash_at_beginning_of_period": [17037, 17250, 16735, 19584, 17616],
+      "cash_at_end_of_period": [17250, 16735, 19584, 17616, 17655]
+    }
+  },
+  "gaap_to_non_gaap_reconciliation_5q": {
+    "unit": "USD millions, except per-share",
+    "periods": ["Q1-2025", "Q2-2025", "Q3-2025", "Q4-2025", "Q1-2026"],
+    "net_income_to_non_gaap": {
+      "net_income_common_gaap": [409, 1172, 1373, 840, 477],
+      "stock_based_compensation_net_of_tax": [428, 443, 459, 682, 803],
+      "digital_assets_loss_gain_net_of_tax": [97, -222, -62, 239, 173],
+      "net_income_common_non_gaap": [934, 1393, 1770, 1761, 1453]
+    },
+    "eps_reconciliation": {
+      "eps_diluted_gaap": [0.12, 0.33, 0.39, 0.24, 0.13],
+      "sbc_net_of_tax_per_share": [0.12, 0.13, 0.13, 0.19, 0.23],
+      "digital_assets_net_of_tax_per_share": [0.03, -0.06, -0.02, 0.07, 0.05],
+      "eps_diluted_non_gaap": [0.27, 0.40, 0.50, 0.50, 0.41],
+      "shares_used_diluted": [3521, 3519, 3526, 3539, 3538]
+    },
+    "adjusted_ebitda": {
+      "net_income_common_gaap": [409, 1172, 1373, 840, 477],
+      "interest_expense": [91, 86, 76, 85, 92],
+      "provision_for_income_taxes": [169, 359, 570, 325, 257],
+      "depreciation_amortization_impairment": [1447, 1433, 1625, 1643, 1590],
+      "stock_based_compensation_expense": [573, 635, 663, 954, 1030],
+      "digital_assets_loss_gain_net": [125, -284, -80, 307, 222],
+      "adjusted_ebitda": [2814, 3401, 4227, 4154, 3668],
+      "total_revenues": [19335, 22496, 28095, 24901, 22387],
+      "adjusted_ebitda_margin": ["14.6%", "15.1%", "15.0%", "16.7%", "16.4%"]
+    },
+    "automotive_gross_margin": {
+      "automotive_gross_margin_gaap": ["16.2%", "17.2%", "17.0%", "20.4%", "21.1%"],
+      "less_total_regulatory_credit_revenue": ["3.7%", "2.2%", "1.6%", "2.5%", "1.9%"],
+      "automotive_gross_margin_excl_reg_credits_non_gaap": ["12.5%", "15.0%", "15.4%", "17.9%", "19.2%"]
+    }
+  },
+  "gaap_to_non_gaap_reconciliation_historical": {
+    "unit": "USD millions",
+    "free_cash_flow_quarterly": {
+      "periods": ["3Q-2022","4Q-2022","1Q-2023","2Q-2023","3Q-2023","4Q-2023","1Q-2024","2Q-2024","3Q-2024","4Q-2024","1Q-2025","2Q-2025","3Q-2025","4Q-2025","1Q-2026"],
+      "net_cash_from_operating_activities": [5100, 3278, 2513, 3065, 3308, 4370, 242, 3612, 6255, 4814, 2156, 2540, 6238, 3813, 3937],
+      "capital_expenditures": [-1803, -1858, -2073, -2060, -2459, -2307, -2777, -2272, -3513, -2780, -1492, -2394, -2248, -2393, -2493],
+      "free_cash_flow": [3297, 1420, 440, 1005, 849, 2063, -2535, 1340, 2742, 2034, 664, 146, 3990, 1420, 1444]
+    },
+    "adjusted_ebitda_quarterly": {
+      "periods": ["3Q-2022","4Q-2022","1Q-2023","2Q-2023","3Q-2023","4Q-2023","1Q-2024","2Q-2024","3Q-2024","4Q-2024","1Q-2025","2Q-2025","3Q-2025","4Q-2025","1Q-2026"],
+      "net_income_common_gaap": [3292, 3687, 2513, 2703, 1853, 7928, 1390, 1400, 2173, 2128, 409, 1172, 1373, 840, 477],
+      "interest_expense": [53, 33, 29, 28, 38, 61, 76, 86, 92, 96, 91, 86, 76, 85, 92],
+      "provision_for_benefit_from_income_taxes": [305, 276, 261, 323, 167, -5752, 483, 371, 602, 381, 169, 359, 570, 325, 257],
+      "depreciation_amortization_impairment": [956, 989, 1046, 1154, 1235, 1232, 1246, 1278, 1348, 1496, 1447, 1433, 1625, 1643, 1590],
+      "stock_based_compensation_expense": [362, 419, 418, 445, 465, 484, 524, 439, 457, 579, 573, 635, 663, 954, 1030],
+      "digital_assets_loss_gain_net": [null, 34, null, null, null, null, -335, 100, -7, -347, 125, -284, -80, 307, 222],
+      "adjusted_ebitda": [4968, 5438, 4267, 4653, 3758, 3953, 3384, 3674, 4665, 4333, 2814, 3401, 4227, 4154, 3668]
+    },
+    "free_cash_flow_ttm": {
+      "periods": ["2Q-2023","3Q-2023","4Q-2023","1Q-2024","2Q-2024","3Q-2024","4Q-2024","1Q-2025","2Q-2025","3Q-2025","4Q-2025","1Q-2026"],
+      "net_cash_from_operating_activities_ttm": [13956, 12164, 13256, 10985, 11532, 14479, 14923, 16837, 15765, 15748, 14747, 16528],
+      "capital_expenditures_ttm": [-7794, -8450, -8899, -9603, -9815, -10869, -11342, -10057, -10179, -8914, -8527, -9528],
+      "free_cash_flow_ttm": [6162, 3714, 4357, 1382, 1717, 3610, 3581, 6780, 5586, 6834, 6220, 7000]
+    },
+    "adjusted_ebitda_ttm": {
+      "periods": ["2Q-2023","3Q-2023","4Q-2023","1Q-2024","2Q-2024","3Q-2024","4Q-2024","1Q-2025","2Q-2025","3Q-2025","4Q-2025","1Q-2026"],
+      "net_income_common_gaap_ttm": [12195, 10756, 14997, 13874, 12571, 12891, 7091, 6110, 5882, 5082, 3794, 3862],
+      "interest_expense_ttm": [143, 128, 156, 203, 261, 315, 350, 365, 365, 349, 338, 339],
+      "provision_for_benefit_from_income_taxes_ttm": [1165, 1027, -5001, -4779, -4731, -4296, 1837, 1523, 1511, 1479, 1423, 1511],
+      "depreciation_amortization_impairment_ttm": [4145, 4424, 4667, 4867, 4991, 5104, 5368, 5569, 5724, 6001, 6148, 6291],
+      "stock_based_compensation_expense_ttm": [1644, 1747, 1812, 1918, 1912, 1904, 1999, 2048, 2244, 2450, 2825, 3282],
+      "digital_assets_loss_gain_net_ttm": [34, 34, null, -335, -235, -242, -589, -129, -513, -586, 68, 165],
+      "adjusted_ebitda_ttm": [19326, 18116, 16631, 15748, 14769, 15676, 16056, 15486, 15213, 14775, 14596, 15450]
+    }
+  },
+  "highlights_q1_2026": {
+    "gaap_operating_income_b": 0.9,
+    "gaap_net_income_b": 0.5,
+    "non_gaap_net_income_b": 1.5,
+    "operating_cash_flow_b": 3.9,
+    "free_cash_flow_b": 1.4,
+    "increase_in_cash_and_investments_b": 0.7,
+    "net_new_supercharging_stalls_added": ">2,200",
+    "supercharger_network_yoy_growth": "19%",
+    "inference_latency_reduction": "up to 20%",
+    "fsd_version": "v14.3",
+    "solar_panel_power_zones": 18,
+    "optimus_gen1_line_capacity_robots_per_year": 1000000,
+    "optimus_gen2_line_capacity_robots_per_year": 10000000,
+    "yoy_positive_fx_revenue_impact_b": 0.9,
+    "yoy_positive_fx_operating_income_impact_b": 0.2,
+    "spacex_equity_investment_b": 2.0,
+    "financing_cash_inflow_b": 1.2
+  }
+}

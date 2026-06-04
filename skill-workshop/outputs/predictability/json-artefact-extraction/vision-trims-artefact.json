@@ -1,0 +1,22 @@
+{
+  "artefact_id": "tesla-model-s-x-trims-2026",
+  "subject": {"entity": "Tesla", "scope": "Model S and Model X trims"},
+  "dimensions": ["model_line", "trim"],
+  "metrics": [
+    {"name": "starting_cost", "unit": "USD"},
+    {"name": "epa_range", "unit": "mile"}
+  ],
+  "rows": [
+    {"model_line": "Model S", "trim": "Model S AWD",   "starting_cost": 79990, "epa_range": 410},
+    {"model_line": "Model S", "trim": "Model S Plaid", "starting_cost": 94990, "epa_range": 348},
+    {"model_line": "Model X", "trim": "Model X AWD",   "starting_cost": 84990, "epa_range": 329},
+    {"model_line": "Model X", "trim": "Model X Plaid", "starting_cost": 99990, "epa_range": 314}
+  ],
+  "provenance": {
+    "source": "raw/Screenshot 2026-05-31 at 19.50.55.png",
+    "source_note": "Source: Tesla Model Comparison (footnote 2)",
+    "extractor": "Claude vision (Read tool, opus-4-8)",
+    "method": "labelled",
+    "confidence": "high"
+  }
+}
