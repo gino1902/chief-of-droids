@@ -13,13 +13,15 @@ A plan you want to be executed by agents must be a plan that brings prescriptive
 - User expects a *reusable* artifact, not a one-off plan
 - User requires strict prescriptiveness (mandatory fields, no optional structure)
 
-**Don't trigger when:** the pattern source is too thin to constrain (then the requirements doc would have to supply structure); only one application is foreseen (recipe overhead unjustified); the user wants a plan, not a recipe; the example dominates the pattern's force (e.g. applying Task Graph to a 3-task project — overhead wins).
+**Don't trigger when:** the pattern source is too thin to constrain (then the requirements doc would have to supply structure); only one application is foreseen (recipe overhead unjustified); the user wants a plan, not a recipe; the example dominates the pattern's force (e.g. applying Task Graph to a 3-task project — overhead wins). Also don't trigger for interactive, model-in-the-loop work where a human drives each step and the model assists. That is a copilot workflow, not this autopilot recipe.
 
 ## Why it matters
 
 Because the plan is executed by an agent — a skill, subagent, or claude.md-scoped session running inside Claude Code — prescriptiveness is the lever for predictability.
 
 Every task's mandatory contract (fields, BDD, granularity, antecedents) leaves no interpretive gap for the agent to fill with hallucination, omission, or off-path improvisation. The plan design pattern dictates section structure, mandatory fields, and verification scenarios.
+
+**Execution mode — autopilot, not copilot.** This recipe targets supervised autonomous execution. The human stays in the loop at the supervisory level: they author and approve the static plan up front, then monitor and approve at gates (§H plan approval, §C completion checks). Agents execute the locked DAG on rails. It is not a copilot recipe. It does not target interactive, model-in-the-loop work where a human drives the change step by step and the model assists turn by turn. The prescriptiveness lever (§D.2) only pays off when no human is correcting each step, so a copilot workflow would carry the authoring overhead without the return.
 
 ---
 
@@ -306,9 +308,95 @@ Reporting table includes:
 
 ---
 
+## §H — Optional execution via agent teams (opt-in)
+
+Execution-layer concern, separate from the recipe proper. §A–§G produce the artifacts. §H describes how a skill built from this recipe *may* hand the produced plan to a Claude Code agent team for parallel execution. It is off by default.
+
+> **Default stays single-agent.** A skill built from this recipe must not start an agent team unless the user explicitly asks for team execution. Absent that request, the plan is executed per its waves by a single agent (sequential across waves, internal-parallel within a task per §B Granularity option (b)).
+
+The fit is structural: the recipe already produces a static DAG with per-wave parallel-eligible cohorts (§Task graph), explicit antecedents per task (§B), and a per-task BDD contract (§C). An agent team's shared task list, self-claim model, and completion gates map onto those directly.
+
+#### §H.1 — Activation gate (preconditions)
+
+The skill verifies all rows before proposing team execution. The env var cannot be flipped mid-session (it is read at launch), so the skill detects state and, if the user asks for a team while the feature is off, instructs the user to enable it and restart rather than attempting to set it itself.
+
+| Precondition | Value | Where |
+| :--- | :--- | :--- |
+| Explicit user request | User asks for team execution in plain language | Conversation |
+| Feature flag | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"` | `settings.json` `env` block, or shell env (set before launch) |
+| Claude Code version | `>= 2.1.32` | `claude --version` |
+| Display mode | `teammateMode` one of `in-process`, `auto` (default), `tmux` | `~/.claude/settings.json` |
+| Split-pane prerequisite | tmux or iTerm2 (with `it2` CLI) | Only if split panes wanted |
+| Cost acknowledgement | User accepts higher token cost (each teammate carries its own context window) | Conversation |
+
+`settings.json` form:
+
+```json
+{
+  "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }
+}
+```
+
+#### §H.2 — Plan-to-team mapping
+
+| Recipe artifact (§A/§B) | Agent team construct |
+| :--- | :--- |
+| `Tasks[]` records | Pre-seeded shared task list, one entry per `T-NN`. No task created at run time. |
+| `Antecedents` | Blocked-until predicate. A task is claimable only when every antecedent is complete (mirrors §B Antecedents). |
+| Wave table cohort | The set of tasks that become claimable together. Peak concurrent claims per wave = `min(M, N) + 1` (§Tasks Graph pattern). |
+| Self-claim | After finishing, a teammate pulls the next unblocked, unassigned task. File-locking prevents two teammates claiming the same `T-NN`. |
+| Critical path | Tasks on the path are claimed first (lead assigns, or labels them priority). |
+| Lead role | Owns the plan, assigns or lets teammates self-claim, approves plans. Authors no new tasks (the DAG is static). |
+| `L` task, resolution (b) | A single team task whose teammate may run internal-parallel phases. Topology unchanged. |
+
+#### §H.3 — Team start (plain language)
+
+The user starts a team by describing the goal and asking for one, optionally naming teammate count and models. Example seeded from the plan's Goal and wave 0:
+
+```text
+Execute the implementation plan at <scope>/plans/<date>-<topic>-implementation-plan.md
+as an agent team. Seed the shared task list from its Tasks[] section, one task per
+T-NN, with antecedents as blocking dependencies. Let teammates self-claim unblocked
+tasks. Spawn 3 teammates. Require plan approval before any teammate edits files.
+```
+
+#### §H.4 — Invariant enforcement with hooks
+
+The recipe's hard invariants map onto the three agent-team hook events. Each gate exits with code `2` to block the action and return feedback to the offending teammate.
+
+| Hook event | Recipe invariant enforced | Gate action (exit 2 = block) |
+| :--- | :--- | :--- |
+| `TaskCreated` | "Graph topology does not evolve at run time" (§B Granularity, §Context) | Reject any task whose ID is not pre-declared in the plan's `Tasks[]`. The static DAG is the only source of tasks. |
+| `TaskCompleted` | Per-task BDD contract (§C) and declared `Outputs` (§B) | Reject completion unless the task's `Then` clauses hold: every declared `Outputs` path exists and conforms. Mirrors §C per-task scenario. |
+| `TeammateIdle` | Critical-path progress, no idle capacity | Assign the next unblocked wave task (critical-path tasks first), or hold the teammate if the wave is exhausted. |
+
+#### §H.5 — Operational controls
+
+| Control | Mechanism | Recipe use |
+| :--- | :--- | :--- |
+| Display mode | `in-process` (default) all teammates in main terminal, or split panes via tmux/iTerm2 | Operator preference. No effect on the DAG. |
+| Cycle teammates | `Shift+Down` in in-process mode (wraps to lead after the last) | Inspect a teammate working a given `T-NN`. |
+| Direct message | Cycle to a teammate (in-process) or click its pane (split) and type | Steer one teammate without routing through the lead. |
+| Plan approval | Ask the lead to require approval. Teammate stays in read-only plan mode until the lead approves or rejects with feedback | Apply to critical-path or `L` tasks where an off-path choice is costly (mirrors §D.2 P5, zero off-path improvisation). |
+
+#### §H.6 — Limitations (surface to the user before starting)
+
+- Experimental. Known rough edges in session resumption, task coordination, and shutdown.
+- No nested teams. A teammate cannot spawn its own team. Only the lead manages the team.
+- Token cost is materially higher than a single session (per-teammate context windows).
+- Requires Claude Code `>= 2.1.32`. Split panes require tmux or iTerm2.
+
+> Speculative note: these constraints are accurate as of the documented release (`agent-teams.md`, v2.1.32). Experimental behaviour can change. The skill should re-check `claude --version` and the docs at activation rather than trusting this section verbatim.
+
+Source: https://code.claude.com/docs/en/agent-teams.md and https://code.claude.com/docs/en/hooks-guide.md
+
+---
+
 ## Open point
 
 O.1 - Plan construction workflow must be explicit.
+
+O.2 - §H agent-team execution is opt-in and execution-layer. A skill built from this recipe owns the activation decision. Confirm before promotion to the skill whether team seeding (§H.3) should be a scripted step or remain plain-language.
 
 ---
 
@@ -337,6 +425,6 @@ O.1 - Plan construction workflow must be explicit.
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.0 |
-| Last Updated | 2026-05-26 |
-| Status | **Initial version** derived from backlog/2026-05-25-recipe-authoring-play.md |
+| Version | 1.2 |
+| Last Updated | 2026-06-06 |
+| Status | Draft. Adds explicit autopilot (human-in-the-loop) execution-mode boundary in Why it matters and When to trigger, on top of 1.1 §H agent-team execution. Recipe derived from backlog/2026-05-25-recipe-authoring-play.md |
