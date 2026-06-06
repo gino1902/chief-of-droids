@@ -1,0 +1,57 @@
+{
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Bash(claude plugin *)",
+      "Bash(python3 *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Skill(writing-requirements)",
+      "WebFetch(domain:docs.claude.com)",
+      "WebFetch(domain:code.claude.com)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:support.claude.com)",
+      "WebFetch(domain:anthropic.com)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:developer.mozilla.org)",
+      "WebFetch(domain:www.typescriptlang.org)",
+      "WebFetch(domain:docs.python.org)",
+      "WebFetch(domain:nodejs.org)",
+      "WebFetch(domain:modelcontextprotocol.io)",
+      "WebFetch(domain:spec.commonmark.org)",
+      "WebFetch(domain:json-schema.org)"
+    ],
+    "ask": [
+      "Bash(rm *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "if": "Skill(skill-creator*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/inject-skill-docs.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptExpansion": [
+      {
+        "matcher": "skill-creator:skill-creator",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/inject-skill-docs.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "autoMemoryEnabled": false
+}
