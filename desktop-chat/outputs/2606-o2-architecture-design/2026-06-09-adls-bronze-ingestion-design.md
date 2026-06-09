@@ -143,6 +143,84 @@ Two preconditions sit above the scoring. The platform mandates Unity Catalog gov
 | 8 | Security surface and access governance | The marginal security exposure the catch-and-ingest choice adds on top of the platform baseline, the identity and credential model it uses, any self-operated component it introduces to harden and patch, and whether it keeps ingestion inside the platform's governed access, lineage and audit. Excludes the storage and network baseline, which is fixed in the shared head | 5 | Every credential and self-run component an ingestion path adds is one more thing to secure, rotate and patch, and one more way in if it is neglected. Keeping ingestion inside the governed plane means it inherits central access control and audit instead of becoming something separate to police. The wider questions, who can write to the landing zone, encryption, network isolation and whether a landed file is malicious or poisoned, are just as real, but the catch-and-ingest choice does not change them |
 | 9 | GDPR and data protection | How well the option supports data-subject obligations, PII classification, lineage for erasure and access requests, retention and residency | 3 | Personal data carries legal duties, classifying it, tracing where it went, deleting it on request and keeping it in the right region. The design has to support those duties so the platform can answer a regulator or a data-subject request without manual digging |
 
+## Concept definitions
+
+Definitions for the terms used across the diagram and tables, grouped by where they sit in the flow. Each definition is grounded in the official source carrying the same `[n]` reference as the Official sources list below. These are reference definitions, not configuration steps.
+
+### Storage and landing
+
+Azure Data Lake Storage Gen2 (ADLS Gen2) is not a separate service or account type. It is a set of big-data capabilities layered on an Azure Storage account, unlocked by enabling the hierarchical namespace setting on Blob Storage. Data still persists as blobs, so Blob Storage features such as access tiers and lifecycle policies remain available [1].
+
+Hierarchical namespace (HNS) is the account setting that organises objects into a true directory tree rather than a flat blob namespace. It makes directory operations such as rename or delete single atomic metadata operations instead of per-object enumerations, and it is the prerequisite for Data Lake Storage Gen2 file-system semantics and for the Gen2 event set [1][3].
+
+ABFS driver, addressed by the `abfss://` scheme, is the Azure Blob File System driver. It is the HDFS-compatible access layer that lets Spark and other Hadoop-ecosystem frameworks read and write ADLS Gen2 directly, surfaced through the `dfs.core.windows.net` endpoint [1].
+
+CreateFile and FlushWithClose are the two Data Lake Storage Gen2 REST operations that bracket a write on an HNS account. `CreateFile` opens the file and `FlushWithClose` commits it. On an HNS account a `Microsoft.Storage.BlobCreated` event is raised for both, so filtering the subscription on `FlushWithClose` is what restricts downstream triggering to fully committed files [3].
+
+### Eventing
+
+Azure Event Grid system topic is the managed publisher that a Storage account uses to emit blob and Data Lake events. Subscribers (a queue, an Azure Function, a webhook) attach event subscriptions to it, giving push delivery with no polling. General-purpose v1 accounts do not support Event Grid integration [2][3].
+
+Microsoft.Storage.BlobCreated is the event raised when a blob is created or replaced. On an HNS account it fires for the `CreateFile` and `FlushWithClose` operations, so a subscription that does not filter on `FlushWithClose` will also see the premature `CreateFile` event before data is committed [2][3].
+
+At-least-once delivery is Event Grid's delivery guarantee: every event is delivered at least once, but retries between backend nodes mean a subscriber can receive duplicates. Consumers must therefore be idempotent, and can use the `sequencer` field to order events on the same blob name [2].
+
+### Auto Loader and file detection
+
+Auto Loader is the Databricks incremental ingestion source (`format("cloudFiles")`) that discovers and loads new files from cloud storage with exactly-once guarantees. It supports two detection modes and you can switch between them across stream restarts without losing those guarantees [6].
+
+Directory listing mode discovers new files by listing the input directory. It needs no notification setup beyond read access, but its discovery cost grows with directory size [6].
+
+File notification mode discovers files from cloud notification and queue services rather than by listing, which is more performant and scalable. Databricks recommends it over directory listing for most workloads. It comes in two forms, managed file events and classic [6].
+
+Managed file events (`cloudFiles.useManagedFileEvents=true`) is the recommended file-notification form. A single Databricks-managed service sets up one shared Event Grid subscription and queue per Unity Catalog external location, reads the notifications, and caches file metadata. Auto Loader then discovers new files by reading that cache rather than listing storage [5].
+
+The `useManagedFileEvents = if_available` default applies from Databricks Runtime 18.1 and above: Auto Loader automatically uses managed file events when they are available on the location, with no code change. On earlier runtimes you set `cloudFiles.useManagedFileEvents` to `true` explicitly. This automatic behaviour is documented only in the File events FAQ [F].
+
+File events cache behaviour has three timings worth knowing. On its first run, and after migration or any change that invalidates its position, a stream does a full directory listing to establish a read position in the cache. Subsequent runs read incrementally from the cache. The stored read position expires if Auto Loader is not run for more than seven days, forcing a full listing on the next run. As a safety net the service performs a full directory reconciliation listing roughly every 24 hours while at least one stream is consuming, to catch any missed notifications [5].
+
+Classic file notification mode (`cloudFiles.useNotifications=true`) is the older form, in which Auto Loader provisions a dedicated Event Grid subscription and Azure Queue Storage queue per stream and reads that queue directly. It gives the lowest latency by avoiding the cache hop, but you manage a queue per stream, grant resource-creation credentials, and live within the limit of 500 notification pipelines per ADLS storage account [4].
+
+Checkpoint and exactly-once: Auto Loader records its progress in a checkpoint location (kept outside the data path). The checkpoint is what lets a stream resume after a restart and process each file exactly once, independent of the detection mode. A `foreachBatch` sink, by contrast, gives only at-least-once [6][7].
+
+Unity Catalog external location is the governed object that maps a cloud storage path to a storage credential under Unity Catalog. File events are configured on the external location, and from the FAQ they are enabled by default on new external locations, with `enable_file_events=false` as the explicit opt-out [4][F].
+
+Unity Catalog volume is a governed storage abstraction within a catalog and schema. Databricks recommends pointing Auto Loader and file-arrival triggers at a per-subpath volume rather than the bare external location, so file discovery is scoped to the relevant objects. This is the structural fix for both the Too many requests rate limit and the trigger time-out problem [5][4].
+
+Too many requests is the file events service rate limit, raised when several Auto Loader streams read different subpaths under one external location and the service has to iterate all objects to serve each stream. Scoping each stream to its own Unity Catalog volume resolves it [4].
+
+`cloudFiles.backfillInterval` schedules periodic backfills so Auto Loader re-lists to catch the rare file a notification missed, which matters when a data-completeness SLA applies. Backfills do not create duplicates. The option is unsupported, and unnecessary, with managed file events, where backfill is handled automatically [4].
+
+> ⚠️ Unverified — `cloudFiles.cleanSource` (the source-file retention and cleanup option, DBR 16.4 LTS+) was not separately fetched. Check against the Auto Loader options documentation before relying on its exact behaviour.
+
+### Triggers and jobs
+
+File-arrival trigger is a Databricks Jobs trigger that starts a job run when new files arrive at a Unity Catalog volume or external location. It checks on a best-effort basis about every minute and incurs no cost beyond cloud listing. It requires Unity Catalog and becomes far more scalable when the location has file events enabled. Only genuinely new files trigger a run, an overwrite with the same name does not [7].
+
+`min_time_between_triggers` and `wait_after_last_change` are the file-arrival trigger's debounce settings. The first sets the minimum wait after a previous run completes before another can start, controlling run frequency. The second waits for a quiet period after the last file arrival, so a batch arriving together is processed as one run [7].
+
+50-job and 10,000-file caps apply only when the location does not have file events enabled: at most 50 jobs can use a file-arrival trigger on such a location, and the monitored path can hold up to 10,000 files. With file events enabled there is no file-count limit, but a trigger on a subpath can enter a time-out error state if there is heavy extraneous change at the external-location root, which is why a dedicated per-subpath volume is recommended [7].
+
+Azure Function (Event Grid trigger), in option B, is a self-operated push consumer. Event Grid delivers the blob event straight to the Function with no intervening queue, the Function filters on `api == FlushWithClose`, and it then calls the Databricks Jobs API to start a run. It is the only option here that needs no Unity Catalog, at the cost of you owning the Function, its subscription, and idempotency [3].
+
+> ⚠️ Unverified — `jobs/run-now` (the Databricks Jobs REST endpoint that option B calls to start a run, with PAT or OAuth authentication) and the option B Function tutorial [8] were not fetched. Check the run-now call shape and its run-rate limits against the Databricks Jobs API documentation before building option B.
+
+### Bronze table and VARIANT
+
+VARIANT is the semi-structured Databricks type (Databricks Runtime 15.3 and above for JSON, in Public Preview) for storing a whole record without a fixed schema. It is a standard SQL type on Delta-backed tables and is the recommended replacement for storing semi-structured data as JSON strings [11].
+
+`singleVariantColumn` is the Auto Loader and `COPY INTO` option that loads the entire source record into one VARIANT column. It is the whole-record ingest path used in this design's tail. `parse_json` is the SQL and DataFrame function that converts a JSON string into VARIANT, used on the INSERT or CTAS path instead [11].
+
+PERMISSIVE mode and `corruptRecordColumn`: VARIANT cannot encode malformed records, and treats records over the 16 MB limit like corrupt records. In the default PERMISSIVE processing mode, both land in the `corruptRecordColumn` rather than failing the batch [11].
+
+`rescuedDataColumn` disabled: because a whole-record VARIANT ingest captures the entire record in one column, no schema evolution happens during ingestion and the rescued-data column is not supported on that path [11].
+
+VARIANT case sensitivity: all VARIANT path elements are matched case-sensitively, so `col:Field` and `col:field` address different fields. JSON-string access is case-insensitive, so a query ported from JSON strings to VARIANT can silently return nothing if the field casing does not match exactly. The `[*]` array-unpacking syntax is also unsupported, and VARIANT encodes nulls differently from JSON strings [12].
+
+VARIANT operational limits: a VARIANT column cannot be used as a partition, clustering, or Z-order key, and cannot be used in comparison, grouping, ordering, or set operations. Any field you filter, join, group, order, or cluster on must therefore be promoted into a typed column alongside the VARIANT [11].
+
+Promoted columns are the typed columns extracted from the record and stored next to the VARIANT (in this design `ingest_ts`, `source_path`, `business_key`). They exist because VARIANT cannot be used for the operations above, and because extracting frequently queried fields accelerates queries and improves storage layout [11].
+
 ## Official sources
 
 - [1] https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction
@@ -161,6 +239,6 @@ Two preconditions sit above the scoring. The platform mandates Unity Catalog gov
 
 | Field | Value |
 |---|---|
-| Version | 1.3 |
-| Last Updated | 2026-06-09 |
+| Version | 1.4 |
+| Last Updated | 2026-06-10 |
 | Status | Review |
