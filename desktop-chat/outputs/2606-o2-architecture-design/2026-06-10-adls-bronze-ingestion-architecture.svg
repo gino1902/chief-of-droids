@@ -1,0 +1,124 @@
+<svg viewBox="0 0 1320 800" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ah" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#444"/></marker>
+    <marker id="ahb" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#1F24E9"/></marker>
+    <marker id="ahg" markerWidth="10" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#888"/></marker>
+  </defs>
+
+  <style>
+    .ttl{font-size:18px;font-weight:700;fill:#0F0E2B}
+    .bnd{font-size:14px;font-weight:700}
+    .box{font-size:12.5px;fill:#0F0E2B}
+    .boxb{font-size:12.5px;fill:#0F0E2B}
+    .lbl{font-size:11.5px;fill:#444}
+    .lblb{font-size:11.5px;fill:#1F24E9;font-weight:600}
+    .sm{font-size:11px;fill:#555}
+    .note{font-size:11px;fill:#1F24E9}
+    rect.g{fill:#ececec;stroke:#666;stroke-width:1.5}
+    rect.b{fill:#eef0ff;stroke:#1F24E9;stroke-width:1.8}
+  </style>
+
+  <text x="28" y="30" class="ttl">ADLS Gen2 to bronze ingestion — locked design A1b (Auto Loader, managed file events)</text>
+
+  <rect class="b" x="40" y="50" width="140" height="48" rx="6"/>
+  <text x="110" y="72" text-anchor="middle" class="boxb">SaaS API</text>
+  <text x="110" y="88" text-anchor="middle" class="sm">external system</text>
+
+  <rect class="b" x="250" y="50" width="320" height="48" rx="6"/>
+  <text x="410" y="70" text-anchor="middle" class="boxb">Extractor — pull (REST), writes JSON</text>
+  <text x="410" y="88" text-anchor="middle" class="sm">CreateFile + FlushWithClose, unique filenames</text>
+
+  <line x1="180" y1="74" x2="248" y2="74" stroke="#1F24E9" stroke-width="1.8" marker-end="url(#ahb)"/>
+  <path d="M410,98 L410,118 L200,118 L200,468" fill="none" stroke="#1F24E9" stroke-width="1.8" marker-end="url(#ahb)"/>
+  <text x="214" y="300" class="lblb" transform="rotate(90 214 300)" text-anchor="middle">write JSON</text>
+
+  <rect x="25" y="120" width="620" height="600" rx="10" fill="none" stroke="#E0922A" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="42" y="143" class="bnd" fill="#E0922A">Your Azure subscription</text>
+
+  <rect x="55" y="205" width="560" height="150" rx="8" fill="none" stroke="#888" stroke-width="1.4" stroke-dasharray="5 4"/>
+  <text x="70" y="226" class="sm" font-weight="700">Notification resources — provisioned and managed by the file events service</text>
+
+  <rect class="g" x="80" y="250" width="200" height="68" rx="6"/>
+  <text x="180" y="280" text-anchor="middle" class="box">Event Grid</text>
+  <text x="180" y="297" text-anchor="middle" class="box">system topic</text>
+
+  <rect class="g" x="370" y="250" width="210" height="68" rx="6"/>
+  <text x="475" y="280" text-anchor="middle" class="box">Azure Storage</text>
+  <text x="475" y="297" text-anchor="middle" class="box">Queue</text>
+
+  <line x1="280" y1="284" x2="368" y2="284" stroke="#444" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="324" y="277" text-anchor="middle" class="lbl">publish</text>
+
+  <rect class="b" x="80" y="470" width="250" height="86" rx="6"/>
+  <text x="205" y="500" text-anchor="middle" class="boxb">ADLS Gen2 landing (HNS)</text>
+  <text x="205" y="518" text-anchor="middle" class="sm">abfss, FlushWithClose commit boundary</text>
+  <text x="205" y="535" text-anchor="middle" class="sm">cloudFiles.cleanSource retention</text>
+
+  <path d="M170,470 L150,355 L150,318" fill="none" stroke="#444" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="60" y="408" class="lbl">BlobCreated</text>
+  <text x="60" y="423" class="sm">(HNS fires on both</text>
+  <text x="60" y="437" class="sm">CreateFile + FlushWithClose)</text>
+
+  <rect x="55" y="585" width="560" height="110" rx="8" fill="#f5f6ff" stroke="#1F24E9" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <text x="70" y="607" class="note" font-weight="700">Filter ownership on the managed path</text>
+  <text x="70" y="626" class="note">The service owns the subscription and queue (one pair per external location).</text>
+  <text x="70" y="643" class="note">The docs do not state it filters on FlushWithClose, so premature CreateFile</text>
+  <text x="70" y="660" class="note">events are absorbed by the idempotent ingest, not a filter you set.</text>
+  <text x="70" y="681" class="note" font-weight="700">BYO-queue variant: keep useManagedFileEvents, supply your own queue +</text>
+  <text x="70" y="697" class="note" font-weight="700">subscription filtered on FlushWithClose to own the filter.</text>
+
+  <rect x="675" y="120" width="620" height="600" rx="10" fill="none" stroke="#C0392B" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="692" y="143" class="bnd" fill="#C0392B">Databricks — Unity Catalog</text>
+
+  <rect class="g" x="705" y="250" width="215" height="68" rx="6"/>
+  <text x="812" y="288" text-anchor="middle" class="box">File Events Service</text>
+
+  <rect class="g" x="1000" y="250" width="195" height="68" rx="6"/>
+  <text x="1097" y="280" text-anchor="middle" class="box">Cache</text>
+  <text x="1097" y="297" text-anchor="middle" class="box">(file metadata)</text>
+
+  <line x1="920" y1="284" x2="998" y2="284" stroke="#444" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="959" y="277" text-anchor="middle" class="lbl">store metadata</text>
+
+  <rect class="b" x="705" y="430" width="270" height="128" rx="6"/>
+  <text x="840" y="453" text-anchor="middle" class="boxb" font-weight="700">Auto Loader — Lakeflow job</text>
+  <text x="840" y="472" text-anchor="middle" class="sm">useManagedFileEvents=true</text>
+  <text x="840" y="489" text-anchor="middle" class="sm">Trigger.availableNow (scheduled)</text>
+  <text x="840" y="506" text-anchor="middle" class="sm">RocksDB checkpoint, exactly-once</text>
+  <text x="840" y="523" text-anchor="middle" class="sm">per-subpath UC volume scoping</text>
+  <text x="840" y="540" text-anchor="middle" class="sm">7-day expiry, 24h reconcile scan</text>
+
+  <rect class="b" x="1015" y="438" width="200" height="120" rx="6"/>
+  <text x="1115" y="462" text-anchor="middle" class="boxb" font-weight="700">Bronze Delta table</text>
+  <text x="1115" y="482" text-anchor="middle" class="sm">whole-record VARIANT</text>
+  <text x="1115" y="499" text-anchor="middle" class="sm">(singleVariantColumn)</text>
+  <text x="1115" y="516" text-anchor="middle" class="sm">+ promoted columns</text>
+  <text x="1115" y="533" text-anchor="middle" class="sm">ingest_ts, source_path,</text>
+  <text x="1115" y="550" text-anchor="middle" class="sm">business_key</text>
+
+  <line x1="975" y1="498" x2="1013" y2="498" stroke="#1F24E9" stroke-width="1.8" marker-end="url(#ahb)"/>
+  <text x="994" y="491" text-anchor="middle" class="lblb">write</text>
+
+  <path d="M812,430 L812,318" fill="none" stroke="#444" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="822" y="378" class="lbl">list objects</text>
+  <text x="822" y="392" class="sm">(discovery, reads cache)</text>
+
+  <line x1="580" y1="284" x2="703" y2="284" stroke="#444" stroke-width="1.5" marker-end="url(#ah)"/>
+  <text x="642" y="277" text-anchor="middle" class="lbl">get file events</text>
+
+  <path d="M760,250 C700,170 360,170 200,248" fill="none" stroke="#888" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#ahg)"/>
+  <path d="M790,250 C760,200 560,200 475,248" fill="none" stroke="#888" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#ahg)"/>
+  <text x="470" y="185" text-anchor="middle" class="sm" font-weight="700" fill="#888">set up and manage</text>
+
+  <path d="M740,558 C700,740 360,740 280,558" fill="none" stroke="#1F24E9" stroke-width="1.8" marker-end="url(#ahb)"/>
+  <text x="510" y="752" text-anchor="middle" class="lblb">read files to ingest (bytes from storage, not the cache)</text>
+
+  <rect x="980" y="600" width="305" height="105" rx="8" fill="#ffffff" stroke="#ccc" stroke-width="1"/>
+  <text x="996" y="622" class="sm" font-weight="700">Legend</text>
+  <rect x="996" y="635" width="22" height="15" rx="3" class="g"/>
+  <text x="1026" y="647" class="sm">Managed file-events mechanism,</text>
+  <text x="1026" y="662" class="sm">preserved from the reference diagram</text>
+  <rect x="996" y="675" width="22" height="15" rx="3" class="b"/>
+  <text x="1026" y="687" class="sm">Specialised or added for the</text>
+  <text x="1026" y="700" class="sm">A1b lock-in design</text>
+</svg>

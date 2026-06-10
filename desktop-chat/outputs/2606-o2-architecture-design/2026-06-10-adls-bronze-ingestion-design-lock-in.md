@@ -66,48 +66,69 @@ Scoped to the concepts this design uses.
 
 ## Diagram
 
-```text
- [SaaS API] --pull(REST)--> [Extractor] --write JSON--> [ADLS Gen2 landing (HNS)]
- external                   ext. app                    CreateFile + FlushWithClose, abfss://
- system                     already running             unique filenames (same-name overwrite
-                                                         does NOT retrigger discovery)
-                                                         cloudFiles.cleanSource retention (DBR 16.4 LTS+)
-                                                              |
-                                                              | Microsoft.Storage.BlobCreated (HNS fires on both
-                                                              | CreateFile and FlushWithClose)
-                                                              v
-                                          [Event Grid subscription + storage queue]
-                                          MANAGED PATH: the file events service provisions and owns this
-                                          subscription + queue, one shared pair per external location.
-                                          You do NOT configure the subscription. The docs do not state the
-                                          managed subscription filters on FlushWithClose, so premature
-                                          CreateFile events are absorbed by the idempotent ingest, not a
-                                          filter you set.
-                                          TO OWN THE FILTER: use the bring-your-own-queue variant
-                                          (useManagedFileEvents kept, self-provided queue + subscription
-                                          filtered on FlushWithClose).
-                                          at-least-once delivery, so the ingest must be idempotent regardless
-                                                              |
-                                                              v
- [Auto Loader stream, MANAGED file events]
-   ONE Databricks-managed queue per UC external location, file events service caches metadata
-   cloudFiles.useManagedFileEvents=true (automatic from DBR 18.1), reads the CACHE for discovery,
-   reads file bytes from storage to ingest
-   run mode: Trigger.availableNow on a schedule (continuous only for a sub-minute SLA)
-   exactly-once via RocksDB checkpoint
-   scope each stream to a per-subpath UC volume to avoid file-events rate limiting
-   listing: 24h service reconciliation scan, plus 7-day stream read-position expiry
-                                                              |
-                                                              v
- [Bronze Delta table]
-   singleVariantColumn -> whole-record VARIANT (DBR 15.3+, Public Preview) plus promoted columns
-   (ingest_ts, source_path, business_key)
-   VARIANT cannot be a partition / clustering / Z-order key, nor used in compare/group/order,
-   so promote any key you filter, join or cluster on into a typed column
-   VARIANT path access is CASE-SENSITIVE (col:Field is not col:field)
-   VARIANT caps records at 16 MB; malformed or oversized records land in corruptRecordColumn
-   under PERMISSIVE mode; whole-record VARIANT disables schema evolution and rescuedDataColumn
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}, "flowchart": {"defaultRenderer": "elk"}}}%%
+
+flowchart LR
+  classDef main              fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
+  classDef primary           fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
+  classDef secondary         fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
+  classDef tertiary          fill:#C5D8F6,color:#000000,stroke:#425F8B
+  classDef primary_cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
+  classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#6DA5FF
+  classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B,stroke-dasharray:5
+  linkStyle default color:#0F0E2B
+
+  subgraph Main
+    SAAS[SaaS API
+    external system]
+    EXT[Extractor
+    pull REST, writes JSON]
+
+    subgraph Azure["`**Your Azure subscription**`"]
+      subgraph NotifRes["`**Notification resources — service-managed**`"]
+        EG[Event Grid
+        system topic]
+        Q([Azure Storage Queue])
+      end
+      ADLS[ADLS Gen2 landing HNS
+      FlushWithClose commit]
+    end
+
+    subgraph Databricks["`**Databricks — Unity Catalog**`"]
+      FES[File Events Service]
+      CACHE([Cache
+      file metadata])
+      AL[Auto Loader
+      Lakeflow job, availableNow]
+      BRONZE([Bronze Delta table
+      VARIANT + promoted cols])
+    end
+  end
+
+  SAAS -->|pull REST| EXT
+  EXT -->|write JSON| ADLS
+  ADLS -->|BlobCreated| EG
+  EG -->|publish| Q
+  Q -->|get file events| FES
+  FES -->|store metadata| CACHE
+  AL -->|list objects| FES
+  AL -->|read files to ingest| ADLS
+  AL -->|write VARIANT| BRONZE
+  FES -.->|set up and manage| EG
+  FES -.->|set up and manage| Q
+
+  class EXT,ADLS,AL,BRONZE primary
+  class EG,Q,FES,CACHE secondary
+  class SAAS tertiary
+  class NotifRes secondary_cluster
+  class Azure,Databricks primary_cluster
+  class Main main
 ```
+
+Diagram class semantics. `primary` (electric blue) marks what the A1b lock-in specialises or adds: the extractor, ADLS, Auto Loader and bronze. `secondary` (sky blue) marks the managed file-events mechanism preserved from the Databricks reference diagram. `tertiary` (ice blue) marks the external source system. Dashed edges are the file events service control plane (set up and manage), solid edges are the data plane. The managed service owns the Event Grid subscription and queue, so those dashed edges originate at the service, not at you.
+
+The full per-step annotations (unique filenames, cleanSource retention, 7-day expiry, 24h reconciliation, VARIANT 16 MB cap and case sensitivity) sit in the design-steps table and glossary below rather than on the diagram.
 
 ## Design steps
 
@@ -157,6 +178,6 @@ Items 1 to 8 are runtime and ingestion checks. Items 9 to 13 are the storage and
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.2 |
+| Version | 1.3 |
 | Last Updated | 2026-06-10 |
 | Status | Review |
