@@ -55,6 +55,7 @@ Scoped to the concepts this design uses.
 | cloudFiles.useManagedFileEvents | The Auto Loader option that reads from the managed file events cache. Automatic on DBR 18.1+ |
 | Trigger.availableNow | A batch trigger that processes all files present at start, then stops. The locked run mode |
 | Checkpoint (RocksDB) | The Auto Loader state store that tracks discovered files and gives exactly-once and resume-on-restart |
+| File events cache | The Databricks-managed metadata index that the file events service writes and Auto Loader reads for discovery. Internal to the service, not separately addressable, and distinct from the RocksDB checkpoint |
 | cloudFiles.cleanSource | The Auto Loader option that archives or deletes processed source files (DBR 16.4 LTS+). A storage-cost lever here |
 | cloudFiles.backfillInterval | The Auto Loader option that triggers periodic backfills against rare missed notifications, without duplicates. Unsupported on the managed path, where backfill is automatic |
 | VARIANT | The semi-structured column type (DBR 15.3+, Public Preview) holding the whole JSON record |
@@ -74,6 +75,7 @@ flowchart LR
   classDef primary           fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
   classDef secondary         fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
   classDef tertiary          fill:#C5D8F6,color:#000000,stroke:#425F8B
+  classDef govern            fill:#9673A6,color:#FFFFFF,stroke:#5E4670
   classDef primary_cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
   classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#6DA5FF
   classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B,stroke-dasharray:5
@@ -95,7 +97,7 @@ flowchart LR
       FlushWithClose commit]
     end
 
-    subgraph Databricks["`**Databricks — Unity Catalog**`"]
+    subgraph Databricks["`**Databricks**`"]
       FES[File Events Service]
       CACHE([Cache
       file metadata])
@@ -104,6 +106,9 @@ flowchart LR
       BRONZE([Bronze Delta table
       VARIANT + promoted cols])
     end
+
+    UC[Unity Catalog
+    account-level governance]
   end
 
   SAAS -->|pull REST| EXT
@@ -112,23 +117,28 @@ flowchart LR
   EG -->|publish| Q
   Q -->|get file events| FES
   FES -->|store metadata| CACHE
-  AL -->|list objects| FES
+  AL -->|read for discovery| CACHE
   AL -->|read files to ingest| ADLS
   AL -->|write VARIANT| BRONZE
   FES -.->|set up and manage| EG
   FES -.->|set up and manage| Q
+  BRONZE -.->|governed by| UC
 
   class EXT,ADLS,AL,BRONZE primary
   class EG,Q,FES,CACHE secondary
   class SAAS tertiary
+  class UC govern
   class NotifRes secondary_cluster
   class Azure,Databricks primary_cluster
   class Main main
+
+  linkStyle 9,10 stroke:#888888,color:#888888
+  linkStyle 11 stroke:#9673A6,color:#9673A6
 ```
 
-Diagram class semantics. `primary` (electric blue) marks what the A1b lock-in specialises or adds: the extractor, ADLS, Auto Loader and bronze. `secondary` (sky blue) marks the managed file-events mechanism preserved from the Databricks reference diagram. `tertiary` (ice blue) marks the external source system. Dashed edges are the file events service control plane (set up and manage), solid edges are the data plane. The managed service owns the Event Grid subscription and queue, so those dashed edges originate at the service, not at you.
+Diagram class semantics. `primary` (electric blue) marks what the A1b lock-in specialises or adds: the extractor, ADLS, Auto Loader and bronze. `secondary` (sky blue) marks the managed file-events mechanism preserved from the Databricks reference diagram. `tertiary` (ice blue) marks the external source system. `govern` (mauve) marks Unity Catalog as the account-level governance metastore. There are two kinds of dashed edge. Grey dashed edges are the file events service control plane (set up and manage), which originate at the service because it owns the Event Grid subscription and queue. The mauve dashed edge is the governance dependency, bronze governed by the metastore. Solid edges are the data plane. The discovery edge runs from Auto Loader to the cache, since Auto Loader reads file metadata directly from the file events cache, not from the service front door and not by polling the queue [5].
 
-The full per-step annotations (unique filenames, cleanSource retention, 7-day expiry, 24h reconciliation, VARIANT 16 MB cap and case sensitivity) sit in the design-steps table and glossary below rather than on the diagram.
+The full per-step annotations (unique filenames, cleanSource retention, 7-day expiry, 24h reconciliation, VARIANT 16 MB cap and case sensitivity) sit in the design-steps table and glossary below rather than on the diagram. Container technology per component sits in the component inventory below.
 
 ## Design steps
 
@@ -139,6 +149,32 @@ The full per-step annotations (unique filenames, cleanSource retention, 7-day ex
 | 3. Emit event, ADLS to the file events queue | Event Grid subscription + storage queue. On the managed path the file events service provisions and owns this pair, one per external location. Microsoft.Storage.BlobCreated (HNS fires on both CreateFile and FlushWithClose) | Native push, no polling, no resources for you to operate on the managed path | The managed subscription is service-owned, so you do not set its filter. The docs do not state it filters on FlushWithClose, so premature CreateFile events are handled by the idempotent ingest. To own a FlushWithClose filter, use the bring-your-own-queue variant. At-least-once delivery means duplicates are possible regardless | [2][3][5] |
 | 4. Catch and ingest, managed file events | Auto Loader stream, useManagedFileEvents=true (automatic on DBR 18.1+), one managed queue per UC external location, per-subpath volume, reads cache for discovery and storage for bytes, Trigger.availableNow on a schedule, RocksDB checkpoint exactly-once | Fewest moving parts, one queue per location, no extra creds, managed tuning and cleanup, default-on, exactly-once | Cache hop adds latency, run at least every 7 days or it falls back to a full listing, 24h reconciliation scan, scope to a per-subpath volume to avoid rate limiting | [4][5][6] |
 | 5. Write to bronze as VARIANT | Delta bronze table, singleVariantColumn whole-record VARIANT (DBR 15.3+), promoted columns (ingest_ts, source_path, business_key) | Schema-flexible semi-structured storage, replaces JSON strings, queryable | VARIANT cannot be a partition, clustering or Z-order key nor used in compare, group or order, so promote keys. Path access is case-sensitive. 16 MB record cap. Public Preview | [9][10] |
+
+## Component inventory
+
+Container technology and ownership per component on the diagram. "Owned by" is who provisions and operates the component, which is what matters for setup and cost.
+
+| Component | Container technology | Owned by |
+| :--- | :--- | :--- |
+| Extractor | External SaaS REST client, emits JSON | You, external to Databricks |
+| ADLS Gen2 landing | ADLS Gen2 with HNS, read over the abfss driver | You, Azure subscription |
+| Event Grid + Storage Queue | Azure Event Grid subscription and Azure Storage Queue, one shared pair per external location | File events service, service-managed |
+| File Events Service | Databricks-managed service | Databricks |
+| File events cache | Databricks-managed internal metadata index for discovery, not separately addressable | Databricks |
+| Auto Loader | Lakeflow job running Spark Structured Streaming (`cloudFiles`), Trigger.availableNow | You configure the job, Databricks runs the runtime |
+| Auto Loader checkpoint | RocksDB state store in the checkpoint location, holds read position and processed-file set | You, on durable storage you choose |
+| Bronze table | Delta Lake table, single VARIANT column plus promoted typed columns | You, governed by Unity Catalog |
+| Unity Catalog | Account-level governance metastore, one per region, attached to workspaces | Databricks account admin |
+
+## Implementation notes
+
+Items surfaced while mapping the components to the diagram. They refine, not replace, the standing checks below.
+
+1. Discovery reads the cache, not the service front door and not the queue. Auto Loader with `useManagedFileEvents` reads new-file metadata directly from the file events cache, using the read position held in its checkpoint. There is no queue consumer for you to write and no cache endpoint for you to provision. The diagram edge is Auto Loader to the cache for this reason [5].
+2. The cache and the checkpoint are two different stores, do not conflate them. The file events cache is the Databricks-managed metadata index used for discovery. The RocksDB checkpoint is the Auto Loader state store holding the read position and the processed-file set for exactly-once [5]. Keep the checkpoint location durable and unique per stream. If it is lost, Auto Loader does a full re-listing and re-establishes a read position, so the idempotent ingest (check 13) is what prevents double counting.
+3. Nothing to provision for the cache itself. It is internal to the file events service and not separately addressable. The only service-managed resources are the Event Grid subscription and the storage queue, one pair per external location.
+4. Unity Catalog is account-level, not a workspace component. One metastore per region, attached to workspaces. Configure governance, that is grants, lineage and classification, at the catalog, schema and table level, not as part of the ingestion job. Bronze is governed by it, shown as the governance edge. Do not model it inside the Databricks workspace boundary.
+5. On the first run Auto Loader does one full directory listing to get current with the cache and to seed the read position, then stores that position in the checkpoint [5]. Plan for that first-run listing cost on a large existing directory.
 
 ## Standing checks before a production commitment
 
@@ -178,6 +214,6 @@ Items 1 to 8 are runtime and ingestion checks. Items 9 to 13 are the storage and
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.3 |
-| Last Updated | 2026-06-10 |
+| Version | 1.4 |
+| Last Updated | 2026-06-11 |
 | Status | Review |
