@@ -36,13 +36,17 @@ All temp files, output files, and session artefacts default to this directory.
 
 ## Version Block
 
-Every `.md` file written to disk via a workflow must include a version block at the bottom (excludes chat-only outputs and user-owned files such as FRAMING.md):
+Every `.md` file written to disk via a workflow must include a version block at the bottom (excludes chat-only outputs and user-owned files such as FRAMING.md).
 
-| Field        | Value                  |
-|--------------|------------------------|
-| Version      | 1.x                    |
-| Last Updated | YYYY-MM-DD             |
-| Status       | Draft / Review / Final |
+The block is a hidden HTML comment — present in the source, not rendered:
+
+```markdown
+<!--
+Version: 1.x | Last Updated: YYYY-MM-DD | Status: Draft / Review / Final
+-->
+```
+
+Rationale: the metadata stays in the source (grep-able, diffable) but does not render, keeping the document clean for the reader. HTML comments are hidden by every renderer; do not use a visible table or YAML frontmatter for this purpose.
 
 Version numbers must increment on each material revision.
 Format: `1.0` for initial release, `1.1`, `1.2` etc. for incremental updates, `2.0` for structural rewrites.
@@ -160,8 +164,6 @@ Run once, as the final step of reading this file. Do not repeat within the sessi
 
 ---
 
-| Field        | Value       |
-|--------------|-------------|
-| Version      | 1.1         |
-| Last Updated | 2026-05-31  |
-| Status       | Draft       |
+<!--
+Version: 1.2 | Last Updated: 2026-06-14 | Status: Draft
+-->
