@@ -5,8 +5,9 @@
 > The temporary-zone instance whose end state is the ADLS play. When SharePoint
 > retires and the extractor repoints to ADLS, that sibling governs.
 >
-> VARIANT and standard-connector claims are tech-verified against Microsoft Learn
-> on 2026-06-13. One residual gap remains, the singleVariantColumn plus
+> VARIANT and connector claims are tech-verified against Microsoft Learn, last
+> re-verified 2026-06-21. The managed-versus-standard rationale was corrected
+> then. One residual gap remains, the singleVariantColumn plus
 > databricks.connection composition. See Sources.
 
 ## When to trigger
@@ -37,50 +38,61 @@ What carries over unchanged to the end state: singleVariantColumn to a payload V
 
 ## Flow
 
-A C4 component view scoped to the bronze ingestion pipeline container.
+A C4 container view of the bronze ingestion path, drawn on the same boundary as the ADLS end-state diagram so the two read as one family. Only the ingestion pattern differs.
 
 ```mermaid
+%%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}, "flowchart": {"defaultRenderer": "elk"}}}%%
+
 flowchart LR
-    classDef ext fill:#e9ecef,stroke:#868e96,color:#212529;
-    classDef temp fill:#fff3cd,stroke:#d39e00,color:#212529;
-    classDef comp fill:#d0ebff,stroke:#1c7ed6,color:#212529;
-    classDef store fill:#d4edda,stroke:#28a745,color:#212529;
-    classDef gov fill:#f3f0ff,stroke:#7048e8,color:#212529;
+  classDef main              fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
+  classDef primary           fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
+  classDef secondary         fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
+  classDef tertiary          fill:#C5D8F6,color:#000000,stroke:#425F8B
+  classDef primary_cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
+  classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#6DA5FF
+  classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B,stroke-dasharray:5
+  linkStyle default color:#0F0E2B
 
-    EXT["Extractor
-    [Software System: PHP / cron]"]
-    SP["Microsoft SharePoint
-    [Software System: doc library, temp]"]
-    UC["Unity Catalog
-    [Software System: governance]"]
-    BR["bronze.orders_raw
-    [Container: Delta table, VARIANT]"]
-    SIL["silver
-    [Container: Delta pipeline]"]
-
-    subgraph PIPE["Bronze ingestion pipeline [Container: Databricks job, scheduled 2-3x/day, availableNow]"]
-      AL["Auto Loader stream
-      [Component: cloudFiles, databricks.connection, singleVariantColumn]"]
-      CHK["Checkpoint
-      [Component: exactly-once state]"]
+  subgraph Main
+    subgraph SQLI["`**SQLI**`"]
+      subgraph SQLIExtractor["`**SQLI Data Extractor [Software System]**`"]
+        EXT["SQLI Data Extractor
+        [Container: PHP / cron]
+        Extracts source files for the data flow"]
+      end
     end
+    subgraph Microsoft["`**Microsoft**`"]
+      subgraph M365["`**Microsoft SharePoint [Software System]**`"]
+        SP[\"SharePoint document library
+        [Container: Microsoft 365, document store]
+        Holds JSON files landed by the extractor"/]
+      end
+      subgraph DBControl["`**Databricks Control Plane [Software System]**`"]
+        AL["Auto Loader
+        [Container: Lakeflow job, Spark, UC connection]
+        Scheduled availableNow ingest to bronze"]
+      end
+      subgraph DBStorage["`**Databricks Storage Plane [Software System]**`"]
+        BR[\"Bronze Layer
+        [Container: ADLS Gen2, Delta table]
+        Raw records as VARIANT payload, append-only"/]
+      end
+    end
+  end
 
-    EXT -->|writes JSON 2-3x/day| SP
-    SP -->|reads JSON, OAuth M2M| AL
-    AL -->|appends payload + provenance| BR
-    AL -.->|tracks files| CHK
-    BR -->|dedup / merge| SIL
-    UC -.->|governs connection| SP
-    UC -.->|governs table| BR
+  EXT -->|write json| SP
+  AL -->|read json| SP
+  AL -->|append payload| BR
 
-    class EXT ext
-    class SP temp
-    class AL,CHK comp
-    class BR,SIL store
-    class UC gov
+  class AL primary
+  class SP,BR secondary
+  class EXT tertiary
+  class SQLIExtractor,M365,DBControl,DBStorage secondary_cluster
+  class SQLI,Microsoft primary_cluster
+  class Main main
 ```
 
-The connection and the 2-to-3-a-day schedule are not components. They are relationship and qualifier metadata: the connection is the technology on the read edge, the schedule is a property of the pipeline container. Solid edges are the data path, dashed edges are governance and state associations. At ADLS migration the supporting elements change but the components do not. Microsoft SharePoint becomes a UC External Location on ADLS Gen2, and the pipeline qualifier changes from scheduled availableNow to a native file-arrival trigger.
+Read it as three hops. The extractor writes timestamped JSON into the SharePoint library and forgets it. On its scheduled run Auto Loader reads, through the Unity Catalog connection, only the files it has not seen, and appends each record to bronze. The two ends never meet. They share nothing but the files in SharePoint, and the Auto Loader checkpoint is the memory that keeps them in sync. At ADLS migration the boundary and the components stay put. Microsoft SharePoint becomes a UC External Location on ADLS Gen2, and the scheduled availableNow qualifier on Auto Loader becomes a native file-arrival trigger.
 
 ## The play
 
@@ -99,7 +111,7 @@ The connection and the 2-to-3-a-day schedule are not components. They are relati
 
 | Move | Collapse test |
 | :--- | :--- |
-| Using the standard SharePoint connector (read_files, Auto Loader, COPY INTO via databricks.connection), not the managed one | Skip it and the managed connector lands binary one-file-per-row, not the queryable JSON to VARIANT path this design needs |
+| Using the standard SharePoint connector (read_files, Auto Loader, COPY INTO via databricks.connection), not the managed one | Both read JSON into Delta. Take the managed connector instead and you get typed Delta with managed schema inference and sync, not the raw single-VARIANT, append-only, provenance capture and pipeline control this design wants |
 | Pinning the format as JSON, collapsing the earlier CSV-via-Auto-Loader plus Excel-via-COPY-INTO split into one path | Skip it and the design carries a needless dual path and a double-beta dependency |
 | singleVariantColumn to VARIANT, which also removes schema evolution because the variant absorbs drift | Skip it and you fight nested-JSON schema evolution in bronze |
 | Reading SharePoint directly through the UC connection, no ADLS hop for the quick win | Skip it and you build a bridge you will delete at migration |
@@ -109,7 +121,7 @@ The connection and the 2-to-3-a-day schedule are not components. They are relati
 ### Pits to avoid
 
 - Designing for CSV and Excel before confirming the format is JSON. This was the actual detour in the session.
-- Reaching for the managed SharePoint connector. It outputs a binary one-file-per-row table for RAG-style use, not the structured JSON to VARIANT path. The standard connector is the one that ingests JSON into a queryable table.
+- Assuming the managed connector cannot read JSON. It can. It parses CSV, JSON, XML, and Excel into Delta tables, with incremental ingestion, schema evolution, and Unity Catalog governance. This design uses the standard connector for the output shape and control (raw whole-record VARIANT, append-only, provenance, and a path-swap-only migration), not because of a capability gap. If you would rather hand off schema handling and sync, the managed connector is a valid quick-win alternative.
 - Treating VARIANT as byte-faithful. It is a normalised parsed tree, not the original bytes. Key order, insignificant whitespace, and duplicate keys are not preserved.
 - The 16 MB VARIANT per-record cap. A record over 16 MB is treated like a corrupt record and lands in corruptRecordColumn under PERMISSIVE, not in the payload.
 - Setting multiLine wrong for the file shape. Newline-delimited JSON needs it off, a single object or array per file needs it on.
@@ -151,6 +163,7 @@ The caveat under Pits to avoid still holds: VARIANT is a normalised parse, not t
 - Byte-exact audit or replay is required now. Dual-land a STRING column alongside VARIANT, or move to the ADLS design.
 - Records exceed 16 MB. The single VARIANT column rejects them into the corrupt-record column.
 - Files are regenerated under the same name and cannot be renamed. Auto Loader will not reload a same-name overwrite at the default allowOverwrites=false. Switch to a unique-name scheme upstream first.
+- You would rather not maintain a pipeline. The managed SharePoint connector parses JSON into Delta with managed sync and schema handling, at the cost of the raw single-VARIANT control this design keeps. Use it if hands-off beats control for the bounded phase.
 - SharePoint is permanent. Go to ADLS plus a file-arrival trigger now and use the sibling play, skipping the Beta connector.
 - The SaaS is a supported Lakeflow Connect managed connector. Ingest the SaaS directly and retire both SharePoint and the extractor.
 
@@ -170,7 +183,7 @@ Connector and path
 
 | Decision | Pole A | Pole B | Chosen position |
 | :--- | :--- | :--- | :--- |
-| Connector variant | Managed SharePoint connector | Standard SharePoint connector | Standard. The managed connector outputs binary one-file-per-row, the standard one ingests JSON into structured Delta as VARIANT |
+| Connector variant | Managed SharePoint connector | Standard SharePoint connector | Standard. Both read JSON into Delta. Managed parses into typed Delta with managed schema inference and sync, standard lands the whole record as one VARIANT column with full pipeline control and a path-swap-only migration. Chosen for raw VARIANT capture and control, not capability |
 | Read path | DIY Graph or ADLS bridge | Native standard connector (read_files / Auto Loader) | Native connector, direct read, no ADLS hop |
 | Replace the extractor | UC HTTP connection with http_request to call the SaaS directly | Keep the PHP extractor and SharePoint | Keep the extractor. http_request is a per-call primitive, not an ingestion source, SOAP makes it clumsy, and it re-implements extraction for thin gain |
 
@@ -248,22 +261,22 @@ Notes:
 - Each record must stay under the 16 MB VARIANT cap. Oversized records land in corruptRecordColumn under PERMISSIVE.
 - Keep file names unique per run. Auto Loader at the default allowOverwrites=false ingests each path exactly once and will not reload a same-name overwrite.
 - cloudFiles.cleanSource is not supported on this connector, so source cleanup at SharePoint is manual.
-- Combining singleVariantColumn with databricks.connection is the logical composition but is not shown together in an official example. The official singleVariantColumn examples read from a UC Volume or object-store path, not a SharePoint connection. Test on one file before committing (see Sources).
+- Combining singleVariantColumn with databricks.connection is the logical composition but is not shown together in an official example. The official singleVariantColumn examples read from a UC Volume or object-store path, not a SharePoint connection. The VARIANT page also shows .schema("payload VARIANT") as an alternative whole-record route worth including in the test. Test on one file before committing (see Sources).
 
 ## Sources
 
 Load-bearing claims mapped to source. Connector and VARIANT claims were fetched
-and verified against Microsoft Learn on 2026-06-13 (SharePoint ingestion page
-updated 2026-03-16, SharePoint auth overview updated 2025-12-11, VARIANT page in
-Public Preview, Auto Loader production and FAQ pages Mar to May 2026). The
-ingestion-overview source [9] is carried from the options doc
+and verified against Microsoft Learn on 2026-06-13 and re-verified 2026-06-21
+(SharePoint standard and managed connector pages, VARIANT page, Auto Loader FAQ).
+The ingestion-overview source [9] is carried from the options doc
 (2026-06-09-adls-bronze-ingestion-design-options.md, v1.4).
 
 | Claim in this play | Source |
 | :--- | :--- |
-| Two SharePoint connectors (managed binary output, standard structured output), standard connector via databricks.connection with read_files, Auto Loader and COPY INTO, Beta status, DBR 17.3 LTS floor, URL folder scope, pathGlobFilter on name, folder-path glob unsupported, no multi-site per query, cleanSource unsupported | [13] |
+| Standard SharePoint connector via databricks.connection with read_files, Auto Loader, spark.read and COPY INTO, Beta status, DBR 17.3 LTS floor, URL folder scope (site, sub-site, library, folder, file), pathGlobFilter on name, folder-path glob unsupported, no multi-site per query, cleanSource unsupported | [13] |
+| Managed SharePoint connector parses structured formats (CSV, JSON, XML, Excel) into Delta tables, plus binary and metadata-only modes, with incremental ingestion, schema evolution, Unity Catalog governance and OAuth M2M | [15] |
 | OAuth M2M recommended for automated pipelines (app-only, service principal), Sites.Selected or Sites.Read.All scope | [14] |
-| VARIANT type, JSON from DBR 15.3, Public Preview, singleVariantColumn whole-record ingest, 16 MB record cap, oversized and malformed records to corruptRecordColumn under PERMISSIVE, whole-record VARIANT disables schema evolution and rescuedDataColumn, maintains case sensitivity | [11] |
+| VARIANT type, JSON from DBR 15.3, singleVariantColumn whole-record ingest, 16 MB record cap, oversized and malformed records to corruptRecordColumn under PERMISSIVE, whole-record VARIANT disables schema evolution and rescuedDataColumn, maintains case sensitivity | [11] |
 | VARIANT is a normalised parsed tree not the original bytes, and path access is case-sensitive | [11][12] |
 | Auto Loader checkpoint (RocksDB) gives exactly-once ingestion, resumes from the last checkpoint, no manual state | [10] |
 | Default allowOverwrites=false processes each file path exactly once, a same-name overwrite is not reliably reprocessed, immutable files recommended | [F-AL] |
@@ -286,13 +299,14 @@ Source URLs:
 - [12] https://learn.microsoft.com/en-us/azure/databricks/semi-structured/variant-json-diff
 - [13] https://learn.microsoft.com/en-us/azure/databricks/ingestion/sharepoint
 - [14] https://learn.microsoft.com/en-us/azure/databricks/ingestion/lakeflow-connect/sharepoint-source-setup-overview
+- [15] https://learn.microsoft.com/en-us/azure/databricks/ingestion/lakeflow-connect/sharepoint
 - [F-AL] https://learn.microsoft.com/en-us/azure/databricks/ingestion/cloud-object-storage/auto-loader/faq
 
 ## Version block
 
 | Field | Value |
 | :--- | :--- |
-| Version | 2.3 |
-| Last Updated | 2026-06-13 |
+| Version | 2.5 |
+| Last Updated | 2026-06-21 |
 | Status | Draft |
-| Pairs with | 2026-06-02-json-adls-to-bronze-ingestion-play.md, 2026-06-02-temporary-landing-zone-bronze-ingestion-play.md, c4-sharepoint-databricks-bronze.pptx |
+| Pairs with | 2026-06-02-json-adls-to-bronze-ingestion-play.md, 2026-06-02-temporary-landing-zone-bronze-ingestion-play.md |
