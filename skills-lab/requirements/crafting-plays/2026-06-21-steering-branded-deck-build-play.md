@@ -2,15 +2,10 @@
 
 > A play for driving a model to produce a branded, on-template presentation from prepared content, holding one visual system across every slide and iterating the look without losing consistency. Worked instance: a 14-slide executive deck built from cleaned markdown on a branded corporate template.
 
-## Advice (read first)
+## Read first
 
-- Clean the content in its own pass before any design. Keep the author's words, show every change, then write.
-- Read the generation tool's code, not just its description, to learn the real primitive set and palette. Confirm the template's layout names before you build.
-- Decide the few real aesthetic choices once (theme, divider colour, card fill) and hold them across every slide. Route all styling through one helper.
-- Render the deck to images and check the densest slide before delivering.
-- Set card body text a step larger than feels safe, and add an accent so the cards are not flat.
-- Use the native slide-number field, never literal page text. A later page deletion otherwise forces a full manual renumber.
-- Expect the binary to leave through the download or outputs path, not a filesystem write.
+- Work in phases and do each once. Content first, then tool design possibilities study, then design lock, then build, then render-and-iterate.
+- Scope every rendering edit. Iterate against named slide ranges, so a change lands only where intended and leaves deliberate variation alone.
 
 ## When to trigger
 
@@ -121,7 +116,7 @@ A future reuse returns a deck that passes the checks below. If any check fails, 
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.0 |
-| Last Updated | 2026-06-21 |
+| Version | 1.1 |
+| Last Updated | 2026-06-22 |
 | Status | Draft |
 | Pairs with | 20260622-excom-oujda-ai-delivery-and-operations.pptx |
