@@ -38,77 +38,71 @@ Verdict: the locked configuration, a file-arrival trigger launching an available
 ## Diagram
 
 ```mermaid
+---
+title: ADLS to bronze ingestion
+---
 %%{init: {"theme": "base", "themeVariables": {"edgeLabelBackground": "#FFFFFF"}, "flowchart": {"defaultRenderer": "elk"}}}%%
 
 flowchart LR
-  classDef main              fill:#FFFAF0,color:#FFFAF0,stroke:#C5D8F6
   classDef primary           fill:#1F24E9,color:#FFFAF0,stroke:#425F8B
   classDef secondary         fill:#6DA5FF,color:#FFFFFF,stroke:#425F8B
   classDef tertiary          fill:#C5D8F6,color:#000000,stroke:#425F8B
   classDef govern            fill:#9673A6,color:#FFFFFF,stroke:#5E4670
-  classDef primary_cluster   fill:#FFFFFF,color:#0F0E2B,stroke:#0F0E2B
-  classDef secondary_cluster fill:#FFFAF0,color:#0F0E2B,stroke:#6DA5FF
-  classDef ytbc              fill:#D9E4F0,color:#3A3A4A,stroke:#425F8B,stroke-dasharray:5
+  classDef component         fill:#D9E4F0,color:#0F0E2B,stroke:#425F8B
+  classDef sw_cluster        fill:#FFFAF0,color:#0F0E2B,stroke:#6DA5FF
+  classDef container_cluster fill:#FFFFFF,color:#0F0E2B,stroke:#425F8B,stroke-dasharray:3
+  classDef boundary          fill:#F4F6FB,color:#0F0E2B,stroke:#425F8B,stroke-dasharray:4
   linkStyle default color:#0F0E2B
 
-  subgraph Main
-    SAAS[SaaS API
-    external system]
-    EXT[Extractor
-    pull REST, writes JSON]
+  SAAS["SaaS API<br/>[Software system]<br/>Serves business records over REST"]
+  EXT["Extractor<br/>[Software system]<br/>Pulls from the API, writes JSON files"]
+  UC["Unity Catalog<br/>[Software system]<br/>Governs bronze: grants, lineage, classification"]
 
-    subgraph Azure["`**Your Azure subscription**`"]
-      subgraph NotifRes["`**Notification resources, service-managed**`"]
-        EG[Event Grid
-        system topic]
-        Q([Azure Storage Queue])
+  subgraph PLANE["`**Managed ingestion plane**`"]
+    subgraph AZURE["`**Azure (your subscription)** [Software system]`"]
+      ADLS[\"ADLS Gen2 landing<br/>[ADLS Gen2, HNS]<br/>Lands committed JSON on FlushWithClose"/]
+      EG["Event Grid system topic<br/>[Azure Event Grid]<br/>Publishes BlobCreated events"]
+      Q[("Notification queue<br/>[Azure Storage Queue]<br/>Buffers file events, at-least-once")]
+    end
+    subgraph DBX["`**Databricks** [Software system]`"]
+      subgraph FES["`**File Events Service** [Databricks managed]`"]
+        LISTENER["Notification listener<br/>[Component]<br/>Manages the eventing surface, consumes the queue, writes the cache"]
+        CACHE["File events cache<br/>[Component]<br/>Indexes new-file metadata for discovery"]
       end
-      ADLS[ADLS Gen2 landing HNS
-      FlushWithClose commit]
+      AL["Auto Loader<br/>[Lakeflow job, Spark Structured Streaming]<br/>Ingests via file events, exactly-once"]
+      BRONZE[("Bronze table<br/>[Delta Lake, VARIANT]<br/>Stores whole-record JSON and promoted keys")]
     end
-
-    subgraph Databricks["`**Databricks**`"]
-      FES[File Events Service]
-      CACHE([Cache
-      file metadata])
-      AL[Auto Loader
-      Lakeflow job, file-arrival + availableNow]
-      BRONZE([Bronze Delta table
-      VARIANT + promoted cols])
-    end
-
-    UC[Unity Catalog
-    account-level governance]
   end
 
-  SAAS -->|pull REST| EXT
-  EXT -->|write JSON| ADLS
-  ADLS -->|BlobCreated| EG
-  EG -->|publish| Q
-  Q -->|get file events| FES
-  FES -->|store metadata| CACHE
-  AL -->|read for discovery| CACHE
-  AL -->|read files to ingest| ADLS
-  AL -->|write VARIANT| BRONZE
-  FES -->|file-arrival trigger: launch run| AL
-  FES -.->|set up and manage| EG
-  FES -.->|set up and manage| Q
-  BRONZE -.->|governed by| UC
+  SAAS -->|Pulls records| EXT
+  EXT -->|Writes JSON| ADLS
+  ADLS -->|Emits BlobCreated| EG
+  EG -->|Publishes to| Q
+  Q -->|Delivers file events| LISTENER
+  LISTENER -->|Writes metadata| CACHE
+  LISTENER -.->|Provisions and manages| EG
+  LISTENER -.->|Provisions and manages| Q
+  AL -->|Reads new-file metadata for discovery| CACHE
+  CACHE -->|Launches run, file-arrival trigger| AL
+  AL -->|Reads files to ingest| ADLS
+  AL -->|Writes VARIANT| BRONZE
+  UC -.->|Governs| BRONZE
 
-  class EXT,ADLS,AL,BRONZE primary
-  class EG,Q,FES,CACHE secondary
-  class SAAS tertiary
+  class ADLS,AL,BRONZE primary
+  class EG,Q secondary
+  class LISTENER,CACHE component
+  class SAAS,EXT tertiary
   class UC govern
-  class NotifRes secondary_cluster
-  class Azure,Databricks primary_cluster
-  class Main main
+  class AZURE,DBX sw_cluster
+  class FES container_cluster
+  class PLANE boundary
 
-  linkStyle 9 stroke:#6DA5FF,color:#6DA5FF
-  linkStyle 10,11 stroke:#888888,color:#888888
+  linkStyle 6,7 stroke:#888888,color:#888888
+  linkStyle 8,9 stroke:#6DA5FF,color:#6DA5FF
   linkStyle 12 stroke:#9673A6,color:#9673A6
 ```
 
-Diagram class semantics. `primary` (electric blue) marks what this design specialises or adds: the extractor, ADLS, Auto Loader and bronze. `secondary` (sky blue) marks the managed file-events mechanism preserved from the Databricks reference diagram. `tertiary` (ice blue) marks the external source system. `govern` (mauve) marks Unity Catalog as the account-level governance metastore. There are two kinds of dashed edge. Grey dashed edges are the file events service control plane (set up and manage), which originate at the service because it owns the Event Grid subscription and queue. The mauve dashed edge is the governance dependency, bronze governed by the metastore. Solid edges are the data plane, plus the blue launch edge. The discovery edge runs from Auto Loader to the cache, since Auto Loader reads file metadata directly from the file events cache, not from the service front door and not by polling the queue [5]. The blue launch edge runs from the file events service to Auto Loader: the Lakeflow job's file-arrival trigger uses the same service to decide when to start a run [11].
+Notation. The diagram is a C4 container view of the system in focus, ADLS to bronze ingestion (the title). The dashed outer boundary is the sub-system boundary, Managed ingestion plane. Inside it sit two software systems drawn as boundaries, Azure (your subscription) and Databricks, each holding its containers. Containers carry three lines: name, technology in brackets, then a function starting with a verb. Shape encodes container kind. A box is an application or service (Event Grid topic, Auto Loader). A cylinder is a datastore (notification queue, bronze Delta table). A trapezoid is object storage (ADLS Gen2 landing). The three black-box nodes outside the boundary (SaaS API, Extractor, Unity Catalog) are external software systems carrying name, [Software system], then a function. They are the supporting elements the in-scope containers connect to. The File Events Service container is opened to show its two components, the notification listener (manages the eventing surface, consumes the queue, writes the cache) and the file events cache (indexes new-file metadata). This is a deliberate zoom, so this one container is drawn at component depth while the others stay at container depth. Relationships read source to destination with an active verb, following the Structurizr relationship convention. Solid edges are the data plane plus the blue discovery and launch edges: Auto Loader reads new-file metadata from the cache, and the cache launches the run as the file-arrival trigger. Grey dashed edges are the File Events Service control plane, sourced from the notification listener as the eventing-facing component, since the service provisions and owns the Event Grid subscription and the storage queue. The mauve dashed edge is the governance dependency, Unity Catalog governs bronze. Colour follows the Elevate palette: electric blue for the containers this design specialises (ADLS, Auto Loader, bronze), sky blue for the Azure-side managed mechanism (Event Grid, queue), light blue for the File Events Service components, ice blue for the external source systems (SaaS API, Extractor), and mauve for Unity Catalog as the governance system.
 
 The full per-step annotations (unique filenames, cleanSource retention, 7-day expiry, 24h reconciliation, VARIANT 16 MB cap and case sensitivity) sit in the design-steps table and glossary below rather than on the diagram. Container technology per component sits in the component inventory below.
 
@@ -124,14 +118,14 @@ The full per-step annotations (unique filenames, cleanSource retention, 7-day ex
 
 ## Component inventory
 
-Container technology and ownership per component on the diagram. "Owned by" is who provisions and operates the component, which is what matters for setup and cost.
+Container technology and ownership for each component in the design. The Auto Loader checkpoint is listed for completeness though it is not a separate node on the diagram. "Owned by" is who provisions and operates the component, which is what matters for setup and cost.
 
 | Component | Container technology | Owned by |
 | :--- | :--- | :--- |
 | Extractor | External SaaS REST client, emits JSON | You, external to Databricks |
 | ADLS Gen2 landing | ADLS Gen2 with HNS, read over the abfss driver | You, Azure subscription |
 | Event Grid + Storage Queue | Azure Event Grid subscription and Azure Storage Queue, one shared pair per external location [13] | File events service, service-managed |
-| File Events Service | Databricks-managed service | Databricks |
+| File Events Service | Databricks-managed service, opened on the diagram into a notification listener and a file events cache | Databricks |
 | File events cache | Databricks-managed internal metadata index for discovery, not separately addressable | Databricks |
 | Auto Loader | Lakeflow job running Spark Structured Streaming (`cloudFiles`), file-arrival trigger launch, Trigger.availableNow drain | You configure the job, Databricks runs the runtime |
 | Auto Loader checkpoint | RocksDB state store in the checkpoint location, holds read position and processed-file set | You, on durable storage you choose |
@@ -142,7 +136,7 @@ Container technology and ownership per component on the diagram. "Owned by" is w
 
 These refine the diagram and steps above and do not replace the standing checks below.
 
-1. Discovery reads the cache, not the service front door and not the queue. Auto Loader with `useManagedFileEvents` reads new-file metadata directly from the file events cache, using the read position held in its checkpoint, so there is no queue consumer for you to write. The cache itself is internal to the service and not separately addressable, so there is nothing to provision for it either. The only service-managed resources are the Event Grid subscription and the storage queue, one pair per external location. The diagram edge is Auto Loader to the cache for this reason [5].
+1. Discovery reads the cache, not the service front door and not the queue. Auto Loader with `useManagedFileEvents` reads new-file metadata directly from the file events cache, using the read position held in its checkpoint, so there is no queue consumer for you to write. The cache itself is internal to the service and not separately addressable, so there is nothing to provision for it either. The only service-managed resources are the Event Grid subscription and the storage queue, one pair per external location. On the diagram the File Events Service container is opened to show its components, the notification listener and the file events cache, so the discovery edge runs from Auto Loader to the cache [5].
 2. The cache and the checkpoint are two different stores, do not conflate them. The file events cache is the Databricks-managed metadata index used for discovery. The RocksDB checkpoint is the Auto Loader state store holding the read position and the processed-file set for exactly-once [5]. Keep the checkpoint location durable and unique per stream. If it is lost, Auto Loader does a full re-listing and re-establishes a read position, so the idempotent ingest (check 13) is what prevents double counting.
 3. The file events service serves two consumers, not one. Auto Loader uses it for in-run discovery, the Lakeflow job file-arrival trigger uses the same service to decide when to launch a run [5][11]. Enable file events once on the external location and both consumers benefit, volumes on that location inherit it [11][13]. There is no per-pipeline enablement.
 4. Unity Catalog is account-level, not a workspace component. One metastore per region, attached to workspaces. Configure governance, that is grants, lineage and classification, at the catalog, schema and table level, not as part of the ingestion job. Bronze is governed by it, shown as the governance edge. Do not model it inside the Databricks workspace boundary.
@@ -220,6 +214,6 @@ Scoped to the concepts this design uses.
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.6 |
+| Version | 1.10 |
 | Last Updated | 2026-06-24 |
 | Status | Review |
