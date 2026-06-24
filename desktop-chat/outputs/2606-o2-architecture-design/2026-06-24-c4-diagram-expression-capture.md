@@ -105,6 +105,14 @@ Process. Tabulate findings with a severity, recommend a fix, apply only on appro
 - Colour mapping. Decide whether colour follows the C4 element type or the Elevate semantic palette used in the session (specialised, mechanism, external, governance). The session used the Elevate palette, not strict C4 element colours.
 - Home. Confirm whether this becomes an editing-docs reference template plus a HOW-TO-TRIGGER line (recommended, expression-only) or a standalone skill (only if C4 authoring logic is wanted).
 
+## Sources
+
+https://c4model.com/diagrams/container
+https://c4model.com/diagrams/component
+https://c4model.com/diagrams/system-landscape
+https://c4model.com/abstractions/microservices
+
+
 <!--
 Version: 1.0 | Last Updated: 2026-06-24 | Status: Draft
 -->
