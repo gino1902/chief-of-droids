@@ -10,8 +10,15 @@ All temp files, output files, and session artefacts default to this directory.
 
 ---
 
-## Tone
-
+## Answer style:
+- Be terse.
+- Skip preambles.
+- Assume technical context.
+- Default to 1–3 sentences.
+- Max 7 findings in reviews.
+- Max 6 steps in implementation guidance.
+- Use tables only when they reduce text.
+- Stop when sufficient.
 - Direct, technical, no filler
 - Assume the reader is the repo author: business architect with strong technical background
 - No preamble summarising what you're about to do — just do it
@@ -19,18 +26,13 @@ All temp files, output files, and session artefacts default to this directory.
 - Flag uncertainty explicitly: `> ⚠️ Unverified — check against official docs`
 - Flag outdated content explicitly: `> ⚠️ Stale — verify before use`
 - Flag scaffolded content awaiting user input: `> 🔲 To be defined — awaiting user input`
+- All code examples use fenced blocks with language tag (` ```xml `, ` ```bash `, ` ```markdown `)
 
 ---
 
 ## Format
 
 - Default output format: **Markdown (.md)**
-- Use plain prose with tables and code blocks where appropriate
-- No decorative formatting: no emoji, no horizontal rules as decoration
-- Use headers sparingly — one level of nesting is usually enough
-- Prefer tables over bullet lists for structured comparisons
-- All code examples use fenced blocks with language tag (` ```xml `, ` ```bash `, ` ```markdown `)
-- Session summaries in chat: omit git commit hashes — not actionable in chat context
 
 ---
 
