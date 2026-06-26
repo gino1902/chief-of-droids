@@ -1,7 +1,5 @@
-# Project repos — each has its own git
-# slide-gen/
-# my-claude-fmk/
-# datawan/
+# Side projects, separate repo
+claude-code-digest/
 sqli-ai-taskforce/
 wiki-data/
 
@@ -26,6 +24,3 @@ skills-lab/outputs/predictability/ingest-fixture/raw/
 # Session removal logs — local only, not versioned
 .logs/sessions-removed/*
 !.logs/sessions-removed/.gitkeep
-
-# Personal side project, separate repo
-claude-code-digest/
