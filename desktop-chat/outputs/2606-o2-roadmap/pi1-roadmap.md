@@ -2,6 +2,8 @@
 
 Context: greenfield Azure Databricks, account created June 2026, Premium tier. All product and feature names verified against current official Microsoft Learn documentation for Azure Databricks (see sources). This file holds eight epics, ordered by dependency.
 
+The first ingestion pattern reads JSON from a SharePoint document library into a bronze Delta table through a Unity Catalog connection (standard SharePoint connector, scheduled Auto Loader drain), per the locked design in `2026-06-24-sharepoint-to-bronze-ingestion-lock-in.md`. CI/CD runs on Azure DevOps, chosen over GitHub Actions for ecosystem compliance and integration with existing Azure DevOps tooling.
+
 ## Scope and sequencing
 
 The epics are an enabler-then-business chain. Each depends on the ones before it.
@@ -9,7 +11,7 @@ The epics are an enabler-then-business chain. Each depends on the ones before it
 - PI1 (this increment): Epics 1 to 6, the commercial, architecture, infrastructure, CI/CD and governance foundations.
 - PI2 candidates: Epics 7 and 8, the cost and usage reporting. They depend on the full foundation and on accumulated billing data, so they realistically land after PI1.
 
-Public Preview risk: several features this roadmap relies on are still Public Preview on Azure as of June 2026, namely the `system.access.audit` table, serverless usage policies, Budgets, and the GitHub Actions CI/CD path. They are usable but not yet generally available, so treat their stability and SLA as a delivery risk for any epic that depends on them.
+Pre-GA risk: several features this roadmap relies on are still Public Preview on Azure as of June 2026, namely the `system.access.audit` table, serverless usage policies, and Budgets. The first ingestion pattern also depends on the SharePoint standard connector, which is Beta on a Databricks Runtime 17.3 LTS floor. These are usable but not yet generally available, so treat their stability and SLA as a delivery risk for any epic or workload that depends on them.
 
 Epic type follows SAFe: enabler epics build the architectural runway, business epics deliver visible value. The "so that" clause states the runway unlocked (enablers) or the value delivered (business).
 
@@ -50,13 +52,13 @@ Acceptance criteria:
 
 ## Epic 4 (Enabler — infrastructure) — CI/CD pipeline
 
-> Establish version-controlled, repeatable deployment for all Databricks code and resources using Declarative Automation Bundles and a service-principal-authenticated pipeline, so that every change after this point ships as a reviewable, automated release across environments. Depends on Epic 3, and is the delivery mechanism for Epics 5 to 8.
+> Establish version-controlled, repeatable deployment for all Databricks code and resources using Declarative Automation Bundles and a service-principal-authenticated Azure DevOps pipeline, so that every change after this point ships as a reviewable, automated release across environments. Depends on Epic 3, and is the delivery mechanism for Epics 5 to 8.
 
 Acceptance criteria:
 - A source repository and branching model are established for Databricks code and configuration.
 - Declarative Automation Bundles (formerly Databricks Asset Bundles) define jobs, pipelines and resources as code.
-- A pipeline on Azure DevOps or GitHub Actions runs `databricks bundle deploy`, using the official `databricks/setup-cli` action where GitHub is used. The GitHub Actions path is Public Preview.
-- Deployment authenticates as a service principal, using workload identity federation (for GitHub, `DATABRICKS_AUTH_TYPE: github-oidc`) rather than stored secrets where supported.
+- An Azure Pipelines (Azure DevOps) pipeline runs `databricks bundle deploy`. Azure DevOps is chosen over GitHub Actions for ecosystem compliance and integration with existing Azure DevOps tooling.
+- Deployment authenticates as a Microsoft Entra service principal. The documented default uses OAuth M2M (client ID and secret); workload identity federation through an Azure DevOps service connection is the recommended secret-free alternative and is preferred where supported.
 - Separate dev, test and prod targets deploy through the same bundle definitions.
 - A sample job deploys end-to-end through the pipeline as proof.
 
@@ -68,6 +70,7 @@ Acceptance criteria:
 - New workloads run against a Unity Catalog catalog, not the legacy Hive metastore.
 - Managed tables and volumes are created in Unity Catalog with a defined managed storage location on ADLS Gen2.
 - External locations and storage credentials are configured via the Access Connector for Azure Databricks and access-tested against ADLS Gen2.
+- A Unity Catalog connection to the source SharePoint document library is configured for the first ingestion pattern, using the standard SharePoint connector authenticated as an OAuth M2M service principal (Entra app, Sites.Selected or Sites.Read.All scope).
 - Microsoft Entra ID with automatic identity management syncs users and groups from the identity provider, so no manual SCIM provisioning is needed. Assigning a synced group to a workspace is still a separate manual step.
 - Access grants enforce least privilege. An unauthorised access attempt is denied and recorded in `system.access.audit`.
   > ⚠️ Unverified — the cited audit-log source documents the `response.statusCode` field but does not state that denied/unauthorised attempts produce audit rows; confirm the audit behaviour for denied access before relying on it for the test.
@@ -100,7 +103,7 @@ Acceptance criteria:
 > Build usage monitoring that attributes ingestion (Auto Loader, Lakeflow Spark Declarative Pipelines, Lakeflow Jobs) and consumption (SQL warehouse queries, Model Serving model and agent endpoints) to an identity, using `system.billing.usage` `identity_metadata` and correlating control-plane actor data from `system.access.audit`, so that DBUs are traceable to a user or service principal (agent) for the workload types that expose identity. Depends on Epics 5, 6 and 7. PI2 candidate.
 
 Acceptance criteria:
-- Ingestion usage is attributed to a user or service principal for each pipeline and job, via `identity_metadata.run_as` (populated for jobs compute, serverless compute for jobs, serverless compute for notebooks, Lakeflow Spark Declarative Pipelines, Foundation Model Fine-tuning, predictive optimization and data quality monitoring).
+- Ingestion usage is attributed to a user or service principal for each pipeline and job, via `identity_metadata.run_as` (populated for jobs compute, serverless compute for jobs, serverless compute for notebooks, Lakeflow Spark Declarative Pipelines, Foundation Model Fine-tuning, predictive optimization and data quality monitoring). The first ingestion pattern, the scheduled SharePoint-to-bronze Auto Loader job, is attributed via its `run_as` service principal.
 - Consumption usage is attributed to an identity: SQL warehouse usage via `identity_metadata.owned_by`, and Model Serving / agent endpoints where an identity field is populated.
 - Identity resolution is best-effort, not total. The `identity_metadata` struct (`run_as`, `owned_by`, `created_by`) populates only for certain workload types, so usage without an identity field (for example all-purpose compute or plain model-serving endpoints) is flagged as unattributable rather than forced onto an owner. The `system.access.audit` table names the actor of control-plane actions but holds no usage quantities, so it corroborates an identity rather than attributing billed usage on its own.
   > ⚠️ Unverified — confirm the join path between `system.access.audit` and `system.billing.usage` before relying on it; the cited sources document no shared key.
@@ -130,11 +133,15 @@ All verified against current Microsoft Learn documentation for Azure Databricks 
 - [Attribute usage with serverless usage policies](https://learn.microsoft.com/en-us/azure/databricks/admin/usage/budget-policies)
 - [Create and monitor budgets](https://learn.microsoft.com/en-us/azure/databricks/admin/account-settings/budgets)
 - [Declarative Automation Bundles](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/)
-- [CI/CD with GitHub Actions](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/ci-cd/github)
+- [CI/CD with Azure DevOps](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/ci-cd/azure-devops)
+- [Authenticate with Azure DevOps](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/auth/auth-with-azure-devops)
 - [Service principals for CI/CD](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/auth/service-principals)
+- [SharePoint standard connector](https://learn.microsoft.com/en-us/azure/databricks/ingestion/sharepoint)
+- [Standard connectors in Lakeflow Connect](https://learn.microsoft.com/en-us/azure/databricks/ingestion/)
+- [SharePoint source setup overview](https://learn.microsoft.com/en-us/azure/databricks/ingestion/lakeflow-connect/sharepoint-source-setup-overview)
 
 ---
 
 <!--
-Version: 1.7 | Last Updated: 2026-06-26 | Status: Draft
+Version: 1.9 | Last Updated: 2026-06-26 | Status: Draft
 -->
