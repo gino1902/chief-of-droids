@@ -14,6 +14,8 @@ The ingestion path is the standard SharePoint connector read directly through a 
 
 This is a bounded-phase design, a disposable bridge. SharePoint is the temporary landing. When it retires and the extractor repoints to ADLS Gen2, the sibling lock-in governs and the migration changes only the source path and the trigger. See the Temporary by design section.
 
+A second exit exists beyond the ADLS migration. If the SaaS becomes a supported Lakeflow Connect managed connector, ingest it directly and retire both SharePoint and the extractor, skipping this path entirely. See the paired play, When not to use it [2].
+
 Four facts underpin the decision:
 
 - The standard connector is chosen for output shape and control, not a capability gap. Both the standard and the managed SharePoint connector read JSON into Delta. The standard one lands the whole record as one VARIANT, append-only, with provenance and full pipeline control, and a path-swap-only migration. The managed connector is rejected because it parses into its own schema and forecloses the single-VARIANT route [6][8].
@@ -106,7 +108,7 @@ flowchart LR
     end
     subgraph DBX["`**Databricks** [Software system]`"]
       AL["Auto Loader<br/>[Lakeflow scheduled job, Spark, UC connection]<br/>Reads JSON over the connection, ingests exactly-once"]
-      BRONZE[("Bronze table<br/>[Delta Lake, VARIANT]<br/>Stores whole-record JSON and promoted keys")]
+      BRONZE[("Bronze table<br/>[Delta Lake on ADLS Gen2, VARIANT]<br/>Stores whole-record JSON and promoted keys")]
     end
   end
 
@@ -126,7 +128,7 @@ flowchart LR
   linkStyle 4 stroke:#9673A6,color:#9673A6
 ```
 
-Notation. The diagram is a C4 container view of the system in focus, SharePoint to bronze ingestion (the title), drawn on the same boundary as the ADLS end-state diagram so the two read as one family. The dashed outer boundary is the sub-system boundary, Scheduled ingestion plane. Inside it sit two software systems drawn as boundaries, Microsoft 365 and Databricks, each holding its containers. Containers carry three lines: name, technology in brackets, then a function starting with a verb. Shape encodes container kind. A box is an application or service (Auto Loader). A cylinder is a datastore (bronze Delta table). A trapezoid is a document store (SharePoint library). The three black-box nodes outside the boundary (SaaS API, Extractor, Unity Catalog) are external software systems carrying name, [Software system], then a function, the supporting elements the in-scope containers connect to. Relationships read source to destination with an active verb, following the Structurizr relationship convention. The mauve dashed edge is the governance dependency, Unity Catalog governs bronze. Colour follows the Elevate palette: electric blue for the containers this design specialises (Auto Loader, bronze), sky blue for the SharePoint document store, ice blue for the external source systems (SaaS API, Extractor), and mauve for Unity Catalog as the governance system.
+Notation. The diagram is a C4 container view of the system in focus, SharePoint to bronze ingestion (the title), drawn on the same boundary as the ADLS end-state diagram so the two read as one family. The dashed outer boundary is the sub-system boundary, Scheduled ingestion plane. Inside it sit two software systems drawn as boundaries, Microsoft 365 and Databricks, each holding its containers. Containers carry three lines: name, technology in brackets, then a function starting with a verb. Shape encodes container kind. A box is an application or service (Auto Loader). A cylinder is a datastore (the bronze Delta table, physically backed by ADLS Gen2). A trapezoid is a document store (SharePoint library). The three black-box nodes outside the boundary (SaaS API, Extractor, Unity Catalog) are external software systems carrying name, [Software system], then a function, the supporting elements the in-scope containers connect to. Relationships read source to destination with an active verb, following the Structurizr relationship convention. The mauve dashed edge is the governance dependency, Unity Catalog governs bronze. Colour follows the Elevate palette: electric blue for the containers this design specialises (Auto Loader, bronze), sky blue for the SharePoint document store, ice blue for the external source systems (SaaS API, Extractor), and mauve for Unity Catalog as the governance system.
 
 There is no eventing surface on this diagram, and that absence is the point. SharePoint emits no storage events Databricks can subscribe to, so there is no Event Grid topic, no notification queue, and no file events service. The launch trigger is the Lakeflow job clock, internal to the Auto Loader job, which is why it is not a separate node, putting the schedule or the connection in a container label would mistake trigger metadata for a container. Discovery is list-based: on each scheduled run Auto Loader lists the URL-scoped path and ingests only files its checkpoint has not seen.
 
@@ -137,7 +139,7 @@ There is no eventing surface on this diagram, and that absence is the point. Sha
 | 1. Extract from SaaS source | External extractor (already running), PHP or cron, SaaS REST client, emits timestamped JSON, unique filenames | Decoupled from Databricks, owns SaaS auth and pagination | Scheduling and retry are the extractor's, no native exactly-once upstream | [2] |
 | 2. Land file to SharePoint | SharePoint document library (Microsoft 365), extractor writes via its own path, names prefixed YYYY-MM-DD-HH-MM | Working-but-manual setup already in place, no new landing infra | Same-name overwrite does not reload at allowOverwrites=false (check 4). cloudFiles.cleanSource unsupported, so source cleanup stays manual (check 8) | [6][9] |
 | 3. Connect, UC connection to SharePoint | Standard SharePoint connector, databricks.connection, OAuth M2M service principal via Entra app, Sites.Selected or Sites.Read.All, Beta, DBR 17.3 LTS floor | Governed read inside Unity Catalog, no intermediate store, full output-shape control | Beta connector, set a review date. One query reads one site, multi-site per query unsupported | [6][7] |
-| 4. Discover and ingest, scheduled Auto Loader poll | Auto Loader stream, cloudFiles.format=json, singleVariantColumn, URL folder scope, pathGlobFilter on name, multiLine matched to file shape, Trigger.availableNow, scheduled 2 to 3 runs/day, RocksDB checkpoint exactly-once, no schemaLocation | Fire-drain-stop job, no idle compute, source-agnostic loader so migration is a path-and-trigger swap | List-based discovery, no file events. Folder-path glob unsupported, URL scopes the read. The residual singleVariantColumn + databricks.connection composition is unverified (check 2) | [1][3][4][6][9] |
+| 4. Discover and ingest, scheduled Auto Loader poll | Auto Loader stream, cloudFiles.format=json, singleVariantColumn, URL folder scope, pathGlobFilter on name, multiLine matched to file shape, Trigger.availableNow, scheduled 2 to 3 runs/day, RocksDB checkpoint exactly-once, no schemaLocation | Fire-drain-stop job, no idle compute, source-agnostic loader so migration is a path-and-trigger swap | List-based discovery, no file events. Folder-path glob unsupported, URL scopes the read. The residual singleVariantColumn + databricks.connection composition is unverified (check 2) | [1][3][4][6][9][10] |
 | 5. Write to bronze as VARIANT | Delta bronze table, singleVariantColumn whole-record VARIANT (DBR 15.3+), provenance _source_file and _ingested_at, append-only, full-refresh vs incremental resolved in silver | Schema-flexible semi-structured storage, schema evolution drops out, queryable in place | VARIANT is a parsed tree not the source bytes. 16 MB record cap to corruptRecordColumn under PERMISSIVE. Path access case-sensitive. Public Preview (check 6) | [4][5] |
 
 ## Component inventory
@@ -151,7 +153,7 @@ Container technology and ownership for each component. The Auto Loader checkpoin
 | UC connection to SharePoint | Unity Catalog connection, standard SharePoint connector, OAuth M2M service principal | You, Unity Catalog governed |
 | Auto Loader | Lakeflow scheduled job running Spark Structured Streaming (`cloudFiles`), Trigger.availableNow drain | You configure the job, Databricks runs the runtime |
 | Auto Loader checkpoint | RocksDB state store in the checkpoint location, holds read position and processed-file set | You, on durable storage you choose |
-| Bronze table | Delta Lake table, single VARIANT column plus promoted typed columns | You, governed by Unity Catalog |
+| Bronze table | Delta Lake table on ADLS Gen2, single VARIANT column plus promoted typed columns | You, governed by Unity Catalog |
 | Unity Catalog | Account-level governance metastore, one per region, attached to workspaces | Databricks account admin |
 
 ## Implementation notes
@@ -222,6 +224,7 @@ All claims carried from the paired play (v2.8), verified against Microsoft Learn
 | 7 | SharePoint source setup overview | [learn.microsoft.com](https://learn.microsoft.com/en-us/azure/databricks/ingestion/lakeflow-connect/sharepoint-source-setup-overview) |
 | 8 | SharePoint managed connector | [learn.microsoft.com](https://learn.microsoft.com/en-us/azure/databricks/ingestion/lakeflow-connect/sharepoint) |
 | 9 | Auto Loader FAQ | [learn.microsoft.com](https://learn.microsoft.com/en-us/azure/databricks/ingestion/cloud-object-storage/auto-loader/faq) |
+| 10 | Native file-arrival triggers | [learn.microsoft.com](https://learn.microsoft.com/en-us/azure/databricks/jobs/file-arrival-triggers) |
 
 > ⚠️ Unverified, residual. Confirm before Final: `singleVariantColumn` combined with `databricks.connection` in one read. JSON ingestion via Auto Loader on the standard connector is documented, but the whole-record VARIANT composition is not shown in an official example, and every official `singleVariantColumn` example reads from a Volume or object-store path. Test on one file first.
 
@@ -229,7 +232,7 @@ All claims carried from the paired play (v2.8), verified against Microsoft Learn
 
 | Field | Value |
 | :--- | :--- |
-| Version | 1.2 |
-| Last Updated | 2026-06-24 |
+| Version | 1.3 |
+| Last Updated | 2026-06-25 |
 | Status | Draft |
 | Pairs with | 2026-06-13-sharpoint-to-bronze-ingestion-play.md, 2026-06-24-adls-bronze-ingestion-design-lock-in.md |
