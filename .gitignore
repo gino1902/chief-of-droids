@@ -26,3 +26,6 @@ skills-lab/outputs/predictability/ingest-fixture/raw/
 # Session removal logs — local only, not versioned
 .logs/sessions-removed/*
 !.logs/sessions-removed/.gitkeep
+
+# Personal side project, separate repo
+claude-code-digest/
