@@ -6,10 +6,10 @@ The first ingestion pattern reads JSON from a SharePoint document library into a
 
 ## Scope and sequencing
 
-The epics are an enabler-then-business chain. Each depends on the ones before it.
+The epics depends on the ones before it.
 
-- PI1 (this increment): Epics 1 to 6, the commercial, architecture, infrastructure, CI/CD and governance foundations.
-- PI2 candidates: Epics 7 and 8, the cost and usage reporting. They depend on the full foundation and on accumulated billing data, so they realistically land after PI1.
+- Epics 1 to 6, the commercial, architecture, infrastructure, CI/CD and governance foundations.
+- Epics 7 and 8, the cost and usage reporting. They depend on the full foundation and on accumulated billing data.
 
 Pre-GA risk: several features this roadmap relies on are still Public Preview on Azure as of June 2026, namely the `system.access.audit` table, serverless usage policies, and Budgets. The first ingestion pattern also depends on the SharePoint standard connector, which is Beta on a Databricks Runtime 17.3 LTS floor. These are usable but not yet generally available, so treat their stability and SLA as a delivery risk for any epic or workload that depends on them.
 
@@ -117,7 +117,6 @@ All verified against current Microsoft Learn documentation for Azure Databricks 
 
 - [Azure Databricks account and subscription](https://learn.microsoft.com/en-us/azure/databricks/admin/account-settings/account)
 - [Standard tier retirement](https://learn.microsoft.com/en-us/azure/databricks/admin/account-settings/standard-tier)
-- [MACC consumption commitment](https://learn.microsoft.com/en-us/azure/cost-management-billing/benefits/macc/track-consumption-commitment)
 - [Infrastructure-as-code deployment guide](https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/iac)
 - [Workspace ARM template deployment](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/arm-template)
 - [VNet injection](https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/vnet-inject)
