@@ -17,14 +17,12 @@ Epic type follows SAFe: enabler epics build the architectural runway, business e
 
 ## Epic 1 (Enabler — commercial) — Procurement onboarding
 
-> Establish the commercial and account foundation for Azure Databricks: the Azure subscription and billing account, the purchase vehicle, the Databricks account, and the access roles for the provisioning teams, so that the platform can be built and billed under an agreed cost-ownership model. This gates every epic that follows.
+> Establish the commercial and account foundation for Azure Databricks: the Azure subscription and billing account, the purchase vehicle, the Databricks account, and the access roles for the provisioning teams, so that the platform can be built and billed. This gates every epic that follows.
 
 Acceptance criteria:
 - An Azure subscription and billing account are in place, with the purchase vehicle confirmed (Enterprise Agreement, Microsoft Customer Agreement, or pay-as-you-go).
-- If a Microsoft Azure Consumption Commitment (MACC) applies, Azure Databricks MACC-decrement eligibility is confirmed in the Azure portal (the MACC source documents that eligible services and Marketplace offers are determined there, without naming Databricks specifically).
-- The Azure Databricks account is created on the Premium tier. From 1 April 2026 all new workspaces must be created on Premium (Standard remains for existing workspaces until its 1 October 2026 end of life), so a June 2026 greenfield workspace is Premium by default.
+- The Azure Databricks account is created on the Premium tier, the only option for new workspaces from 1 April 2026.
 - The Microsoft Entra ID tenant is identified and provisioning roles are assigned to the platform teams.
-- A subscription-level cost ownership and chargeback model is agreed.
 
 ## Epic 2 (Enabler — architecture) — Solution architecture document
 
@@ -43,10 +41,10 @@ Acceptance criteria:
 > Deploy the Azure plumbing for the platform: the Azure Databricks workspace, network isolation, ADLS Gen2 storage with its access connector, the Unity Catalog metastore, and Entra ID identity wiring, so that a secure, network-isolated platform is ready to host governed workloads. Depends on Epics 1 and 2.
 
 Acceptance criteria:
-- The Azure Databricks workspace is deployed via ARM or Bicep, not manual portal clicks, on the Premium tier (the ARM template defaults to Premium; Premium is required because Unity Catalog only attaches Premium workspaces).
+- The Azure Databricks workspace is deployed on the Premium tier via ARM or Bicep, not manual portal clicks. Premium is required because Unity Catalog only attaches Premium workspaces.
 - Networking is in place: VNet injection, secure cluster connectivity (no public IP), Private Link for the workspace, and serverless egress controlled by NSP with the `AzureDatabricksServerless` service tag.
 - ADLS Gen2 storage is provisioned, with an Access Connector for Azure Databricks (managed identity) configured.
-- A Unity Catalog metastore exists for the region, either created for the region or, if one already exists in-region, the workspace assigned to it via the account console ("Assign to workspace"), with the storage credential registered.
+- A Unity Catalog metastore exists for the region, with the storage credential registered. If a metastore already exists in the region, the workspace is assigned to it through the account console.
 - Microsoft Entra ID is wired up as the identity provider with automatic identity management.
 - The whole deployment is reproducible from version-controlled IaC.
 
@@ -64,14 +62,14 @@ Acceptance criteria:
 
 ## Epic 5 (Enabler — infrastructure) — Unity Catalog governance foundation
 
-> Establish Unity Catalog as the single governance layer for the workspace: catalogs and schemas, managed tables and storage, external locations and storage credentials, identity, access grants, lineage, and connections to external data sources, so that all data and AI assets are governed under one model for security, discovery, semantics, and connectivity, providing the runway that every downstream epic builds on. Depends on Epic 3.
+> Establish Unity Catalog as the single governance layer for the workspace: catalogs and schemas, managed tables and storage, external locations and storage credentials, identity, access grants, lineage, and connections to external data sources, so that all data and AI assets are governed under one model for security, discovery, semantics, and connectivity. Depends on Epic 3.
 
 Acceptance criteria:
 - New workloads run against a Unity Catalog catalog, not the legacy Hive metastore.
 - Managed tables and volumes are created in Unity Catalog with a defined managed storage location on ADLS Gen2.
 - External locations and storage credentials are configured via the Access Connector for Azure Databricks and access-tested against ADLS Gen2.
-- Microsoft Entra ID is active with automatic identity management, so users and groups sync from the IdP without manual SCIM provisioning. Note: account-level sync is automatic, but assigning a synced group to the workspace remains a separate manual step.
-- Access grants enforce least privilege. An unauthorised access attempt is denied, and the action is recorded in `system.access.audit` (the table carries a `response` struct with `statusCode`).
+- Microsoft Entra ID with automatic identity management syncs users and groups from the identity provider, so no manual SCIM provisioning is needed. Assigning a synced group to a workspace is still a separate manual step.
+- Access grants enforce least privilege. An unauthorised access attempt is denied and recorded in `system.access.audit`.
   > ⚠️ Unverified — the cited audit-log source documents the `response.statusCode` field but does not state that denied/unauthorised attempts produce audit rows; confirm the audit behaviour for denied access before relying on it for the test.
 - Column-level lineage is captured automatically for a sample pipeline.
   > ⚠️ Unverified — column-level lineage is not covered by any source cited for this epic; verify against the Unity Catalog data lineage documentation before sign-off.
@@ -95,7 +93,7 @@ Acceptance criteria:
 - Cost is broken down by owner and team using the tags defined in Epic 6.
 - Budgets are configured with alerts at defined spend thresholds.
 - A given cost line can be traced back to a specific cluster, SQL warehouse, or job.
-- Policy-level filtering uses `usage_metadata.usage_policy_id`. The sibling field `usage_metadata.budget_policy_id` is deprecated in favour of it (both are fields of the `usage_metadata` struct, not top-level columns).
+- Policy-level filtering uses `usage_metadata.usage_policy_id`. The older `usage_metadata.budget_policy_id` field is deprecated.
 
 ## Epic 8 (Business) — Usage attribution for ingestion and consumption
 
@@ -104,7 +102,7 @@ Acceptance criteria:
 Acceptance criteria:
 - Ingestion usage is attributed to a user or service principal for each pipeline and job, via `identity_metadata.run_as` (populated for jobs compute, serverless compute for jobs, serverless compute for notebooks, Lakeflow Spark Declarative Pipelines, Foundation Model Fine-tuning, predictive optimization and data quality monitoring).
 - Consumption usage is attributed to an identity: SQL warehouse usage via `identity_metadata.owned_by`, and Model Serving / agent endpoints where an identity field is populated.
-- Identity resolution is best-effort, not total: `identity_metadata` (`run_as`, `owned_by`, `created_by`) populates selectively by workload type, so usage types without an identity field (for example all-purpose compute, plain model-serving endpoints) are flagged as unattributable rather than forced to an owner. `system.access.audit` records the actor of control-plane actions but holds no DBU/usage quantities and no documented join key to billing rows, so it corroborates identity rather than closing attribution on its own.
+- Identity resolution is best-effort, not total. The `identity_metadata` struct (`run_as`, `owned_by`, `created_by`) populates only for certain workload types, so usage without an identity field (for example all-purpose compute or plain model-serving endpoints) is flagged as unattributable rather than forced onto an owner. The `system.access.audit` table names the actor of control-plane actions but holds no usage quantities, so it corroborates an identity rather than attributing billed usage on its own.
   > ⚠️ Unverified — confirm the join path between `system.access.audit` and `system.billing.usage` before relying on it; the cited sources document no shared key.
 - Agent activity (service principals) is distinguishable from human user activity wherever `run_as` / `created_by` populates.
 
@@ -137,8 +135,6 @@ All verified against current Microsoft Learn documentation for Azure Databricks 
 
 ---
 
-| Field        | Value      |
-|--------------|------------|
-| Version      | 1.4        |
-| Last Updated | 2026-06-26 |
-| Status       | Draft      |
+<!--
+Version: 1.7 | Last Updated: 2026-06-26 | Status: Draft
+-->
