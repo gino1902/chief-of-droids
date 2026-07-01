@@ -1,0 +1,135 @@
+# process-taxonomy.yaml
+# Operational value-chain process taxonomy for an Accenture-like
+# professional-services + software company.
+# MECE enforced BETWEEN mega-processes. Single-level decomposition.
+
+meta:
+  domain: operational-value-chain
+  company_model: professional-services-software  # Accenture-like
+  mece_boundary: between-mega-processes
+  granularity: single-level
+  arbitration_rule: assign-to-outcome-owner
+  outcome_definition: [revenue, margin, cost-reduction, retention, freed-time]
+  outcome_scope: [client, internal]
+
+mega_processes:
+  - id: H2R
+    name: Hire-to-Retire
+    sub_processes:
+      - recruitment-and-sourcing
+      - hiring-and-onboarding
+      - payroll
+      - time-and-attendance-hr        # single source of truth; feeds O2C, R2P as data
+      - benefits-administration
+      - compensation-management
+      - performance-management
+      - learning-and-certification-management
+      - career-and-talent-management
+      - offboarding
+
+  - id: O2Contract
+    name: Opportunity-to-Contract
+    sub_processes:
+      - demand-generation-and-qualification
+      - opportunity-and-pipeline-management
+      - solutioning-and-estimation
+      - proposal-and-bid-management
+      - pricing-and-commercial-structuring
+      - contract-negotiation-and-signature   # arbitrated -> owns signed contract
+      - partner-and-subcontractor-engagement-sell-side
+
+  - id: R2P
+    name: Resource-to-Project
+    scope_note: client or internal
+    sub_processes:
+      - demand-and-capacity-planning
+      - resource-requisition-and-matching
+      - staffing-and-assignment              # arbitrated -> owns allocation decision
+      - onboarding-to-engagement
+      - utilisation-and-bench-management
+      - rolloff-and-redeployment
+
+  - id: O2C
+    name: Order-to-Cash
+    sub_processes:
+      - order-intake-and-setup               # arbitrated -> owns booked order
+      - billing-and-invoicing
+      - revenue-recognition
+      - collections-and-receivables
+      - dispute-and-credit-management
+      - cash-application
+
+  - id: P2O
+    name: Project-to-Outcome
+    scope_note: engagement-type-agnostic (client + internal); outcome = value
+    sub_processes:
+      - project-initiation-and-mobilisation
+      - delivery-planning-and-scheduling
+      - execution-and-work-management
+      - project-financial-control            # arbitrated -> project-level cost
+      - quality-and-risk-management
+      - change-and-scope-management
+      - outcome-and-value-realisation
+      - project-closure
+
+  - id: S2P
+    name: Source-to-Pay
+    sub_processes:
+      - sourcing-and-supplier-selection
+      - supplier-onboarding-and-qualification
+      - contracting-buy-side                 # arbitrated -> procurement owns supplier contracts
+      - purchasing-and-requisitioning
+      - goods-and-services-receipt
+      - invoice-processing-and-accounts-payable
+      - supplier-performance-management
+
+  - id: B2R
+    name: Budget-to-Report
+    sub_processes:
+      - budgeting-and-target-setting
+      - forecasting-and-reforecasting
+      - management-reporting-and-analysis
+      - statutory-and-financial-accounting
+      - consolidation-and-close
+      - treasury-and-cash-management         # arbitrated -> enterprise liquidity
+      - tax-and-compliance-reporting
+
+arbitrations:
+  - subprocess: contract-negotiation-and-signature
+    assigned_to: O2Contract
+    contested_with: [O2C]
+    reason: owns-the-signed-contract
+  - subprocess: order-intake-and-setup
+    assigned_to: O2C
+    contested_with: [O2Contract]
+    reason: owns-the-booked-order
+  - subprocess: staffing-and-assignment
+    assigned_to: R2P
+    contested_with: [P2O]
+    reason: owns-the-allocation-decision
+  - subprocess: project-financial-control
+    assigned_to: P2O
+    contested_with: [B2R]
+    reason: project-level-cost-ownership
+  - subprocess: treasury-and-cash-management
+    assigned_to: B2R
+    contested_with: [O2C]
+    reason: enterprise-liquidity
+  - subprocess: contracting-buy-side
+    assigned_to: S2P
+    contested_with: [O2Contract]
+    reason: procurement-owns-supplier-contracts
+  - subprocess: retention-initiatives
+    assigned_to: P2O
+    contested_with: [H2R]
+    reason: initiative-outcome-vs-operational-capability
+
+invariants:
+  - no-subprocess-in-two-mega-processes
+  - time-capture-owned-once-in-H2R
+  - cash-split: {collections-application: O2C, enterprise-liquidity: B2R}
+  - contracting-split: {sell-side: O2Contract, buy-side: S2P}
+
+# <!--
+# Version: 1.0 | Last Updated: 2026-07-01 | Status: Draft
+# -->
