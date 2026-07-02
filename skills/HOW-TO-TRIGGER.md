@@ -18,6 +18,46 @@ If this file is unreadable, notify the user and proceed without skill loading.
 
 ---
 
+## Routing line (mandatory per response)
+
+After the `⚓` anchor, emit a routing line as line 2 of every response, before any prose. It is part of the mandatory header block, so the no-preamble rule does not apply to it. This exists because skip and claimed-load were previously invisible: an unlogged skip looked identical to a real load. The line makes the routing decision a visible artefact every turn.
+
+Grammar:
+
+```text
+🧭 skills: <entry>[, <entry>]*   |   🧭 skills: none
+
+<entry> ::= <name>@<version>[ <state>]
+<state> ::= "(carried)"   read earlier this session, still governing, not re-read this turn
+          | "(failed)"    read attempted this turn, failed
+          |               (no suffix) read fresh this turn
+```
+
+Examples:
+
+```text
+🧭 skills: none
+🧭 skills: brainstorming-ideas@1.4, editing-docs@2.1
+🧭 skills: reviewing-tech-claims@1.8, editing-docs@2.1 (carried)
+🧭 skills: creating-skills@? (failed)
+```
+
+Rules:
+
+- Emit `🧭 skills: none` on turns where no signal matches. Never omit the line.
+- List entries in load order. `none` is used alone, never mixed with entries.
+- Version precedence, first hit wins: frontmatter `version:`, then the `<!-- version: X -->` comment, then the `| Version | X |` table row. If none is found, echo `@?` and treat the skill as loaded-but-unversioned — a defect to log against that skill.
+- Read-receipt rule: `@<version>` may be echoed only after that SKILL.md was read this turn, or carried from an earlier read this session. No echo means not read, so the skill's behaviour must not be applied or claimed.
+- Mandatory fresh re-read, `(carried)` not permitted, on any turn performing a skill-governed side effect: a file write, a commit, an elicitation gate, or a phase transition. Cheap continuation turns may carry; consequential turns must re-read.
+- Scope: workspace skills under `skills/` only. The `⚓` line already covers the two framework files, so `🧭` covers only request-matched domain skills.
+
+Non-guarantees — the line surfaces the routing decision, it does not make it correct:
+
+- A clean `🧭 skills: none` can still be a wrong undertrigger. Trigger correctness is handled by the signal lists in this file, not by the routing line. When in doubt between a skill and none, load the skill.
+- The version echo is a read-receipt. It proves the SKILL.md was read, not that its behaviour was followed.
+
+---
+
 ## managing-tasks
 
 Load this skill when the prompt contains any task list read, write, or state transition signal.
@@ -329,12 +369,19 @@ Load this skill when the user wants to explore a feature idea, frame a problem, 
 - Problems presented with multiple valid solutions
 - Prompts where the user is thinking out loud
 - Requests to explore or frame something before implementation
+- "how should I build [X]" / "how do I approach building [X]"
+- "I want a system / tool that…" stated without settled scope
+- "we need to design / fix [X]" where the solution is open-ended
+- A multi-turn design discussion that has not yet produced a requirements document
 
 **Examples:**
 - "Let's brainstorm a notification redesign"
 - "I'm not sure what to build for the reporting dashboard — help me think it through"
 - "What should we do about the onboarding flow?"
 - "Help me figure out what the search feature should do"
+- "I want a morning digest that pulls yesterday's activity" (open scope → brainstorm, even without the word)
+
+**Pushy rule — undertriggering is the known failure mode.** If the user is exploring what or how to build something across more than one exchange, this skill applies. Load it even when the word "brainstorm" never appears, and even when a single turn looks like a direct build request. When a request is ambiguous between brainstorming and direct work, load brainstorming-ideas rather than skipping it. Do not skip silently: either the routing line shows this skill, or it shows `none` with the reason a skill did not match.
 
 **Does NOT trigger on:**
 - Implementation requests ("implement the CSV export button") → direct work, no brainstorm needed
@@ -398,8 +445,8 @@ Skills compose automatically. Load all skills whose triggers match the request.
 
 | Field        | Value       |
 |--------------|-------------|
-| Version      | 1.16        |
-| Last Updated | 2026-06-04  |
+| Version      | 1.17        |
+| Last Updated | 2026-07-02  |
 | Status       | Draft       |
 
 

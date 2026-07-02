@@ -110,6 +110,14 @@ In Claude Code, setting this field prevents the skill from auto-loading when a u
 
 When applying official Anthropic documentation (via `reviewing-tech-claims` or any source fetch) to skill design, always confirm whether the guidance is Claude Code-specific or general. Guidance about prompt engineering, description specificity, and negative examples applies to both environments. Guidance about frontmatter fields, forking, and routing mechanisms applies to Claude Code only.
 
+**Why the router exists (do not propose replacing it with native skills):**
+Native Claude Code Agent Skills execute in Anthropic's code-execution container (verified against `platform.claude.com` — skills run behind the `code-execution` beta header). That container cannot reach this local workspace over Filesystem MCP. So these skills cannot be registered as native Agent Skills and left to description-matching — they would lose access to `/Users/gilllesmourgues/...`. The HOW-TO-TRIGGER router is the deliberate design for local-filesystem work, not a stopgap. The documented failure mode of description-based triggering is undertriggering, and the official remedy is pushier descriptions — that guidance applies to the router's signal lists, since routing here is still intent-matched against text.
+
+**Routing line:**
+Every response emits a routing line as line 2, directly after the `⚓` anchor:
+`🧭 skills: <name>@<version>[ (carried|failed)], …` or `🧭 skills: none`.
+Full grammar, version precedence, the read-receipt rule, the side-effect re-read rule, and the non-guarantees live in `skills/HOW-TO-TRIGGER.md` under `## Routing line`. Two limits to keep in mind: the version echo is a read-receipt (it proves the SKILL.md was read, not that its behaviour was followed), and a clean `none` can still be a wrong undertrigger — trigger correctness rests on the HOW-TO-TRIGGER signal lists, not on the line.
+
 ---
 
 ## Task Management
@@ -167,5 +175,5 @@ Run once, as the final step of reading this file. Do not repeat within the sessi
 ---
 
 <!--
-Version: 1.2 | Last Updated: 2026-06-14 | Status: Draft
+Version: 1.3 | Last Updated: 2026-07-02 | Status: Draft
 -->
