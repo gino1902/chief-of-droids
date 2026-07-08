@@ -1,4 +1,4 @@
-<!-- pass A reference for project-bootstrapping -->
+<!-- pass A reference for bootstrapping-project -->
 
 # Pass A — environment
 

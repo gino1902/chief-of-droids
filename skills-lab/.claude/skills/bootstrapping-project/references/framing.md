@@ -1,4 +1,4 @@
-<!-- pass C reference for project-bootstrapping -->
+<!-- pass C reference for bootstrapping-project -->
 
 # Pass C — FRAMING.md
 

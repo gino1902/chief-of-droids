@@ -1,5 +1,5 @@
 ---
-name: project-bootstrapping
+name: bootstrapping-project
 description: >
   Bootstraps a Claude Code project in four ordered, resumable passes:
   environment (git init + .claude/ baseline config), FRAMING.md (intent anchor —
@@ -17,7 +17,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 
 <!-- target-environment: claude-code | target-model: claude-opus-4-8 -->
 
-# project-bootstrapping
+# bootstrapping-project
 
 Bootstraps a Claude Code project through four passes that always run in the same order:
 

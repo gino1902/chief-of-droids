@@ -1,9 +1,9 @@
-# project-bootstrapping predictability report
+# bootstrapping-project predictability report
 
 Generated: 2026-07-08 13:35
 Runs analyzed: 6 — v01, v02, v03, v04, v05, v06
 Substrate: scratchpad/substrate.md (taskflow brief, goal=code / sub-type=app fullstack) — **provenance note: this substrate file was removed after the audit; the path no longer resolves.** It was the taskflow project brief: a fullstack team task-tracking app (React frontend, Node/TypeScript backend, pnpm), organising work on boards that hold work items with a state (todo/doing/done), owner, and due date, with four constraints (no cross-feature imports, dependencies point inward, UTC timestamps, no secrets in the repo). Regenerate from that description to reproduce this audit.
-Analyzed skill: .claude/skills/project-bootstrapping/ (SKILL.md v1.4; claude-md.md v1.3, post-R-001)
+Analyzed skill: .claude/skills/bootstrapping-project/ (renamed from project-bootstrapping; SKILL.md v1.4; claude-md.md v1.3, post-R-001)
 Comparable artifacts: FRAMING.md, CLAUDE.md, settings.json, tree.md (captured project tree)
 Non-comparable artifacts excluded: none
 

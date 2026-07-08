@@ -1,4 +1,4 @@
-<!-- pass D reference for project-bootstrapping -->
+<!-- pass D reference for bootstrapping-project -->
 
 # Pass D — project tree
 

@@ -1,4 +1,4 @@
-<!-- pass B reference for project-bootstrapping -->
+<!-- pass B reference for bootstrapping-project -->
 
 # Pass B — CLAUDE.md
 
