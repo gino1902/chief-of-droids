@@ -1,6 +1,6 @@
-<!-- pass B reference for bootstrapping-project -->
+<!-- pass 4 reference for bootstrapping-project -->
 
-# Pass B — CLAUDE.md
+# Pass 4 — CLAUDE.md
 
 Written last, so it documents the tree that already exists rather than guessing at one.
 This is the same discipline the built-in `/init` follows: describe what is there.
@@ -141,9 +141,9 @@ Preserve the author's wording everywhere else. Show the diff, apply only on appr
    found (deploy commands, `apply` without plan, secret paths, prod access), surface a
    matching `settings.json` deny rule and, where a command needs intercepting, a hook — as a
    proposal in this close report only. Do not edit `settings.json`: it was written once in
-   pass A and no later pass touches it (see `environment.md`). Enforcement holds at 100%;
+   pass 1 and no later pass touches it (see `environment.md`). Enforcement holds at 100%;
    prose holds at about 70% — but the user applies the enforcement, the skill does not write
-   it silently. This is also where the stack-specific configuration deferred from pass A gets
+   it silently. This is also where the stack-specific configuration deferred from pass 1 gets
    proposed, now that the stack is known. When you do quote a proposed deny rule, use one
    canonical glob form per command (`Bash(pnpm deploy)` and `Bash(pnpm deploy:*)`), so two
    runs proposing the same rule quote it identically rather than drifting between `deploy *`
@@ -161,6 +161,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
+| Version      | 1.4        |
 | Last Updated | 2026-07-08 |
 | Status       | Review     |

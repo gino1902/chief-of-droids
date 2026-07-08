@@ -1,11 +1,11 @@
-<!-- pass C reference for bootstrapping-project -->
+<!-- pass 2 reference for bootstrapping-project -->
 
-# Pass C — FRAMING.md
+# Pass 2 — FRAMING.md
 
 FRAMING.md is the intent anchor. It answers why the project exists, who it is for, what
 success looks like, and what it delivers. It is the one artifact that is mostly supplied
-by the user rather than read from the repo, and it is the source of truth that passes D
-and B are derived from.
+by the user rather than read from the repo, and it is the source of truth that passes 3
+and 4 are derived from.
 
 FRAMING.md is user-owned once created. Never modify it autonomously in a later session.
 Reconcile it only with explicit approval, and only to fill gaps — never rewrite wholesale.
@@ -106,6 +106,6 @@ section (Constraints). If the user later wants a status marker, they add it them
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
+| Version      | 1.4        |
 | Last Updated | 2026-07-08 |
 | Status       | Review     |

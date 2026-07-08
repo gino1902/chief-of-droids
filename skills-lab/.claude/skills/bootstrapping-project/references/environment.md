@@ -1,11 +1,11 @@
-<!-- pass A reference for bootstrapping-project -->
+<!-- pass 1 reference for bootstrapping-project -->
 
-# Pass A — environment
+# Pass 1 — environment
 
 Establishes the operating environment first, because the permission defaults set here
 decide whether every later write prompts or flows. Goal-agnostic: the same baseline
 applies to thinking, code, and infra projects. Stack-specific configuration (hooks, MCP,
-goal-specific deny rules) is deliberately deferred to the tail of pass B, once the stack
+goal-specific deny rules) is deliberately deferred to the tail of pass 4, once the stack
 is actually known.
 
 ## Steps
@@ -18,10 +18,10 @@ is actually known.
    the defaults are conservative.
 3. Write `.claude/settings.json` and `.gitignore` on approval.
 4. Do not create hooks, `.mcp.json`, or `.claude/agents/` now. Note them as available
-   follow-ups. They depend on decisions that only land in pass D and B.
+   follow-ups. They depend on decisions that only land in passes 3 and 4.
 
 `.claude/settings.json` is written exactly once — here, at the baseline. No later pass
-mutates it. In particular, the pass B enforcement tail never adds `deny` rules to the file:
+mutates it. In particular, the pass 4 enforcement tail never adds `deny` rules to the file:
 any hard prohibition discovered later is surfaced as a proposal in the close report, not
 written into `settings.json` by the skill. This keeps the file deterministic across runs —
 two bootstraps of the same brief produce byte-identical `settings.json`.
@@ -62,8 +62,8 @@ copying it forward pollutes every new project. Keep these out of the generated b
 
 - Domain `WebFetch` allowlists. They reflect the sources one project happens to read.
 - `Skill(...)` allows and stack tools like `python3 *`. Stack- and project-specific — these
-  are added in pass B once the stack is real, or land in `settings.local.json`.
-- Hooks, MCP config, and subagents. Deferred to pass B for the same reason.
+  are added in pass 4 once the stack is real, or land in `settings.local.json`.
+- Hooks, MCP config, and subagents. Deferred to pass 4 for the same reason.
 
 Offer, but do not add without being asked: an `allow` list for read-only Bash the user runs
 often, `git add`/`git commit` convenience allows, or `autoMemoryEnabled: false`. That last
@@ -73,8 +73,8 @@ so surface it with that one-line rationale rather than writing it silently.
 
 ## Baseline `.gitignore`
 
-Start minimal and stack-agnostic. A stack-specific `.gitignore` is better added in pass D
-or B, once the tree and stack are known, so it stays grounded.
+Start minimal and stack-agnostic. A stack-specific `.gitignore` is better added in pass 3
+or 4, once the tree and stack are known, so it stays grounded.
 
 ```gitignore
 # OS
@@ -92,6 +92,6 @@ be committed. `settings.json` (the shared baseline you just wrote) is committed.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
+| Version      | 1.3        |
 | Last Updated | 2026-07-08 |
 | Status       | Review     |

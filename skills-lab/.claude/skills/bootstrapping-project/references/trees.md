@@ -1,11 +1,11 @@
-<!-- pass D reference for bootstrapping-project -->
+<!-- pass 3 reference for bootstrapping-project -->
 
-# Pass D — project tree
+# Pass 3 — project tree
 
 Turns the intent in FRAMING.md into a source layout. Two rules govern this pass.
 
 First, only scaffold on an empty repo. If source files already exist, do not propose a
-reorganisation — document the existing structure so pass B can describe it accurately, and
+reorganisation — document the existing structure so pass 4 can describe it accurately, and
 skip creation. Reorganising someone's repo is rarely wanted and never safe by default.
 
 Second, every directory must be justified now, not speculatively. Create only what the
@@ -171,6 +171,6 @@ in one place, under one goal, per the one-goal-per-repo principle.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.5        |
+| Version      | 1.6        |
 | Last Updated | 2026-07-08 |
 | Status       | Review     |
