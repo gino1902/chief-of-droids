@@ -7,6 +7,8 @@ allowed-tools:
   - Bash
 ---
 
+<!-- todo: scope the read to the target skill only to avoid previous run inference -->
+
 # improving-skills-predictability
 
 <role>
