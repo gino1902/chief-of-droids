@@ -16,6 +16,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 ---
 
 <!-- target-environment: claude-code | target-model: claude-opus-4-8 -->
+<!-- claude aligned to project type; same for tone; link to 'strategy' skill -->
 
 # bootstrapping-project
 
