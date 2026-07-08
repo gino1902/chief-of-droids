@@ -54,6 +54,41 @@ Leave any section the user cannot answer yet marked `🔲` rather than inventing
 an honest gap is more useful than a plausible guess, and it signals what still needs their
 input before substantive work.
 
+## Worked example — a filled FRAMING.md
+
+This is the target shape, filled from a brief, not a blank scaffold. Use it to calibrate
+length and tone: one tight paragraph or a short bullet list per section, grounded in what
+the user said, no padding.
+
+```markdown
+<!-- goal: code -->
+# FRAMING — shift-planner
+
+> User-owned. Claude will not modify this file autonomously.
+
+## Why
+Shift managers build weekly rotas in spreadsheets, so clashes and understaffing surface only
+after the week has started. shift-planner assembles the rota in one place and flags gaps and
+double-bookings as they happen.
+
+## For whom
+Shift managers in venues of 10 to 40 staff who currently rota in spreadsheets. The primary
+user is the manager assembling the week.
+
+## Success
+A venue publishes its weekly rota from shift-planner for three consecutive weeks, and no
+published week ships with an unfilled shift or a double-booked person.
+
+## Delivered
+A web application: a React frontend, a Fastify REST backend, and a PostgreSQL schema. Rota
+grid, shift CRUD, staff assignment, and clash detection.
+
+## Constraints
+- Single PostgreSQL instance, no microservices at this stage.
+- Email plus password auth only, no third-party provider yet.
+- English-only UI for the first release.
+```
+
 ## Reconcile mode (FRAMING.md already exists)
 
 - Read the goal from the `<!-- goal: ... -->` stamp. If an argument conflicts with it, stop
@@ -63,13 +98,14 @@ input before substantive work.
 
 ## Note on the footer
 
-FRAMING.md is user-owned, so it is exempt from the repo's version-block convention. A
-single status line is enough if the user wants one. Do not attach the full version table.
+FRAMING.md is user-owned and exempt from the repo's version-block convention. Do not append
+any footer — no version table and no status line. The template ends at the last content
+section (Constraints). If the user later wants a status marker, they add it themselves.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-07-07 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-08 |
 | Status       | Review     |

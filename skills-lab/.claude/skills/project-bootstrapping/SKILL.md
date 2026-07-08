@@ -104,8 +104,10 @@ make later writes frictionless.
 3. Compose the baseline `.claude/settings.json` and a baseline `.gitignore` from the
    templates in the reference. Show both before writing — settings change behaviour, so
    they are approval-gated even though the templates are conservative.
-4. Write them on approval. Do **not** scaffold hooks, MCP config, or subagents now. Those
-   depend on the stack, which is not known yet. They are proposed at the tail of pass B.
+4. Write them on approval. `settings.json` is written exactly once, here — no later pass
+   mutates it (the pass B tail proposes enforcement, it does not write it). Do **not**
+   scaffold hooks, MCP config, or subagents now. Those depend on the stack, which is not
+   known yet. They are proposed at the tail of pass B.
 
 ## Pass C — FRAMING.md
 
@@ -139,10 +141,13 @@ Written last so it documents the tree that now exists.
    Otherwise create it from the skeleton for the locked goal.
 3. Fill only from what you found in the repo and from FRAMING.md. Delete any line you
    cannot ground — never invent commands or paths. Keep it under 60 lines.
-4. **Tail — enforcement and Karpathy.** Propose (do not silently write) `settings.json`
-   deny rules and hooks for any hard prohibition you found. If `~/.claude/CLAUDE.md` does
-   not carry the Karpathy behavioural guidelines, tell the user to install them there once
-   — they are project-independent and do not belong in a project CLAUDE.md.
+4. **Tail — enforcement and Karpathy.** For any hard prohibition you found, propose matching
+   `settings.json` deny rules and hooks in this close report — never write them into
+   `settings.json`, which was written once in pass A and is not touched again. Quote each
+   proposed deny rule in one canonical glob form so runs do not drift on the pattern. If
+   `~/.claude/CLAUDE.md` does not carry the Karpathy behavioural guidelines, tell the user to
+   install them there once — they are project-independent and do not belong in a project
+   CLAUDE.md.
 
 ## Close
 
@@ -165,6 +170,6 @@ substantive work.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
-| Last Updated | 2026-07-07 |
+| Version      | 1.4        |
+| Last Updated | 2026-07-08 |
 | Status       | Review     |

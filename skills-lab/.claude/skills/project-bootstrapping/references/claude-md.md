@@ -52,7 +52,10 @@ Use the skeleton for the locked goal. Fill only from what you found. Delete unfi
 ## Commands
 <build / single test / lint+typecheck — each verified to exist>
 ## Conventions
-<max 5 load-bearing rules from the repo, imperative, include negatives>
+<one bullet per FRAMING Constraint, in the order they appear there, each carried in imperative
+form using that constraint's own wording. Do not add, merge, split, or reword them, and do not
+synthesise extra conventions from the tree layout. If FRAMING states no Constraints, fall back
+to up to 5 load-bearing negatives verified in the repo.>
 ```
 
 ### infra
@@ -72,6 +75,55 @@ Use the skeleton for the locked goal. Fill only from what you found. Delete unfi
 - <negative rules found in the repo: network boundaries, secret references, residency constraints>
 ```
 
+## Worked example — a filled code CLAUDE.md
+
+This is the target shape for the `code` skeleton, filled from a brief and documenting a tree
+that already exists. It embodies the fixed layout rules from `trees.md` — flat `src/` + `apps/`,
+kebab-case domain folders — and it is grounded: every command is one the project actually runs,
+and Conventions maps one bullet to each FRAMING Constraint, in FRAMING's order, using the
+constraint's own wording. Under 60 lines. Here the brief carries five constraints (the two
+architectural boundaries, the Prisma-only data-access rule, the test-placement rule, and the
+auth rule), so five conventions appear — the count follows FRAMING, it is not a target, and no
+convention is inferred from the tree. The `thinking` and `infra` skeletons follow the same fill
+discipline, so this one example is the pattern for all three.
+
+```markdown
+<!-- goal: code -->
+# CLAUDE.md
+
+## Purpose
+shift-planner builds a venue's weekly staff rota in one place and flags unfilled shifts and
+double-bookings as the manager assembles the week.
+
+## Stack
+- TypeScript, package manager pnpm.
+- Frontend: React with Vite, bulletproof-react layout.
+- Backend: Node.js with Fastify (REST), nodebestpractices layout.
+- Database: PostgreSQL via Prisma.
+- Tests: Vitest (unit and component), Playwright (end-to-end); ESLint plus `tsc --noEmit`.
+
+## Structure
+- `src/` — React frontend. `app/` routes and providers, `features/` self-contained modules,
+  plus `components/`, `config/`, `testing/`, `types/`, `utils/`.
+- `apps/` — backend, one folder per domain (`shifts/`, `staff-members/`, `leave-requests/`),
+  each split into `entry-points/api/`, `domain/`, `data-access/`.
+- `e2e/` — Playwright end-to-end tests, outside `src/`.
+
+## Commands
+- Install: `pnpm install`
+- Build: `pnpm build`
+- Single test: `pnpm vitest run <file>`
+- Lint and typecheck: `pnpm lint && pnpm tsc --noEmit`
+- End-to-end: `pnpm playwright test`
+
+## Conventions
+- Frontend features are self-contained. Compose them at the `app/` layer, never import across features.
+- Split each backend domain into entry-points, then domain, then data-access. Name folders for the business domain, not the framework.
+- Access PostgreSQL only through Prisma. Single instance, no microservices at this stage.
+- Co-locate frontend tests with source. Test backend domains through their `api/` entry-point over HTTP.
+- Auth is email plus password only. No third-party auth provider yet.
+```
+
 ## Reconcile mode (CLAUDE.md already exists)
 
 Do not regenerate. Read the goal from the stamp. Map the existing file onto the matching
@@ -85,11 +137,17 @@ Preserve the author's wording everywhere else. Show the diff, apply only on appr
 
 ## Tail — enforcement and Karpathy
 
-1. **Route hard rules to enforcement.** For any hard prohibition you found (deploy commands,
-   `apply` without plan, secret paths, prod access), propose — do not silently write —
-   matching `settings.json` deny rules and, where a command needs intercepting, a hook.
-   Enforcement holds at 100%; prose holds at about 70%. This is also where the stack-specific
-   configuration deferred from pass A gets proposed, now that the stack is known.
+1. **Route hard rules to enforcement — propose, never write.** For any hard prohibition you
+   found (deploy commands, `apply` without plan, secret paths, prod access), surface a
+   matching `settings.json` deny rule and, where a command needs intercepting, a hook — as a
+   proposal in this close report only. Do not edit `settings.json`: it was written once in
+   pass A and no later pass touches it (see `environment.md`). Enforcement holds at 100%;
+   prose holds at about 70% — but the user applies the enforcement, the skill does not write
+   it silently. This is also where the stack-specific configuration deferred from pass A gets
+   proposed, now that the stack is known. When you do quote a proposed deny rule, use one
+   canonical glob form per command (`Bash(pnpm deploy)` and `Bash(pnpm deploy:*)`), so two
+   runs proposing the same rule quote it identically rather than drifting between `deploy *`
+   and `deploy:*`.
 2. **Check the Karpathy guidelines.** If `~/.claude/CLAUDE.md` does not contain them, tell
    the user to install them there once (github.com/forrestchang/andrej-karpathy-skills).
    They are project-independent and must not be copied into a project CLAUDE.md.
@@ -103,6 +161,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-07 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-08 |
 | Status       | Review     |

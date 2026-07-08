@@ -64,6 +64,31 @@ read-only production folder for automation and `/Shared` for cross-team artifact
 Two standard layouts. Create only the side(s) the project actually has — a UI-only project
 takes frontend, a service-only project takes backend, a fullstack project takes both.
 
+Fixed layout rules — apply these the same way every run, they are not judgement calls:
+
+- Place the frontend at top-level `src/` and the backend at top-level `apps/`. Do not add
+  `frontend/` or `backend/` wrapper directories. Both reference standards are already
+  top-level layouts, so wrapping them is an unforced divergence.
+- Scaffold one `apps/<domain>/` for every business domain the brief names, each with its
+  three tiers (`entry-points/api/`, `domain/`, `data-access/`). Never leave `apps/` empty.
+  The brief names the domains, so scaffolding them is grounded, not speculative.
+- Derive each domain folder name from the brief's business nouns in kebab-case. "Work items"
+  becomes `work-items`, not `workitems`. Do not collapse or re-case the term — the import
+  path depends on it.
+- Scaffold the frontend `src/` set exactly: `app/`, `assets/`, `components/`, `config/`,
+  `features/`, `testing/`, `types/`, `utils/` — these eight, and no others, at bootstrap.
+  Include `assets/` even when it starts empty; do not drop it. The bulletproof-react layout
+  below also shows `hooks/`, `lib/`, and `stores/` — those three are deferred to the first
+  shared consumer, not scaffolded now.
+- Leave `src/features/` empty at bootstrap. Do not pre-scaffold per-feature subfolders
+  (`src/features/<feature>/`); create each one when its feature arrives. This is the same
+  first-consumer rule applied to `apps/<domain>/` tiers, mirrored on the frontend so the two
+  sides do not diverge.
+- Defer the per-domain `test/` directory until the first test is written. Do not scaffold it
+  at bootstrap, and apply this uniformly to every domain so runs do not diverge on it.
+- Defer `libraries/` until a second component needs a shared concern. Do not create it at
+  bootstrap.
+
 ### frontend (React) — bulletproof-react (`alan2207/bulletproof-react`)
 
 ```
@@ -120,7 +145,8 @@ folder names should scream the business domain, not the framework.
 
 Tests: prioritise API / component-level testing over pure unit tests — hit the component's
 actual entry-point (`api/` controller) over HTTP. Tests live in a parallel `test/` directory
-per component, following Arrange-Act-Assert.
+per component, following Arrange-Act-Assert. That `test/` directory is deferred until the
+first test is written (see the fixed layout rules), not scaffolded at bootstrap.
 
 Deferred: create one `apps/<domain>/` per domain that exists now, and inside it only the
 tiers it uses. `libraries/<lib>/` at the second consumer of that concern. `docs/adr/` at the
@@ -145,6 +171,6 @@ in one place, under one goal, per the one-goal-per-repo principle.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
-| Last Updated | 2026-07-07 |
+| Version      | 1.5        |
+| Last Updated | 2026-07-08 |
 | Status       | Review     |

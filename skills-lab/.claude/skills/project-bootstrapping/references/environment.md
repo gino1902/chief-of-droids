@@ -20,6 +20,12 @@ is actually known.
 4. Do not create hooks, `.mcp.json`, or `.claude/agents/` now. Note them as available
    follow-ups. They depend on decisions that only land in pass D and B.
 
+`.claude/settings.json` is written exactly once — here, at the baseline. No later pass
+mutates it. In particular, the pass B enforcement tail never adds `deny` rules to the file:
+any hard prohibition discovered later is surfaced as a proposal in the close report, not
+written into `settings.json` by the skill. This keeps the file deterministic across runs —
+two bootstraps of the same brief produce byte-identical `settings.json`.
+
 ## Baseline `.claude/settings.json`
 
 The baseline is deliberately small. It carries only what generalises to any project.
@@ -86,6 +92,6 @@ be committed. `settings.json` (the shared baseline you just wrote) is committed.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-07-07 |
+| Version      | 1.2        |
+| Last Updated | 2026-07-08 |
 | Status       | Review     |
