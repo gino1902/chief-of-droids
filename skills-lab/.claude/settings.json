@@ -2,27 +2,32 @@
   "permissions": {
     "defaultMode": "acceptEdits",
     "allow": [
-      "Bash(claude plugin *)",
-      "Bash(python3 *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
       "Skill(writing-requirements)",
-      "WebFetch(domain:docs.claude.com)",
-      "WebFetch(domain:code.claude.com)",
-      "WebFetch(domain:docs.anthropic.com)",
-      "WebFetch(domain:support.claude.com)",
+
+      "Bash(claude plugin *)",
+      "Bash(git add *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git commit *)",
+      "Bash(git merge *)",
+      "Bash(md5 *)",
+
       "WebFetch(domain:anthropic.com)",
-      "WebFetch(domain:www.anthropic.com)",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:code.claude.com)",
       "WebFetch(domain:developer.mozilla.org)",
-      "WebFetch(domain:www.typescriptlang.org)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:docs.claude.com)",
       "WebFetch(domain:docs.python.org)",
-      "WebFetch(domain:nodejs.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:json-schema.org)",
       "WebFetch(domain:modelcontextprotocol.io)",
+      "WebFetch(domain:nodejs.org)",
+      "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:spec.commonmark.org)",
-      "WebFetch(domain:json-schema.org)"
+      "WebFetch(domain:support.claude.com)",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:www.typescriptlang.org)"
     ],
     "ask": [
       "Bash(rm *)"
