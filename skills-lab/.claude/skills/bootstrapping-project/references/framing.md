@@ -10,6 +10,10 @@ and 4 are derived from.
 FRAMING.md is user-owned once created. Never modify it autonomously in a later session.
 Reconcile it only with explicit approval, and only to fill gaps — never rewrite wholesale.
 
+The five-question flow below is the **Small** path. For **Medium+** projects, SKILL.md Pass 2
+delegates to the `framing-project` skill instead, which runs its own interview and writes
+FRAMING.md; bootstrap then injects the goal stamp. Use the questions here only on the Small path.
+
 ## The five questions
 
 Ask these, keep answers tight, and write only what the user gives you. Do not pad.

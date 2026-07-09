@@ -16,7 +16,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash
 ---
 
 <!-- target-environment: claude-code | target-model: claude-opus-4-8 -->
-<!-- claude aligned to project type; same for tone; link to 'strategy' skill -->
+<!-- claude aligned to project type; same for tone; framing delegated to framing-project for Medium+ (Pass 2) -->
 
 # bootstrapping-project
 
@@ -117,10 +117,25 @@ FRAMING.md is user-owned after creation — never modify it autonomously in a la
 
 1. Read `references/framing.md`.
 2. If `FRAMING.md` exists, switch to reconcile: propose a minimal diff for gaps only, keep
-   the author's wording, apply on approval. Otherwise create it.
-3. Ask the five framing questions (why, for whom, what success is, what is delivered, what
-   constraints apply). Keep answers tight. Write the goal stamp as the first line. Leave any
-   unanswered section marked `🔲` rather than inventing content.
+   the author's wording, apply on approval. Do not ask the size question on this path. Then
+   continue to Pass 3.
+3. Otherwise, ask once whether this is a **Small** project (solo or short-lived, one workflow,
+   no formal sponsor) or **Medium+** (multiple teams or tracks, a sponsor, real budget). This
+   only chooses how framing is produced. It is not stamped and does not change the goal.
+4. **Small — frame inline.** Ask the five framing questions (why, for whom, what success is,
+   what is delivered, what constraints apply). Keep answers tight. Leave any unanswered section
+   marked `🔲` rather than inventing content. Write FRAMING.md with the goal stamp as the first
+   line.
+5. **Medium+ — delegate to `framing-project`.** Invoke the `framing-project` skill (via the
+   Skill tool) and let it run its interview and write FRAMING.md. Do not duplicate the interview
+   yourself. `framing-project` does not write the goal stamp, so when it returns, inject
+   `<!-- goal: <locked-goal> -->` immediately after the YAML frontmatter if it is not already
+   there. `framing-project` writes at the working-directory root — if you are bootstrapping a
+   different target path, run it from that directory or move the produced FRAMING.md into the
+   target.
+6. Either path keeps the goal locked in the Preamble. Later passes read the goal from the stamp
+   by pattern, not by line position, so it works whether the stamp is line one (Small) or just
+   under the frontmatter (Medium+).
 
 ## Pass 3 — project tree
 
@@ -171,6 +186,6 @@ substantive work.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.5        |
-| Last Updated | 2026-07-08 |
+| Version      | 1.6        |
+| Last Updated | 2026-07-09 |
 | Status       | Review     |
