@@ -1,0 +1,14 @@
+# Silver conforming pipeline: serverless, triggered (ADR-004, 005, 007).
+resources:
+  pipelines:
+    subject_area_conform:
+      name: subject_area_conform
+      catalog: ${var.catalog}
+      schema: ${var.silver_schema}
+      serverless: true
+      continuous: false
+      libraries:
+        - notebook:
+            path: ../src/subject_area/silver.py
+      configuration:
+        source_catalog: ${var.source_catalog}

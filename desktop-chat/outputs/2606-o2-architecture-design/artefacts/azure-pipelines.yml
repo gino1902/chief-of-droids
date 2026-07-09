@@ -1,0 +1,98 @@
+# Azure DevOps CI/CD for the Databricks platform (ADR-002, ADR-006).
+# One modern multi-stage pipeline: validate on PR, deploy staging on merge to main,
+# deploy prod behind an Environment approval gate.
+#
+# Deliberate divergence from the official Azure DevOps sample: it uses classic
+# new_cluster tasks and a build/release split; this design is serverless (ADR-004)
+# and pipeline-based (ADR-005), so unit tests run on the agent and workloads deploy
+# as bundles.
+#
+# Auth: OAuth M2M service principal. Set DATABRICKS_CLIENT_ID and
+# DATABRICKS_CLIENT_SECRET in a variable group per environment; DATABRICKS_HOST
+# comes from each bundle target, so the CLI reads the target's host.
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  # One of these per bundle you deploy. Kept as a list the stages loop over.
+  bundleDir: artefacts/ingestion/source_system
+
+stages:
+  - stage: Validate
+    displayName: Validate and unit test
+    jobs:
+      - job: validate
+        pool:
+          vmImage: ubuntu-22.04
+        steps:
+          - script: curl -fsSL https://astral.sh/uv/install.sh | sh
+            displayName: Install uv
+          - script: |
+              cd $(bundleDir)
+              uv sync --group dev
+              uv run pytest
+            displayName: Unit tests
+          - script: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+            displayName: Install Databricks CLI
+          - script: |
+              cd $(bundleDir)
+              databricks bundle validate -t dev
+            displayName: Bundle validate
+            env:
+              DATABRICKS_HOST: $(DATABRICKS_HOST_DEV)
+              DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID_DEV)
+              DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET_DEV)
+
+  - stage: DeployStaging
+    displayName: Deploy to staging
+    dependsOn: Validate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: deploy_staging
+        pool:
+          vmImage: ubuntu-22.04
+        steps:
+          - script: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+            displayName: Install Databricks CLI
+          - script: |
+              cd $(bundleDir)
+              databricks bundle deploy -t staging
+            displayName: Bundle deploy staging
+            env:
+              DATABRICKS_HOST: $(DATABRICKS_HOST_STAGING)
+              DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID_STAGING)
+              DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET_STAGING)
+
+  - stage: DeployProd
+    displayName: Deploy to production
+    dependsOn: DeployStaging
+    condition: succeeded()
+    jobs:
+      # A deployment job bound to the 'prod' Environment. Configure the approval
+      # check on that Environment in the Azure DevOps UI (ADR-006 prod gate).
+      - deployment: deploy_prod
+        environment: prod
+        pool:
+          vmImage: ubuntu-22.04
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+                  displayName: Install Databricks CLI
+                - script: |
+                    cd $(bundleDir)
+                    databricks bundle deploy -t prod
+                  displayName: Bundle deploy prod
+                  env:
+                    DATABRICKS_HOST: $(DATABRICKS_HOST_PROD)
+                    DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID_PROD)
+                    DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET_PROD)

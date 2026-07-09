@@ -1,0 +1,14 @@
+# Bronze ingestion pipeline: serverless, triggered, one VARIANT column (ADR-004, 005, 007, 008).
+resources:
+  pipelines:
+    source_system_ingest:
+      name: source_system_ingest
+      catalog: ${var.catalog}
+      schema: ${var.bronze_schema}
+      serverless: true
+      continuous: false          # triggered; launched by the job below (ADR-005)
+      libraries:
+        - notebook:
+            path: ../src/source_system/bronze.py
+      configuration:
+        landing_path: ${var.landing_path}

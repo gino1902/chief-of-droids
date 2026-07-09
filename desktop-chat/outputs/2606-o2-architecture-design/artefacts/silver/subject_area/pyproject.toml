@@ -1,0 +1,16 @@
+[project]
+name = "subject_area"
+version = "0.0.1"
+description = "Silver conforming for the subject_area subject area."
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = ["pytest", "pyspark", "chispa"]

@@ -1,0 +1,14 @@
+# Gold pipeline: serverless, materialized views for serving (ADR-004, 005, 007).
+resources:
+  pipelines:
+    use_case_gold:
+      name: use_case_gold
+      catalog: ${var.catalog}
+      schema: ${var.gold_schema}
+      serverless: true
+      continuous: false
+      libraries:
+        - notebook:
+            path: ../src/use_case/gold.py
+      configuration:
+        silver_catalog: ${var.silver_catalog}

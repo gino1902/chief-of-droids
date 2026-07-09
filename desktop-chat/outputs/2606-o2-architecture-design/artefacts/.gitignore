@@ -1,0 +1,13 @@
+# Generated bundle state (ADR-003)
+**/.databricks/
+
+# Python build and wheel output
+**/dist/
+**/build/
+**/*.egg-info/
+**/__pycache__/
+*.pyc
+
+# Local envs
+**/.venv/
+.env

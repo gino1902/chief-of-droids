@@ -1,0 +1,16 @@
+# Orchestrator job: launches the bronze pipeline on file arrival (ADR-005, ADR-008).
+# The task is a pipeline_task, so the job runs on the pipeline's serverless compute;
+# no job cluster or serverless environment is needed here.
+resources:
+  jobs:
+    source_system_ingest_job:
+      name: source_system_ingest_job
+      tasks:
+        - task_key: ingest
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.source_system_ingest.id}
+      trigger:
+        file_arrival:
+          url: ${var.landing_path}
+          min_time_between_triggers_seconds: 60
+          wait_after_last_change_seconds: 30

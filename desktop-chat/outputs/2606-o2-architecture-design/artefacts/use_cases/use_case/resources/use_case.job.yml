@@ -1,0 +1,14 @@
+# Orchestrator job for the gold pipeline.
+# Skeleton uses a schedule; dependency on silver completion is a Decide item.
+resources:
+  jobs:
+    use_case_gold_job:
+      name: use_case_gold_job
+      tasks:
+        - task_key: build_gold
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.use_case_gold.id}
+      schedule:
+        quartz_cron_expression: "0 30 6 * * ?"   # after silver; tune to dependency
+        timezone_id: UTC
+        pause_status: UNPAUSED

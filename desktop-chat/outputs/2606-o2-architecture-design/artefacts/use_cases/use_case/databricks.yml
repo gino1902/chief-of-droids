@@ -1,0 +1,70 @@
+# Gold bundle for one business use case (ADR-001).
+# Builds only on silver. Clone per use case.
+bundle:
+  name: gold_use_case
+
+sync:
+  paths:
+    - ../../common
+    - ./src
+
+include:
+  - resources/*.yml
+  - ../../common/*.yml
+
+artifacts:
+  use_case_wheel:
+    type: whl
+    path: .
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for this environment.
+  gold_schema:
+    description: Gold schema for this use case.
+    default: use_case_gold
+  silver_catalog:
+    description: Catalog holding the silver inputs.
+
+permissions:
+  - level: CAN_VIEW
+    group_name: ${var.data_all_group}
+  - level: CAN_MANAGE
+    group_name: ${var.data_engineering_group}
+  - level: CAN_RUN
+    service_principal_name: ${var.deploy_service_principal}
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-<dev-workspace-id>.azuredatabricks.net
+    variables:
+      catalog: dev
+      gold_schema: ${workspace.current_user.short_name}_use_case_gold
+      silver_catalog: dev
+  staging:
+    mode: production
+    workspace:
+      host: https://adb-<staging-workspace-id>.azuredatabricks.net
+      root_path: /Workspace/.bundle/${bundle.name}/staging
+    run_as:
+      service_principal_name: ${var.deploy_service_principal}
+    git:
+      branch: main
+    variables:
+      catalog: staging
+      silver_catalog: staging
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-<prod-workspace-id>.azuredatabricks.net
+      root_path: /Workspace/.bundle/${bundle.name}/prod
+    run_as:
+      service_principal_name: ${var.deploy_service_principal}
+    git:
+      branch: main
+    variables:
+      catalog: prod
+      silver_catalog: prod

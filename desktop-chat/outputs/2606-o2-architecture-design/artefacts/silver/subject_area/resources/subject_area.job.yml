@@ -1,0 +1,15 @@
+# Orchestrator job for the silver pipeline.
+# Skeleton uses a schedule; the real dependency on upstream bronze completion is a
+# Decide item in the topic map (inter-layer orchestration wiring).
+resources:
+  jobs:
+    subject_area_conform_job:
+      name: subject_area_conform_job
+      tasks:
+        - task_key: conform
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.subject_area_conform.id}
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"   # 06:00 daily; tune to freshness target
+        timezone_id: UTC
+        pause_status: UNPAUSED

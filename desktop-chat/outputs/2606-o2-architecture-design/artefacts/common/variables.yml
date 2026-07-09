@@ -1,0 +1,12 @@
+# Shared variable defaults, included by every bundle via `include: ../../common/*.yml`
+# (ADR-003). Per-target and per-bundle values override these.
+variables:
+  data_all_group:
+    description: Group granted read access across the platform.
+    default: data_all
+  data_engineering_group:
+    description: Group that owns and manages the bundles.
+    default: data_engineering
+  deploy_service_principal:
+    description: Application id of the OAuth service principal used for prod deploys.
+    default: "00000000-0000-0000-0000-000000000000"

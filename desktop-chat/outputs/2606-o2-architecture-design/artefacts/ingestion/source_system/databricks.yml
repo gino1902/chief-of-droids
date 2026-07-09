@@ -1,0 +1,78 @@
+# Bronze ingestion bundle for one data producer (ADR-001, ADR-008).
+# Clone this folder per producer. Owns bronze only.
+bundle:
+  name: ingest_source_system
+
+# Sync shared code and this bundle's source into the workspace (ADR-003).
+# Two-level nesting, so the shared folder is ../../common.
+sync:
+  paths:
+    - ../../common
+    - ./src
+
+include:
+  - resources/*.yml
+  - ../../common/*.yml
+
+# Build the source package into a wheel (ADR-007).
+artifacts:
+  source_system_wheel:
+    type: whl
+    path: .
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for this environment.
+  bronze_schema:
+    description: Bronze schema for this producer.
+    default: source_system_bronze
+  landing_path:
+    description: External-location URL the extractor lands files into.
+
+# Top-level permissions (ADR-006): read for all, manage for DE, run for the deploy SP.
+permissions:
+  - level: CAN_VIEW
+    group_name: ${var.data_all_group}
+  - level: CAN_MANAGE
+    group_name: ${var.data_engineering_group}
+  - level: CAN_RUN
+    service_principal_name: ${var.deploy_service_principal}
+
+targets:
+  # Dev: per-developer isolation. mode:development prefixes resource names with
+  # [dev <short_name>]; the schema is parameterised per user for data isolation (ADR-006).
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-<dev-workspace-id>.azuredatabricks.net
+    variables:
+      catalog: dev
+      bronze_schema: ${workspace.current_user.short_name}_source_system_bronze
+      landing_path: abfss://landing@<devstorage>.dfs.core.windows.net/source_system
+
+  staging:
+    mode: production
+    workspace:
+      host: https://adb-<staging-workspace-id>.azuredatabricks.net
+      root_path: /Workspace/.bundle/${bundle.name}/staging
+    run_as:
+      service_principal_name: ${var.deploy_service_principal}
+    git:
+      branch: main
+    variables:
+      catalog: staging
+      landing_path: abfss://landing@<stagingstorage>.dfs.core.windows.net/source_system
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-<prod-workspace-id>.azuredatabricks.net
+      root_path: /Workspace/.bundle/${bundle.name}/prod
+    run_as:
+      service_principal_name: ${var.deploy_service_principal}
+    git:
+      branch: main
+    variables:
+      catalog: prod
+      landing_path: abfss://landing@<prodstorage>.dfs.core.windows.net/source_system

@@ -1,0 +1,71 @@
+# Silver conforming bundle for one subject area (ADR-001).
+# Reads one or more bronze tables and produces the conformed enterprise view.
+# Clone per subject area. Not owned by any single producer.
+bundle:
+  name: silver_subject_area
+
+sync:
+  paths:
+    - ../../common
+    - ./src
+
+include:
+  - resources/*.yml
+  - ../../common/*.yml
+
+artifacts:
+  subject_area_wheel:
+    type: whl
+    path: .
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for this environment.
+  silver_schema:
+    description: Silver schema for this subject area.
+    default: subject_area_silver
+  source_catalog:
+    description: Catalog holding the bronze inputs (usually the same as catalog).
+
+permissions:
+  - level: CAN_VIEW
+    group_name: ${var.data_all_group}
+  - level: CAN_MANAGE
+    group_name: ${var.data_engineering_group}
+  - level: CAN_RUN
+    service_principal_name: ${var.deploy_service_principal}
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-<dev-workspace-id>.azuredatabricks.net
+    variables:
+      catalog: dev
+      silver_schema: ${workspace.current_user.short_name}_subject_area_silver
+      source_catalog: dev
+  staging:
+    mode: production
+    workspace:
+      host: https://adb-<staging-workspace-id>.azuredatabricks.net
+      root_path: /Workspace/.bundle/${bundle.name}/staging
+    run_as:
+      service_principal_name: ${var.deploy_service_principal}
+    git:
+      branch: main
+    variables:
+      catalog: staging
+      source_catalog: staging
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-<prod-workspace-id>.azuredatabricks.net
+      root_path: /Workspace/.bundle/${bundle.name}/prod
+    run_as:
+      service_principal_name: ${var.deploy_service_principal}
+    git:
+      branch: main
+    variables:
+      catalog: prod
+      source_catalog: prod
