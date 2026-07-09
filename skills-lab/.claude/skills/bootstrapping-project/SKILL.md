@@ -116,9 +116,12 @@ The intent anchor, and the one file that is mostly user-supplied rather than rep
 FRAMING.md is user-owned after creation — never modify it autonomously in a later session.
 
 1. Read `references/framing.md`.
-2. If `FRAMING.md` exists, switch to reconcile: propose a minimal diff for gaps only, keep
-   the author's wording, apply on approval. Do not ask the size question on this path. Then
-   continue to Pass 3.
+2. If `FRAMING.md` exists, route the rework by how it was created so it matches the creation
+   branch. If the frontmatter carries a `last_updated` key (a `framing-project` doc), invoke
+   the `framing-project` skill and let its update phase handle the rework. Otherwise (the Small
+   five-question doc — goal stamp on line one, no `last_updated`) reconcile inline: propose a
+   minimal diff for gaps only, keep the author's wording, apply on approval. Either way, do not
+   ask the size question on this path, and preserve the goal stamp. Then continue to Pass 3.
 3. Otherwise, ask once whether this is a **Small** project (solo or short-lived, one workflow,
    no formal sponsor) or **Medium+** (multiple teams or tracks, a sponsor, real budget). This
    only chooses how framing is produced. It is not stamped and does not change the goal.
@@ -186,6 +189,6 @@ substantive work.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.6        |
+| Version      | 1.7        |
 | Last Updated | 2026-07-09 |
 | Status       | Review     |

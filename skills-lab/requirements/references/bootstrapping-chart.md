@@ -24,7 +24,9 @@ flowchart TD
     B4["Write FRAMING.md + goal stamp"]
     B5["Run framing-project (interview)"]
     B6["Inject goal stamp after frontmatter"]
-    B7["Reconcile: minimal diff, keep wording, approve"]
+    B7["Reconcile inline: minimal diff, keep wording, approve"]
+    B8{"framing-project shape? (has last_updated)"}
+    B9["Run framing-project update (Phase 2)"]
   end
 
   subgraph Pass3["Pass 3 - Tree"]
@@ -48,7 +50,9 @@ flowchart TD
   A1 -->|no| A2 --> A3 --> B1
   A1 -->|yes| B1
   B1 -->|no| B2
-  B1 -->|yes| B7 --> C1
+  B1 -->|yes| B8
+  B8 -->|yes| B9 --> C1
+  B8 -->|no| B7 --> C1
   B2 -->|Small| B3 --> B4 --> C1
   B2 -->|Medium+| B5 --> B6 --> C1
   C1 -->|no| C3 --> C4 --> D1
