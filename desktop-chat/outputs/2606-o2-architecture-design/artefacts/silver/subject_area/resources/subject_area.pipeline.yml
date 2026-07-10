@@ -4,7 +4,7 @@ resources:
     subject_area_conform:
       name: subject_area_conform
       catalog: ${var.catalog}
-      schema: ${var.silver_schema}
+      target: ${var.silver_schema}   # 'target' is the pipeline's destination schema (verified field)
       serverless: true
       continuous: false
       libraries:

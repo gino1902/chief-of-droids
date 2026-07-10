@@ -4,7 +4,7 @@ resources:
     use_case_gold:
       name: use_case_gold
       catalog: ${var.catalog}
-      schema: ${var.gold_schema}
+      target: ${var.gold_schema}   # 'target' is the pipeline's destination schema (verified field)
       serverless: true
       continuous: false
       libraries:

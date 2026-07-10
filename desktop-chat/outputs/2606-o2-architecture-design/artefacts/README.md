@@ -28,7 +28,10 @@ Marked in the topic map (`../2026-07-09-technical-design-topic-map.md`). Chiefly
 
 ## Before use
 
-> ⚠️ Unverified. The YAML field shapes are grounded in the Databricks docs read during design, not run. Run `databricks bundle validate -t dev` in each bundle before relying on it.
+> ⚠️ Unverified. Field shapes are grounded in the Databricks docs, not run against a workspace. A static conformance pass was done; three items could not be settled without the CLI and must be confirmed by `databricks bundle validate -t dev` and a dev deploy:
+> 1. Loading a `.py` declarative-pipeline module. The pipeline `libraries: notebook` form may need to be a `glob`/`file` include, or the source package added as a pipeline library, so `reader` and the shared `utils` are importable at runtime.
+> 2. The `dp.apply_changes(...)` signature (keys, sequence_by, stored_as_scd_type) under the `pyspark.pipelines` namespace.
+> 3. How the shared `common/utils` package resolves on the pipeline path (sync.paths lands it, but the import root must be confirmed).
 
 Requires the Databricks CLI, `uv`, and Databricks Runtime 18.1+ for the automatic managed-file-events default (ADR-008).
 

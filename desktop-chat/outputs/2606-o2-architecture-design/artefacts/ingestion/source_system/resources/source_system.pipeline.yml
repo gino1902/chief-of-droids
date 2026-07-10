@@ -4,7 +4,7 @@ resources:
     source_system_ingest:
       name: source_system_ingest
       catalog: ${var.catalog}
-      schema: ${var.bronze_schema}
+      target: ${var.bronze_schema}   # 'target' is the pipeline's destination schema (verified field)
       serverless: true
       continuous: false          # triggered; launched by the job below (ADR-005)
       libraries:

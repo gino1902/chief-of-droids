@@ -15,7 +15,8 @@ SOURCE = spark.conf.get("source_catalog")  # noqa: F821
 
 
 # Row-level cleaning as a streaming table, with an expectation (warn at silver entry).
-@dp.table(name="orders_clean")
+# CLUSTER BY AUTO for self-tuning layout (ADR-007).
+@dp.table(name="orders_clean", cluster_by_auto=True)
 @dp.expect("valid_order_id", "order_id IS NOT NULL")
 def orders_clean():
     return (
@@ -30,6 +31,12 @@ def orders_clean():
 
 
 # Declarative CDC into the conformed customer table (SCD type 1), instead of MERGE.
+# The change feed is read from a bronze customers table (illustrative source).
+@dp.table(name="customers_cdc")
+def customers_cdc():
+    return spark.readStream.table(f"{SOURCE}.source_system_bronze.customers_bronze")  # noqa: F821
+
+
 dp.create_streaming_table("customers")
 
 dp.apply_changes(
@@ -41,8 +48,8 @@ dp.apply_changes(
 )
 
 
-# Enrichment join as a materialized view (incremental refresh), CLUSTER BY AUTO.
-@dp.materialized_view(name="order_enriched", cluster_by_auto=True)
+# Enrichment join as a materialized view (incremental refresh).
+@dp.materialized_view(name="order_enriched")
 def order_enriched():
     orders = spark.read.table("orders_clean")  # noqa: F821
     customers = spark.read.table("customers")  # noqa: F821

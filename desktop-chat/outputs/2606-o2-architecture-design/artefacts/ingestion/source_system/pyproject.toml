@@ -14,3 +14,7 @@ where = ["src"]
 
 [dependency-groups]
 dev = ["pytest", "pyspark", "chispa"]
+
+[tool.pytest.ini_options]
+# Make the package (src) and the shared common folder importable in tests.
+pythonpath = ["src", "../../common"]
