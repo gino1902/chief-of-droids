@@ -39,6 +39,12 @@ The company network, IAM, security, and monitoring the platform runs on.
 
 _Why it serves the approach:_ trusted data and agents need a secure, observable foundation before teams rely on them.
 
+### Platform engineering
+
+How the platform is built and run: Unity Catalog governance, environment configuration (landing zone, workspaces), CI/CD, the cost and usage model, and the development framework (project tree, templates, skills, decision framework).
+
+_Why it serves the approach:_ orchestrating agents around each team's practice only stays fast and trustworthy if the platform rests on standardised, repeatable engineering.
+
 ### Data ingestion and transformation
 
 Bringing company data in and making it consistent and trustworthy.
