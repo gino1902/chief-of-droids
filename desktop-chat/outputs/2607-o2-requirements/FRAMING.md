@@ -35,7 +35,7 @@ We give teams one governed source of trusted data that carries their cross-team 
 
 ### Company infrastructure
 
-The company network, IAM, security, and monitoring the platform runs on.
+The company network, IAM, security, and monitoring the platform runs on. Terraform template creation and tests.
 
 _Why it serves the approach:_ trusted data and agents need a secure, observable foundation before teams rely on them.
 
@@ -47,19 +47,19 @@ _Why it serves the approach:_ orchestrating agents around each team's practice o
 
 ### Data ingestion and transformation
 
-Bringing company data in and making it consistent and trustworthy.
+Capturing workflows and data flows. Create ingestion pipeline. Transform data into gold layer making it consistent and trustworthy.
 
 _Why it serves the approach:_ the enabler layer that makes one source of trusted data real.
 
 ### Data exposition, driven by customer use cases
 
-Exposing trusted data through team-fitted agentic workflows, built use case by use case.
+Exposing trusted data through team-fitted agentic workflows, built use case by use case, according to a decision framework to evaluate use case elligibily (ROI, location) 
 
 _Why it serves the approach:_ this is where the orchestration differentiator lives.
 
 ### Iterative adoption
 
-Rolling out team by team rather than all at once.
+Rolling out use case per use case. Iterative improvement based on business team usage monitoring and feedback. Invite over Impose pattern. 
 
 _Why it serves the approach:_ modernising existing practice depends on teams adopting it in daily work.
 
