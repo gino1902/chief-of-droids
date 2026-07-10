@@ -1,6 +1,6 @@
-# Artefact scaffold specification
+# Design output specification
 
-The deliverable is a tree of artefacts, not a document. This file gives the tree shape, the rule for every artefact, and the README convention. The worked example is a Databricks Asset Bundle medallion platform, but the rules are general: they hold for any scaffold that renders a set of ADRs.
+The deliverables are two aligned outputs: a tree of artefacts (the per-file how) and, where the existence gate warrants it, a living design doc (the system-level how). This file gives the artefact tree shape, the rule for every artefact, the README convention, and the living design doc template. The worked example is a Databricks Asset Bundle medallion platform, but the rules are general: they hold for any design that renders a set of ADRs.
 
 ## The tree
 
@@ -90,6 +90,63 @@ A starting shape to clone, not the populated repo.
 | Last Updated | YYYY-MM-DD |
 | Status | Draft |
 ```
+
+## The living design doc
+
+Produced where the existence gate warrants it (Part C of the interview): ambiguity in the shared band (unit boundaries, seam contracts, data model) or in a cross-cutting concern. Otherwise a minimal stub. Short, one to three pages for an incremental design. It carries the system-level how and references the ADRs for the why. It never restates ADR rationale, per-file config (that is the artefacts), or operational steps (that is the README).
+
+Sections follow the design-doc practice, adapted so the why stays in the ADRs. Interview only the sections the ADRs leave thin, and drop a section with nothing system-level to say.
+
+~~~markdown
+---
+title: <system> technical design
+status: Draft
+reviewers: <named reviewer or role>
+last_updated: YYYY-MM-DD
+---
+
+# <system> technical design
+
+> Living companion to ADR-001 to NNN. The ADRs are the frozen why; this is the
+> system-level how. Per-file detail lives in artefacts/, operational steps in its README.
+
+## Context and scope
+<the landscape this sits in and where its edges are>
+
+## Goals and non-goals
+- Goal: <...>
+- Non-goal: <...>
+
+## Design
+<overview, then how the units fit and hand data across; cite the ADRs, do not re-argue them>
+
+### System context
+<a small C4 or flow diagram where topology is the point>
+
+### Data flow across units
+<how data moves end to end, at the system level>
+
+### Contracts between units
+<schema, keys, casing, promotion rules, provenance at each seam; a table>
+
+## Cross-cutting concerns
+<security, privacy, observability across units, not file by file>
+
+## Open items
+<system-level questions not yet closed, each one line with what is needed to close it>
+
+## Sources
+<only docs actually used; the ADRs carry their own sources and are not repeated>
+
+---
+| Field | Value |
+|:------|:------|
+| Version | 0.1 (draft) |
+| Last Updated | YYYY-MM-DD |
+| Status | Draft |
+~~~
+
+A shared decision (a seam contract, the data model, a unit boundary) is written here and in the artefact that renders it, from the one answer resolved in the interview. The two are never asked or answered separately.
 
 ## Scope of the scaffold
 
