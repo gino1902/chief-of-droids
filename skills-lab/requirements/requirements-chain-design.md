@@ -87,12 +87,13 @@ The seam was tested end to end on a real framing (Operations Orchestrator, O2), 
 - First pass, before `CONCEPTS.md`: the core mapping extracted cleanly (title, purpose, scope, actors, all requirements to EARS, all acceptance criteria derivable), with six undefined-term warnings.
 - Second pass, with `CONCEPTS.md` seeded and terms drawn from it: the six term warnings cleared. One warning remains, §Constraints N/A, which is a genuine content gap (no artifact invariant was elicited), not a shape fault.
 
-Artifacts from the run live under `outputs/seam-test-o2/` (the slice and a test `CONCEPTS.md`) and `requirements/ingestion-to-gold-pipeline/` (the requirements and report).
+The run's artifacts (the slice, a test `CONCEPTS.md`, and the requirements and report) have since been removed from the repo. The outcome recorded above is the durable record of the run, not the files.
 
 ## Deferred (not built yet)
 
-- Multi-component fan-out in brainstorming-requirements: one product-scope framing splitting into per-component slices.
+- Multi-component fan-out in brainstorming-requirements (Phase 3.5): one product-scope framing splitting into per-component slices.
 - The system-level cross-cutting slice, and the recomposition and consistency checks (the context map as a runtime check), owned by an orchestrator above writing-requirements.
+- Visual and blindspot gates: review gates named at session time and carried here as a deferral. Their scope is not yet defined in writing, so this records the intent to build them, not a specification of what they check.
 - Architectural boundary decisions, which route to making-architecture-decision, not to brainstorming.
 
 ## Sources
@@ -103,6 +104,6 @@ Artifacts from the run live under `outputs/seam-test-o2/` (the slice and a test 
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
+| Version      | 1.4        |
 | Last Updated | 2026-07-13 |
 | Status       | Draft      |
