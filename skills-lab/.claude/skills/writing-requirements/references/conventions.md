@@ -110,7 +110,7 @@ Outstanding: N blocking, M warnings, K info
 **Summary table rules:**
 
 - **Info** — always Resolved; Unresolved is always `N/A`.
-- **Warning** — Resolved if the finding has been treated and requires user verification only (e.g. auto-derived glossary entry, inferred scope signal). Unresolved if the artifact cannot be considered correct without further action.
+- **Warning** — Resolved only if remediation has been fully applied within this pass, leaving no action for the user. Unresolved if any check or gap remains for the user, which includes verification-pending findings (auto-derived glossary entry, inferred scope signal, applied default) as well as unresolved hygiene issues.
 - **Blocking** — resolution rules not yet defined; populate Resolved and Unresolved from phase findings.
 
 **Per-finding tag rules:**
@@ -121,8 +121,8 @@ Every Blocking and Warning finding emitted in a phase section SHALL carry an exp
 |:--|:--|
 | `[BLOCKING-RESOLVED]` | Blocking finding whose remediation has been applied within this pass |
 | `[BLOCKING-UNRESOLVED]` | Blocking finding that requires user action before the artifact is correct |
-| `[WARNING-RESOLVED]` | Warning that has been treated and requires user verification only (auto-derived glossary entry, inferred scope signal, default applied) |
-| `[WARNING-UNRESOLVED]` | Warning whose underlying gap or hygiene issue remains; artifact cannot be considered correct without further action |
+| `[WARNING-RESOLVED]` | Warning whose remediation has been fully applied within this pass, leaving no action for the user |
+| `[WARNING-UNRESOLVED]` | Warning that leaves a real check or gap for the user — including verification-pending findings (auto-derived glossary entry, inferred scope signal, applied default) and unresolved hygiene issues; the artifact cannot be considered correct until the user acts |
 | `[INFO]` | Trace event; always implicitly resolved — no suffix |
 
 Bare `[BLOCKING]` or `[WARNING]` tags (without a `-RESOLVED` / `-UNRESOLVED` suffix) are not permitted on output.
