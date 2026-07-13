@@ -1,6 +1,7 @@
 ---
 name: making-architecture-decision
 description: "Create an architecture decision record (ADR) through a structured interview. Use when a single functional or technical architecture decision needs capturing, in software design or business process design."
+disable-model-invocation: true
 allowed-tools: Read, Write, Edit
 ---
 # Making an architecture decision

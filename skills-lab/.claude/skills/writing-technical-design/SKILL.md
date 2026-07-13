@@ -1,6 +1,7 @@
 ---
 name: writing-technical-design
 description: "Turn a locked set of architecture decisions (ADRs) into two aligned outputs: the concrete artefact skeleton that renders them (project tree, config and pipeline files, code stubs, CI file, README) and a living design document that carries the system-level how (context, goals, cross-unit design, contracts, cross-cutting concerns). A guided interview bridges each decision to its artefact and gathers the system-level design, from the ADR (the why) to the file and the doc (the how). Use this after making-architecture-decision has locked the ADRs and the build scaffold and design doc still need writing, in software design or data-platform design. Invoke as `writing-technical-design from <adr-dir>`. Trigger whenever the user asks to scaffold, draft, or update the technical design, the living design doc, the build skeleton, the asset bundle, or the artefacts that follow a set of ADRs. Not for making architecture decisions (that is making-architecture-decision) and not for producing a populated, runnable repo (this writes an illustrative skeleton, not the real system)."
+disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob
 ---
 # Writing a technical design
