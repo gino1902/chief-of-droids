@@ -81,7 +81,7 @@ Count modal verbs per requirement statement: `SHALL`, `MUST`, `SHOULD`, `MAY`.
 
 - ✓ if every domain term in the statement appears in §Glossary
 - ✗ if one or more domain terms are used but not defined in §Glossary
-- Emit Warning per undefined term: `FR-NNN: term "<term>" not in Glossary`
+- Do not emit a Warning here. The term-absence Warning is emitted once, by the Phase 4 "Terms used in requirements are present in §Glossary" check. This criterion consumes that same finding to set the ✗ score and references it (e.g. "Unambiguous ✗ — see Phase 4 term-absence Warning"). One absent term is one Warning across the run, counted in Phase 4, never re-emitted here.
 
 A domain term is any noun or noun phrase naming a thing the requirement acts on or produces — its objects, inputs, and outputs. Exempt — never counted as domain terms — are only this closed set: the terms in the Phase 3 stop-word list; the RFC 2119 keywords (`MUST`, `SHOULD`, `MAY`) and EARS keywords (`SHALL`, `WHEN`, `WHILE`, `IF`, `THEN`, `WHERE`); and the EARS subject, meaning the component under specification (the `system` in `the system SHALL …`). Everything else the requirement names and the Glossary does not define scores ✗.
 

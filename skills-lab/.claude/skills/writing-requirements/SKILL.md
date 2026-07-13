@@ -380,6 +380,8 @@ Common checks — always run:
 | No duplicate IDs within a category | Warning |
 | Terms used in requirements are present in §Glossary | Warning |
 
+The "Terms used in requirements are present in §Glossary" check is the single canonical emission point for a term-absence Warning. A "term" here is a domain term as defined in `references/verification.md` § Unambiguous. Emit one Warning per distinct absent term, in the form `term "<term>" used in <REQ-ID> is absent from §Glossary`. Phase 5's Unambiguous criterion consumes this same finding to score ✗ and must not emit a second Warning for it — one absent term is one Warning across the whole run, counted here in Phase 4.
+
 Typology-specific checks: follow rules in loaded typology reference files.
 
 Emit closure line at end of Phase 4 always, even at zero findings:
