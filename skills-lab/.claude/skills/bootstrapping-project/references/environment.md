@@ -10,9 +10,11 @@ is actually known.
 
 ## Steps
 
-1. If there is no `.git/`, run `git init`. This makes every subsequent artifact tracked
-   and diffable, which is what makes a multi-pass, resumable bootstrap pleasant to stop
-   and restart.
+1. If there is no `.git/` at the target root, confirm with the user that this project should
+   own its own version tracking, then run `git init`. A `.git/` in an enclosing parent
+   directory does not count — the project owns its own repo, so init one at the target root
+   unless the user declines. This makes every subsequent artifact tracked and diffable, which
+   is what makes a multi-pass, resumable bootstrap pleasant to stop and restart.
 2. Show the baseline `settings.json` and `.gitignore` below, adjusted to the repo, before
    writing. Settings change how the harness behaves, so they are approval-gated even though
    the defaults are conservative.
@@ -92,6 +94,6 @@ be committed. `settings.json` (the shared baseline you just wrote) is committed.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
-| Last Updated | 2026-07-08 |
+| Version      | 1.4        |
+| Last Updated | 2026-07-13 |
 | Status       | Review     |

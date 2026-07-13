@@ -79,7 +79,7 @@ Run this before any pass.
 1. **Resolve the target.** Default to the current working directory. If a path was passed
    as the second argument, use it. State which directory you are bootstrapping.
 2. **Detect what already exists**, to know which passes are done and where to resume:
-   - Pass 1: a `.git/` directory and a `.claude/settings.json`.
+   - Pass 1: a `.git/` directory at the target root and a `.claude/settings.json`.
    - Pass 2: a `FRAMING.md` at the repo root.
    - Pass 3: any source files or a scaffolded tree (more than just config and framing).
    - Pass 4: a `CLAUDE.md` at the repo root.
@@ -101,7 +101,9 @@ Goal-agnostic. Establishes the operating environment and the permission defaults
 make later writes frictionless.
 
 1. Read `references/environment.md`.
-2. If there is no `.git/`, run `git init`.
+2. If there is no `.git/` at the target root, confirm with the user that the project should
+   own its own repo, then run `git init`. A `.git/` in an enclosing parent directory does not
+   count — init the project's own repo at the target root unless the user declines.
 3. Compose the baseline `.claude/settings.json` and a baseline `.gitignore` from the
    templates in the reference. Show both before writing — settings change behaviour, so
    they are approval-gated even though the templates are conservative.
@@ -190,6 +192,6 @@ substantive work.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.8        |
+| Version      | 1.9        |
 | Last Updated | 2026-07-13 |
 | Status       | Review     |
