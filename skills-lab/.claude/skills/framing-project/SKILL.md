@@ -7,9 +7,9 @@ allowed-tools: Read, Write, Edit
 
 Note: the current year is 2026. Use this when dating the framing document.
 
-`framing-project` produces and maintains `FRAMING.md` - a short, durable anchor document that captures what is delivered, who it serves, how it succeeds, and where the team is investing. It lives at the repo root as a canonical, well-known file (peer of `README.md`). 
+`framing-project` produces and maintains `FRAMING.md` - a short, durable anchor document that captures what is delivered, who it serves, how it succeeds, and where the team is investing. It lives at the repo root as a canonical, well-known file (peer of `README.md`).
 
-<!-- Make sure Downstream skills (TBDs) read it as grounding when it exists. -->
+It also seeds a companion, `CONCEPTS.md`, the single source of the project's domain language. Framing is where the domain scope, the main terms, and the boundaries are set, so the language is defined here and downstream requirements work references it rather than reinventing terms. Downstream skills read both files as grounding when they exist.
 
 The document is short and structured on purpose. Good answers to a handful of sharp questions produce a better framing than any amount of prose. This skill asks those questions, pushes back on weak answers, and writes the doc.
 
@@ -57,6 +57,8 @@ Ask every section in order, including the optional ones. Never skip a section wi
 
 When the required sections (1-5) are captured, read `references/framing-template.md`. Its sections correspond one to one with the interview sections above, in the same order, so fill each template section from the answer captured for the matching interview section. Before showing anything, run the post-write checklist at the bottom of the template and fix any item that fails. Then present the full draft in chat, offer one round of edits, and write to `FRAMING.md`.
 
+Then seed the domain language. Read `references/concepts-template.md` and write `CONCEPTS.md` at the repo root, capturing the domain terms already surfaced in the framing answers, structured by track (one context block per track) plus a shared core. Do not run a separate vocabulary interview; framing stays short and downstream skills grow the language. Run the concepts post-write checklist before writing.
+
 ### Phase 2: Update run
 
 Read the existing `FRAMING.md` thoroughly. Summarize current state in 3-5 lines so the user sees what is on file.
@@ -72,6 +74,8 @@ Ask the user which section(s) to revisit with `AskUserQuestion`. Options:
 For each section the user picks, jump to it in `references/framing-interview.md` and re-interview with full pushback, as if this were a first run - do not rubber-stamp existing weak content just because it is already written. The interview section maps to the same-named template section, so write each captured answer back into its matching section. Preserve every section the user does not pick. Update the `last_updated` value in the YAML frontmatter to today's ISO date.
 
 Run the template's post-write checklist against the updated doc, fix any item that fails, then write the updated doc back to `FRAMING.md`.
+
+If any revisited section changed the domain terms or boundaries, read `references/concepts-template.md` and update `CONCEPTS.md` in place: preserve existing terms, add or refine only where framing changed. Leave `CONCEPTS.md` untouched if no term or boundary moved.
 
 ## What this skill does not do
 
