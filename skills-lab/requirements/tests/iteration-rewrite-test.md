@@ -16,20 +16,20 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 
 ## Preconditions
 
-- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` at Version 0.1 (FR-001 to FR-004) and `CONCEPTS.md`.
+- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` at Version 0.1 (FR-001 to FR-005) and `CONCEPTS.md`.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
 ## Run steps
 
 ### 1. Prepare the iterated substrate
 
-Copy `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` to `outputs/ingestion-pipeline/ingestion-pipeline-v2.md`. In the copy, under §Functional Requirements, leave FR-001 to FR-004 exactly as they are and append one new, un-IDed requirement:
+Copy `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` to `outputs/ingestion-pipeline/ingestion-pipeline-v2.md`. In the copy, under §Functional Requirements, leave FR-001 to FR-005 exactly as they are and append one new, un-IDed requirement:
 
 ```markdown
 **FR** — WHEN a `source delivery` has been read into `bronze`, the system SHALL retain it in its delivered form, so that ingestion is auditable.
 ```
 
-The existing declared IDs FR-001 to FR-004 are what Phase 2 must preserve; the appended requirement carries no ID, so it must be assigned the next available one.
+The existing declared IDs FR-001 to FR-005 are what Phase 2 must preserve; the appended requirement carries no ID, so it must be assigned the next available one.
 
 ### 2. Re-run the formaliser
 
@@ -39,13 +39,13 @@ Phase 0.7 reads the prior `ingestion-pipeline-requirements.md` (still 0.1) for I
 
 ## Expected outputs (under `outputs/test-medium`)
 
-- `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` overwritten to Version 0.2, containing FR-001 to FR-005. FR-001 to FR-004 unchanged in ID and statement; FR-005 is the retention requirement.
+- `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` overwritten to Version 0.2, containing FR-001 to FR-006. FR-001 to FR-005 unchanged in ID and statement; FR-006 is the retention requirement.
 - `requirements/ingestion-pipeline/ingestion-pipeline-report.md` at Version 0.2.
 
 ## Acceptance criteria
 
-- FR-001 to FR-004 keep both their IDs and their statements. No renumbering, no reordering.
-- The appended requirement is assigned FR-005, the next available ID in the FR sequence.
+- FR-001 to FR-005 keep both their IDs and their statements. No renumbering, no reordering.
+- The appended requirement is assigned FR-006, the next available ID in the FR sequence.
 - The version increments 0.1 to 0.2 in both files.
 - No undefined-term warnings. The new requirement reuses `source delivery` and `bronze`, both already in the glossary and `CONCEPTS.md`, so no new term is introduced.
 
@@ -57,7 +57,7 @@ Phase 0.7 reads the prior `ingestion-pipeline-requirements.md` (still 0.1) for I
 
 ## Record
 
-Note the version chain (0.1 to 0.2) and the ID-to-content map after the re-pass. Confirm FR-005 is the only ID added and that the first four are byte-for-byte stable in their statements.
+Note the version chain (0.1 to 0.2) and the ID-to-content map after the re-pass. Confirm FR-006 is the only ID added and that the first five are byte-for-byte stable in their statements.
 
 ## Note
 
@@ -65,6 +65,6 @@ This is a single-skill iteration test. It is the foundation the loop tests (MD-3
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-07-13 |
 | Status       | Draft      |

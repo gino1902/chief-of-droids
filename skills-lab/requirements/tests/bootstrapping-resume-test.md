@@ -33,9 +33,9 @@ At this point `outputs/test-resume` holds only `.claude/settings.json` and `.git
 
 ### Session two — resume
 
-In a new session, cwd still `outputs/test-resume`, re-invoke `bootstrapping-project`.
+In a new session, cwd still `outputs/test-resume`, re-invoke `bootstrapping-project` with no goal argument. This mirrors a real resume: nothing carries the goal across sessions until the Pass 2 stamp exists, so the skill has to re-elicit it.
 
-Expected: the Preamble detects Pass 1 done (settings present), reports it, and resumes at Pass 2. Continue as a Small infra project:
+Expected: the Preamble detects Pass 1 done (settings present), reports it, and resumes at Pass 2. Because no `FRAMING.md` stamp exists yet and no goal argument was passed, the skill must ask for the goal before framing. Answer `infra`. It must not infer the goal from the directory name or any other cue. Continue as a Small infra project:
 
 - Pass 2 size: Small (inline five-question framing).
   - Why: my edge and DNS config drifts by hand-editing in the console, and I cannot tell what changed.
@@ -54,6 +54,7 @@ Expected: the Preamble detects Pass 1 done (settings present), reports it, and r
 ## Acceptance criteria
 
 - On resume, the skill reports Pass 1 as done and starts at Pass 2. It does not re-run `git init` or rewrite `settings.json`.
+- On resume with no goal argument and no stamp yet, the skill asks for the goal rather than guessing, and accepts `infra`. It does not default the goal from the directory name.
 - The goal is `infra` throughout, and the tree matches the infra skeleton (`modules/`, `envs/<env>/`), not a code tree.
 - `CLAUDE.md` uses the infra skeleton with a plan-first rule.
 - `settings.json` from session one is unchanged after session two.
@@ -62,6 +63,7 @@ Expected: the Preamble detects Pass 1 done (settings present), reports it, and r
 
 - Resume redoes Pass 1 (rewrites `settings.json` or re-inits git).
 - The skill fails to detect prior state and starts from scratch.
+- On resume, the skill guesses or defaults the goal (for example from the directory name) instead of asking, when no argument and no stamp are present.
 - A code tree is scaffolded instead of the infra tree.
 
 ## Record
@@ -70,6 +72,6 @@ Note the per-pass status line the Preamble prints on resume, and confirm `settin
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-07-13 |
-| Status       | Draft      |
+| Status       | Review     |
