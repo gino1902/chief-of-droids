@@ -33,9 +33,10 @@ Never silently skip a question, especially the pushback step.
 Every run starts here. Read `FRAMING.md` with the Read tool and route on what you find.
 
 - If `FRAMING.md` does not exist, this is a first run. Go to Phase 1.
-- If `FRAMING.md` exists, this is an update run. Ask which section(s) to revisit, then go to Phase 2.
+- If `FRAMING.md` exists and its YAML frontmatter carries a `last_updated` key, it is already in framing-project shape. This is an update run. Ask which section(s) to revisit, then go to Phase 2.
+- If `FRAMING.md` exists but has no `last_updated` frontmatter and carries a `<!-- goal: ... -->` stamp, it is a Small five-question doc (from `bootstrapping-project`). This is a convert run. Go to Phase 1b.
 
-Announce the path in one line: "Framing doc not found - let's write it." or "Found existing framing - let's review and update."
+Announce the path in one line: "Framing doc not found - let's write it." / "Found existing framing - let's review and update." / "Found a Small framing - let's upgrade it to the full shape."
 
 ### Phase 1: First-run interview
 
@@ -58,6 +59,24 @@ Ask every section in order, including the optional ones. Never skip a section wi
 When the required sections (1-5) are captured, read `references/framing-template.md`. Its sections correspond one to one with the interview sections above, in the same order, so fill each template section from the answer captured for the matching interview section. Before showing anything, run the post-write checklist at the bottom of the template and fix any item that fails. Then present the full draft in chat, offer one round of edits, and write to `FRAMING.md`.
 
 Then seed the domain language. Read `references/concepts-template.md` and write `CONCEPTS.md` at the repo root, capturing the domain terms already surfaced in the framing answers, structured by track (one context block per track) plus a shared core. Do not run a separate vocabulary interview; framing stays short and downstream skills grow the language. Run the concepts post-write checklist before writing.
+
+### Phase 1b: Convert a Small five-question doc
+
+The Small doc answers five questions (Why, For whom, Success, Delivered, Constraints), with a goal stamp on line one and no frontmatter. Convert it in place. Do not re-interview what it already answers.
+
+1. Preserve the `<!-- goal: ... -->` stamp, re-emitted immediately after the new YAML frontmatter. This skill does not otherwise read or change it.
+2. Carry each answered section into its target, keeping the user's own wording:
+
+   | Small section   | framing-project target                                 |
+   |:----------------|:-------------------------------------------------------|
+   | Why             | Target problem (the diagnosis)                         |
+   | Why + Delivered | Our approach (the goal plus the means Delivered names) |
+   | For whom        | Who it's for → Customer                                 |
+   | Success         | What success means → customer measure                  |
+   | Constraints     | Not working on (the hard exclusions)                   |
+
+3. Read `references/framing-interview.md` and interview only the gaps the Small doc cannot supply, with full pushback: the Business dimension of "Who it's for" and "What success means" (a solo Small project may genuinely have no separate sponsor - record that rather than invent one), and Tracks, which the Small doc never carries and which the Medium+ shape requires.
+4. Add YAML frontmatter (`name`, `last_updated` = today) and write the doc from `references/framing-template.md`, running its post-write checklist. Then seed `CONCEPTS.md` per Phase 1's final step, drawing the domain terms already surfaced in the carried answers.
 
 ### Phase 2: Update run
 
@@ -89,3 +108,11 @@ If any revisited section changed the domain terms or boundaries, read `reference
 The framing structure (target problem, our approach, tracks) is adapted from Richard Rumelt's *Good Strategy Bad Strategy: The Difference and Why It Matters* (Crown Business, New York, 2011, ISBN 978-0307886231), specifically his kernel of diagnosis, guiding policy, and coherent action. The interview questions push past what he calls "bad strategy": fluff, goals dressed up as strategy, and feature lists in place of a guiding choice.
 
 This skill is adapted from the `ce-strategy` skill in Every's compound-engineering-plugin (https://github.com/EveryInc/compound-engineering-plugin), used under the MIT licence. See `LICENSE`.
+
+---
+
+| Field        | Value      |
+|:-------------|:-----------|
+| Version      | 1.0        |
+| Last Updated | 2026-07-13 |
+| Status       | Review     |
