@@ -12,6 +12,8 @@ Refines the what of one product surface, anchored in project FRAMING, into a com
 
 **Thin-slice scope.** This version handles one component per run. Multi-component fan-out, a system-level cross-cutting slice, approach exploration, resume logic, and any downstream handoff beyond emitting the slice are deliberately out of scope.
 
+**Standalone use.** Running this skill on its own, a one-shot brainstorm from a FRAMING with no project around it and no `CONCEPTS.md` beside it, is valid and terminal. It needs no bootstrapped project, and the slice it emits is the deliverable. Carrying that slice onward into `writing-requirements` is discouraged: the formalisation chain proper starts from a bootstrapped or `framing-project` project, not from a decoupled brainstorm. The Phase 2 emission still reports the downstream invocation for the in-chain case; treat it as not applying to a standalone run.
+
 <reference-files>
 
 | File | Load at | Condition |
