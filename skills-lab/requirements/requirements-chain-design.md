@@ -6,30 +6,61 @@ A reader's map of how framing, elicitation, and formalisation fit together, and 
 
 ```mermaid
 flowchart TB
-    U([user dialogue]) --> FP[framing-project]
-    FP -- produces --> FRAMING[FRAMING.md]
-    FP -- produces --> CONCEPTS[CONCEPTS.md]
+    U([user dialogue]) --> BP[bootstrapping-project]
+    BP --> SIZE{project size}
+    SIZE -- "Small, produces" --> FRAMING[/FRAMING.md/]
+    SIZE -- "Medium+" --> FP[framing-project]    
+    FP -- produces --> FRAMING
+    FP -- produces --> CONCEPTS[/CONCEPTS.md/]
+    BP -- produces --> TREE[/project tree anchor/]
+    BP -- produces --> CLAUDE[/CLAUDE.md/]
 
     FRAMING -- consumes --> BR[brainstorming-requirements]
     CONCEPTS -- consumes --> BR
-    BR -- produces --> SLICE[component slice .md]
+    BR -- produces --> SLICE[/component slice .md/]
     BR -. records new terms .-> CONCEPTS
 
     SLICE -- consumes --> WR[writing-requirements]
-    WR -- produces --> REQ[slug-requirements.md]
-    WR -- produces --> REP[slug-report.md]
+    WR -- produces --> REQ[/slug-requirements.md/]
+    WR -- produces --> REP[/slug-report.md/]
     REP -. warnings feed refinement .-> BR
 ```
 
-Read the solid arrows as produce and consume, the dotted arrows as the two loops: brainstorming records new terms back to `CONCEPTS.md`, and the report's warnings feed the next refinement pass.
+Node shapes mark the two types: rectangles are activities (the skills and steps that do work), parallelograms are deliverables (the artifacts they produce). The diamond is the size decision and the rounded node is external user input.
 
-It is a requirements-refinement pipeline anchored in project framing. Framing sets intent and domain language. brainstorming-requirements elicits the what. writing-requirements writes it into a prescriptive, testable spec so that development has an unambiguous target and is predictable. Plan (the how) sits downstream and is out of scope here.
+Read the solid arrows as produce and consume, the dotted arrows as the two loops: brainstorming records new terms back to `CONCEPTS.md`, and the report's warnings feed the next refinement pass. Note the size fork: a Small project frames inline and produces no `CONCEPTS.md`; a Medium+ project delegates framing to framing-project, which also seeds `CONCEPTS.md`. That fork is the single biggest determinant of how the downstream chain behaves (see Project size below).
 
-## Roles
+bootstrapping-project sets the project up (environment, framing, tree anchor, CLAUDE.md). The requirements chain proper is framing → brainstorming-requirements → writing-requirements: framing sets intent and domain language, brainstorming-requirements elicits the what, writing-requirements writes it into a prescriptive, testable spec so development has an unambiguous target and is predictable. Plan (the how) sits downstream and is out of scope here.
 
-- framing-project produces `FRAMING.md` (the intent anchor: problem, approach, who, success, tracks, out of scope) and seeds `CONCEPTS.md` (the domain language). Language and boundaries are set here, up top.
-- brainstorming-requirements refines one component at a time through a one-question-per-turn interview, and emits a single component slice. It consumes `CONCEPTS.md` and records new terms back to it. It elicits, it does not write the final spec.
-- writing-requirements is unchanged. It extracts a structured requirements artifact and a diagnostic report from the slice, with no synthesis: anything absent or mis-shaped comes back as `N/A` + Warning.
+## Steps: activities and deliverables
+
+Each step is an activity (the work it performs) that yields deliverables (the durable artifacts it leaves behind). The activity is the means and persists nothing but its deliverables; the deliverables are what the next step consumes. Keeping the two apart matters twice over: a reader sees what the chain produces at a glance, and an agent running a step knows to run only the activity and to emit exactly the listed deliverables, no extra artifacts.
+
+| Step | Activity (what it does) | Consumes | Deliverables (what it produces) |
+|:--|:--|:--|:--|
+| bootstrapping-project | Four-pass project setup (environment, framing, tree, CLAUDE.md); Pass 2 branches by size | user dialogue; goal (thinking / code / infra) | `.claude/` baseline config; `FRAMING.md`; project tree anchor (provisional); `CLAUDE.md` |
+| ↳ Pass 2, framing | Small: inline five-question framing. Medium+: delegates to framing-project | user dialogue | Small: `FRAMING.md` only. Medium+: `FRAMING.md` + `CONCEPTS.md` (context-structured, via framing-project) |
+| brainstorming-requirements | Elicits one component's requirements through a one-question-per-turn dialogue; does not write the final spec | `FRAMING.md`, `CONCEPTS.md` | one component slice `.md`; new terms appended to `CONCEPTS.md` |
+| writing-requirements (unchanged) | Formalises the slice into a structured spec by extraction only, no synthesis; absent or mis-shaped signal returns as `N/A` + Warning | component slice `.md` | `<slug>-requirements.md`; `<slug>-report.md` |
+
+Two of the arrows in the diagram are activities, not deliverables: brainstorming-requirements appending new terms to `CONCEPTS.md` is a running update to an existing deliverable, and the report's warnings driving the next elicitation pass produce no new artifact. Everything else on a solid arrow is a deliverable handed to the next step.
+
+## Project size and its downstream impact
+
+Project size is decided once, at bootstrapping Pass 2, and it propagates through the whole chain. It is the highest-leverage choice in the setup, because it fixes which anchors the requirements chain will have to work from.
+
+| Size | Bootstrapping produces | Downstream consequence |
+|:--|:--|:--|
+| Small (solo, one workflow, no sponsor) | `FRAMING.md` only, no `CONCEPTS.md`, no Tracks | The requirements chain runs without a domain-language anchor: brainstorming-requirements has no term source, and writing-requirements raises undefined-term warnings (the O2 pre-`CONCEPTS.md` failure). Single-context and single-component by construction, so no fan-out. |
+| Medium+ (multiple tracks, sponsor, budget) | `FRAMING.md` + context-structured `CONCEPTS.md` + Tracks | The chain has its domain-language anchor and extracts clean. Tracks are the bounded contexts that become `CONCEPTS.md` context blocks and the units the multi-component fan-out iterates. |
+
+Three impacts worth holding:
+
+- Domain-language anchor. The size choice, made at bootstrap, decides whether the requirements chain is clean or noisy on vocabulary. Not cosmetic: undefined terms drag the Unambiguous score and hide drift.
+- Context and fan-out are Medium+ features. Only Medium+ framing yields Tracks, and Tracks are what both the context-structured `CONCEPTS.md` and the multi-component fan-out stand on. A Small project is inherently one context, one component.
+- Grounding depth. Small framing is lighter (five questions, possible `🔲` gaps, no pushback), so brainstorming surfaces more open questions than on a Medium+ base.
+
+The gate is proportionate, not a defect. A Small project is unlikely to run the heavy requirements chain, so skipping `CONCEPTS.md` and Tracks is right-sized. The one risk is a Small project entering the chain silently, and the mitigation is the upgrade path: run framing-project on it to seed `CONCEPTS.md` and Tracks, converting it to the Medium+ shape before elicitation begins.
 
 ## The elicit-then-write seam
 
@@ -72,6 +103,6 @@ Artifacts from the run live under `outputs/seam-test-o2/` (the slice and a test 
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.3        |
 | Last Updated | 2026-07-13 |
 | Status       | Draft      |
