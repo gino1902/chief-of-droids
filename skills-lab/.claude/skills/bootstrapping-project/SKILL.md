@@ -166,10 +166,15 @@ Written last so it documents the tree that now exists.
 4. **Tail — enforcement and Karpathy.** For any hard prohibition you found, propose matching
    `settings.json` deny rules and hooks in this close report — never write them into
    `settings.json`, which was written once in pass 1 and is not touched again. Quote each
-   proposed deny rule in one canonical glob form so runs do not drift on the pattern. If
-   `~/.claude/CLAUDE.md` does not carry the Karpathy behavioural guidelines, tell the user to
-   install them there once — they are project-independent and do not belong in a project
-   CLAUDE.md.
+   proposed deny rule in one canonical glob form so runs do not drift on the pattern. The
+   generated project CLAUDE.md ends with a one-line pointer to the user-level behavioural
+   guidelines; resolve it by check → read → apply — check they exist at user level (default
+   `~/.claude/CLAUDE.md`), read the location, and apply the pointer into the project CLAUDE.md
+   the skill instantiates. The apply target is always the project file; the skill never writes
+   `~/.claude/CLAUDE.md` or installs anything into the user's environment. If the guidelines are
+   absent, omit the pointer and surface a warning in the close report telling the user to install
+   them at user level — they are project-independent and do not belong in a project CLAUDE.md,
+   which references them rather than holding them.
 
 ## Close
 
@@ -192,6 +197,6 @@ substantive work.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.9        |
+| Version      | 1.11       |
 | Last Updated | 2026-07-13 |
 | Status       | Review     |

@@ -8,6 +8,10 @@ You are an expert in skills engineering and prompt engineering.
 `skills-lab` is a staging area for skill design and test work.
 This is a working repository.
 
+## Skill scope boundary
+
+A project-scoped skill may read user-global state, for example `~/.claude/CLAUDE.md`, but never writes or mutates it, and never installs into the user's environment. Every write targets the project, meaning cwd or the repo root. A skill that needs user-level content references its location and warns when it is absent. It does not create or change that content.
+
 ## Read & write permissions
 
 All read and write actions must target files in cwd and subdirectories.

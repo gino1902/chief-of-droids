@@ -22,6 +22,18 @@ live once at user level. See the tail check below.
 
 Use the skeleton for the locked goal. Fill only from what you found. Delete unfilled lines.
 
+Append one pointer line as the final line of every generated CLAUDE.md, regardless of goal, so
+the deferral of behavioural conduct to user level is explicit and checkable rather than a silent
+omission:
+
+```markdown
+> Behavioural conduct (think-before-coding, simplicity-first, surgical changes, goal-driven
+> execution) lives at user level in `~/.claude/CLAUDE.md`, not duplicated here.
+```
+
+The Pass 4 tail then verifies the referenced file actually carries those guidelines and warns if
+it does not.
+
 ### thinking
 
 ```markdown
@@ -148,9 +160,17 @@ Preserve the author's wording everywhere else. Show the diff, apply only on appr
    canonical glob form per command (`Bash(pnpm deploy)` and `Bash(pnpm deploy:*)`), so two
    runs proposing the same rule quote it identically rather than drifting between `deploy *`
    and `deploy:*`.
-2. **Check the Karpathy guidelines.** If `~/.claude/CLAUDE.md` does not contain them, tell
-   the user to install them there once (github.com/forrestchang/andrej-karpathy-skills).
-   They are project-independent and must not be copied into a project CLAUDE.md.
+2. **Resolve the conduct reference — check, read, apply.** The skill instantiates the *project*
+   CLAUDE.md, so the apply target is that file — never the user's global config, and the skill
+   installs nothing into the user's environment.
+   - **Check** whether the user-level behavioural conduct exists (default location
+     `~/.claude/CLAUDE.md`).
+   - **Read** it to confirm the location and that it carries the guidelines.
+   - **Apply** the one-line pointer into the project CLAUDE.md, pointing at that location.
+   If the conduct is absent, do not fabricate the reference — omit the pointer and surface a
+   warning in the close report telling the user to install the guidelines at user level
+   (github.com/forrestchang/andrej-karpathy-skills). They are project-independent: the project
+   file references them, it never holds or installs them.
 
 ## Note on the footer
 
@@ -161,6 +181,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.4        |
-| Last Updated | 2026-07-08 |
+| Version      | 1.6        |
+| Last Updated | 2026-07-13 |
 | Status       | Review     |
