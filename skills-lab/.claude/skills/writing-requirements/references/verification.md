@@ -79,11 +79,13 @@ Count modal verbs per requirement statement: `SHALL`, `MUST`, `SHOULD`, `MAY`.
 ### Unambiguous
 **Heuristic.**
 
-- ✓ if all domain-specific terms in the statement appear in §Glossary
-- ✗ if one or more terms are used but not defined in §Glossary
+- ✓ if every domain term in the statement appears in §Glossary
+- ✗ if one or more domain terms are used but not defined in §Glossary
 - Emit Warning per undefined term: `FR-NNN: term "<term>" not in Glossary`
 
-Common words and RFC 2119 keywords are exempt from this check.
+A domain term is any noun or noun phrase naming a thing the requirement acts on or produces — its objects, inputs, and outputs. Exempt — never counted as domain terms — are only this closed set: the terms in the Phase 3 stop-word list; the RFC 2119 keywords (`MUST`, `SHOULD`, `MAY`) and EARS keywords (`SHALL`, `WHEN`, `WHILE`, `IF`, `THEN`, `WHERE`); and the EARS subject, meaning the component under specification (the `system` in `the system SHALL …`). Everything else the requirement names and the Glossary does not define scores ✗.
+
+Do not widen the exemption to an open notion of "common words". That open exemption is exactly what lets an undefined domain object pass silently — for example a lowercase `record` in `the system SHALL store each record`, which is a domain term (the object the requirement acts on), not a common word. The skill flags such a term; it never invents a definition. The upstream fix is to define it in `CONCEPTS.md`, not to exempt it here.
 
 ### Verifiable
 **Auto-scorable.**
