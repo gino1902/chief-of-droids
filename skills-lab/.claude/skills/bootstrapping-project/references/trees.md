@@ -37,9 +37,9 @@ databricks.yml            bundle definition, targets (dev/prod)
 pyproject.toml            deps, managed via uv
 src/<pkg>/
   main.py                 importable, testable package code
-  notebook.ipynb          thin orchestration notebook, imports the package
+  notebook.ipynb          thin orchestration entry, imports the package (style provisional)
 resources/
-  <pkg>_job.yml           job / workflow definitions
+  <pkg>.job.yml           job / workflow definitions
 tests/
   main_test.py            unit tests against the package, via databricks-connect
 ```
@@ -54,6 +54,20 @@ directly via `databricks-connect`, not the notebook itself.
 Deferred: `scratch/exploration.ipynb` for throwaway notebooks, added at the first ad-hoc
 exploration (never deployed). A second `resources/*.yml` at the second job. `docs/adr/` at
 the first decision.
+
+Topology is provisional. This is a single bundle, the clonable unit. Layering it into a
+medallion monorepo (bronze / silver / gold as top-level directories, one bundle per producer,
+subject area, and use case, sharing a `common/` via `sync.paths`) is an architecture-stage
+decision, not a bootstrap-time one. Defer it to `making-architecture-decision` and
+`writing-technical-design`; do not pre-scaffold layers here. The anchor stays one bundle so
+the architecture stage can restructure without unwinding speculative directories.
+
+Orchestration style is provisional too. The `default-python` template ships a thin
+`notebook.ipynb`. A declarative Lakehouse Pipeline (a `resources/*.pipeline.yml` over pure
+`src/` modules, no notebook) is the alternative, and it is what a medallion platform tends to
+use. Which style, and whether to add `*.pipeline.yml`, is an architecture-stage decision routed
+to `making-architecture-decision` and `writing-technical-design`. Scaffold only what the
+template gives; do not pre-commit either style here.
 
 Workspace convention (separate from the repo layout, note it, do not scaffold it): git
 folders are cloned per-developer under `/Workspace/Users/<email>/<project>`, with a shared
@@ -171,6 +185,6 @@ in one place, under one goal, per the one-goal-per-repo principle.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.6        |
-| Last Updated | 2026-07-08 |
+| Version      | 1.7        |
+| Last Updated | 2026-07-13 |
 | Status       | Review     |

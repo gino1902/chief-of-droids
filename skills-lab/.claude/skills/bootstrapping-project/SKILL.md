@@ -128,10 +128,11 @@ FRAMING.md is user-owned after creation — never modify it autonomously in a la
 4. **Small — frame inline.** Ask the five framing questions (why, for whom, what success is,
    what is delivered, what constraints apply). Keep answers tight. Leave any unanswered section
    marked `🔲` rather than inventing content. Write FRAMING.md with the goal stamp as the first
-   line.
+   line. The Small path deliberately skips `CONCEPTS.md` — a solo, single-workflow project does
+   not need a domain-language artifact. If it later grows, a `framing-project` run seeds one.
 5. **Medium+ — delegate to `framing-project`.** Invoke the `framing-project` skill (via the
-   Skill tool) and let it run its interview and write FRAMING.md. Do not duplicate the interview
-   yourself. `framing-project` does not write the goal stamp, so when it returns, inject
+   Skill tool) and let it run its interview, write FRAMING.md, and seed the companion
+   `CONCEPTS.md` (the domain language). Do not duplicate the interview yourself. `framing-project` does not write the goal stamp, so when it returns, inject
    `<!-- goal: <locked-goal> -->` immediately after the YAML frontmatter if it is not already
    there. `framing-project` writes at the working-directory root — if you are bootstrapping a
    different target path, run it from that directory or move the produced FRAMING.md into the
@@ -189,6 +190,6 @@ substantive work.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.7        |
-| Last Updated | 2026-07-09 |
+| Version      | 1.8        |
+| Last Updated | 2026-07-13 |
 | Status       | Review     |

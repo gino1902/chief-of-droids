@@ -14,6 +14,10 @@ The five-question flow below is the **Small** path. For **Medium+** projects, SK
 delegates to the `framing-project` skill instead, which runs its own interview and writes
 FRAMING.md; bootstrap then injects the goal stamp. Use the questions here only on the Small path.
 
+The Small path writes FRAMING.md only. `CONCEPTS.md`, the domain-language companion, is a
+Medium+ concern seeded by `framing-project`; a Small, single-workflow project skips it, and a
+later `framing-project` run seeds it if the project grows.
+
 ## The five questions
 
 Ask these, keep answers tight, and write only what the user gives you. Do not pad.
@@ -110,6 +114,6 @@ section (Constraints). If the user later wants a status marker, they add it them
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.4        |
-| Last Updated | 2026-07-08 |
+| Version      | 1.5        |
+| Last Updated | 2026-07-13 |
 | Status       | Review     |
