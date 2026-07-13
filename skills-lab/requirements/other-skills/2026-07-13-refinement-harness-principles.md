@@ -15,7 +15,7 @@ Each principle carries a stage-applicability tag: [advisor], [orchestrator], [al
 **Gate semantics**
 - P1. [all] DoR/DoD exist only to evaluate readiness to move from one stage to the next. They are guidance, never hard blocks. Humans own flow decisions; the harness (at orchestrator maturity) owns flow mechanics (P12).
 - P2. [all] Transition assessments carry rationale per criterion, not bare verdicts.
-- P3. [all] Minimal gate set: only load-bearing criteria per transition. Count and selection TBD — see outstanding questions.
+- P3. [all] Minimal gate set: each transition answers one question, and its criteria are the minimum evidence for that answer. Organisation-specific additions live in contract instances (P9), never in the principle set.
 - P10. [all] Each stage owns one artefact template embodying the DoR/DoD essence of that stage.
 - P13. [all] No producer assesses its own artefact against the contract. At advisor maturity, assessment is performed by a party other than the producing skill or session. At orchestrator maturity, it runs harness-side.
 
@@ -49,6 +49,7 @@ Per target skill: gap analysis = principles × current skill behaviour → skill
 - No delivery-side tooling (sprint boards, burndown, estimation math).
 
 ## Key decisions
+- P3 resolved: three transition questions — worth shaping? (epic → feature), buildable? (feature → backlog), pickable by a team? (backlog → delivery-ready) — carrying eight criteria in total. The criteria live in the contract artefact per P9, not in this document. Derived from the transition questions; the originating flowchart was brainstorm input, not an anchor.
 - Maturity stages renamed advisor / orchestrator for self-explanatory reading (formerly C / B in session history, from the approach menu of the originating brainstorm).
 - Interfaced, not coupled: skills standalone, DoR/DoD as methodology contract (P11). Resolves P9 in a stronger form — the shared reference is the interface artefact itself.
 - Harness owns flow mechanics, humans own flow decisions (P12). User wording challenged against Anthropic's workflow pattern and revised to the control/data split: harness activates, skills return results.
@@ -70,20 +71,20 @@ Per target skill: gap analysis = principles × current skill behaviour → skill
 ## Outstanding questions
 
 ### Resolve before gap analysis
-- [Affects P3][User decision] Which criteria per transition are load-bearing, and how many? Claude proposes a shortlist, user decides.
+_(none — P3 resolved, see key decisions)_
 
 ### Deferred to gap analysis or later
 - [Affects orchestrator maturity][User decision] Artefact store: markdown repo vs Jira/ADO. Blocks orchestrator-stage design only.
 - [Affects P12][Technical] Stage-state representation — default: self-describing artefact frontmatter, progression record harness-side.
 - [Affects P2][Technical] Assessment output format (per-criterion verdict table vs prose).
-- [Affects P4, P9][Technical] Contract schema and shared-reference location.
+- [Affects P4, P9][Technical] Contract schema and shared-reference location; carries the eight resolved criteria with their default gate ownership.
 - [Affects P9][Design] Contract shape: static per stage, or negotiated per work item (sprint-contract precedent, source 2).
 - [Affects P11][Technical] Conformance checking cadence — default: at gap analysis and via qualify-pass governing-contract anchor, no runtime machinery.
 - [Affects P13][Design] Cross-party assessment at advisor stage: which party (sibling skill, fresh session, qualify pass) — decide at gap analysis.
 
 ## Next steps
-Run the per-skill gap analysis (conversion mechanism above). Starting skill to be decided at gap-analysis kickoff. Resolve the load-bearing criteria question first.
+Run the per-skill gap analysis (conversion mechanism above). Starting skill to be decided at gap-analysis kickoff. First build step: author the contract artefact (P9) carrying the eight criteria.
 
 <!--
-Version: 2.6 | Last Updated: 2026-07-13 | Status: Draft
+Version: 2.7 | Last Updated: 2026-07-13 | Status: Draft
 -->
