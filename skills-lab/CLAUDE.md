@@ -59,3 +59,7 @@ Every `.md` file written to disk via a workflow must include a version block at 
 
 Version numbers must increment on each material revision.
 Format: `1.0` for initial release, `1.1`, `1.2` etc. for incremental updates, `2.0` for structural rewrites.
+
+## Target and version
+
+These instructions are version-neutral. They target claude-code and do not depend on any single Claude model version.
