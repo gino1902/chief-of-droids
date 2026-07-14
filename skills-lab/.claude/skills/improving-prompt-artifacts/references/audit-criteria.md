@@ -9,6 +9,7 @@ Direct, technical, no filler. Quote violations verbatim. Cite the best-practices
 <execution-rules>
 Apply every criterion in the order it appears in each block.
 Evaluate every criterion against the submitted artifact.
+Before scoring a criterion, check its precondition. A criterion whose precondition is absent is NOT APPLICABLE, not Failed. Preconditions: EX-1 through EX-5 require the artifact to define an output format or contain non-trivial output-format rules; OUT-1 through OUT-5 require the artifact to produce a machine-consumed output such as structured data, a fixed schema, or a pinned response contract. A prose guidance artifact that emits no such output takes N/A on these criteria. OBL-5 requires the artifact to define a task or workflow with a scope of effort; a standing config or preferences artifact that sets rules rather than a task takes N/A. STR-2 requires the artifact to intermix multiple prompt components (instructions, context, examples, inputs) in one document; a guidance or config artifact organised by topic under markdown headers takes N/A. RSN-3 requires the artifact to govern a model's response generation where chain-of-thought is a relevant lever; a standing config or preferences artifact takes N/A. This precondition gate takes precedence over a criterion's own "Applicability: universal" tag where the two conflict.
 Report every violation. Report each violation block in full.
 Do not gate the audit on Minor violations. Surface them; continue evaluating.
 Reason internally before producing the report. Include in the output only the structured report.
@@ -28,7 +29,9 @@ REASON CLAUSE — a sentence following a rule that encodes the intent or princip
 
 VIOLATION — a criterion that fails. Report every violation; do not stop at the first.
 
-INSUFFICIENT EVIDENCE — a criterion that cannot be assessed because the artifact does not contain enough information to evaluate it. Count as Failed.
+INSUFFICIENT EVIDENCE — a criterion whose precondition is met but which cannot be fully assessed because the artifact does not contain enough information to evaluate it. Count as Failed.
+
+NOT APPLICABLE — a criterion whose precondition is absent from the artifact, for example an output-determinism criterion evaluated against an artifact that produces no machine-consumed output. Record as N/A. Do not count as Failed. Reason: scoring an absent precondition as a failure manufactures violations and pushes the artifact toward structure it does not need.
 
 CITATION — every criterion that derives from the snapshot in claude-prompting-best-practices.md carries a citation tag pointing to the section. Criteria not in the snapshot carry the tag (source: in-house).
 </definitions>
@@ -182,11 +185,11 @@ Source: best-practices snapshot, "Match your prompt style to the desired output.
 
 SECTION 3 — EXAMPLES
 
-EX-1: For each non-trivial output format rule, verify 3–5 complete worked examples are present.
-Pass: every non-trivial format rule has 3–5 concrete examples showing the exact expected output.
-Fail: fewer than three examples exist for a non-trivial format rule, or a format rule has no example.
-Fix: add labeled examples to reach 3–5.
-Reason: one example anchors a single pattern; three establish range — without range, the model generalises from the single case and fails on inputs outside that shape.
+EX-1: For each non-trivial output format rule whose correct application is not inferrable from the stated principle alone, verify worked examples are present, 3–5 where the input space is wide.
+Pass: every such rule carries at least one worked example, and rules with a wide input space carry 3–5 spanning that range. A rule whose correct application follows from its principle needs no example.
+Fail: a rule whose correct application is not inferrable from principle has no example, or a wide-input-space rule shows only a single pattern.
+Fix: add labeled examples where inference from principle is insufficient. Do not add examples to rules already unambiguous from their principle.
+Reason: one example anchors a single pattern and three establish range, but an example added to an already-inferrable rule is the over-specification BRN-1 and OBL-5 warn against. Demonstrate where principle underdetermines behaviour, not by default.
 Applicability: universal.
 Source: best-practices snapshot, "Include 3–5 examples for best results."
 
@@ -512,6 +515,6 @@ Reason: prior audit state introduces confirmation bias — the current run must 
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-05-17 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-14 |
 | Status       | Draft      |

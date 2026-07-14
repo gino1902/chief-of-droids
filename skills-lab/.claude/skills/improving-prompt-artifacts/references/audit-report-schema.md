@@ -21,6 +21,8 @@ UNAUDITABLE unauditable_input
 
 SUMMARY
 Total criteria: 41
+Not applicable: 0
+Applicable criteria: 41
 Passed: 0
 Failed: 41
 Risk level: High — do not deploy
@@ -141,6 +143,8 @@ Every report ends with a Summary block:
 ```
 SUMMARY
 Total criteria: 41
+Not applicable: [n]
+Applicable criteria: [41 − N/A]
 Passed: [n]
 Failed: [n]
  — Blocking: [n]
@@ -151,19 +155,28 @@ Risk level: [per thresholds below]
 
 ### Risk level thresholds
 
-| Passed (of 41) | Pass ratio | Risk level |
-|:---------------|:-----------|:-----------|
-| 41 | 100% | Low — safe to deploy |
-| 35–40 | 85–99% | Medium — address violations before deployment |
-| Below 35 | <85% | High — do not deploy |
+Pass ratio = Passed / Applicable criteria, where Applicable = 41 − Not applicable.
+
+| Pass ratio | Risk level |
+|:-----------|:-----------|
+| 100% | Low — safe to deploy |
+| 85–99% | Medium — address violations before deployment |
+| Below 85% | High — do not deploy |
 
 Override rule: any Blocking violation forces Risk level High regardless of pass ratio.
 
 ---
 
-## Insufficient Evidence Rule
+## Insufficient Evidence and Not Applicable Rules
 
-If a criterion cannot be assessed due to insufficient evidence:
+Distinguish two cases by whether the criterion's precondition is present in the artifact.
+
+Precondition absent — the artifact does not contain the feature the criterion governs, for example an output-determinism criterion against an artifact that produces no machine-consumed output:
+- Record as NOT APPLICABLE. Do not produce a violation block.
+- Exclude from the Failed count and from the pass-ratio denominator. Add to the "Not applicable" summary count.
+- Reason: scoring an absent precondition as a failure manufactures violations and pushes the artifact toward structure it does not need.
+
+Precondition present but unassessable — the feature exists but the artifact does not carry enough information to evaluate the criterion:
 - Record: `Finding: Insufficient evidence to assess. Fix: [describe what would resolve the ambiguity].`
 - Count as Failed.
 - Assign severity Major unless the criterion's failure mode is explicitly Blocking (e.g., ENV-1 when environment-conditional criteria apply).
@@ -172,6 +185,6 @@ If a criterion cannot be assessed due to insufficient evidence:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-05-17 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-14 |
 | Status       | Draft      |
