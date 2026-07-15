@@ -7,7 +7,7 @@
 
 ## What a play is
 
-A play is a recipe you want to reproduce when you face a similar situation again. It is reconstructed from a single Claude-user session that produced a move worth capitalising on, then generalised into a repeatable procedure.
+A play is a recipe you want to reproduce when you face a similar situation again. A session usually spans several moves; a play captures one. It is reconstructed from the move within a Claude-user session that is worth capitalising on, then turned into a repeatable procedure pitched at the narrowest scope that will recur.
 
 A play is not a narrative retrospective (which recounts what happened) and not a generic how-to (which prescribes steps from scratch). It is the idealised path through a situation, recovered after the fact, with the dead ends removed and the load-bearing decisions named.
 
@@ -24,7 +24,7 @@ The play is the output of this format. The deliverable is the recipe itself (opt
 | **When not to use it** | No-go conditions and counter-cases that look similar but break the recipe. | Bullet list |
 | **Expected outcome** | The value a future reuse should return, for the user and/or the system. Stated in checkable terms. | Prose or short table |
 | **Tradeoffs** | The decisions where one pole was chosen against another, with the position taken and what it gave up. The reasoning behind the recipe. | One or more decision tables |
-| **Version block** | Standard. Plus a Pairs with: line linking the deliverable doc(s) the originating session produced. | Table |
+| **Version block** | The play's single version block. Carries Version, Last Updated, Status, and a Pairs with: line linking the deliverable doc(s) the session produced, or N/A when the session produced chat output only. | HTML comment at file end |
 
 "When to trigger" describes the situation so a reader can pattern-match it. "When to use it" and "When not to use it" are the go and no-go gates applied once the match is made. Keep the three distinct.
 
@@ -56,19 +56,21 @@ Each tradeoff names both poles honestly and states the position taken, which is 
 | P6 | Use and don't-use gates are both stated. | Without the don't-use gate the play becomes universal advice and stops being a recipe. |
 | P7 | Expected outcome is stated as value and made falsifiable. | If a reuse cannot be checked against the promised outcome, the play cannot be validated or retired. |
 | P8 | Each tradeoff is stated as both poles plus the chosen position. | Single-pole framing hides the cost. Naming what was given up makes the choice reusable rather than dogmatic. |
+| P9 | Pitch the recipe at the narrowest scope that will recur. Keep it specific to the concrete instance until a second instance is in hand. | Generalising on a single observation invents a recurrence that has not been seen. A later instance is what widens the scope. |
 
 ## Authoring procedure
 
 1. Read the session end to end before drafting any section.
-2. Identify the situation and the move that resolved it. Draft When to trigger first, with at least one concrete example. If you cannot, the session probably does not warrant a play.
-3. State why it matters. Name the problem solved and the deliverable(s) produced.
-4. Reconstruct the optimal workflow. Walk the session, keep the steps that worked, drop the detours, renumber into a clean sequence (P2).
-5. Extract the critical moves. For each, apply the collapse test: would the outcome still hold if this move were removed? If yes, it is not critical (P3).
-6. Mine the session's friction and dead ends for pits to avoid (P4).
-7. Write the when-to-use and when-not-to-use gates (P6).
-8. State the expected outcome as value for the user and/or the system, in checkable terms (P7).
-9. Catalogue the tradeoffs. For each load-bearing decision, name both poles and the position taken. Cluster into categories if there are many (P8).
-10. Add the version block with a Pairs with: row linking the deliverable doc(s).
+2. Bound the play. A session usually spans several moves; the play captures one. Identify the single situation the play covers, from the user's instruction or the single most capitalisable move, and state what falls out of scope. Confirm the target with the user when the session is multi-scope or the instruction is ambiguous about which move.
+3. Identify the situation and the move that resolved it. Draft When to trigger first, with at least one concrete example. If you cannot, the session probably does not warrant a play.
+4. State why it matters. Name the problem solved and the deliverable(s) produced.
+5. Reconstruct the optimal workflow. Walk the session, keep the steps that worked, drop the detours, renumber into a clean sequence (P2).
+6. Extract the critical moves. For each, apply the collapse test: would the outcome still hold if this move were removed? If yes, it is not critical (P3).
+7. Mine the session's friction and dead ends for pits to avoid (P4).
+8. Write the when-to-use and when-not-to-use gates (P6).
+9. State the expected outcome as value for the user and/or the system, in checkable terms (P7).
+10. Catalogue the tradeoffs. For each load-bearing decision, name both poles and the position taken. Cluster into categories if there are many (P8).
+11. Add the version block with a Pairs with: row linking the deliverable doc(s), or N/A when the session produced chat output only.
 
 ## When to author a play
 
@@ -89,17 +91,17 @@ Each tradeoff names both poles honestly and states the position taken, which is 
 - The optimal workflow is numbered. Critical moves and pits are listed.
 - Tradeoffs are rendered as pole A / pole B / chosen position tables.
 - All concrete examples sit under When to trigger, not scattered through other sections.
-- The version block carries a Pairs with: row linking the deliverable doc(s) the session produced.
+- The play's version block is a single HTML comment at file end, not a visible table. It carries a Pairs with: row linking the deliverable doc(s) the session produced, or N/A when the session produced chat output only. Plays are interactively authored rather than workflow-written, so they use the HTML-comment form.
 
 ## Naming and location
 
 - Filename: `YYYY-MM-DD-<topic>-play.md`
-- Default location: the project root where the play is generated.
+- Location follows the repository's established convention for plays, and falls back to the project root only when the repo has none. The spec does not override a repo convention.
 
 ---
 
 | Field        | Value      |
 | :----------- | :--------- |
-| Version      | 2.0        |
-| Last Updated | 2026-05-31 |
+| Version      | 2.1        |
+| Last Updated | 2026-07-15 |
 | Status       | Draft      |
