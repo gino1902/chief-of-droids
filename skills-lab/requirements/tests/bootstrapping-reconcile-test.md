@@ -19,6 +19,16 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 - The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `.claude/settings.json`, `FRAMING.md` (framing-project shape with `last_updated` and the `<!-- goal: code -->` stamp), `CONCEPTS.md`, a data-bundle tree anchor, and `CLAUDE.md`.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
+## Base snapshot (before acting)
+
+Reconcile-not-regenerate is a no-change claim across the whole tree, so it is only provable against the pristine base. Before re-invoking bootstrapping, snapshot the fresh base from the skills-lab repo root:
+
+```
+cp -R outputs/test-medium outputs/test-medium.base
+```
+
+Use a filesystem copy, not a nested `git init`. This row re-runs bootstrapping, whose Pass 1 keys on `.git/` plus `.claude/settings.json`; a tester-created `.git/` would change what the skill detects and corrupt the test. The diff in Record uses `git diff --no-index`, which needs no repo.
+
 ## Run steps
 
 ### 1. Re-invoke bootstrapping
@@ -56,10 +66,16 @@ Approve nothing that regenerates. Accept only gap-filling reconciliation.
 
 ## Record
 
-Note which passes reported done versus reconciled, confirm the FRAMING rework went to the framing-project branch, and confirm `settings.json` is byte-for-byte unchanged.
+Note which passes reported done versus reconciled, and confirm the FRAMING rework went to the framing-project branch. Then emit the whole-tree diff against the committed base as evidence, from the repo root:
+
+```
+git diff --no-index outputs/test-medium.base outputs/test-medium > outputs/test-medium.md-5.diff
+```
+
+The diff must be either empty or confined to gap-filling `CLAUDE.md` lines. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, and the tree must be absent from it. Any of those appearing is a regeneration, not a reconcile. Keep `outputs/test-medium.md-5.diff` as the evidence artifact.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-15 |
 | Status       | Draft      |

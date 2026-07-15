@@ -57,10 +57,10 @@ These are in the design doc's Deferred section because the feature is unbuilt. N
 
 After a run-through, mark each row pass or fail and attach the observed `Outstanding` line and any deviation. Read failures against the tier: a failure in a lower tier invalidates the rows above it, so fix bottom-up. Auto-derived glossary entries surface as verification-pending (`WARNING-UNRESOLVED`) after the `conventions.md` resolution-model fix; treat those as normal, not failures.
 
-Record the Capture column as the run proceeds, not after. A clean end-state leaves no trace for behavioural rows or in-place mutation rows, so evidence not captured live cannot be recovered. Rows tagged `[beh]` in that column have no end-state artifact at all and depend entirely on the live transcript. To make in-place effects auditable, `git init` and commit each `test-*` directory at its base state, so every scenario's change reads as a diff rather than a lost delta. The first run-through's marked table is in `../requirements-chain-test-retrospective.md`.
+Record the Capture column as the run proceeds, not after. A clean end-state leaves no trace for behavioural rows or in-place mutation rows, so evidence not captured live cannot be recovered. Rows tagged `[beh]` in that column have no end-state artifact at all and depend entirely on the live transcript. To make in-place effects auditable, snapshot each in-place scenario's base with `cp -R <dir> <dir>.base` before it acts, then capture `git diff --no-index <dir>.base <dir>` as a named evidence artifact, so every scenario's change reads as a diff rather than a lost delta. Use a filesystem copy, not a nested `git init`, which would perturb the bootstrapping detection some rows exercise (see Open items). The four in-place rows (MD-2, MD-3, MD-5, MD-7) carry this in their Base snapshot and Record sections. The first run-through's marked table is in `../requirements-chain-test-retrospective.md`.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-07-14 |
+| Version      | 1.2        |
+| Last Updated | 2026-07-15 |
 | Status       | Draft      |

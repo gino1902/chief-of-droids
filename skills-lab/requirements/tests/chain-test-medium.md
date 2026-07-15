@@ -42,7 +42,7 @@ Invoke `brainstorming-requirements from FRAMING.md --target "ingestion pipeline"
 - Purpose: the ingestion pipeline reads source deliveries into the bronze layer and transforms them through silver to gold, so the business gets trusted enterprise data.
 - Scope: covers reading landing-zone deliveries into bronze, the bronze-to-silver and silver-to-gold transformations, and gating publication to gold on quality rules. Out of scope: populating the landing zone (owned by the source app teams); governance and the catalog (owned by the Governance and platform track); exposing gold (owned by the Exposition and reporting track).
 - Actors and consumers: upstream, the landing zone. Downstream, the Exposition and reporting track consumes gold. Operator, the platform team.
-- Requirements: elicit three to five in the actor / action / result / conditions contract, using the terms defined in `CONCEPTS.md` (backticked or defined so they reach the glossary). For any new term, record it back to `CONCEPTS.md`.
+- Requirements: elicit the requirements the scope implies, in the actor / action / result / conditions contract, using the terms defined in `CONCEPTS.md` (backticked or defined so they reach the glossary). For any new term, record it back to `CONCEPTS.md`. The current canonical base carries five (FR-001 to FR-005, the last being the IF/THEN quality-rule withholding requirement); record the resulting FR list as the base reference (see Record) rather than treating any count as fixed in advance.
 
 Let it emit one component slice.
 
@@ -78,12 +78,14 @@ Medium+ signatures that must be present: FRAMING has `last_updated` frontmatter 
 
 Copy the report's `Outstanding: N blocking, M warnings, K info` line, and classify each warning. Compare against the Small run: the expected difference is that Medium+ carries a governed `CONCEPTS.md` and Tracks, and its report has no undefined-term warnings.
 
+Record the base FR list: the IDs and a one-line summary of each functional requirement this run produced. This is the canonical base every MD-* row reads, so downstream assertions reference these IDs and this count, never a number hard-coded in the downstream test. Snapshot and commit the base per `test-strategy.md` §Retrospective use before running any MD-* row, so an off-by-one in a downstream count surfaces as a diff against a fixed reference rather than silent drift.
+
 ## Note
 
 Multi-component fan-out is deferred, so this test runs a single component (the ingestion pipeline). The Tracks in `FRAMING.md` name the other candidate components, but the test does not fan out over them.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-15 |
 | Status       | Draft      |

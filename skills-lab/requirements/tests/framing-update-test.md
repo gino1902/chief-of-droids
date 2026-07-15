@@ -19,6 +19,16 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 - The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds a framing-project-shaped `FRAMING.md` (YAML frontmatter with `last_updated`, three Tracks) and a context-structured `CONCEPTS.md`.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
+## Base snapshot (before acting)
+
+The scenario edits `FRAMING.md` in place, so the pristine base is destroyed the moment `framing-project` runs. Before invoking anything, snapshot the fresh base from the skills-lab repo root so the no-change criteria can be proven as a diff:
+
+```
+cp -R outputs/test-medium outputs/test-medium.base
+```
+
+Use a filesystem copy, not a nested `git init` inside the test dir. An added `.git/` would perturb the bootstrapping detection sibling rows exercise (see the git-init open item in `test-strategy.md`). The diff in Record compares the copy against the post-run dir with `git diff --no-index`, which needs no repo.
+
 ## Run steps
 
 ### 1. Invoke the update
@@ -56,7 +66,13 @@ Let `framing-project` update `FRAMING.md` and decide whether `CONCEPTS.md` needs
 
 ## Record
 
-Diff `FRAMING.md` before and after: confirm the change is confined to "Our approach" plus `last_updated`. Confirm `CONCEPTS.md` is identical before and after.
+Emit the diff against the committed base as a named evidence artifact, from the repo root:
+
+```
+git diff --no-index outputs/test-medium.base outputs/test-medium > outputs/test-medium.md-2.diff
+```
+
+The diff must contain only `FRAMING.md` changes: the "Our approach" section and the `last_updated` line. `CONCEPTS.md` and every other section must be absent from the diff. If any other path appears, the no-churn rule failed. Keep `outputs/test-medium.md-2.diff` as the evidence artifact.
 
 ## Note
 
@@ -64,6 +80,6 @@ A companion variant worth running later moves a boundary on purpose (rename or r
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-15 |
 | Status       | Draft      |

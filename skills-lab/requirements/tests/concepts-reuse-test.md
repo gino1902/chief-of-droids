@@ -19,6 +19,16 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 - The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `FRAMING.md` (three Tracks), a context-structured `CONCEPTS.md` (the Ingestion and transformation context carries `landing zone` and `quality rules`; the Exposition and reporting context carries `cross-team report`), and the ingestion-pipeline slice.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
+## Base snapshot (before acting)
+
+The write-back edits `CONCEPTS.md` in place, and the no-drift claim is that existing terms are preserved while only the new one is added. That is provable only against the pristine base. Before brainstorming, snapshot the fresh base from the skills-lab repo root:
+
+```
+cp -R outputs/test-medium outputs/test-medium.base
+```
+
+Use a filesystem copy, not a nested `git init` inside the test dir. An added `.git/` would perturb the bootstrapping detection sibling rows exercise (see the git-init open item in `test-strategy.md`). The diff in Record uses `git diff --no-index`, which needs no repo.
+
 ## Run steps
 
 ### 1. Brainstorm a second component (different Track)
@@ -53,7 +63,13 @@ Let it emit the slice and update `CONCEPTS.md`.
 
 ## Record
 
-List the terms reused verbatim and the term(s) written back, with the context each landed in. Confirm no existing term was renamed and that the context map still holds.
+List the terms reused verbatim and the term(s) written back, with the context each landed in. Then emit the diff against the committed base as evidence, from the repo root:
+
+```
+git diff --no-index outputs/test-medium.base outputs/test-medium > outputs/test-medium.md-3.diff
+```
+
+Read the diff as the pass check. The only changes allowed are additive: the new `report-builder/` slice, and a `CONCEPTS.md` addition of `report definition` under the Exposition and reporting context. Every existing `CONCEPTS.md` term must be unchanged in the diff (no rename, no re-definition), no requirements file may appear, and `FRAMING.md` must be absent. Keep `outputs/test-medium.md-3.diff` as the evidence artifact.
 
 ## Note
 
@@ -61,6 +77,6 @@ brainstorming handles one component per run, so this is a manual second run agai
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-15 |
 | Status       | Draft      |
