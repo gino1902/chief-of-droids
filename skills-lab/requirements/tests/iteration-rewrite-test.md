@@ -19,6 +19,17 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 - The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` at Version 0.1, carrying the canonical base FR set, and `CONCEPTS.md`. Read the base for the actual FR list, do not assume a count. The current base is FR-001 to FR-005; every "FR-005 / FR-006" below is that instance, not a fixed number.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
+## Reset to the committed base (before acting)
+
+MD-1 asserts ID and statement byte-stability across the re-pass, provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before preparing the substrate:
+
+```
+git reset --hard <base-commit>
+git clean -fd
+```
+
+`<base-commit>` is the base repo's HEAD after a fresh `chain-test-medium` run. This restores a deterministic base with no rebuild and no elicitation variance; the Record step diffs the re-pass output against it.
+
 ## Run steps
 
 ### 1. Prepare the iterated substrate
@@ -27,12 +38,6 @@ Copy `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` to `ou
 
 ```markdown
 **FR** — WHEN a `source delivery` has been read into `bronze`, the system SHALL retain it in its delivered form, so that ingestion is auditable.
-```
-
-Also snapshot the base requirements file, so the re-pass output can be diffed against it for byte-stability (the run overwrites it in place):
-
-```
-cp requirements/ingestion-pipeline/ingestion-pipeline-requirements.md outputs/ingestion-pipeline-requirements.base.md
 ```
 
 The base's existing declared IDs are what Phase 2 must preserve; the appended requirement carries no ID, so it must be assigned the next available one after the base's highest.
@@ -63,10 +68,10 @@ Phase 0.7 reads the prior `ingestion-pipeline-requirements.md` (still 0.1) for I
 
 ## Record
 
-Note the version chain (0.1 to 0.2) and the ID-to-content map after the re-pass. Then diff the re-pass output against the base snapshot, from the repo root:
+Note the version chain (0.1 to 0.2) and the ID-to-content map after the re-pass. Then diff the re-pass output against the committed base, from inside `outputs/test-medium`:
 
 ```
-git diff --no-index outputs/ingestion-pipeline-requirements.base.md requirements/ingestion-pipeline/ingestion-pipeline-requirements.md > outputs/test-medium.md-1.diff
+git diff <base-commit> -- requirements/ingestion-pipeline/ingestion-pipeline-requirements.md > ../test-medium.md-1.diff
 ```
 
 Every base FR must appear in the diff as unchanged context; the only additions are the next-ID requirement (FR-006 for the current base) and the version bump. Confirm no base FR statement is on a changed line. Keep `outputs/test-medium.md-1.diff` as the evidence artifact.
@@ -77,6 +82,6 @@ This is a single-skill iteration test. It is the foundation the loop tests (MD-3
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
+| Version      | 1.3        |
 | Last Updated | 2026-07-15 |
 | Status       | Draft      |

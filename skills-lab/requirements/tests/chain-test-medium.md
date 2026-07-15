@@ -78,7 +78,7 @@ Medium+ signatures that must be present: FRAMING has `last_updated` frontmatter 
 
 Copy the report's `Outstanding: N blocking, M warnings, K info` line, and classify each warning. Compare against the Small run: the expected difference is that Medium+ carries a governed `CONCEPTS.md` and Tracks, and its report has no undefined-term warnings.
 
-Record the base FR list: the IDs and a one-line summary of each functional requirement this run produced. This is the canonical base every MD-* row reads, so downstream assertions reference these IDs and this count, never a number hard-coded in the downstream test. Snapshot and commit the base per `test-strategy.md` §Retrospective use before running any MD-* row, so an off-by-one in a downstream count surfaces as a diff against a fixed reference rather than silent drift.
+Record the base FR list: the IDs and a one-line summary of each functional requirement this run produced. This is the canonical base every MD-* row reads, so downstream assertions reference these IDs and this count, never a number hard-coded in the downstream test. Commit the base in `test-medium`'s own repo before running any MD-* row (its HEAD becomes the diff reference `<base-commit>`), per `test-strategy.md` §Retrospective use, so each MD row resets to it and an off-by-one in a downstream count surfaces as a diff against a fixed reference rather than silent drift.
 
 ## Note
 
@@ -86,6 +86,6 @@ Multi-component fan-out is deferred, so this test runs a single component (the i
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-15 |
 | Status       | Draft      |

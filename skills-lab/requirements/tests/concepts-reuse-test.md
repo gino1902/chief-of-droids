@@ -19,15 +19,16 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 - The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `FRAMING.md` (three Tracks), a context-structured `CONCEPTS.md` (the Ingestion and transformation context carries `landing zone` and `quality rules`; the Exposition and reporting context carries `cross-team report`), and the ingestion-pipeline slice.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
-## Base snapshot (before acting)
+## Reset to the committed base (before acting)
 
-The write-back edits `CONCEPTS.md` in place, and the no-drift claim is that existing terms are preserved while only the new one is added. That is provable only against the pristine base. Before brainstorming, snapshot the fresh base from the skills-lab repo root:
+The write-back edits `CONCEPTS.md` in place, and the no-drift claim is that existing terms are preserved while only the new one is added. That is provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before brainstorming:
 
 ```
-cp -R outputs/test-medium outputs/test-medium.base
+git reset --hard <base-commit>
+git clean -fd
 ```
 
-Use a filesystem copy, not a nested `git init` inside the test dir. An added `.git/` would perturb the bootstrapping detection sibling rows exercise (see the git-init open item in `test-strategy.md`). The diff in Record uses `git diff --no-index`, which needs no repo.
+`<base-commit>` is the base repo's HEAD after a fresh `chain-test-medium` run. This restores a deterministic base with no rebuild and no elicitation variance; the Record step diffs the working tree against it.
 
 ## Run steps
 
@@ -63,10 +64,10 @@ Let it emit the slice and update `CONCEPTS.md`.
 
 ## Record
 
-List the terms reused verbatim and the term(s) written back, with the context each landed in. Then emit the diff against the committed base as evidence, from the repo root:
+List the terms reused verbatim and the term(s) written back, with the context each landed in. Then emit the diff against the committed base as evidence, from inside `outputs/test-medium`:
 
 ```
-git diff --no-index outputs/test-medium.base outputs/test-medium > outputs/test-medium.md-3.diff
+git diff <base-commit> > ../test-medium.md-3.diff
 ```
 
 Read the diff as the pass check. The only changes allowed are additive: the new `report-builder/` slice, and a `CONCEPTS.md` addition of `report definition` under the Exposition and reporting context. Every existing `CONCEPTS.md` term must be unchanged in the diff (no rename, no re-definition), no requirements file may appear, and `FRAMING.md` must be absent. Keep `outputs/test-medium.md-3.diff` as the evidence artifact.
@@ -77,6 +78,6 @@ brainstorming handles one component per run, so this is a manual second run agai
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-15 |
 | Status       | Draft      |

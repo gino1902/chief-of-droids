@@ -19,15 +19,16 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 - The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `FRAMING.md` (three Tracks: Ingestion and transformation, Governance and platform, Exposition and reporting) and a context-structured `CONCEPTS.md`.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
-## Base snapshot (before acting)
+## Reset to the committed base (before acting)
 
-The critical claim is that run 2 adds the Exposition meaning of `owner` without overwriting run 1's Governance meaning, a preservation property provable only against the pristine base. Before the first brainstorm, snapshot the fresh base from the skills-lab repo root:
+The critical claim is that run 2 adds the Exposition meaning of `owner` without overwriting run 1's Governance meaning, a preservation property provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before the first brainstorm:
 
 ```
-cp -R outputs/test-medium outputs/test-medium.base
+git reset --hard <base-commit>
+git clean -fd
 ```
 
-Use a filesystem copy, not a nested `git init` inside the test dir. An added `.git/` would perturb the bootstrapping detection sibling rows exercise (see the git-init open item in `test-strategy.md`). The diff in Record uses `git diff --no-index`, which needs no repo.
+`<base-commit>` is the base repo's HEAD after a fresh `chain-test-medium` run. This restores a deterministic base with no rebuild and no elicitation variance; the Record step diffs the working tree against it.
 
 ## Run steps
 
@@ -77,10 +78,10 @@ Here the skill must recognise that `owner` already exists in another context wit
 
 ## Record
 
-Show the two `owner` definitions and the context-map divergence row. Then emit the diff against the committed base as evidence, from the repo root:
+Show the two `owner` definitions and the context-map divergence row. Then emit the diff against the committed base as evidence, from inside `outputs/test-medium`:
 
 ```
-git diff --no-index outputs/test-medium.base outputs/test-medium > outputs/test-medium.md-7.diff
+git diff <base-commit> > ../test-medium.md-7.diff
 ```
 
 Read the diff as the pass check. The only changes allowed are additive: the two new slices (`steward-assignment/`, `report-ownership/`), and `CONCEPTS.md` gaining `owner` under both the Governance and Exposition contexts plus a context-map divergence row. The Governance `owner` entry added by run 1 must still be present after run 2 (no deletion or overwrite in the final `CONCEPTS.md`), no synonym may appear, no requirements file may appear, and `FRAMING.md` must be absent from the diff. Keep `outputs/test-medium.md-7.diff` as the evidence artifact.
@@ -91,6 +92,6 @@ This validates the central reason `CONCEPTS.md` is context-structured rather tha
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-15 |
 | Status       | Draft      |

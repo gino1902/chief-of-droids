@@ -19,15 +19,16 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 - The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds a framing-project-shaped `FRAMING.md` (YAML frontmatter with `last_updated`, three Tracks) and a context-structured `CONCEPTS.md`.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
-## Base snapshot (before acting)
+## Reset to the committed base (before acting)
 
-The scenario edits `FRAMING.md` in place, so the pristine base is destroyed the moment `framing-project` runs. Before invoking anything, snapshot the fresh base from the skills-lab repo root so the no-change criteria can be proven as a diff:
+The scenario edits `FRAMING.md` in place, so the no-change criteria are only provable against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before invoking anything:
 
 ```
-cp -R outputs/test-medium outputs/test-medium.base
+git reset --hard <base-commit>
+git clean -fd
 ```
 
-Use a filesystem copy, not a nested `git init` inside the test dir. An added `.git/` would perturb the bootstrapping detection sibling rows exercise (see the git-init open item in `test-strategy.md`). The diff in Record compares the copy against the post-run dir with `git diff --no-index`, which needs no repo.
+`<base-commit>` is the base repo's HEAD after a fresh `chain-test-medium` run. This restores a deterministic base with no rebuild and no elicitation variance; the Record step diffs the working tree against it.
 
 ## Run steps
 
@@ -66,10 +67,10 @@ Let `framing-project` update `FRAMING.md` and decide whether `CONCEPTS.md` needs
 
 ## Record
 
-Emit the diff against the committed base as a named evidence artifact, from the repo root:
+Emit the diff against the committed base as a named evidence artifact, from inside `outputs/test-medium`:
 
 ```
-git diff --no-index outputs/test-medium.base outputs/test-medium > outputs/test-medium.md-2.diff
+git diff <base-commit> > ../test-medium.md-2.diff
 ```
 
 The diff must contain only `FRAMING.md` changes: the "Our approach" section and the `last_updated` line. `CONCEPTS.md` and every other section must be absent from the diff. If any other path appears, the no-churn rule failed. Keep `outputs/test-medium.md-2.diff` as the evidence artifact.
@@ -80,6 +81,6 @@ A companion variant worth running later moves a boundary on purpose (rename or r
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-15 |
 | Status       | Draft      |

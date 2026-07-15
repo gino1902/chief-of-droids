@@ -19,15 +19,16 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 - The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `.claude/settings.json`, `FRAMING.md` (framing-project shape with `last_updated` and the `<!-- goal: code -->` stamp), `CONCEPTS.md`, a data-bundle tree anchor, and `CLAUDE.md`.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
-## Base snapshot (before acting)
+## Reset to the committed base (before acting)
 
-Reconcile-not-regenerate is a no-change claim across the whole tree, so it is only provable against the pristine base. Before re-invoking bootstrapping, snapshot the fresh base from the skills-lab repo root:
+Reconcile-not-regenerate is a no-change claim across the whole tree, so it is only provable against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before re-invoking bootstrapping:
 
 ```
-cp -R outputs/test-medium outputs/test-medium.base
+git reset --hard <base-commit>
+git clean -fd
 ```
 
-Use a filesystem copy, not a nested `git init`. This row re-runs bootstrapping, whose Pass 1 keys on `.git/` plus `.claude/settings.json`; a tester-created `.git/` would change what the skill detects and corrupt the test. The diff in Record uses `git diff --no-index`, which needs no repo.
+`<base-commit>` is the base repo's HEAD after a fresh `chain-test-medium` run. Note this row re-runs bootstrapping, whose Pass 1 keys on `.git/` plus `.claude/settings.json`. The base repo, created during the base build, is exactly the existing-repo state reconcile must detect, so resetting to `<base-commit>` sets up that precondition directly. The Record step diffs the working tree against it.
 
 ## Run steps
 
@@ -66,16 +67,16 @@ Approve nothing that regenerates. Accept only gap-filling reconciliation.
 
 ## Record
 
-Note which passes reported done versus reconciled, and confirm the FRAMING rework went to the framing-project branch. Then emit the whole-tree diff against the committed base as evidence, from the repo root:
+Note which passes reported done versus reconciled, and confirm the FRAMING rework went to the framing-project branch. Then emit the whole-tree diff against the committed base as evidence, from inside `outputs/test-medium`:
 
 ```
-git diff --no-index outputs/test-medium.base outputs/test-medium > outputs/test-medium.md-5.diff
+git diff <base-commit> > ../test-medium.md-5.diff
 ```
 
 The diff must be either empty or confined to gap-filling `CLAUDE.md` lines. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, and the tree must be absent from it. Any of those appearing is a regeneration, not a reconcile. Keep `outputs/test-medium.md-5.diff` as the evidence artifact.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-15 |
 | Status       | Draft      |
