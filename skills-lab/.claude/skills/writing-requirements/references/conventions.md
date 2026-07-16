@@ -152,8 +152,8 @@ Severity is purely diagnostic. It never gates writes. The user iterates based on
 
 | Type | Trigger | Behavior |
 |:--|:--|:--|
-| Hard fail | Unresolvable parse error, missing CLAUDE.md, non-`.md` substrate, write error, unreadable reference file | Halt; stream error; no outputs written |
-| Soft issue | Substrate gap, absent scope signal, defaulted assumption | Recorded in report; both files written at end |
+| Hard fail | Unresolvable parse error, non-`.md` substrate, write error, unreadable reference file | Halt; stream error; no outputs written |
+| Soft issue | Substrate gap, absent scope signal, defaulted assumption, no `CLAUDE.md` at cwd (cwd used as repo root) | Recorded in report; both files written at end |
 
 Hard-fail message (replaces current phase stream line):
 ```

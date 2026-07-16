@@ -1,6 +1,6 @@
 ---
 name: writing-requirements
-description: Produces a structured requirements artifact and diagnostic report for one deployable component from a markdown substrate. Output files are written to `<CLAUDE.md parent dir>/requirements/<slug>/` and named `<slug>-requirements.md` and `<slug>-report.md`. Invoke as `writing-requirements <slug> from <path> --type generic|technical` — slug must not contain "requirement", "req", or "reqs". Use --type generic for lightweight functional requirements: skill definitions, file format specs, pre-design tech objects, migration requirements. Use --type technical for full requirements covering functional, interface, data, non-functional, security, error handling, and observability. Iterates statelessly: feed prior `<slug>-requirements.md` as substrate to refine.
+description: Produces a structured requirements artifact and diagnostic report for one deployable component from a markdown substrate. Output files are written to `requirements/<slug>/` under the current working directory and named `<slug>-requirements.md` and `<slug>-report.md`. Invoke as `writing-requirements <slug> from <path> --type generic|technical` — slug must not contain "requirement", "req", or "reqs". Use --type generic for lightweight functional requirements: skill definitions, file format specs, pre-design tech objects, migration requirements. Use --type technical for full requirements covering functional, interface, data, non-functional, security, error handling, and observability. Iterates statelessly: feed prior `<slug>-requirements.md` as substrate to refine.
 allowed-tools:
   - Read
   - Write
@@ -147,7 +147,7 @@ Phase 6 (write permission):
 | 0.2 | Validate slug against `^[a-z0-9-]+$` | Hard-fail |
 | 0.3 | Validate `--type` is `generic` or `technical` | Hard-fail |
 | 0.4 | Resolve input path; existence check | Hard-fail |
-| 0.5 | Check cwd for `CLAUDE.md` first; if absent, walk upward to filesystem root directory by directory; the parent directory of the first `CLAUDE.md` found is the repo root | Hard-fail if none found |
+| 0.5 | Resolve the repo root to cwd. Check cwd for `CLAUDE.md`: if present it confirms the root; if absent, still use cwd as the root and emit a Phase 0 Warning (`no CLAUDE.md at cwd; cwd used as repo root`). Never walk upward into an ancestor directory, since adopting an ancestor `CLAUDE.md` would write outputs into a parent project | Warning if no `CLAUDE.md` at cwd; no hard-fail |
 | 0.6 | Resolve output dir `<repo root>/requirements/<slug>/`; create if absent | Hard-fail on permission error |
 | 0.7 | Read prior `<slug>-requirements.md` if present (ID stability + version increment) | Warning if unreadable; treat as no-prior |
 | 0.8 | Read substrate file; reject non-`.md` extension OR empty file (0 bytes) OR whitespace-only file | Hard-fail |
