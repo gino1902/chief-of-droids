@@ -475,10 +475,8 @@ Commit gate suppressed for this skill; user commits post-run. Reason: this skill
 
 </phase-6-format-write>
 
-| Field                | Value                                |
-|----------------------|--------------------------------------|
-| Target Model         | claude-opus-4-7                      |
-| Target Environment   | claude-code                          |
-| Best-Practices Ref   | 2026-05-17 snapshot                  |
-| Last Revised         | 2026-05-26                           |
-| Revision Source      | improving-prompt-artifacts skill     |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.0        |
+| Last Updated | 2026-05-26 |
+| Status       | Draft      |

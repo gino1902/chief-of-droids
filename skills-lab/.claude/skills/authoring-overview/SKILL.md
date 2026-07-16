@@ -97,10 +97,8 @@ Confirm: `✓ overview.md regenerated and committed`. If the wiki was unchanged 
 
 </staleness>
 
-| Field | Value |
-|---|---|
-| Version | 1.1 |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.1        |
 | Last Updated | 2026-05-31 |
-| Status | Draft |
-| Target Model | claude-opus-4-8 |
-| Target Environment | claude-code |
+| Status       | Draft      |

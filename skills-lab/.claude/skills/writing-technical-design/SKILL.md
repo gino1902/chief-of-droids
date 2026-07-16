@@ -114,3 +114,11 @@ Write under an `artefacts/` directory and the design doc beside it, siblings of 
 ## Learn more
 
 The living design doc follows Malte Ubl's "Design docs at Google" (https://www.industrialempathy.com/posts/design-docs-at-google/): context and scope, goals and non-goals, the design, cross-cutting concerns, kept short and written for a named reviewer, living through creation, review, and maintenance. It is adapted so the why and the alternatives stay in the ADRs and the doc references them. The artefact-over-prose stance draws on Simon Brown's C4 model (https://c4model.com/) and the arc42 template (https://arc42.org/). The bias toward a skeleton and deciding at the last responsible moment draws on Martin Fowler's YAGNI (https://martinfowler.com/bliki/Yagni.html). The frozen ADR paired with a living design comes from the companion `making-architecture-decision` skill.
+
+---
+
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.0        |
+| Last Updated | 2026-07-16 |
+| Status       | Draft      |

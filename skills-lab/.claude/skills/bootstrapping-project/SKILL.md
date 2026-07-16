@@ -227,7 +227,7 @@ a silent edit — the drift-check flags a contract change made without one.
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.12       |
 | Last Updated | 2026-07-16 |
 | Status       | Review     |

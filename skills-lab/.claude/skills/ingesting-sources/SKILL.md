@@ -189,10 +189,8 @@ Write only the content authorised by an approved row. Do not add sections, prose
 
 </phase-6-apply>
 
-| Field | Value |
-|---|---|
-| Version | 1.2 |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.2        |
 | Last Updated | 2026-05-31 |
-| Status | Draft |
-| Target Model | claude-opus-4-8 |
-| Target Environment | claude-code |
+| Status       | Draft      |

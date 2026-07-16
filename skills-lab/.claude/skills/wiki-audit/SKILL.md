@@ -121,10 +121,8 @@ Route every correction through ingest or re-ingest so provenance and the commit 
 
 </routes>
 
-| Field | Value |
-|---|---|
-| Version | 1.1 |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.1        |
 | Last Updated | 2026-05-31 |
-| Status | Draft |
-| Target Model | claude-opus-4-8 |
-| Target Environment | claude-code |
+| Status       | Draft      |

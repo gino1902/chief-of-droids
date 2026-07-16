@@ -112,7 +112,7 @@ This skill is adapted from the `ce-strategy` skill in Every's compound-engineeri
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.0        |
 | Last Updated | 2026-07-13 |
 | Status       | Review     |

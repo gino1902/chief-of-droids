@@ -82,3 +82,11 @@ For supersede, do not rewrite the old ADR. Set the old ADR's status to "Supersed
 The ADR structure (context, options, decision, consequences) follows Michael Nygard's original decision-record format, extended with governance metadata (decision-makers, consulted, informed) and a validation section from MADR, the Markdown Any Decision Records project (https://adr.github.io/madr/).
 
 This skill is adapted from the `ce-strategy` skill in Every's compound-engineering-plugin (https://github.com/EveryInc/compound-engineering-plugin), used under the MIT licence. See `LICENSE.md`.
+
+---
+
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.0        |
+| Last Updated | 2026-07-16 |
+| Status       | Draft      |

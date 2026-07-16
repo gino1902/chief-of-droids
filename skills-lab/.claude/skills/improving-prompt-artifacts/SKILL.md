@@ -144,7 +144,7 @@ Reason: prior audit state introduces confirmation bias — each audit must evalu
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.5        |
 | Last Updated | 2026-05-18 |
 | Status       | Draft      |

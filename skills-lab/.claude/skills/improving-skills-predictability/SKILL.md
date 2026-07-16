@@ -524,16 +524,8 @@ After the write succeeds, stream the `## Summary - Outputs Variance per Dimensio
 - No scratch work in the output. The final report must not contain self-correction notes such as `(check)`, `(verify)`, `(TODO)`, `(unsure)`, parenthetical hedges directed at the reader, or any other in-line marker of analytical doubt. Either resolve the uncertainty before writing, or surface it as a one-sentence note in the relevant section. The reader is not a reviewer of the analyst's thinking — only of the result.
 </operational-notes>
 
-| Field                | Value                            |
-|----------------------|----------------------------------|
-| Target Model         | claude-opus-4-7                  |
-| Target Environment   | claude-code                      |
-| Best-Practices Ref   | 2026-05-17 snapshot              |
-| Last Revised         | 2026-05-18                       |
-| Revision Source      | improving-prompt-artifacts skill |
-
-| Field        | Value       |
-|--------------|-------------|
-| Version      | 1.13        |
-| Last Updated | 2026-05-18  |
-| Status       | Draft       |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.13       |
+| Last Updated | 2026-05-18 |
+| Status       | Draft      |

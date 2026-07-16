@@ -140,10 +140,8 @@ A typical cycle runs 4 to 6 passes. A cycle still finding Genuine drifts past 6 
 
 </convergence>
 
-| Field | Value |
-|---|---|
-| Version | 1.4 |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.4        |
 | Last Updated | 2026-07-14 |
-| Status | Draft |
-| Target Model | claude-opus-4-8 |
-| Target Environment | claude-code |
+| Status       | Draft      |
