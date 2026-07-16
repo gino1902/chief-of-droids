@@ -48,7 +48,7 @@ Invoke `writing-requirements ticket-api from outputs/ticket-api/ticket-api.md --
 ## Expected outputs (under `outputs/test-app`)
 
 - the Medium+ app project (FRAMING with Tracks, CONCEPTS, app tree, CLAUDE.md).
-- `CONVENTIONS.md` — the app structural contract with an enforcement stanza (`config` the ESLint config, `runner` the lint command, `zoned: apps/* src/features/*`), plus the generated ESLint `import/no-restricted-paths` config and gate. This is the only scenario that meaningfully exercises zone coverage, since the app tree scaffolds one `apps/<domain>/` per business domain.
+- `CONVENTIONS.md` — the app structural contract with an enforcement stanza (`config` the ESLint config, `runner` the lint command, `zoned: apps/*` — helpdesk is a backend service, so no `src/features/*` glob), plus the generated ESLint `import/no-restricted-paths` config and gate. This is the only scenario that meaningfully exercises zone coverage, since the app tree scaffolds one `apps/<domain>/` per business domain.
 - the `ticket-api` slice.
 - `requirements/ticket-api/ticket-api-requirements.md` and `-report.md`, on the S2 template.
 
@@ -81,6 +81,6 @@ This is the highest pure-coverage scenario. It sits below the iteration ladder b
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
+| Version      | 1.3        |
 | Last Updated | 2026-07-16 |
 | Status       | Draft      |

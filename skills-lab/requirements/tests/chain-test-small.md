@@ -57,7 +57,7 @@ Invoke `writing-requirements link-service from <slice-path> --type generic`, usi
 - `FRAMING.md` — Small shape: `<!-- goal: code -->` on line 1, the five sections, no `last_updated` frontmatter, no version footer
 - no `CONCEPTS.md`
 - a minimal app-backend tree (for example `apps/<domain>/` with the three tiers), deferred directories left out
-- `CONVENTIONS.md` — the app structural contract (dependency, import, promotion rules) with a machine-readable enforcement stanza (`config`, `runner`, `zoned: apps/* src/features/*`), plus the generated lint config and gate for the confirmed stack
+- `CONVENTIONS.md` — the app structural contract (dependency, import, promotion rules) with a machine-readable enforcement stanza (`config`, `runner`, `zoned: apps/*` — backend only, so no `src/features/*` glob), plus the generated lint config and gate for the confirmed stack
 - `CLAUDE.md`, grounded, under ~60 lines, pointing at `CONVENTIONS.md` rather than restating the structural rules
 - one component slice `.md`
 - `requirements/link-service/link-service-requirements.md` and `link-service-report.md`
@@ -85,6 +85,6 @@ Copy the report's `Outstanding: N blocking, M warnings, K info` line, and classi
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-16 |
 | Status       | Draft      |

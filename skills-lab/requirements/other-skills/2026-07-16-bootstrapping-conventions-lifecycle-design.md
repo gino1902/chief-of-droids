@@ -66,7 +66,9 @@ degrades to documented-convention-plus-review, which `trees.md` already states.
 3. The lifecycle drift-check is a deterministic script under `requirements/tests/checks/`,
    runnable in CI with no skill run, staying inside the `grep`, `sed`, `cut`, `sort`, `uniq`,
    `comm`, `diff`, `git`, `jq` set, no `awk` and no interpreter.
-4. This session produces this design doc only. Skill edits come after review.
+4. Implemented after review: the four skill files, `check-conventions-drift.sh`, and the test
+   suite now carry the design below. This doc is the record of intent, kept in step with the
+   built artifacts.
 
 ## The key resolution, enforcement is project-native
 
@@ -155,23 +157,24 @@ Show the diff, apply only on approval, degrade gracefully where a tool is not ye
 
 ## Drift-check spec, the deterministic script
 
-A script under `requirements/tests/checks/`, working name `check-conventions-drift.sh`,
-invoked as `check-conventions-drift.sh <dir> [<base-commit>]`. Deterministic, no skill run,
-inside the allowed read-only text-tool set. Exit non-zero on any drift, print one line per
-finding. Three checks.
+A script under `requirements/tests/checks/`, invoked as
+`check-conventions-drift.sh <dir> [<base-commit>]`. Deterministic, no skill run, built from
+`git`, `grep`, `sed`, `sort` (no `awk`, no interpreter). Exit 0 pass, 1 drift, 2 usage or lookup
+error. It parses `CONVENTIONS.md`'s machine-readable enforcement stanza (`config`, `runner`,
+`zoned`), the same stanza the skill writes, and runs three checks.
 
-- Coverage. Every folder the contract says must be zoned has a matching zone in the lint
-  config, and every zone points at a folder that exists. Build the folder set from the tree
-  with `git ls-files` or `Glob` piped through `sed` and `sort`, build the zone-target set from
-  the config with `grep` and `sed`, and set-diff the two with `comm`. A folder without a zone
-  is a new-feature-without-enforcement drift. A zone without a folder is a stale zone.
+- Coverage. For each `prefix/*` glob in `zoned`, list the prefix's immediate child folders from
+  `git ls-files` (via `grep` and `sed`), then require each folder's path to appear in the lint
+  config (`grep -F`). A folder with no zone is a new-feature-without-enforcement drift. Skipped
+  when `zoned: none`.
 - Traceability, the heart of point 2. If `CONVENTIONS.md` or the lint config changed since
   `<base-commit>` but no decision record was added in the same range, flag an untraceable
   change. Compute with `git diff --name-only <base-commit> --` against the contract and config
   paths, and against `decisions/` or the deferred `docs/adr/` path. Contract changed and no
   record added is the drift signal.
-- Existence. The config file named in `CONVENTIONS.md` exists, and the runner command it names
-  appears in the project gate file. `test -f` and `grep`.
+- Existence. The config file named in the stanza exists (`test -f`), and the runner command it
+  names appears in a project gate file (`grep` over `.pre-commit-config.yaml`, `package.json`,
+  `.husky`, CI workflows). Skipped when `config: none` (thinking).
 
 At bootstrap coverage is trivially satisfied because features and domains are mostly deferred.
 The check earns its keep over the project's life, in CI, as folders are added and as the
@@ -238,6 +241,6 @@ Tests.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-07-16 |
-| Status       | Draft      |
+| Status       | Review     |
