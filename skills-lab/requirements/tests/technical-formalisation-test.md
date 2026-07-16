@@ -48,6 +48,7 @@ Invoke `writing-requirements ticket-api from outputs/ticket-api/ticket-api.md --
 ## Expected outputs (under `outputs/test-app`)
 
 - the Medium+ app project (FRAMING with Tracks, CONCEPTS, app tree, CLAUDE.md).
+- `CONVENTIONS.md` — the app structural contract with an enforcement stanza (`config` the ESLint config, `runner` the lint command, `zoned: apps/* src/features/*`), plus the generated ESLint `import/no-restricted-paths` config and gate. This is the only scenario that meaningfully exercises zone coverage, since the app tree scaffolds one `apps/<domain>/` per business domain.
 - the `ticket-api` slice.
 - `requirements/ticket-api/ticket-api-requirements.md` and `-report.md`, on the S2 template.
 
@@ -56,11 +57,14 @@ Invoke `writing-requirements ticket-api from outputs/ticket-api/ticket-api.md --
 - Every S2 section that has substrate signal renders as content, not `N/A`: `FR`, `CON` (the id invariant), `NFR` (the latency threshold), `SEC` (the read-authorisation rule), `OBS` (the created metric). Sections with no signal (for example `IR`, `DR`, `TR`) may render `N/A` with a Warning, which is acceptable.
 - ERR coverage: each FR of Acquire, Mutate, or Validate shape (create, fetch) has a paired `ERR` entry drawn in the same pass, or an inline opt-out rationale.
 - Bounded scores ✓ on the `NFR` latency requirement (the 300 ms threshold). The `SEC` (read-authorisation) and `OBS` (metric emission) requirements as scripted carry no quantitative threshold, so Bounded scores ✗ and each emits a Bounded Warning. That is correct scoring, not a defect. If you want Bounded ✓ across all three, give the `SEC` and `OBS` requirements numeric thresholds in the slice.
+- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh outputs/test-app` returns 0. Every scaffolded `apps/<domain>/` has a matching `import/no-restricted-paths` zone in the ESLint config (coverage), and the runner is wired into the project gate. A scaffolded domain with no zone is a coverage failure — that is the feature working.
+- The structural rules live in `CONVENTIONS.md`, not restated in `CLAUDE.md`; the ESLint config and gate are stack files, so `settings.json` stays byte-identical.
 - No undefined-term warnings, since `CONCEPTS.md` governs the vocabulary.
 - The report Summary reconciles with the body: the Info Resolved cell equals the count of `[INFO]` lines, and the Warning and Blocking Resolved and Unresolved cells equal their `[<SEVERITY>-RESOLVED]` and `[<SEVERITY>-UNRESOLVED]` line counts. Run 2 found the Info count undercounting here; the standalone check is `verify-summary-info-tally.md`.
 
 ## Fail conditions
 
+- `CONVENTIONS.md` is missing, a scaffolded `apps/<domain>/` has no zone in the ESLint config (coverage gap), or the structural rules were written into `CLAUDE.md` instead.
 - A technical section collapses to `N/A` despite the slice carrying that flavour of requirement (signal lost).
 - An Acquire/Mutate/Validate FR has neither a paired `ERR` nor an opt-out rationale (Phase 4 warning).
 - The NFR renders unbounded (Bounded ✗) when the slice gave a 300 ms threshold.
@@ -77,6 +81,6 @@ This is the highest pure-coverage scenario. It sits below the iteration ladder b
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-16 |
 | Status       | Draft      |

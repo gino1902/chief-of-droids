@@ -56,13 +56,15 @@ Invoke `writing-requirements ingestion-pipeline from <slice-path> --type generic
 - `FRAMING.md` — framing-project shape: YAML frontmatter with `last_updated`, two to four Tracks, and the injected `<!-- goal: code -->` stamp after the frontmatter
 - `CONCEPTS.md` — context-structured: a shared core, one context block per Track, a context map
 - a data-bundle tree anchor
-- `CLAUDE.md`, grounded
+- `CONVENTIONS.md` — the data structural contract (dependency, thin-notebook, promotion rules) with a machine-readable enforcement stanza (`config` the ruff config, `runner` the lint command, `zoned: none` — ruff is file-level, not zone-level), plus the generated lint config for the confirmed stack
+- `CLAUDE.md`, grounded, pointing at `CONVENTIONS.md` rather than restating the structural rules
 - one component slice `.md`, with domain terms drawn from `CONCEPTS.md`
 - `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` and `ingestion-pipeline-report.md`
 
 ## Acceptance criteria
 
 - All the above exist; `CONCEPTS.md` is present and context-structured; the slice's domain terms trace back to `CONCEPTS.md`.
+- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh outputs/test-medium` returns 0 (`zoned: none`, so existence runs and coverage is skipped). The structural rules are in `CONVENTIONS.md`, not restated in `CLAUDE.md`.
 - The requirements report extracts clean: no undefined-term warnings, no shape-defect warnings. A §Constraints N/A is acceptable.
 
 Medium+ signatures that must be present: FRAMING has `last_updated` frontmatter and a Tracks section; a context-structured `CONCEPTS.md` exists; the slice's terms are sourced from it.
@@ -70,6 +72,7 @@ Medium+ signatures that must be present: FRAMING has `last_updated` frontmatter 
 ## Fail conditions
 
 - `CONCEPTS.md` is missing, or FRAMING has no Tracks (the Medium+ branch did not fire).
+- `CONVENTIONS.md` is missing, or the structural rules were written into `CLAUDE.md` instead.
 - The report shows undefined-term warnings for terms that are defined in `CONCEPTS.md` (the term-drawing discipline did not hold).
 - Any shape-defect warning (scope not extracted, requirements not SHALL/EARS, title fallback fired).
 - bootstrapping wrote into `skills-lab` root rather than `outputs/test-medium`.
@@ -78,7 +81,7 @@ Medium+ signatures that must be present: FRAMING has `last_updated` frontmatter 
 
 Copy the report's `Outstanding: N blocking, M warnings, K info` line, and classify each warning. Compare against the Small run: the expected difference is that Medium+ carries a governed `CONCEPTS.md` and Tracks, and its report has no undefined-term warnings.
 
-Record the base FR list: the IDs and a one-line summary of each functional requirement this run produced. This is the canonical base every MD-* row reads, so downstream assertions reference these IDs and this count, never a number hard-coded in the downstream test. Commit the base in `test-medium`'s own repo before running any MD-* row (its HEAD becomes the diff reference `<base-commit>`), per `test-strategy.md` §Retrospective use, so each MD row resets to it and an off-by-one in a downstream count surfaces as a diff against a fixed reference rather than silent drift.
+Record the base FR list: the IDs and a one-line summary of each functional requirement this run produced. This is the canonical base every MD-* row reads, so downstream assertions reference these IDs and this count, never a number hard-coded in the downstream test. Commit the base in `test-medium`'s own repo before running any MD-* row (its HEAD becomes the diff reference `<base-commit>`), per `test-strategy.md` §Retrospective use, so each MD row resets to it and an off-by-one in a downstream count surfaces as a diff against a fixed reference rather than silent drift. `CONVENTIONS.md` and its generated lint config are part of this committed base; the diff-confined MD rows leave them untouched, so they must stay absent from those rows' diffs, and MD-5's reconcile leaves them unchanged.
 
 ## Note
 
@@ -86,6 +89,6 @@ Multi-component fan-out is deferred, so this test runs a single component (the i
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-07-15 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

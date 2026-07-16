@@ -35,7 +35,7 @@ Invoke `bootstrapping-project`. Goal `thinking`. Pass 2 size: Small (inline five
 - Delivered: a set of ADRs and working notes.
 - Constraints: decisions are append-only; accepted ADRs are superseded, never edited.
 
-Let it write `FRAMING.md` with `<!-- goal: thinking -->` on line one, scaffold the thinking tree (`decisions/`, `notes/`, `diagrams/`, `references/`), and write the thinking `CLAUDE.md`.
+Let it write `FRAMING.md` with `<!-- goal: thinking -->` on line one, scaffold the thinking tree (`decisions/`, `notes/`, `diagrams/`, `references/`), write `CONVENTIONS.md` (the thinking contract: record, naming, promotion rules, with a stanza of `config: none`, `runner: review`, `zoned: none` — review is the gate, no lint config generated), and write the thinking `CLAUDE.md` pointing at `CONVENTIONS.md`.
 
 ### 2. Re-invoke with a conflicting goal
 
@@ -45,18 +45,19 @@ Expected: the Preamble reads the goal from the stamp, sees the argument conflict
 
 ## Expected outputs (under `outputs/test-goal-lock`)
 
-- The thinking project from step 1: `FRAMING.md` (five-question, `<!-- goal: thinking -->`), the thinking tree anchor, `CLAUDE.md` on the thinking skeleton, `.claude/settings.json`.
+- The thinking project from step 1: `FRAMING.md` (five-question, `<!-- goal: thinking -->`), the thinking tree anchor, `CONVENTIONS.md` (thinking contract, no lint config since review is the gate), `CLAUDE.md` on the thinking skeleton, `.claude/settings.json`.
 - Nothing new or changed from step 2.
 
 ## Acceptance criteria
 
-- Step 1 produces a thinking project: the thinking tree (`decisions/`, `notes/`, `diagrams/`, `references/`) and a thinking `CLAUDE.md` (challenge ideas, minimal-intervention edits, ADR discipline).
-- Step 2 stops and reports the goal conflict (stamp `thinking` versus argument `code`) and mutates nothing.
+- Step 1 produces a thinking project: the thinking tree (`decisions/`, `notes/`, `diagrams/`, `references/`), a `CONVENTIONS.md` carrying the thinking contract with `config: none`/`runner: review`/`zoned: none` (no lint config generated), and a thinking `CLAUDE.md` (challenge ideas, minimal-intervention edits, ADR discipline) pointing at `CONVENTIONS.md`.
+- Step 2 stops and reports the goal conflict (stamp `thinking` versus argument `code`) and mutates nothing — `CONVENTIONS.md` included.
 
 ## Fail conditions
 
 - Step 2 proceeds, adopts the argument goal, or mutates any artifact.
 - Step 1 scaffolds a code or infra tree instead of the thinking tree.
+- `CONVENTIONS.md` is missing from step 1, or a lint config was generated for the thinking goal (review is its only gate).
 - The goal stamp is absent or altered.
 
 ## Record
@@ -65,6 +66,6 @@ Confirm step 2 halted with a conflict report, and that no file changed between s
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

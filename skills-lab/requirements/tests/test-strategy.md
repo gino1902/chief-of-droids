@@ -65,20 +65,20 @@ The disk-checkable invariants have scripts under `tests/checks/`, run against a 
 
 | # Row | Check | Invocation, or why manual |
 |:--|:--|:--|
-| 1 small | tally | `check-summary-tally.sh <dir>/requirements/link-service/link-service-report.md` |
-| 2 medium | tally | `check-summary-tally.sh <dir>/requirements/ingestion-pipeline/ingestion-pipeline-report.md` |
+| 1 small | tally, plus conventions-drift | `check-summary-tally.sh <dir>/requirements/link-service/link-service-report.md`; `check-conventions-drift.sh <dir>` (app, coverage on domains that exist) |
+| 2 medium | tally, plus conventions-drift | `check-summary-tally.sh <dir>/requirements/ingestion-pipeline/ingestion-pipeline-report.md`; `check-conventions-drift.sh <dir> <base>` (data, `zoned: none`, base exercises traceability) |
 | 3 MD-1 | tally, plus ID-stability | tally on the report; ID-stability (base FRs byte-stable, one new next-ID) not yet scripted, check by hand |
 | 4 MD-2 | diff-confined | `check-diff-confined.sh <dir> <base> FRAMING.md` |
-| 5 MD-5 | diff-confined | `check-diff-confined.sh <dir> <base> CLAUDE.md` |
-| 6 SM-3 | diff-confined, plus `[beh]` | no-mutation of `settings.json` is diff-checkable against the pass-1 commit; re-elicitation is `[beh]`, manual |
+| 5 MD-5 | diff-confined, plus conventions-drift | `check-diff-confined.sh <dir> <base> CLAUDE.md`; `check-conventions-drift.sh <dir> <base>` (reconcile leaves the contract unchanged, so traceability passes with no record) |
+| 6 SM-3 | diff-confined, conventions-drift, plus `[beh]` | no-mutation of `settings.json` is diff-checkable against the pass-1 commit; `check-conventions-drift.sh <dir>` (infra, `zoned: none`); re-elicitation is `[beh]`, manual |
 | 7 MD-4 | tally | `check-summary-tally.sh` on each pass's report |
 | 8 MD-3 | diff-confined | `check-diff-confined.sh --no-deletions <dir> <base> CONCEPTS.md 'report-builder/*'` |
 | 9 MD-7 | diff-confined | `check-diff-confined.sh --no-deletions <dir> <base> CONCEPTS.md 'steward-assignment/*' 'report-ownership/*'` |
-| 10 SM-1 | tally | `check-summary-tally.sh` on the re-pass report |
-| 11 MD-6 | tally | `check-summary-tally.sh <dir>/requirements/ticket-api/ticket-api-report.md` |
+| 10 SM-1 | tally, plus conventions-drift | `check-summary-tally.sh` on the re-pass report; `check-conventions-drift.sh <dir>` (written at Small bootstrap, unchanged by the upgrade) |
+| 11 MD-6 | tally, plus conventions-drift | `check-summary-tally.sh <dir>/requirements/ticket-api/ticket-api-report.md`; `check-conventions-drift.sh <dir>` (app — the meaningful zone-coverage case, one zone per scaffolded `apps/<domain>/`) |
 | 12 XC-1 | none yet | manual: no `requirements/` written, each sub-case cites the correct hard-fail phase |
 | 13 XC-3 | diff-confined, tally, structural | script the confinement and tally; title-equals-slug and `N/A` sections are structural greps, not yet scripted |
-| 14 XC-2 | diff-confined, plus `[beh]` | zero-mutation: `check-diff-confined.sh <dir> <step1>` with no allowed globs (empty diff passes); stop-report is `[beh]`, manual |
+| 14 XC-2 | diff-confined, conventions-drift, plus `[beh]` | zero-mutation: `check-diff-confined.sh <dir> <step1>` with no allowed globs (empty diff passes); `check-conventions-drift.sh <dir>` (thinking, `config: none`/`review`, existence and coverage skipped); stop-report is `[beh]`, manual |
 | 15 OP-1 | none yet | manual: slice self-contained (terms backticked or defined), no `requirements/` dir |
 
 Three scripts cover most rows because the invariants are shared, not per-row: `check-summary-tally.sh` for every report-producing row, `check-diff-confined.sh` for the committed-base confinement rows, and `check-conventions-drift.sh` for the bootstrapping rows that reach Pass 3.
@@ -89,10 +89,10 @@ Every bootstrapping run that reaches Pass 3 writes `CONVENTIONS.md` (the durable
 
 `check-conventions-drift.sh <dir> [<base>]` is the lifecycle check for this contract, deterministic and disk-only, built from git, grep, sed, sort. It asserts three things: the config file named in the stanza exists and its runner is wired into a gate (existence), every folder under a zoned prefix has its path in the config (coverage), and any change to the contract or config since `<base>` is traced to a decision record under `decisions/` or `docs/adr/` (traceability). At bootstrap coverage is trivially green because per-feature and per-domain folders are still deferred; the check earns its keep over the project's life as folders arrive and as the contract is edited. The thinking goal sets `config: none`, `runner: review`, `zoned: none`, so only traceability runs.
 
-Applicable rows: chain-test-small (1), chain-test-medium (2), MD-5 (5), SM-3 (6, infra), SM-1 (10), MD-6 (11, code/app), XC-2 (14, thinking). For the committed-base rows among these (MD-5, and the medium base at row 2), pass the base commit to exercise traceability; the others run existence and coverage with no base. Remaining test work, not done in this pass: a dedicated emission scenario that asserts the per-goal stanza values verbatim, and updating each applicable row's Capture column to record the `CONVENTIONS.md` stanza and the drift-check result.
+Applicable rows: chain-test-small (1), chain-test-medium (2), MD-5 (5), SM-3 (6, infra), SM-1 (10), MD-6 (11, code/app), XC-2 (14, thinking). For the committed-base rows among these (MD-5, and the medium base at row 2), pass the base commit to exercise traceability; the others run existence and coverage with no base. Each applicable scenario file now carries the `CONVENTIONS.md` expected output, a drift-check acceptance criterion, and a matching fail condition, and the executable-checks table below cites the invocation per row. MD-6 is the only row that meaningfully exercises zone coverage, since the app tree scaffolds one `apps/<domain>/` per business domain. Remaining test work, not done in this pass: a dedicated emission scenario that asserts the per-goal stanza values verbatim, run against a real bootstrap once the Phase 2 driver exists.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.7        |
+| Version      | 1.8        |
 | Last Updated | 2026-07-16 |
 | Status       | Draft      |

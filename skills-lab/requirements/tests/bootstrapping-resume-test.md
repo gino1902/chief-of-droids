@@ -43,13 +43,13 @@ Expected: the Preamble detects Pass 1 done (settings present), reports it, and r
   - Success: every change goes through a reviewed plan, for a month, with no console hand-edits.
   - Delivered: Terraform modules and thin per-environment roots.
   - Constraints: one cloud account; plan before every apply.
-- Pass 3: the infra tree (`modules/`, `envs/<env>/`), no code sub-type question.
-- Pass 4: the infra `CLAUDE.md` skeleton (plan-first, ground provider args, negative rules found in the repo).
+- Pass 3: the infra tree (`modules/`, `envs/<env>/`), no code sub-type question, then `CONVENTIONS.md` with the infra structural contract (composition, module, pinning, state-and-secrets, promotion rules) and an enforcement stanza (`config` the TFLint config, `runner` its command, `zoned: none`).
+- Pass 4: the infra `CLAUDE.md` skeleton (plan-first, ground provider args, negative rules found in the repo), pointing at `CONVENTIONS.md`. The enforcement tail generates the TFLint config and its gate (fmt/validate as pre-commit), leaving `settings.json` untouched.
 
 ## Expected outputs (under `outputs/test-resume`)
 
 - From session one: `.claude/settings.json`, `.gitignore`.
-- From session two: `FRAMING.md` (five-question Small, `<!-- goal: infra -->` on line one), an infra tree anchor (`modules/`, `envs/<env>/`), and `CLAUDE.md` on the infra skeleton.
+- From session two: `FRAMING.md` (five-question Small, `<!-- goal: infra -->` on line one), an infra tree anchor (`modules/`, `envs/<env>/`), `CONVENTIONS.md` (infra contract + TFLint enforcement stanza) with its generated config and gate, and `CLAUDE.md` on the infra skeleton pointing at `CONVENTIONS.md`.
 
 ## Acceptance criteria
 
@@ -57,7 +57,8 @@ Expected: the Preamble detects Pass 1 done (settings present), reports it, and r
 - On resume with no goal argument and no stamp yet, the skill asks for the goal rather than guessing, and accepts `infra`. It does not default the goal from the directory name.
 - The goal is `infra` throughout, and the tree matches the infra skeleton (`modules/`, `envs/<env>/`), not a code tree.
 - `CLAUDE.md` uses the infra skeleton with a plan-first rule.
-- `settings.json` from session one is unchanged after session two.
+- `CONVENTIONS.md` exists with the infra contract and passes the drift-check: `check-conventions-drift.sh outputs/test-resume` returns 0 (`zoned: none`, so existence runs, coverage skipped).
+- `settings.json` from session one is unchanged after session two — the generated TFLint config and gate are stack files, not `settings.json`.
 
 ## Fail conditions
 
@@ -65,6 +66,7 @@ Expected: the Preamble detects Pass 1 done (settings present), reports it, and r
 - The skill fails to detect prior state and starts from scratch.
 - On resume, the skill guesses or defaults the goal (for example from the directory name) instead of asking, when no argument and no stamp are present.
 - A code tree is scaffolded instead of the infra tree.
+- `CONVENTIONS.md` is missing, or the enforcement tail wrote a hook into `settings.json` instead of generating stack-file config.
 
 ## Record
 
@@ -72,6 +74,6 @@ Note the per-pass status line the Preamble prints on resume, and confirm `settin
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.2        |
+| Last Updated | 2026-07-16 |
 | Status       | Review     |

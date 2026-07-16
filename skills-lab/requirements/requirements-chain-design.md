@@ -38,7 +38,7 @@ Each step is an activity (the work it performs) that yields deliverables (the du
 
 | Step | Activity (what it does) | Consumes | Deliverables (what it produces) |
 |:--|:--|:--|:--|
-| bootstrapping-project | Four-pass project setup (environment, framing, tree, CLAUDE.md); Pass 2 branches by size | user dialogue; goal (thinking / code / infra) | `.claude/` baseline config; `FRAMING.md`; project tree anchor (provisional); `CLAUDE.md` |
+| bootstrapping-project | Four-pass project setup (environment, framing, tree + `CONVENTIONS.md`, CLAUDE.md); Pass 2 branches by size | user dialogue; goal (thinking / code / infra) | `.claude/` baseline config; `FRAMING.md`; project tree anchor (provisional); `CONVENTIONS.md` (structural contract) + generated lint config and gate; `CLAUDE.md` |
 | ↳ Pass 2, framing | Small: inline five-question framing. Medium+: delegates to framing-project | user dialogue | Small: `FRAMING.md` only. Medium+: `FRAMING.md` + `CONCEPTS.md` (context-structured, via framing-project) |
 | brainstorming-requirements | Elicits one component's requirements through a one-question-per-turn dialogue; does not write the final spec | `FRAMING.md`, `CONCEPTS.md` | one component slice `.md`; new terms appended to `CONCEPTS.md` |
 | writing-requirements (unchanged) | Formalises the slice into a structured spec by extraction only, no synthesis; absent or mis-shaped signal returns as `N/A` + Warning | component slice `.md` | `<slug>-requirements.md`; `<slug>-report.md` |
@@ -138,6 +138,6 @@ Guardrail: do not let the pass that writes the code also write the only tests th
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.9        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.10       |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

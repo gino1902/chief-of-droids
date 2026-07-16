@@ -16,7 +16,7 @@ Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `c
 
 ## Preconditions
 
-- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `.claude/settings.json`, `FRAMING.md` (framing-project shape with `last_updated` and the `<!-- goal: code -->` stamp), `CONCEPTS.md`, a data-bundle tree anchor, and `CLAUDE.md`.
+- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `.claude/settings.json`, `FRAMING.md` (framing-project shape with `last_updated` and the `<!-- goal: code -->` stamp), `CONCEPTS.md`, `CONVENTIONS.md`, a data-bundle tree anchor, and `CLAUDE.md`.
 - Session cwd is `skills-lab/outputs/test-medium`.
 
 ## Reset to the committed base (before acting)
@@ -40,14 +40,14 @@ Expected routing:
 
 - Pass 1: detects `.git`/`.claude/settings.json` present, reports done, does not rewrite `settings.json`.
 - Pass 2: reads the goal from the stamp (code). Because `FRAMING.md` carries a `last_updated` key, it routes the rework to `framing-project` (the update branch), and does not ask the size question or run an inline five-question reconcile. If no gap needs filling, it leaves `FRAMING.md` as is.
-- Pass 3: sees the existing tree, documents it, proposes no reorganisation.
-- Pass 4: reconciles `CLAUDE.md` against the code skeleton, filling any gap and dropping any ungrounded line, preserving wording, applied only on approval.
+- Pass 3: sees the existing tree, documents it, proposes no reorganisation. `CONVENTIONS.md` already exists, so it reconciles against the goal's conventions block with a minimal diff at most, never regenerates.
+- Pass 4: reconciles `CLAUDE.md` against the code skeleton, filling any gap and dropping any ungrounded line, preserving wording, applied only on approval. The enforcement tail leaves the already-generated lint config in place rather than regenerating it.
 
 Approve nothing that regenerates. Accept only gap-filling reconciliation.
 
 ## Expected outputs (under `outputs/test-medium`)
 
-- No new artifacts. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, and the tree are unchanged unless a genuine gap was filled.
+- No new artifacts. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, `CONVENTIONS.md` and its lint config, and the tree are unchanged unless a genuine gap was filled.
 - `CLAUDE.md` either unchanged or minimally reconciled, with its goal stamp and wording intact.
 
 ## Acceptance criteria
@@ -55,6 +55,7 @@ Approve nothing that regenerates. Accept only gap-filling reconciliation.
 - The goal stays `code`, read from the stamp, never re-asked.
 - Pass 2 routes to the `framing-project` update branch (not inline reconcile) and does not ask the Small/Medium+ size question.
 - The tree is documented, not reorganised.
+- `CONVENTIONS.md` is reconciled, not regenerated: its wording and enforcement stanza survive unchanged unless a genuine gap was filled.
 - `CLAUDE.md` is reconciled, not regenerated wholesale, and stays under 60 lines.
 - `settings.json` is not mutated (it is written once, in Pass 1 of the original run).
 
@@ -73,10 +74,10 @@ Note which passes reported done versus reconciled, and confirm the FRAMING rewor
 git diff <base-commit> > ../test-medium.md-5.diff
 ```
 
-The diff must be either empty or confined to gap-filling `CLAUDE.md` lines. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, and the tree must be absent from it. Any of those appearing is a regeneration, not a reconcile. Keep `outputs/test-medium.md-5.diff` as the evidence artifact.
+The diff must be either empty or confined to gap-filling `CLAUDE.md` lines. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, `CONVENTIONS.md` (and its lint config), and the tree must be absent from it. Any of those appearing is a regeneration, not a reconcile. Keep `outputs/test-medium.md-5.diff` as the evidence artifact.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-07-15 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

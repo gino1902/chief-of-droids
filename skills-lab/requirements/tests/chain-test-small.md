@@ -57,13 +57,16 @@ Invoke `writing-requirements link-service from <slice-path> --type generic`, usi
 - `FRAMING.md` — Small shape: `<!-- goal: code -->` on line 1, the five sections, no `last_updated` frontmatter, no version footer
 - no `CONCEPTS.md`
 - a minimal app-backend tree (for example `apps/<domain>/` with the three tiers), deferred directories left out
-- `CLAUDE.md`, grounded, under ~60 lines
+- `CONVENTIONS.md` — the app structural contract (dependency, import, promotion rules) with a machine-readable enforcement stanza (`config`, `runner`, `zoned: apps/* src/features/*`), plus the generated lint config and gate for the confirmed stack
+- `CLAUDE.md`, grounded, under ~60 lines, pointing at `CONVENTIONS.md` rather than restating the structural rules
 - one component slice `.md`
 - `requirements/link-service/link-service-requirements.md` and `link-service-report.md`
 
 ## Acceptance criteria
 
 - All the above exist; `CONCEPTS.md` is absent; only one component is produced (no fan-out).
+- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh outputs/test-small` returns 0 (config present, runner wired, coverage green — per-domain zones only for domains that exist).
+- The structural rules live in `CONVENTIONS.md`, not restated in `CLAUDE.md`; `CLAUDE.md` carries the two appended pointer lines.
 - The requirements report shows no shape-defect warnings: Title, Scope, Actors extracted; requirements are SHALL/EARS; each has a derivable acceptance criterion.
 - Auto-derived glossary "verify" warnings and a §Constraints N/A are acceptable.
 
@@ -72,6 +75,7 @@ Small signatures that must be present: FRAMING has no `last_updated` frontmatter
 ## Fail conditions
 
 - A `CONCEPTS.md` was produced (the size branch leaked).
+- `CONVENTIONS.md` is missing, or the structural rules were written into `CLAUDE.md` instead.
 - writing-requirements raised shape-defect warnings (scope not extracted, requirements not SHALL/EARS, title fallback fired).
 - bootstrapping wrote into `skills-lab` root rather than `outputs/test-small`.
 
@@ -81,6 +85,6 @@ Copy the report's `Outstanding: N blocking, M warnings, K info` line, and classi
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

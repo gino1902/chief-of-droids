@@ -61,14 +61,14 @@ Re-run `writing-requirements filing from <slice-path> --type generic`. The undef
 
 ## Expected outputs (under `outputs/test-upgrade`)
 
-- Small bootstrap artifacts: five-question `FRAMING.md`, `CLAUDE.md`, a tree anchor, and no `CONCEPTS.md` initially.
-- After the upgrade: `FRAMING.md` in framing-project shape (frontmatter with `last_updated`, Tracks) and a context-structured `CONCEPTS.md`.
+- Small bootstrap artifacts: five-question `FRAMING.md`, `CLAUDE.md`, a tree anchor, `CONVENTIONS.md` (data contract, `zoned: none`), and no `CONCEPTS.md` initially.
+- After the upgrade: `FRAMING.md` in framing-project shape (frontmatter with `last_updated`, Tracks) and a context-structured `CONCEPTS.md`. `CONVENTIONS.md` is untouched by the upgrade — the framing shift adds domain language, it does not change the structural contract.
 - the `filing` slice (pre- and post-upgrade) and `requirements/filing/filing-requirements.md` plus `-report.md` (0.1 then 0.2).
 
 ## Acceptance criteria
 
-- The Small bootstrap produces no `CONCEPTS.md` and no Tracks. The Small branch fired.
-- The upgrade produces a context-structured `CONCEPTS.md` and Tracks, converting the project to the Medium+ shape.
+- The Small bootstrap produces no `CONCEPTS.md` and no Tracks, but does produce `CONVENTIONS.md` (the structural contract is written regardless of size). The Small branch fired.
+- The upgrade produces a context-structured `CONCEPTS.md` and Tracks, converting the project to the Medium+ shape, and leaves `CONVENTIONS.md` unchanged.
 - The post-upgrade `writing-requirements` re-pass carries no undefined-term warnings, or strictly fewer than the pre-upgrade pass, demonstrating the mitigation.
 - The version increments across the re-write.
 
@@ -88,6 +88,6 @@ This is the integration capstone. Because it exercises bootstrapping, framing-pr
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |
