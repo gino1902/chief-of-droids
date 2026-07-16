@@ -1,324 +1,140 @@
 # Middleware and O2 boundary decisions
 
-Preparatory decision sheet for the workshop on the responsibility split between the SQLI middleware and the O2 Databricks platform.
+Prep sheet for the workshop on who does what between the SQLI middleware and the Databricks O2 platform.
 
 ## Workshop summary
 
-Intent. Fix the responsibility boundary between the SQLI middleware, the extractor, IT owned, and the O2 Databricks platform, Transformation team owned, before a working session with the IS head, the middleware architect and the Databricks architect. The question the workshop settles is which requirements each side carries, anchored on the implemented ADR-009 SharePoint phase first and the ADR-008 ADLS phase as the later evolution.
+Intent. Decide where the line sits between the middleware, the extractor owned by IT, and the O2 Databricks platform, owned by the Transformation team. This prepares a workshop with the IS head, the middleware architect and the Databricks architect. We answer one thing, which side does each job. We start from the SharePoint phase (ADR-009), live now, and treat the ADLS phase (ADR-008) as the next step.
 
-Expected output. A set of decisions the three architects can work through and close in the room. One question per point. Each point states where the accepted ADRs and current Databricks practice already point, so the room confirms or overturns a default rather than starting from blank.
+Expected output. A short list of decisions the three architects can settle in the room. One question each. Each one says what the ADRs and Databricks practice already suggest, so the room just confirms it or changes it.
 
-Scope note. The middleware build is IT owned and outside the O2 project, but it is a strong upstream dependency, so the split has to be agreed. This sheet is a cross team boundary contract, not an internal O2 design.
+The base line. The middleware brings data in and drops it in the landing zone. Databricks takes over from there, it stores, cleans, joins and serves the data. Data flows one way, in. Databricks holds the truth.
 
-Out of scope, treated as givens. The behaviours a middleware needs to function are not on the agenda. Idempotence, retry, dead letter queue, communication logging and error handling, and authentication to the SaaS via the vault. They belong to the middleware by definition.
+Two contracts. The boundary runs through two contracts, linked by a flow-down principle.
+- SaaS-to-middleware contract. Between the SaaS source and the middleware. Sets what the source sends, format, fields, sensitive data, and whether it sends all the data or only what changed.
+- Middleware-to-O2 contract. Between the middleware and O2. Sets what the middleware drops in the landing zone.
+- Flow-down. What the middleware commits to O2 comes from what the SaaS commits to the middleware. Terms flow down from the upstream contract to the downstream one, so O2 never gets a stronger guarantee than the source gives. IT owns both. The middleware-to-O2 contract is the one shared with the Transformation team, and neither side changes it without the other.
+
+Write-back. O2 does not push data back into the SaaS tools. Consumption happens through agents reading gold. Keep write-back possible for a future need, but do not design for it now.
+
+Scope note. The middleware is built by IT, outside the O2 project, but O2 depends on it, so the split has to be agreed. This sheet is an agreement between two teams, not an O2 internal design.
+
+Out of scope, taken as given. What any middleware needs to run, idempotence, retry, dead letter queue, logging, error handling, and SaaS authentication via the vault. These are the middleware's by default.
 
 ## How to read each point
 
-Point 0 is a statement of record, already decided. Every decision point after it carries the same fields. Status, the question, why it is a decision, the settled position to ratify, the open edges as options with an owner and a trade-off, what it depends on, who owns the call, and a recommendation.
+Each point has the same parts. Status, the question, why it matters, and what is already set. Point 4 adds a short note where the classic middleware idea and Databricks practice disagree.
 
-## Recommended order in the room
+## Order to take them in the room
 
-Take them in dependency order, not in numeric order. Point 0 is decided and frames the rest, so the working session starts at Point 1.
+Work through them in this order.
 
-1. Point 1, the inbound contract, the durable artefact.
-2. Points 2 and 6, source delta and cadence, decided together.
-3. Point 4, sanitisation and sensitive data, needs the data classification.
-4. Point 5, decoupling and the bus scope question.
-5. Point 3, outbound shaping.
-6. Point 7, outbound routing.
-7. Point 8, volume sizing, cuts across the rest.
+1. Point 1, the middleware-to-O2 contract.
+2. Points 2 and 5, changed data and freshness.
+3. Point 3, compliance and the contracts.
+4. Point 4, do we need an event bus.
 
-## Facts to establish before the workshop
+Point 6 (volumes) is deferred at the current company size, so it is not on the agenda.
 
-These gate the decisions and are not ours to invent. Bring them in.
+## Facts to bring to the workshop
 
-- Does the SaaS source expose an incremental or changed since pull. Gates Point 2.
-- A per flow freshness band, near real time, hourly, daily. Gates Point 6.
-- A data classification of the SaaS sources, which fields are sensitive. Gates Point 4.
-- Does the middleware serve consumers beyond O2. Gates Points 5 and 7.
-- Peak and surge volume per source. Gates Point 8.
+These decide the open points and are not ours to invent.
+
+- The freshness SLO per O2 use case, agreed with the business. Feeds Point 5.
+- Which fields in the SaaS sources are sensitive, so the contracts carry the rules. Feeds Point 3.
+- Is there any command or state change that must be reliably acted on. Decides Point 4.
 
 ---
 
-## Point 0. Ownership and dependency contract
+## Point 1. Middleware-to-O2 contract
 
-Status. Decided. Statement of record, not a workshop decision.
+Status. Set by the SharePoint-to-bronze pattern and the batch design. The remaining details are written into the contract, not decided in the room.
 
-Decision. IT owns and builds the middleware. The Transformation team owns O2. The boundary between them is a contract between the two teams, with a defined change control path in both directions. Neither side changes the shared contract without the other.
+Question. In the SharePoint phase, this is a batch design. What does the middleware drop in the landing zone each run: file format, file names, and who deletes the files once they are read.
 
-Why it is here. Every later point assigns work to the middleware or to Databricks, and that assignment rests on this ownership line. It is recorded here as the frame the rest hang on. It is settled, so the room applies it rather than re-opening it.
+Why it matters. This is the middleware-to-O2 contract, the downstream half, and its terms flow down from the SaaS-to-middleware contract. Databricks reads whatever the middleware leaves. If it does not match, records are lost or broken and no one notices. It ties two teams, so it has to be written down. And it lasts, because moving to ADLS later changes only how Databricks reads, not what the middleware writes.
 
-Consequence. The landing contract in Point 1 is the versioned artefact that binds the two teams, together with its outbound mirror in Point 3. Any change to either goes through the agreed change control. The middleware is a strong upstream dependency of O2, not a part of it.
-
----
-
-## Point 1. Inbound landing contract
-
-Status. Core settled by ADR-009, three open edges.
-
-Question. In the ADR-009 SharePoint phase, what must the middleware deliver into the landing zone: format, record granularity, filenames, and who removes files after ingest.
-
-Why it is a decision. Databricks ingests whatever the middleware leaves in the landing zone. A mismatch drops or corrupts records silently, and it binds two teams, so it has to be written down. It is also the durable part of the boundary, because the later move to ADLS changes only the Databricks read path, not the middleware write contract.
-
-Settled position, to ratify.
-- The middleware delivers JSON, one whole record as one VARIANT. Bronze stores it raw.
-- Technical cleansing sits with the middleware, before landing. Encoding, well formed JSON, record size within a 16 MB ceiling, and the agreed file shape. Malformed or oversized records are caught at the edge, not lost at ingest.
-- Business cleansing, deduplication, normalisation and conforming sit in silver (ADR-001). Bronze is not cleansed.
-- Landed files are not removed automatically, so cleanup is an explicit obligation, not a default.
-
-Open edges.
-
-| Edge | Option | Owner | Trade-off |
-|:--|:--|:--|:--|
-| Record granularity | One record per file | middleware | Cleanest provenance and idempotency, most files |
-| | Batched records per file | middleware | Fewer files, needs an agreed split key |
-| Filename uniqueness | Middleware guarantees unique names | middleware | Matches the idempotent ingest requirement |
-| | Content hash dedup in bronze | Databricks | Removes the middleware obligation, adds bronze cost |
-| Post ingest cleanup | Middleware deletes after confirmed ingest | middleware | Files are not auto removed, so someone must |
-| | Scheduled ops job on a retention window | shared | Simpler for the middleware, needs an owner and a window |
-
-Depends on. Point 0 for the obligations that bind IT. The SaaS response shape, single record or paged, drives the granularity choice. This point gates Point 2 and Point 6.
-
-Owner of the call. Middleware architect proposes the delivery shape. Databricks architect confirms it ingests cleanly. IS head ratifies the IT obligations, filename uniqueness and cleanup.
-
-Recommendation.
-- Confirm JSON, whole record to a single VARIANT, as the contract that holds across both phases.
-- One record per file, middleware guaranteed unique filenames. Adds no bronze cost and matches idempotency.
-- Technical cleansing and the 16 MB and valid JSON checks at the middleware edge. Business cleansing stays in silver.
-- Assign post ingest cleanup to the middleware, or to a named ops job on an agreed retention window.
+Already set, to confirm.
+- It is a batch design. The middleware sends JSON in batch files, each record as one VARIANT value, drained on schedule (ADR-009, Point 5). Bronze keeps it raw.
+- The middleware does the technical clean-up before dropping the file. Right encoding, valid JSON, each record under 16 MB, agreed file shape. Bad or oversized records are caught here, not lost later.
+- Business clean-up, removing duplicates, joining, standardising, happens in silver, not the middleware (ADR-001).
+- Files are not deleted on their own, so someone has to clean them up.
 
 ---
 
-## Point 2. Source side delta
+## Point 2. Full data or only changes
 
-Status. Open, decided by one source fact, with a clear default either way.
+Status. Set by design. Not an open fork.
 
-Question. How does the middleware avoid re-pulling and re-landing the whole SaaS dataset every cycle, and does it hold any state to do so.
+Question. Does each source send all its data every cycle, or only what changed, and who reconciles it.
 
-Why it is a decision. Full re-pulls cost source API load, transfer, and unbounded bronze growth. Holding delta state in the middleware breaks the stateless principle and adds a recovery burden if the middleware is rebuilt or replayed. Which way it goes depends on what the source can give, and that fact has to be established before the room can close it.
+Why it matters. Sending all the data every cycle is heavier than sending only what changed. But it is not an architecture choice, because the middleware already does both and the platform absorbs the difference. Which one a source uses is fixed in the SaaS-to-middleware contract.
 
-Settled position, to ratify.
-- The middleware stays stateless by default. Idempotent landing means the same record delivered twice lands the same result, so re-delivery and replay are safe, see Point 1.
-- Bronze is append only, so deduplication and change detection on a business key are a platform job, not a middleware job.
-
-Open edges.
-
-| Edge | Option | Owner | Trade-off |
-|:--|:--|:--|:--|
-| Source capability | SaaS exposes changed since or a watermark | middleware | Middleware lands only changes, stays stateless. Best case |
-| | SaaS gives full snapshot only | — | Forces the branch below |
-| If snapshot only | Land full snapshot, dedup on the platform | Databricks | Middleware stays stateless, higher transfer and bronze cost |
-| | Middleware stores a watermark to compute delta | middleware | Less transfer, breaks stateless, adds state and recovery ownership |
-
-Depends on. The source capability fact, does the SaaS API expose an incremental or changed since pull. Point 1 granularity. This point gates Point 6, since pull frequency and delta size trade against each other.
-
-Owner of the call. Middleware architect establishes the source capability and proposes the extraction mode. Databricks architect confirms platform side dedup and change handling. IS head ratifies only if middleware state is introduced.
-
-Recommendation.
-- Establish the source delta capability first. It decides the branch, so it is the one fact to bring.
-- If the source supports it, pull native delta and keep the middleware stateless.
-- If it does not, land full snapshots and dedup on the platform, still stateless. Introduce middleware state only if snapshot volume makes transfer or bronze cost unacceptable, and treat that as a deliberate exception with a named owner, not the default.
+Already set, to confirm.
+- The middleware already handles both, all the data or only the changes. Which one per source is written into the SaaS-to-middleware contract, not chosen at runtime.
+- Once that contract sets it for a source, it does not change, except through its change control.
+- What lands in O2 is the same either way, per the middleware-to-O2 contract. Bronze keeps every record as VARIANT.
+- Silver reconciles it, adding new records, updating changed ones, or removing duplicates, per entity. Silver already owns this (ADR-001), so it fits.
 
 ---
 
-## Point 3. Outbound shaping, gold to SaaS
+## Point 3. Compliance and the contracts
 
-Status. Open. No ADR covers the outbound path, so this is the widest ground in the sheet.
+Status. Set by design, through the contract flow-down from SaaS. Not an open compliance debate.
 
-Question. Who turns gold into the format each target SaaS requires and pushes it, and does gold stay SaaS neutral or carry SaaS specific shapes.
+Question. Where in the two contracts do the security and data-policy rules sit, and is each side tested against its contract.
 
-Why it is a decision. Every ADR to date is inbound ingestion. The return path, gold back out to the SaaS tools, is unspecified, and it is where the middleware earns most of its keep. If SaaS specific shaping leaks into gold, gold fragments into one variant per target and drifts, which is the same divergence ADR-001 prevents on the inbound side. If it sits in the middleware, gold stays one clean product and the middleware absorbs each target's quirks.
+Why it matters. Bronze stores records raw, so what is allowed to land has to be clear up front. But it is not decided record by record. Both contracts carry the company's security and data policies, and the rules flow down from the SaaS-to-middleware contract into the middleware-to-O2 contract. A test on each side checks conformance, so compliance is by design.
 
-Starting position, to confirm or overturn.
-- Gold stays SaaS neutral, one business ready product per use case (ADR-001). The middleware does the SaaS specific mapping, format and delivery. This is the outbound anti corruption layer.
-- Authentication to each SaaS sits with the middleware, via the vault. Given, not re-decided.
-- One hard constraint. The platform cannot write back into the inbound SharePoint path, so outbound is never a mirror of Point 1. It needs its own handoff.
+Already set, to confirm.
+- Both contracts carry the security and data-policy rules. Policy flows down from the SaaS-to-middleware contract to the middleware-to-O2 contract.
+- The middleware checks what it receives against the SaaS-to-middleware contract, at the edge.
+- Databricks checks what lands against the middleware-to-O2 contract, at ingestion. Both are compliant by design.
+- The split stays, technical and security checks at the middleware edge, data quality in silver (ADR-001).
 
-Open edges.
-
-| Edge | Option | Owner | Trade-off |
-|:--|:--|:--|:--|
-| SaaS specific mapping | Middleware adapts gold per target | middleware | Gold stays clean, middleware carries the target quirks |
-| | Per SaaS gold tables on the platform | Databricks | Simpler middleware, gold fragments and drifts per target |
-| Outbound handoff | Middleware pulls from gold, query or extract | middleware | Platform stays serving only, middleware controls timing |
-| | Platform writes an outbound extract to a shared drop | Databricks | Symmetric to Point 1, needs a drop location and a contract |
-| Trigger | Middleware polls or runs on a schedule | middleware | Simple, adds latency |
-| | Gold refresh signals the middleware | shared | Fresher, needs an event contract across the boundary |
-
-Depends on. Point 0 for ownership of the return contract. Gold definitions per use case, still to be defined on the platform side. Shares the cadence decision with Point 6 and the unit sizing with Point 7.
-
-Owner of the call. Databricks architect fixes what gold exposes and how it is reached. Middleware architect owns the mapping to each SaaS and the delivery. IS head ratifies the return contract, the mirror of Point 0.
-
-Recommendation.
-- Keep gold SaaS neutral. Put all SaaS specific shaping, format and delivery in the middleware, as the outbound adapter.
-- Make the middleware pull from gold rather than have the platform push. It keeps the platform serving only and gives the middleware control of outbound timing.
-- Write a return handoff contract now, even a thin one, so outbound is not improvised at build time. It is the reverse of Point 1 and deserves the same rigour.
-- Keep authentication and the vault with the middleware.
+Note. The security and data policies come from the company's policy owners. This sheet applies them, it does not set them.
 
 ---
 
-## Point 4. Edge sanitisation versus data quality in silver
+## Point 4. Do we need an event bus
 
-Status. The split principle is settled in Point 1. One genuinely open decision remains, sensitive data handling before landing.
+Status. Deferred. Revisit only when a use case needs a command reliably acted on by a SaaS.
 
-Question. What must the middleware sanitise and validate at the edge before landing, and specifically must sensitive or personal data be stripped or masked before it reaches bronze.
+Question. Is the file landing zone enough, or is a message bus needed.
 
-Why it is a decision. Bronze stores the whole record raw as VARIANT, so anything that must not live in the platform has to be removed by the middleware before it lands. That cannot be corrected later in silver, because by then it is already in bronze. This is a compliance and security boundary, not a data quality one. Separately, deciding what the middleware rejects at the edge versus what the platform quarantines sets where bad input surfaces.
+Why it matters. The landing zone and a message bus do different jobs. Confusing them adds a component no one needs.
 
-Settled position, from Point 1, not re-opened here.
-- Structural and technical sanitisation at the middleware edge, well formed, size bounded, contract conformant.
-- Business data quality, completeness, referential integrity and conforming rules in silver (ADR-001).
+Already set, to confirm.
+- The landing zone is a shared store, read by pull. Any other consumer can read the same store, so fan-out is by adding readers.
+- A message bus does a different job. It is needed when commands must be processed with a reliable action, for example a state change that must be acted on.
+- The middleware keeps no data of its own either way. The landing zone holds the data in transit.
 
-Open edges.
-
-| Edge | Option | Owner | Trade-off |
-|:--|:--|:--|:--|
-| Sensitive and personal data | Strip or mask before landing | middleware | Nothing sensitive enters bronze, middleware carries the classification logic |
-| | Land raw, govern in the platform | Databricks | Simpler middleware, sensitive data resides in bronze and is masked in silver and Unity Catalog |
-| Bad records | Middleware rejects at the edge | middleware | Malformed input never lands, rejects surface upstream |
-| | Land everything, silver quarantines | Databricks | Nothing lost at the boundary, invalid business records surface in silver |
-
-Depends on. Point 0. The Point 1 cleansing split. A data classification of the SaaS sources, which fields are sensitive, a fact to establish before the room can close the top edge.
-
-Owner of the call. IS head and security own the sensitive data decision, because it is compliance. Middleware architect implements edge sanitisation. Databricks architect owns silver quarantine and Unity Catalog governance.
-
-Recommendation.
-- Keep the Point 1 split. Structural and security sanitisation at the edge, data quality in silver.
-- Decide sensitive data by classification. If any field must not reside in bronze, strip or mask it in the middleware before landing, because bronze is raw and silver is too late. Otherwise let it land and govern it in Unity Catalog with masking in silver.
-- Reject only what is structurally unusable at the edge, malformed or oversized. Let well formed but business invalid records land and be quarantined in silver, so nothing business relevant is lost at the boundary.
-- Get compliance sign off on the sensitive data decision. This touches data protection, so a qualified reviewer should confirm it. This sheet is not legal advice.
+Where the classic idea and Databricks differ. The classic middleware reaches for a message bus by default. Here the landing zone already covers data sharing by pull, so a bus is only for commands that must be acted on reliably, which O2 does not have today.
 
 ---
 
-## Point 5. Decoupling mechanism, landing zone versus message bus
+## Point 5. Data freshness
 
-Status. Settled for the O2 inbound path. Open only if the middleware must serve needs beyond O2.
+Status. Set by config and monitoring. Waiting only on the SLO per use case.
 
-Question. Is inbound decoupling done by the file landing zone the ADRs already use, or does a message bus sit in the flow, and if a bus is wanted, what actually justifies it.
+Question. How fresh does each use case's data need to be, and how is that kept.
 
-Why it is a decision. The middleware principles assume a message bus for decoupling. The platform decouples through a file landing zone and Auto Loader instead. Running both puts two components on the same job, and someone has to own the extra one.
+Why it matters. Freshness is end to end, it depends on how often the middleware brings data in and how often Databricks loads it. Get it wrong and a use case works on stale data, or you pay for speed no one needs. But it is not a hard architectural choice, it is a schedule on each side plus a target to watch.
 
-Settled position, to ratify.
-- For the O2 inbound path, the landing zone is the decoupling mechanism. SharePoint in phase 1, ADLS with file events in phase 2. Locked by ADR-009 and ADR-008.
-- The middleware stays stateless either way. The landing zone holds the in flight data, not the middleware.
-
-Divergence to acknowledge, useful signal not an oversight. Message bus is the classic middleware default. For a batch, file based JSON pull into a lakehouse, the landing zone plus Auto Loader already gives the buffering, decoupling and replay a bus would. Databricks practice overrides the classic principle for this workload.
-
-Open edge.
-
-| Edge | Option | Owner | Trade-off |
-|:--|:--|:--|:--|
-| Bus beyond O2 | No bus, landing zone only | Databricks | Simplest, covers the O2 path, matches the ADRs |
-| | Bus upstream of the landing zone, for the wider SI | middleware | Justified only by real time distribution or fan out to consumers beyond the platform. O2 still ingests from the landing zone |
-
-Depends on. Point 0. Whether the middleware serves consumers beyond O2, a scope fact for the IS head. Cadence, Point 6, since a real time need is the main thing that would call for a bus.
-
-Owner of the call. IS head owns the scope question. Middleware architect owns the bus if one is justified. Databricks architect confirms the landing zone covers the O2 path with no bus.
-
-Recommendation.
-- For O2, use the file landing zone as the decoupling mechanism. Do not add a message bus to the O2 path, it would duplicate what Auto Loader already provides.
-- Treat a bus as a separate, wider SI decision. Adopt one only if the middleware must distribute real time events or fan out to consumers beyond the platform. If adopted it sits upstream of the landing zone and does not change the O2 inbound contract.
-- Record the no bus choice as a deliberate override of the classic principle, so it is a decision on the record rather than a gap.
+Already set, to confirm.
+- How often the data refreshes is a schedule on both sides. The middleware schedules when it brings data in, Databricks schedules or triggers when it loads it.
+- Freshness is an SLO per O2 use case, agreed with the business. It is an O2 requirement that flows down as the freshness target on the middleware. O2 monitoring alerts when the SLO is breached.
+- Phase 1 refreshes a few times a day, because SharePoint cannot signal new files (ADR-009). Phase 2 on ADLS can load when new files arrive (ADR-008).
 
 ---
 
-## Point 6. Cadence and freshness, real time versus batch
+## Point 6. Volumes
 
-Status. Open, gated by a business fact. Phase 1 is batch by construction.
+Status. Deferred. At the current company size, volume is not a concern.
 
-Question. What data freshness does each business flow need, and what pull cadence does the middleware run to meet it.
+Why deferred. The landing zone holds a surge of data and serverless loads it with no idle cost, and at today's company size that is comfortably enough. Nothing to size and nothing to decide now.
 
-Why it is a decision. The middleware pull cadence is an explicit input to the platform ingest configuration (ADR-008). Set it without a freshness target and you either over provision, paying for compute and source API load you do not need, or under deliver against what the workflow needs. Freshness is a business fact and it differs per flow, so it has to come from the use cases.
-
-Settled position, to ratify.
-- Phase 1 is batch, hours latency, by construction. SharePoint has no event path, so the drain is scheduled a few times a day (ADR-009). No real time option exists until the ADLS move.
-- Phase 2 opens event driven near real time on file arrival (ADR-008). Continuous streaming is a fallback only under a sub minute SLA, because it bills idle compute.
-- Cadence is set per flow, not once globally. Simplest mode that meets the need.
-
-Open edges.
-
-| Edge | Option | Owner | Trade-off |
-|:--|:--|:--|:--|
-| Freshness per flow | Near real time | business, then middleware | Only where the workflow needs it, higher cost and cadence |
-| | Hourly or few times a day | business, then middleware | Fits most operational reporting, low cost |
-| Phase 2 trigger | Event driven on arrival | Databricks | Near real time, no idle compute. The default |
-| | Scheduled | Databricks | Fixed cadence, simple, small latency |
-| | Continuous stream | Databricks | Sub minute only, bills idle compute |
-
-Depends on. The per flow freshness requirement from the use cases, a business input. Point 2, since pull frequency and delta size trade against each other. Point 1 granularity.
-
-Owner of the call. Business use case owners set the freshness need. Middleware architect sets the pull cadence to meet it. Databricks architect maps it to the trigger mode and confirms the cost.
-
-Recommendation.
-- Do not set cadence in the abstract. Bring a per flow freshness target to the workshop, even rough bands, near real time, hourly, daily.
-- Phase 1, accept batch a few times a day, since SharePoint offers nothing faster and no SLA forces it.
-- Phase 2, default to event driven on arrival. It gives near real time without idle compute. Use scheduled only where a fixed cadence is genuinely preferred, and continuous only if a sub minute SLA is set.
-- Set the middleware pull cadence and the platform trigger together per flow, since one is the input to the other.
-
----
-
-## Point 7. Outbound routing and message decomposition
-
-Status. Open, low urgency. Mostly a build now versus defer call.
-
-Question. When outbound data serves more than one SaaS, or an aggregate record must be split into units, does the middleware do the decomposition and routing, and is that built now or deferred.
-
-Why it is a decision. The middleware principles keep decomposition as an option for future SI needs, splitting an aggregate of candidate, address and skills into separate messages, for example. Building it before a second consumer exists is speculative. Leaving no room for it means retrofitting the outbound path later.
-
-Settled position, to ratify.
-- Inbound data model segmentation is silver's job, conformed by subject area (ADR-001), not the middleware. See Points 1 and 4.
-- Outbound splitting and routing to targets is a middleware job when it is needed, as the extension of the outbound adapter in Point 3.
-
-Open edges.
-
-| Edge | Option | Owner | Trade-off |
-|:--|:--|:--|:--|
-| Multi target routing | Build now | middleware | Ready for a second consumer, speculative until one exists |
-| | Defer until a second target is real | middleware | No speculative complexity, small retrofit later |
-| Aggregate decomposition | Gold exposes the units pre separated | Databricks | Middleware routes, does not split. Cleaner |
-| | Middleware splits the aggregate | middleware | Needed only when gold cannot pre separate |
-
-Depends on. Point 3 for the outbound contract. Whether a second outbound consumer is on the roadmap, a scope fact. Point 0.
-
-Owner of the call. IS head on scope, is a second consumer coming. Middleware architect owns routing if built. Databricks architect decides whether gold exposes aggregates or pre split units.
-
-Recommendation.
-- Build the outbound adapter from Point 3 so routing can be added per target cleanly, but do not build multi target decomposition until a second consumer is real.
-- Prefer gold to expose the units the consumers need, so the middleware routes rather than splits. Splitting in the middleware is the fallback when gold cannot pre separate.
-- Revisit when a second SaaS target appears, as a per target extension, not a rebuild.
-
----
-
-## Point 8. Scalability and volume sizing
-
-Status. Open sizing input, not a design choice. Both sides scale by construction, the target has to be set.
-
-Question. What peak and surge volume must the inbound boundary absorb, and does either side need protection beyond what the landing zone and serverless compute already give.
-
-Why it is a decision. Scalability is a given for both components, but scalable means nothing without a figure. The surge target decides whether the default mechanisms are enough or whether the middleware needs rate limiting and the platform needs throughput tuning. It is a number to bring, not a design to invent.
-
-Settled position, to ratify.
-- The landing zone buffers inbound, so a surge lands as files and is drained by the platform with no backpressure onto the middleware or the SI. This is the main surge absorber, see Point 5.
-- Platform compute is serverless and event driven (ADR-004, ADR-008), so it scales the drain without idle cost.
-- The middleware stays stateless, which is what lets it scale horizontally under load.
-
-Open edges.
-
-| Edge | Option | Owner | Trade-off |
-|:--|:--|:--|:--|
-| Volume target | Establish peak and surge per source | business, then both | A fact to bring, gates the rest |
-| Extra protection | None beyond landing zone and serverless | shared | Fits if the target is within default throughput |
-| | Middleware rate limiting or batching | middleware | Needed only if a source bursts beyond the drain window |
-
-Depends on. The volume figures from the sources and use cases. Point 1 granularity, since file count rises under surge. Point 6 cadence.
-
-Owner of the call. Business and source owners provide the volume figures. Middleware architect confirms absorption and any rate limiting. Databricks architect confirms drain throughput.
-
-Recommendation.
-- Bring peak and surge volume figures per source to the workshop. Without them scalable cannot be signed off.
-- Lean on the landing zone as the surge buffer and serverless as the elastic drain. They cover most surge with no extra work.
-- Add middleware rate limiting or batching only if a source can burst beyond what the drain clears in the freshness window. Treat it as an exception with a figure behind it.
-- Watch file count under surge, since one record per file from Point 1 multiplies files, and confirm the drain and trigger handle that rate.
+Revisit when. A single source grows materially, or a new high-volume source arrives. Then set peak and surge figures and check the load keeps up. One record per file (Point 1) means many files, so watch the file count if that day comes.
 
 ---
 
@@ -330,5 +146,5 @@ Recommendation.
 - Ingest files from SharePoint, Azure Databricks. https://learn.microsoft.com/en-us/azure/databricks/ingestion/sharepoint
 
 <!--
-Version: 1.1 | Last Updated: 2026-07-16 | Status: Draft
+Version: 1.0 | Last Updated: 2026-07-16 | Status: Draft
 -->
