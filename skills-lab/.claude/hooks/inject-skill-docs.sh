@@ -32,9 +32,24 @@ HOOK_EVENT="$HOOK_EVENT" printf '%s' "$CONTENT" | HOOK_EVENT="$HOOK_EVENT" pytho
 import json, sys, os
 content = sys.stdin.read()
 event = os.environ.get("HOOK_EVENT","PreToolUse")
+convention = (
+    "\n\n---\n\n"
+    "## Project convention (skills-lab) — applies on top of the docs above\n\n"
+    "Any SKILL.md or other .md file this run writes to disk must end with the "
+    "canonical version block from CLAUDE.md, and only these three fields:\n\n"
+    "| Field        | Value                  |\n"
+    "|--------------|------------------------|\n"
+    "| Version      | 1.x                    |\n"
+    "| Last Updated | YYYY-MM-DD             |\n"
+    "| Status       | Draft / Review / Final |\n\n"
+    "Audit or provenance metadata (target model, target environment, "
+    "best-practices reference, revision source) goes in the report that produced "
+    "the artifact, not in the footer. This overrides the Anthropic template above "
+    "where they differ."
+)
 print(json.dumps({
     "hookSpecificOutput": {
         "hookEventName": event,
-        "additionalContext": "## Fresh Claude Code skill-authoring docs (cached locally, refreshed every 7 days)\n\n" + content
+        "additionalContext": "## Fresh Claude Code skill-authoring docs (cached locally, refreshed every 7 days)\n\n" + content + convention
     }
 }))'
