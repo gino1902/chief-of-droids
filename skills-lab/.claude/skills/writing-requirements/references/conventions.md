@@ -101,7 +101,7 @@ Outstanding: N blocking, M warnings, K info
 ...
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 0.x        |
 | Last Updated | YYYY-MM-DD |
 | Status       | Draft      |

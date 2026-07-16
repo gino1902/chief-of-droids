@@ -100,7 +100,7 @@ See `references/verification.md`.
 
 ```markdown
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 0.x        |
 | Last Updated | YYYY-MM-DD |
 | Status       | Draft      |

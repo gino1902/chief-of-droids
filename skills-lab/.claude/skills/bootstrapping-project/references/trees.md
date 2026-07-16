@@ -447,7 +447,7 @@ Sources:
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 2.2        |
 | Last Updated | 2026-07-16 |
 | Status       | Review     |

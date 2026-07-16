@@ -201,7 +201,7 @@ so it takes the goal stamp as its first line and does not need the version-block
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.7        |
 | Last Updated | 2026-07-16 |
 | Status       | Review     |

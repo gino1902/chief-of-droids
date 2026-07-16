@@ -100,10 +100,11 @@ Basis: {{the specific source and section, benchmark, or constraint that drove th
 
 ---
 
-| Field | Value |
-|:------|:------|
-| Version | 0.1 (draft) |
+| Field        | Value          |
+|--------------|----------------|
+| Version      | 0.1 (draft)    |
 | Last Updated | {{YYYY-MM-DD}} |
+| Status       | Draft          |
 ~~~
 
 ## Post-write checklist

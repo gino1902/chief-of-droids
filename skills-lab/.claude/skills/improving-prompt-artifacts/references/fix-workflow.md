@@ -1,7 +1,7 @@
 # Fix Workflow — improving-prompt-artifacts
 
 Interactive workflow for applying audit recommendations to a prompting artifact.
-Consumes a prior audit report. Proposes fixes per violation. Awaits per-violation approval. Applies approved fixes via the `Edit` tool. Emits revision metadata.
+Consumes a prior audit report. Proposes fixes per violation. Awaits per-violation approval. Applies approved fixes via the `Edit` tool. Updates the artifact's canonical version block and reports revision provenance in the fix summary.
 
 ---
 
@@ -11,7 +11,7 @@ Do not apply any fix without explicit user approval for that specific fix.
 Use `Edit` for targeted text replacements. Use `Write` only for full-file structural rewrites with explicit user approval.
 `Edit` and `Write` calls during this run target `target-artifact` only. If a fix appears to require modifying a different file, halt and report — do not write. Reason: the audit report scopes the fix run; writing outside the scoped artifact is a silent regression on an unrelated file.
 Surface every iteration of each fix proposal in chat along with its self-challenge notes — iter-1, iter-2, iter-3, and any further iterations triggered by a Drifting verdict. The `y/n` prompt appears only after the trajectory verdict is surfaced. Reason: user visibility into the refinement steps lets the reviewer verify the self-challenge actually happened — without it, the iteration loop becomes internal handwaving the user cannot audit.
-After all approved fixes are applied, append or update the revision metadata block (criterion VER-2).
+After all approved fixes are applied, update the artifact's canonical version block and record revision provenance in the fix summary (criterion VER-2).
 Do not re-run the audit at the end of the fix workflow — that is a separate invocation.
 </execution-rules>
 
@@ -88,19 +88,17 @@ Then prompt per the branch rules in sub-step 9.
 
 4. **Apply each approved fix.** Use `Edit` per fix. Preserve the rest of the file. If a fix requires structural rewrite (e.g. STR-1 section split, STR-2 XML restructure), surface this explicitly and request `Write` approval before applying.
 
-5. **Emit revision metadata (VER-2).** After all fixes are applied, append or update the metadata block at the bottom of the artifact:
+5. **Update the version block (VER-2).** After all fixes are applied, ensure `target-artifact` ends with the canonical workspace version block, bumping `Version` and setting `Last Updated` to today:
 
    ```markdown
-   | Field                | Value                                |
-   |----------------------|--------------------------------------|
-   | Target Model         | [model id]                           |
-   | Target Environment   | [claude-code | claude-desktop | both]|
-   | Best-Practices Ref   | [YYYY-MM-DD snapshot]                |
-   | Last Revised         | [today's date]                       |
-   | Revision Source      | improving-prompt-artifacts skill     |
+   | Field        | Value      |
+   |--------------|------------|
+   | Version      | [bumped]   |
+   | Last Updated | [today]    |
+   | Status       | [Draft | Review | Final] |
    ```
 
-   If a version block already exists at the bottom (per workspace convention), keep it and add the revision metadata above it, or merge the two blocks if the artifact's authoring convention permits.
+   Do not inject a separate provenance or metadata block into the artifact. The revision provenance (Target Model, Target Environment, Best-Practices Ref, Revision Source) is recorded in the fix summary below, not in the artifact.
 
 6. **Produce fix summary.**
 
@@ -111,13 +109,15 @@ Then prompt per the branch rules in sub-step 9.
    Target Environment: [value]
    Target Model: [value]
    Best-Practices Ref: [date]
+   Revision Source: improving-prompt-artifacts skill
+   Last Revised: [today's date]
 
    Fixes applied: [n]
    Fixes deferred: [n] — criterion IDs: [list]
    Fixes user-edited: [n] — criterion IDs: [list]
    Minor violations skipped: [n] — re-run audit to include
 
-   Revised metadata block: [appended | updated | merged with existing version block]
+   Version block: [bumped to <version> | added]
    ```
 
 ---
@@ -173,7 +173,7 @@ Fix runs are independent. A fix workflow consumes one audit report and produces 
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-05-18 |
+|--------------|------------|
+| Version      | 1.3        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

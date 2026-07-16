@@ -184,7 +184,7 @@ Precondition present but unassessable — the feature exists but the artifact do
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.3        |
 | Last Updated | 2026-07-14 |
 | Status       | Draft      |

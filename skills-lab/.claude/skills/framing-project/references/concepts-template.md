@@ -66,7 +66,7 @@ Relationships between contexts: which owns a term, which consumes it, where the 
 - [ ] Context map has a row for each cross-context relationship (owner, consumer, or divergent term).
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.0        |
 | Last Updated | 2026-07-13 |
 | Status       | Draft      |

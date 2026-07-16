@@ -84,11 +84,11 @@ A starting shape to clone, not the populated repo.
 <the toolchain and runtime prerequisites>
 
 ---
-| Field | Value |
-|:------|:------|
-| Version | 1.0 |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.0        |
 | Last Updated | YYYY-MM-DD |
-| Status | Draft |
+| Status       | Draft      |
 ```
 
 ## The living design doc
@@ -139,11 +139,11 @@ last_updated: YYYY-MM-DD
 <only docs actually used; the ADRs carry their own sources and are not repeated>
 
 ---
-| Field | Value |
-|:------|:------|
-| Version | 0.1 (draft) |
-| Last Updated | YYYY-MM-DD |
-| Status | Draft |
+| Field        | Value       |
+|--------------|-------------|
+| Version      | 0.1 (draft) |
+| Last Updated | YYYY-MM-DD  |
+| Status       | Draft       |
 ~~~
 
 A shared decision (a seam contract, the data model, a unit boundary) is written here and in the artefact that renders it, from the one answer resolved in the interview. The two are never asked or answered separately.

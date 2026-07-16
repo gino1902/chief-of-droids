@@ -222,7 +222,7 @@ If an FR action verb does not fit any row, classify under the closest shape and 
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.1        |
 | Last Updated | 2026-05-15 |
 | Status       | Draft      |

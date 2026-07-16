@@ -40,11 +40,11 @@ Fill this structure. Omit a section if the wiki has nothing for it. Keep prose t
 
 - <thread> — [[page]]
 
-| Field | Value |
-|---|---|
-| Version | 1.0 |
+| Field        | Value        |
+|--------------|--------------|
+| Version      | 1.0          |
 | Last Updated | <YYYY-MM-DD> |
-| Status | Draft |
+| Status       | Draft        |
 ```
 
 Notes:
@@ -81,11 +81,11 @@ The automotive and clean-energy activities of Tesla and its founder, across 7 pa
 
 - Whether the Dojo programme is still funded — [[dojo-supercomputer]]
 
-| Field | Value |
-|---|---|
-| Version | 1.0 |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.0        |
 | Last Updated | 2026-05-31 |
-| Status | Draft |
+| Status       | Draft      |
 ```
 
 ## Worked example — sparse wiki (edge case)
@@ -105,11 +105,11 @@ When no themes or centres emerge, do not invent groupings:
 - [[elon-musk]] — entity
 - [[battery-day]] — concept
 
-| Field | Value |
-|---|---|
-| Version | 1.0 |
+| Field        | Value      |
+|--------------|------------|
+| Version      | 1.0        |
 | Last Updated | 2026-05-31 |
-| Status | Draft |
+| Status       | Draft      |
 ```
 
 ## Map vs rewrite

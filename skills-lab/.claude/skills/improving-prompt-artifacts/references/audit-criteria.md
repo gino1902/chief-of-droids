@@ -486,20 +486,19 @@ Note: criteria OBL-5 (literalism), OUT-2 (default verbosity), TOOL-3 (action sta
 Applicability: universal.
 Source: best-practices snapshot, "Prompting Claude Opus 4.7" + "Migration considerations."
 
-VER-2: For artifacts revised by the improving-prompt-artifacts skill, verify the revision metadata block is present and current.
-Pass: the artifact contains a metadata block declaring Target Model, Target Environment, Best-Practices Ref date, Last Revised date, and Revision Source.
-Fail: revision metadata is absent on a revised artifact, or is stale (older than the artifact's content date).
-Fix: append or update the metadata block at the bottom of the artifact:
+VER-2: For artifacts revised by the improving-prompt-artifacts skill, verify the artifact carries the canonical workspace version block and that the revision is recorded in the audit output.
+Pass: the artifact ends with the canonical version block (Version, Last Updated, Status), with Version bumped and Last Updated set to the revision date. The audit report and fix summary carry the revision provenance (Target Model, Target Environment, Best-Practices Ref, Revision Source).
+Fail: a revised artifact lacks the canonical version block, or the block was not updated for this revision.
+Fix: ensure the canonical version block at the bottom of the artifact:
 
-  | Field                | Value                                |
-  |----------------------|--------------------------------------|
-  | Target Model         | claude-opus-4-7                      |
-  | Target Environment   | claude-code                          |
-  | Best-Practices Ref   | YYYY-MM-DD snapshot                  |
-  | Last Revised         | YYYY-MM-DD                           |
-  | Revision Source      | improving-prompt-artifacts skill     |
+  | Field        | Value      |
+  |--------------|------------|
+  | Version      | 1.x        |
+  | Last Updated | YYYY-MM-DD |
+  | Status       | Draft      |
 
-Reason: downstream consumers (other audits, other models, future revisions) need to know what version and environment this artifact was tuned for. Without metadata, the artifact's calibration is invisible.
+  Do not inject a separate provenance or metadata block into the artifact. Revision provenance (Target Model, Target Environment, Best-Practices Ref, Revision Source) belongs in the audit report and the fix summary, not in the artifact footer.
+Reason: every artifact carries one consistent footer. Audit provenance is run metadata that lives with the report that produced it, so the artifact stays clean and downstream consumers read a single canonical block.
 Applicability: artifacts that have undergone a fix run; optional for audit-only outputs but flagged as Minor if absent.
 Source: in-house.
 
@@ -514,7 +513,7 @@ Reason: prior audit state introduces confirmation bias — the current run must 
 </cross-run-behaviour>
 
 | Field        | Value      |
-|:-------------|:-----------|
-| Version      | 1.3        |
-| Last Updated | 2026-07-14 |
+|--------------|------------|
+| Version      | 1.4        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

@@ -113,7 +113,7 @@ section (Constraints). If the user later wants a status marker, they add it them
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.5        |
 | Last Updated | 2026-07-13 |
 | Status       | Review     |

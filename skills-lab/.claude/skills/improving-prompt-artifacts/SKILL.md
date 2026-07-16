@@ -122,7 +122,7 @@ The report file must end with the version block defined in `audit-report-schema.
 
 **Steps:** See `references/fix-workflow.md`. Read that file at workflow start.
 
-Summary of behavior: filters to Blocking and Major violations from the supplied report; for each violation, displays the verbatim block from the report, then surfaces every iteration of the proposed replacement (iter-1, iter-2, iter-3, and any further iterations triggered by a Drifting verdict) with self-challenge notes on each against fix-intent and predictability-intent (see `## Predictability intent` in `references/fix-workflow.md`); after the iterations, surfaces a trajectory verdict (Stable / Drifting / Divergent) and then prompts the user — `Proceed (y/n)?` on Stable, run more iterations on Drifting (cap iter-5), `Proceed with no-change (y/n)?` on Divergent. Approved fixes are applied via `Edit` (or `Write` for structural rewrites). On completion, the revision metadata block (VER-2) is appended at the bottom of the artifact.
+Summary of behavior: filters to Blocking and Major violations from the supplied report; for each violation, displays the verbatim block from the report, then surfaces every iteration of the proposed replacement (iter-1, iter-2, iter-3, and any further iterations triggered by a Drifting verdict) with self-challenge notes on each against fix-intent and predictability-intent (see `## Predictability intent` in `references/fix-workflow.md`); after the iterations, surfaces a trajectory verdict (Stable / Drifting / Divergent) and then prompts the user — `Proceed (y/n)?` on Stable, run more iterations on Drifting (cap iter-5), `Proceed with no-change (y/n)?` on Divergent. Approved fixes are applied via `Edit` (or `Write` for structural rewrites). On completion, the artifact's canonical version block (VER-2) is updated; revision provenance is recorded in the fix summary, not injected into the artifact.
 
 ---
 
@@ -145,6 +145,6 @@ Reason: prior audit state introduces confirmation bias — each audit must evalu
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.5        |
-| Last Updated | 2026-05-18 |
+| Version      | 1.6        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |
