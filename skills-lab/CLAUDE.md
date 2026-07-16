@@ -41,7 +41,7 @@ Cache: `.claude/cache/skill-docs/` (gitignored). Refresh policy: `curl` only whe
 
 Scripts:
 - `.claude/scripts/refresh-skill-docs.sh` — fetcher
-- `.claude/hooks/inject-skill-docs.sh` — stale-check + emit JSON (dynamic `hookEventName`); one-line diagnostic at `/tmp/skill-creator-hook.log`
+- `.claude/hooks/inject-skill-creator-context.sh` — stale-check + emit JSON (docs plus the version-block convention; dynamic `hookEventName`); one-line diagnostic at `/tmp/skill-creator-hook.log`
 
 ## Auto-memory
 

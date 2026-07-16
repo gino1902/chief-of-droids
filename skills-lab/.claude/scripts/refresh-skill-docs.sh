@@ -1,6 +1,6 @@
 #!/bin/bash
 # Fetch latest Anthropic skill-authoring docs into local cache.
-# Idempotent. Run manually to force-refresh, or let inject-skill-docs.sh
+# Idempotent. Run manually to force-refresh, or let inject-skill-creator-context.sh
 # call it when the cache is older than 7 days.
 
 set -e

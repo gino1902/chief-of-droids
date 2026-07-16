@@ -1,8 +1,9 @@
 #!/bin/bash
-# Hook handler for /skill-creator: emit cached Anthropic skill-authoring docs as
-# additionalContext. Wired to both PreToolUse(Skill) and UserPromptExpansion in
-# settings.json. Echoes the event name back so Claude Code accepts the output for
-# whichever event invoked it. Refreshes the cache inline if older than 7 days.
+# Hook handler for /skill-creator: emit cached Anthropic skill-authoring docs plus
+# the skills-lab version-block convention as additionalContext. Wired to both
+# PreToolUse(Skill) and UserPromptExpansion in settings.json. Echoes the event name
+# back so Claude Code accepts the output for whichever event invoked it. Refreshes
+# the docs cache inline if older than 7 days.
 
 HOOK_INPUT=$(cat)
 HOOK_EVENT=$(printf '%s' "$HOOK_INPUT" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("hook_event_name","PreToolUse"))' 2>/dev/null)
