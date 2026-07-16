@@ -59,8 +59,32 @@ After a run-through, mark each row pass or fail and attach the observed `Outstan
 
 Record the Capture column as the run proceeds, not after. A clean end-state leaves no trace for behavioural rows or in-place mutation rows, so evidence not captured live cannot be recovered. Rows tagged `[beh]` in that column have no end-state artifact at all and depend entirely on the live transcript. To make in-place effects auditable, commit each shared base in `test-medium`'s own repo when `chain-test-medium` builds it; that commit is the diff reference. Each in-place row runs in a fresh session, resets `test-medium` to the base commit (`git reset --hard <base-commit> && git clean -fd`) rather than rebuilding, runs its scenario, and captures `git diff <base-commit>` as a named evidence artifact, so every change reads as a diff against a fixed, deterministic base rather than a lost delta. Resetting to a committed base also removes the base-elicitation variance that caused MD-1's off-by-one. This assumes the base carries its own repo, which the git-init open item below governs. The five diff-based rows (MD-1, MD-2, MD-3, MD-5, MD-7) carry this in their Reset-to-base and Record sections. The first run-through's marked table is in `../requirements-chain-test-retrospective-run1.md`; the second, against the tightened suite, is in `../requirements-chain-test-retrospective-run2.md`.
 
+## Executable checks
+
+The disk-checkable invariants have scripts under `tests/checks/`, run against a scenario's outputs after the run. They are deterministic, need no skill run, and stay inside the `grep`/`sed`/`git` set. `<dir>` is the scenario's output dir, `<base>` the committed base commit (see `chain-test-medium.md` §Record). Rows with no script, and the `[beh]` halves, stay manual until the Phase 2 driver and R2's decision stamp exist.
+
+| # Row | Check | Invocation, or why manual |
+|:--|:--|:--|
+| 1 small | tally | `check-summary-tally.sh <dir>/requirements/link-service/link-service-report.md` |
+| 2 medium | tally | `check-summary-tally.sh <dir>/requirements/ingestion-pipeline/ingestion-pipeline-report.md` |
+| 3 MD-1 | tally, plus ID-stability | tally on the report; ID-stability (base FRs byte-stable, one new next-ID) not yet scripted, check by hand |
+| 4 MD-2 | diff-confined | `check-diff-confined.sh <dir> <base> FRAMING.md` |
+| 5 MD-5 | diff-confined | `check-diff-confined.sh <dir> <base> CLAUDE.md` |
+| 6 SM-3 | diff-confined, plus `[beh]` | no-mutation of `settings.json` is diff-checkable against the pass-1 commit; re-elicitation is `[beh]`, manual |
+| 7 MD-4 | tally | `check-summary-tally.sh` on each pass's report |
+| 8 MD-3 | diff-confined | `check-diff-confined.sh --no-deletions <dir> <base> CONCEPTS.md 'report-builder/*'` |
+| 9 MD-7 | diff-confined | `check-diff-confined.sh --no-deletions <dir> <base> CONCEPTS.md 'steward-assignment/*' 'report-ownership/*'` |
+| 10 SM-1 | tally | `check-summary-tally.sh` on the re-pass report |
+| 11 MD-6 | tally | `check-summary-tally.sh <dir>/requirements/ticket-api/ticket-api-report.md` |
+| 12 XC-1 | none yet | manual: no `requirements/` written, each sub-case cites the correct hard-fail phase |
+| 13 XC-3 | diff-confined, tally, structural | script the confinement and tally; title-equals-slug and `N/A` sections are structural greps, not yet scripted |
+| 14 XC-2 | diff-confined, plus `[beh]` | zero-mutation: `check-diff-confined.sh <dir> <step1>` with no allowed globs (empty diff passes); stop-report is `[beh]`, manual |
+| 15 OP-1 | none yet | manual: slice self-contained (terms backticked or defined), no `requirements/` dir |
+
+Two scripts cover most rows because the invariants are shared, not per-row: `check-summary-tally.sh` for every report-producing row, `check-diff-confined.sh` for the committed-base confinement rows.
+
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.5        |
+| Version      | 1.6        |
 | Last Updated | 2026-07-16 |
 | Status       | Draft      |
