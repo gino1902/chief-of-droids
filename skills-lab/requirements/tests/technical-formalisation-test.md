@@ -57,6 +57,7 @@ Invoke `writing-requirements ticket-api from outputs/ticket-api/ticket-api.md --
 - ERR coverage: each FR of Acquire, Mutate, or Validate shape (create, fetch) has a paired `ERR` entry drawn in the same pass, or an inline opt-out rationale.
 - Bounded scores ✓ on the `NFR` latency requirement (the 300 ms threshold). The `SEC` (read-authorisation) and `OBS` (metric emission) requirements as scripted carry no quantitative threshold, so Bounded scores ✗ and each emits a Bounded Warning. That is correct scoring, not a defect. If you want Bounded ✓ across all three, give the `SEC` and `OBS` requirements numeric thresholds in the slice.
 - No undefined-term warnings, since `CONCEPTS.md` governs the vocabulary.
+- The report Summary reconciles with the body: the Info Resolved cell equals the count of `[INFO]` lines, and the Warning and Blocking Resolved and Unresolved cells equal their `[<SEVERITY>-RESOLVED]` and `[<SEVERITY>-UNRESOLVED]` line counts. Run 2 found the Info count undercounting here; the standalone check is `verify-summary-info-tally.md`.
 
 ## Fail conditions
 
@@ -64,6 +65,7 @@ Invoke `writing-requirements ticket-api from outputs/ticket-api/ticket-api.md --
 - An Acquire/Mutate/Validate FR has neither a paired `ERR` nor an opt-out rationale (Phase 4 warning).
 - The NFR renders unbounded (Bounded ✗) when the slice gave a 300 ms threshold.
 - Any undefined-term warning, or a shape-defect warning (scope not extracted, a non-EARS requirement, or a title fallback). Bounded ✗ warnings on the non-quantitative `SEC` and `OBS` requirements are expected and are not failures.
+- Any Summary count disagrees with the body tagged-line count, for example the Info Resolved cell differs from the number of `[INFO]` lines.
 
 ## Record
 
@@ -75,6 +77,6 @@ This is the highest pure-coverage scenario. It sits below the iteration ladder b
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

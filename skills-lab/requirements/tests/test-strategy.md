@@ -55,12 +55,12 @@ These are in the design doc's Deferred section because the feature is unbuilt. N
 
 ## Retrospective use
 
-After a run-through, mark each row pass or fail and attach the observed `Outstanding` line and any deviation. Read failures against the tier: a failure in a lower tier invalidates the rows above it, so fix bottom-up. Auto-derived glossary entries surface as verification-pending (`WARNING-UNRESOLVED`) after the `conventions.md` resolution-model fix; treat those as normal, not failures.
+After a run-through, mark each row pass or fail and attach the observed `Outstanding` line and any deviation. Read failures against the tier: a failure in a lower tier invalidates the rows above it, so fix bottom-up. Auto-derived glossary entries surface as verification-pending (`WARNING-UNRESOLVED`) after the `conventions.md` resolution-model fix; treat those as normal, not failures. For every row that runs `writing-requirements`, also confirm the report Summary reconciles with the body tagged-line counts: the Info Resolved cell equals the `[INFO]` line count, and each Warning and Blocking cell equals its suffix-line count. A mismatch is a defect, not normal variance. The standalone check is `verify-summary-info-tally.md`.
 
 Record the Capture column as the run proceeds, not after. A clean end-state leaves no trace for behavioural rows or in-place mutation rows, so evidence not captured live cannot be recovered. Rows tagged `[beh]` in that column have no end-state artifact at all and depend entirely on the live transcript. To make in-place effects auditable, commit each shared base in `test-medium`'s own repo when `chain-test-medium` builds it; that commit is the diff reference. Each in-place row runs in a fresh session, resets `test-medium` to the base commit (`git reset --hard <base-commit> && git clean -fd`) rather than rebuilding, runs its scenario, and captures `git diff <base-commit>` as a named evidence artifact, so every change reads as a diff against a fixed, deterministic base rather than a lost delta. Resetting to a committed base also removes the base-elicitation variance that caused MD-1's off-by-one. This assumes the base carries its own repo, which the git-init open item below governs. The five diff-based rows (MD-1, MD-2, MD-3, MD-5, MD-7) carry this in their Reset-to-base and Record sections. The first run-through's marked table is in `../requirements-chain-test-retrospective-run1.md`; the second, against the tightened suite, is in `../requirements-chain-test-retrospective-run2.md`.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.4        |
+| Version      | 1.5        |
 | Last Updated | 2026-07-16 |
 | Status       | Draft      |

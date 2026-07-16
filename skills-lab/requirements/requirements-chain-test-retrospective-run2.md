@@ -62,12 +62,12 @@ Kept separate so it carries no factual weight it has not earned.
 ## Open follow-ups
 
 - Parked tightening decisions from the session analysis. R2, a durable oracle for the two `[beh]` rows, now less urgent since both were confirmed live, but still transcript-dependent. R3, whether MD-3 and MD-7 should formalise through writing-requirements or stay scoped to the CONCEPTS layer. R4, unmask the XC-3 and SM-3 defects in the tests now that the escape is re-confirmed.
-- Skill fixes. The `writing-requirements` Summary Info tally (MD-6). The `writing-requirements` Phase 0.5 repo-root anchoring (XC-3 escape).
+- Skill fixes. The `writing-requirements` Summary Info tally (MD-6), fixed and verified after the run: the reconciliation invariant now counts `[INFO]` lines from the body, confirmed by `tests/verify-summary-info-tally.md` (Info reconciled at 23 across body, Summary, and Outstanding). The `writing-requirements` Phase 0.5 repo-root anchoring (XC-3 escape) remains open.
 - Test-doc corrections. The XC-1 "Expected outputs" empty-dir prediction, since no dir is created. The MD-2 `last_updated`-advances AC, untestable on a same-day base, so backdate the base or reword the AC.
 - Re-run hygiene. The mid-run deletion argues for committing or relocating `.diff` evidence out of `outputs/` promptly, since `outputs/` is disposable scratch and a stray `rm` takes the evidence with it.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-07-16 |
 | Status       | Draft      |
