@@ -8,6 +8,8 @@ Run this after a fresh `chain-test-medium.md`, in a session at the Medium base.
 
 Exercise the untested half of the domain-language design: a single word that legitimately means different things in two contexts. The chain design structures `CONCEPTS.md` by context precisely because "the same word can mean different things in two contexts", and the context map exists to record "where the same word diverges". MD-3 tests only the same-meaning case (reuse a term verbatim, no drift). This tests divergence: the word is recorded under both owning contexts with distinct definitions, and the context map carries a divergence row, rather than one meaning overwriting the other, a synonym being minted to dodge the clash, or the term being flattened into the shared core.
 
+Scope: this row proves divergence at the `CONCEPTS.md` layer only and does not run `writing-requirements`. Because the formaliser reads a single slice and never sees the context map, it cannot exercise divergence at all. The divergence-to-spec leg, distinct senses enforced across components in the formalised output, is the deferred recomposition check (the context map as a runtime check), not this row.
+
 ## Directory and precedence
 
 Directory: `outputs/test-medium`, created by `chain-test-medium.md`, not by this test.
@@ -92,6 +94,6 @@ This validates the central reason `CONCEPTS.md` is context-structured rather tha
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-07-15 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

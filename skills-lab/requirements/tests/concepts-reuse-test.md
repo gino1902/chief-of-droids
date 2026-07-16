@@ -8,6 +8,8 @@ Run this after `chain-test-medium.md`, in a session where the Medium+ outputs al
 
 Exercise the ubiquitous-language loop. A second component, from a different Track, drawn on the same `CONCEPTS.md`, must reuse existing terms verbatim rather than mint synonyms, and record genuinely new terms back under the owning context. This guards the domain-driven-design no-drift property, where two components would otherwise name the same thing differently. It is also the closest safe probe of multi-component behaviour without the fan-out the chain design defers.
 
+Scope: this row proves the loop at the brainstorm and `CONCEPTS.md` layer only and does not run `writing-requirements`. The CONCEPTS-to-spec leg, that a governed term reaches the formalised spec, is covered by `chain-test-medium.md` and `technical-formalisation-test.md`, which assert no undefined-term warnings with terms tracing to `CONCEPTS.md`.
+
 ## Directory and precedence
 
 Directory: `outputs/test-medium`, created by `chain-test-medium.md`, not by this test.
@@ -78,6 +80,6 @@ brainstorming handles one component per run, so this is a manual second run agai
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-07-15 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |
