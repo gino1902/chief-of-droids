@@ -28,6 +28,14 @@ any hard prohibition discovered later is surfaced as a proposal in the close rep
 written into `settings.json` by the skill. This keeps the file deterministic across runs —
 two bootstraps of the same brief produce byte-identical `settings.json`.
 
+The freeze is scoped to `settings.json` specifically. It does not cover the project's own
+enforcement files. The pass 4 tail does generate a lint config and a project gate
+(`.pre-commit-config.yaml`, husky, or a CI step) to hold the `CONVENTIONS.md` contract — those
+are stack files, not Claude Code config, and they enforce for every contributor rather than only
+Claude's sessions. Writing them leaves `settings.json` untouched, so the byte-identical guarantee
+above still holds. The only `settings.json`-adjacent action at the tail is an additive allowlist
+offer for the lint runner, which is the existing offer path, not a mutation of the baseline.
+
 ## Baseline `.claude/settings.json`
 
 The baseline is deliberately small. It carries only what generalises to any project.
@@ -94,6 +102,6 @@ be committed. `settings.json` (the shared baseline you just wrote) is committed.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.4        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.5        |
+| Last Updated | 2026-07-16 |
 | Status       | Review     |

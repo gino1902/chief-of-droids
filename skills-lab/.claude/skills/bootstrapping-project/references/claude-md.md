@@ -22,17 +22,20 @@ live once at user level. See the tail check below.
 
 Use the skeleton for the locked goal. Fill only from what you found. Delete unfilled lines.
 
-Append one pointer line as the final line of every generated CLAUDE.md, regardless of goal, so
-the deferral of behavioural conduct to user level is explicit and checkable rather than a silent
-omission:
+Append two pointer lines as the final lines of every generated CLAUDE.md, regardless of goal, so
+each deferral is explicit and checkable rather than a silent omission:
 
 ```markdown
+> Structural conventions (import, dependency, promotion rules) live in `CONVENTIONS.md`, enforced
+> by the project lint config and gate, not restated here.
 > Behavioural conduct (think-before-coding, simplicity-first, surgical changes, goal-driven
 > execution) lives at user level in `~/.claude/CLAUDE.md`, not duplicated here.
 ```
 
-The Pass 4 tail then verifies the referenced file actually carries those guidelines and warns if
-it does not.
+The `CONVENTIONS.md` pointer is why CLAUDE.md does not carry the tree's structural rules: they
+have a durable home of their own (written in Pass 3), so CLAUDE.md references it and stays inside
+its 60-line budget. The Pass 4 tail then verifies the behavioural-conduct file actually carries
+those guidelines and warns if it does not.
 
 ### thinking
 
@@ -66,8 +69,9 @@ it does not.
 ## Conventions
 <one bullet per FRAMING Constraint, in the order they appear there, each carried in imperative
 form using that constraint's own wording. Do not add, merge, split, or reword them, and do not
-synthesise extra conventions from the tree layout. If FRAMING states no Constraints, fall back
-to up to 5 load-bearing negatives verified in the repo.>
+synthesise extra conventions from the tree layout — the tree's structural rules live in
+`CONVENTIONS.md`, reached via the appended pointer, not here. If FRAMING states no Constraints,
+fall back to up to 5 load-bearing negatives verified in the repo.>
 ```
 
 ### infra
@@ -160,17 +164,34 @@ Preserve the author's wording everywhere else. Show the diff, apply only on appr
    canonical glob form per command (`Bash(pnpm deploy)` and `Bash(pnpm deploy:*)`), so two
    runs proposing the same rule quote it identically rather than drifting between `deploy *`
    and `deploy:*`.
-2. **Resolve the conduct reference — check, read, apply.** The skill instantiates the *project*
+2. **Generate the structural enforcement — write config and gate, not `settings.json`.** The
+   `CONVENTIONS.md` contract written in pass 3 states the import, dependency, and promotion
+   rules; now that the stack is confirmed, make them a 100% gate. Generate, approval-gated: the
+   lint config encoding the structural boundaries (ESLint `import/no-restricted-paths` zones for
+   the app goals, TFLint for infra, ruff for data) and the project gate that runs it (a
+   `.pre-commit-config.yaml`, husky plus lint-staged, or a CI step — whichever the stack already
+   uses). These are stack files, so writing them does not touch `settings.json`, whose pass-1
+   freeze stands. Constrain generation two ways: only for tooling the confirmed stack actually
+   uses, and only zones for folders that exist — where per-feature or per-domain folders are
+   still deferred, leave a documented extend-per-feature marker rather than fabricating zones for
+   absent paths (the grounding test applies to config too). Record the config file path and the
+   runner command back into `CONVENTIONS.md` so the drift-check can bind the two. The `thinking`
+   goal has no lint equivalent; its gate is review, so generate no config and say so in the
+   report. An additive allowlist offer for the runner (for example `Bash(pnpm lint)`) is fine —
+   that is the existing pass-1 offer path, not a new mutation.
+3. **Resolve the conduct reference — check, read, apply.** The skill instantiates the *project*
    CLAUDE.md, so the apply target is that file — never the user's global config, and the skill
    installs nothing into the user's environment.
    - **Check** whether the user-level behavioural conduct exists (default location
      `~/.claude/CLAUDE.md`).
    - **Read** it to confirm the location and that it carries the guidelines.
-   - **Apply** the one-line pointer into the project CLAUDE.md, pointing at that location.
-   If the conduct is absent, do not fabricate the reference — omit the pointer and surface a
-   warning in the close report telling the user to install the guidelines at user level
+   - **Apply** the appended pointer lines into the project CLAUDE.md: the `CONVENTIONS.md`
+     pointer always, and the behavioural-conduct pointer pointing at that location.
+   If the conduct is absent, do not fabricate the reference — omit the conduct pointer and
+   surface a warning in the close report telling the user to install the guidelines at user level
    (github.com/forrestchang/andrej-karpathy-skills). They are project-independent: the project
-   file references them, it never holds or installs them.
+   file references them, it never holds or installs them. The `CONVENTIONS.md` pointer is
+   unaffected — that file is always written in pass 3.
 
 ## Note on the footer
 
@@ -181,6 +202,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.6        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.7        |
+| Last Updated | 2026-07-16 |
 | Status       | Review     |

@@ -2,7 +2,7 @@
 
 # Pass 3 — project tree
 
-Turns the intent in FRAMING.md into a source layout. Two rules govern this pass.
+Turns the intent in FRAMING.md into a source layout. Three rules govern this pass.
 
 First, only scaffold on an empty repo. If source files already exist, do not propose a
 reorganisation — document the existing structure so pass 4 can describe it accurately, and
@@ -11,6 +11,35 @@ skip creation. Reorganising someone's repo is rarely wanted and never safe by de
 Second, every directory must be justified now, not speculatively. Create only what the
 project needs today. The deferred directories listed under each tree are created later,
 when the trigger for them actually occurs — this keeps the tree honest and readable.
+
+Third, write the conventions down. Each goal below carries a Conventions block: dependency,
+import, and promotion rules, plus an Enforcement line naming the real mechanism. That block is
+not just reference for the model — it is the source text for a `CONVENTIONS.md` written at the
+repo root in this pass, the durable contract for the tree. Fill `CONVENTIONS.md` verbatim from
+the locked goal's block, do not reword or re-synthesise. If it already exists, reconcile with a
+minimal approval-gated diff, never regenerate. The lint config and project gate that enforce the
+contract are generated at the pass 4 tail, once the stack is confirmed; `CONVENTIONS.md` names
+the config file and runner so the two cannot silently drift.
+
+`CONVENTIONS.md` ends with a machine-readable enforcement stanza, an HTML comment the lifecycle
+drift-check (`check-conventions-drift.sh`) parses. Write it exactly in this shape, one stanza per
+file:
+
+```
+<!-- enforcement:
+config: <relative-path to the lint config, or none>
+runner: <the lint command, or review>
+zoned: <space-separated prefix/* globs whose child folders must each be zoned, or none>
+-->
+```
+
+Per goal: app sets `config` to the ESLint config, `runner` to the lint command, and `zoned` to
+`apps/* src/features/*`. Data sets the ruff config, its runner, and `zoned: none` (ruff is
+file-level, not zone-level). Infra sets the TFLint config, its runner, and `zoned: none`. Thinking
+sets `config: none`, `runner: review`, `zoned: none` — review is its only gate. At bootstrap
+`config` and `runner` may be pending until the pass 4 tail confirms the stack; write the stanza
+with the values the tail will produce, and the tail reconciles them into place when it generates
+the config.
 
 Create approved directories via `.gitkeep` files so they are tracked by git.
 
@@ -416,6 +445,6 @@ Sources:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 2.0        |
+| Version      | 2.1        |
 | Last Updated | 2026-07-16 |
 | Status       | Review     |

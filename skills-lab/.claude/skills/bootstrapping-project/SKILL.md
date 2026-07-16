@@ -24,7 +24,7 @@ Bootstraps a Claude Code project through four passes that always run in the same
 
 1. **Pass 1 — environment.** `git init` and a baseline `.claude/` configuration.
 2. **Pass 2 — FRAMING.md.** The intent anchor: why, for whom, what success is, what is delivered, what constraints apply.
-3. **Pass 3 — project tree.** The source layout that will hold the deliverables named in Pass 2.
+3. **Pass 3 — project tree.** The source layout that will hold the deliverables named in Pass 2, plus `CONVENTIONS.md`, the durable contract that governs it.
 4. **Pass 4 — CLAUDE.md.** Written last, so it documents a tree that already exists.
 
 The order is locked and load-bearing. Pass 1 comes first because its permission defaults
@@ -46,7 +46,11 @@ here so the model applies them by judgement, not by rote.
 - **Enforcement beats prose.** A hard prohibition ("never deploy", "never touch prod")
   belongs in `settings.json` deny rules or a hook, which enforce at 100%, not in CLAUDE.md
   prose, which is followed about 70% of the time. When you find a hard rule, route it to
-  enforcement and propose it — do not just write it as a sentence.
+  enforcement and propose it — do not just write it as a sentence. The same logic governs the
+  tree's structural conventions (import, dependency, promotion rules): they are stated once in
+  `CONVENTIONS.md` and held by a project-native lint config and gate, not by prose that erodes.
+  The gate is the project's own (pre-commit, CI, lint zones), never a `settings.json` hook —
+  a structural contract binds every contributor, not only Claude's sessions.
 - **Reconcile, never regenerate.** An artifact that already exists is never overwritten.
   It is reconciled through a minimal, approval-gated diff that preserves the author's
   wording. This is also what makes the skill resumable.
@@ -69,8 +73,8 @@ Load the file for the pass you are running, not all of them up front.
 |:--|:--|:--|
 | `references/environment.md` | Pass 1 | Baseline `settings.json`, `.gitignore`, git-init steps, what to defer |
 | `references/framing.md` | Pass 2 | FRAMING.md template, the five framing questions, goal stamp, reconcile rules |
-| `references/trees.md` | Pass 3 | Per-goal project trees and their deferred directories |
-| `references/claude-md.md` | Pass 4 | Per-goal CLAUDE.md skeletons, grounding test, enforcement + Karpathy checks |
+| `references/trees.md` | Pass 3 | Per-goal project trees, their deferred directories, and the conventions block written to `CONVENTIONS.md` |
+| `references/claude-md.md` | Pass 4 | Per-goal CLAUDE.md skeletons, grounding test, enforcement generation + Karpathy checks |
 
 ## Preamble — orient, then resume
 
@@ -81,7 +85,8 @@ Run this before any pass.
 2. **Detect what already exists**, to know which passes are done and where to resume:
    - Pass 1: a `.git/` directory at the target root and a `.claude/settings.json`.
    - Pass 2: a `FRAMING.md` at the repo root.
-   - Pass 3: any source files or a scaffolded tree (more than just config and framing).
+   - Pass 3: a `CONVENTIONS.md` at the repo root, or any source files or a scaffolded tree
+     (more than just config and framing).
    - Pass 4: a `CLAUDE.md` at the repo root.
 3. **Resolve the goal.**
    - If `FRAMING.md` exists, read the goal from its `<!-- goal: ... -->` stamp. This is
@@ -152,6 +157,13 @@ FRAMING.md is user-owned after creation — never modify it autonomously in a la
    ask the one sub-type question: data or app). Create the directories via `.gitkeep` only
    after the user approves. Leave deferred directories deferred — each directory must be
    justified now, not speculatively.
+4. Write `CONVENTIONS.md` at the repo root, the durable contract for the tree that now
+   exists. Fill it verbatim from the locked goal's Conventions block in `trees.md` (dependency,
+   import, promotion rules, and the enforcement line naming the config file and runner). Do not
+   re-synthesise or reword the rules. If `CONVENTIONS.md` already exists, reconcile it against
+   that block with a minimal approval-gated diff, never regenerate. This is what stops the
+   philosophy's conventions from evaporating once scaffolding is done. The lint config and gate
+   that enforce it are generated at the Pass 4 tail, once the stack is confirmed.
 
 ## Pass 4 — CLAUDE.md
 
@@ -166,21 +178,35 @@ Written last so it documents the tree that now exists.
 4. **Tail — enforcement and Karpathy.** For any hard prohibition you found, propose matching
    `settings.json` deny rules and hooks in this close report — never write them into
    `settings.json`, which was written once in pass 1 and is not touched again. Quote each
-   proposed deny rule in one canonical glob form so runs do not drift on the pattern. The
-   generated project CLAUDE.md ends with a one-line pointer to the user-level behavioural
-   guidelines; resolve it by check → read → apply — check they exist at user level (default
+   proposed deny rule in one canonical glob form so runs do not drift on the pattern. Also
+   generate the project-native enforcement for the `CONVENTIONS.md` contract, approval-gated:
+   the lint config encoding the structural boundaries (ESLint `import/no-restricted-paths`
+   zones, TFLint, or ruff per goal) and the project gate that runs it (pre-commit, husky, or a
+   CI step). These are stack files, not `settings.json`, so the pass-1 freeze is untouched.
+   Generate only for tooling the confirmed stack actually uses, and only zones for folders that
+   exist — leave an extend-per-feature marker where per-feature or per-domain folders are still
+   deferred, rather than fabricating zones for absent paths. The `thinking` goal has no lint
+   equivalent; its gate is review, so generate nothing and say so. The
+   generated project CLAUDE.md ends with two pointer lines: one to `CONVENTIONS.md` (always,
+   since Pass 3 always writes it) and one to the user-level behavioural guidelines. Resolve the
+   conduct pointer by check → read → apply — check they exist at user level (default
    `~/.claude/CLAUDE.md`), read the location, and apply the pointer into the project CLAUDE.md
    the skill instantiates. The apply target is always the project file; the skill never writes
    `~/.claude/CLAUDE.md` or installs anything into the user's environment. If the guidelines are
-   absent, omit the pointer and surface a warning in the close report telling the user to install
-   them at user level — they are project-independent and do not belong in a project CLAUDE.md,
-   which references them rather than holding them.
+   absent, omit the conduct pointer and surface a warning in the close report telling the user to
+   install them at user level — they are project-independent and do not belong in a project
+   CLAUDE.md, which references them rather than holding them. The `CONVENTIONS.md` pointer is
+   unconditional.
 
 ## Close
 
 Report what each pass produced and what was deferred (stack-specific hooks, MCP, any
 `🔲` framing gaps). Remind the user that FRAMING.md is theirs to complete before
-substantive work.
+substantive work. Name `CONVENTIONS.md` and the generated lint config and gate as the
+structural contract, and point the user at the drift-check they run over the project's life
+(`check-conventions-drift.sh`) so the contract stays faithful. Changing a convention or a lint
+zone later is a decision record (an ADR/BDR in `decisions/` or the deferred `docs/adr/`), never
+a silent edit — the drift-check flags a contract change made without one.
 
 ## Gotchas
 
@@ -190,6 +216,11 @@ substantive work.
 - **CLAUDE.md is grounded, not aspirational.** It is written after the tree exists precisely
   so its paths and commands are real. If you cannot verify a command, drop the line.
 - **Hard rules do not live in prose.** Route them to deny rules and hooks, and propose them.
+- **The structural contract is enforced project-side, not in `settings.json`.** `CONVENTIONS.md`
+  holds the import, dependency, and promotion rules; a project-native lint config and gate
+  (pre-commit, CI, lint zones) enforce them. `settings.json` stays byte-identical from pass 1 —
+  no enforcement step ever writes it. A change to the contract is a decision record, and the
+  drift-check catches an unrecorded one.
 - **This is Claude Code, not Desktop.** No artifacts, no Filesystem MCP, no system-prompt XML.
   Files are written directly with the file tools.
 
@@ -197,6 +228,6 @@ substantive work.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.11       |
-| Last Updated | 2026-07-13 |
+| Version      | 1.12       |
+| Last Updated | 2026-07-16 |
 | Status       | Review     |
