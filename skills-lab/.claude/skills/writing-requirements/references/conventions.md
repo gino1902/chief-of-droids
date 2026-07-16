@@ -127,7 +127,7 @@ Every Blocking and Warning finding emitted in a phase section SHALL carry an exp
 
 Bare `[BLOCKING]` or `[WARNING]` tags (without a `-RESOLVED` / `-UNRESOLVED` suffix) are not permitted on output.
 
-Counts in the §Summary table SHALL agree with the suffix tallies in phase sections: the number of `[<SEVERITY>-RESOLVED]` lines equals the Resolved column; the number of `[<SEVERITY>-UNRESOLVED]` lines equals the Unresolved column. The per-phase `Outstanding:` closure line counts unresolved findings only.
+Counts in the §Summary table SHALL agree with the tallies in the phase sections: the number of `[<SEVERITY>-RESOLVED]` lines equals the Resolved column, the number of `[<SEVERITY>-UNRESOLVED]` lines equals the Unresolved column, and the number of `[INFO]` lines across all phase sections equals the Info Resolved column (Info Unresolved is always `N/A`). Derive the §Summary by counting the tagged lines already emitted in the body, not by tallying independently: in particular, count every `[INFO]` line and set Info Resolved to that exact number. The per-phase and report-level `Outstanding:` closure lines report unresolved counts for `blocking` and `warnings`; info has no unresolved state, so their `info` figure reports the `[INFO]` line count instead, and the report-level `Outstanding:` `info` figure equals the §Summary Info Resolved column.
 
 Every phase section emits its closure line even when findings are zero:
 ```
