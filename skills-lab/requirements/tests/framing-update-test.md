@@ -54,14 +54,14 @@ Let `framing-project` update `FRAMING.md` and decide whether `CONCEPTS.md` needs
 ## Acceptance criteria
 
 - Only the revisited section changed. All other sections are preserved verbatim.
-- `last_updated` in the frontmatter advances.
+- `last_updated` in the frontmatter is set to today. On a base built on an earlier date it advances; on a same-day base it stays today, which is correct behaviour, not a failure. To exercise the advance itself, build the base with a backdated `last_updated`.
 - `CONCEPTS.md` is left untouched, since the revision moved no term or boundary.
 - The document stays framing-project shape (frontmatter, locked section order), and the injected `<!-- goal: code -->` stamp is preserved.
 
 ## Fail conditions
 
 - Any unrevisited section is reworded, reordered, or dropped (wholesale regeneration).
-- `last_updated` is not advanced.
+- `last_updated` is not set to today (left stale).
 - `CONCEPTS.md` is churned despite no boundary moving.
 - The goal stamp is lost, or the frontmatter shape is broken.
 
@@ -81,6 +81,6 @@ A companion variant worth running later moves a boundary on purpose (rename or r
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
-| Last Updated | 2026-07-15 |
+| Version      | 1.3        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |

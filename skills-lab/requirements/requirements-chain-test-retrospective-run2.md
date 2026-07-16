@@ -63,11 +63,11 @@ Kept separate so it carries no factual weight it has not earned.
 
 - Parked tightening decisions from the session analysis. R2, a durable oracle for the two `[beh]` rows, now less urgent since both were confirmed live, but still transcript-dependent. R3, whether MD-3 and MD-7 should formalise through writing-requirements or stay scoped to the CONCEPTS layer. R4, now resolved: the XC-3 escape is fixed (`e4a0e06`) and XC-3 was updated to prove the contained behaviour without a scaffold, and SM-3's goal-persistence finding was already handled by the skill re-eliciting, confirmed in run 2, so nothing remains to unmask.
 - Skill fixes. The `writing-requirements` Summary Info tally (MD-6), fixed and verified after the run: the reconciliation invariant now counts `[INFO]` lines from the body, confirmed by `tests/verify-summary-info-tally.md` (Info reconciled at 23 across body, Summary, and Outstanding). The `writing-requirements` Phase 0.5 repo-root anchoring (XC-3 escape), fixed at `e4a0e06` and verified: with no `CLAUDE.md` at cwd the skill anchors the root at cwd, warns, and does not climb into an ancestor, so nothing escapes upward.
-- Test-doc corrections. The XC-1 "Expected outputs" empty-dir prediction, since no dir is created. The MD-2 `last_updated`-advances AC, untestable on a same-day base, so backdate the base or reword the AC.
+- Test-doc corrections, both applied. The XC-1 "Expected outputs" empty-dir prediction is corrected, no dir is created, and its root-resolution note now reflects the cwd anchoring. The MD-2 `last_updated` AC is reworded to "set to today", with a note to backdate the base if the advance itself is to be exercised.
 - Re-run hygiene. The mid-run deletion argues for committing or relocating `.diff` evidence out of `outputs/` promptly, since `outputs/` is disposable scratch and a stray `rm` takes the evidence with it.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
+| Version      | 1.3        |
 | Last Updated | 2026-07-16 |
 | Status       | Draft      |

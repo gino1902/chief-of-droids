@@ -33,13 +33,13 @@ Run each invocation and record the outcome. Each must hard-fail at the stated Ph
 
 ## Expected outputs (under `outputs/test-wr-guards`)
 
-- The two fixtures only, plus at most one empty directory. Sub-cases 1 to 5 create nothing (they halt at Phase 0.2 to 0.4, before the output dir is resolved). Sub-case 6 passes the path check and reaches Phase 0.6, which creates the output dir, so it may leave an empty `requirements/user-auth/` before it hard-fails at the Phase 0.8 substrate check. No `*-requirements.md` or `*-report.md` is written by any sub-case.
+- The two fixtures only. No directory is created by any sub-case. Sub-cases 1 to 5 halt at Phase 0.2 to 0.4, before the output dir is resolved. Sub-case 6 passes the path check, resolves the root at Phase 0.5, and reaches the Phase 0.8 substrate check, where it hard-fails. Phase 0.6 does not itself `mkdir` (the skill uses Read and Write tools only, so the output dir is created implicitly only when Phase 6 writes a file), and Phase 6 is never reached. So no `requirements/user-auth/` dir, and no `*-requirements.md` or `*-report.md`, is written by any sub-case.
 
 ## Acceptance criteria
 
 - Every sub-case halts with the hard-fail block, citing the correct phase step and a matching reason and remediation.
 - No output file is written by any sub-case (validation halts before Phase 6).
-- Sub-cases 1 to 5 halt before repo-root resolution; sub-case 6 halts at the substrate check after root resolution (an ancestor `CLAUDE.md` exists under `skills-lab`, so root resolution itself succeeds).
+- Sub-cases 1 to 5 halt before repo-root resolution. Sub-case 6 halts at the Phase 0.8 substrate check after root resolution, which now always succeeds by anchoring at cwd. Phase 0.5 no longer walks upward, and since `test-wr-guards` carries no `CLAUDE.md` a no-`CLAUDE.md` warning is streamed, but nothing is written because the run hard-fails at 0.8.
 
 ## Fail conditions
 
@@ -53,6 +53,6 @@ For each sub-case, note the phase cited and confirm nothing was written. One lin
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
-| Last Updated | 2026-07-13 |
+| Version      | 1.1        |
+| Last Updated | 2026-07-16 |
 | Status       | Draft      |
