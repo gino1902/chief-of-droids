@@ -18,6 +18,12 @@ role and a clear ownership boundary, because those boundaries drive the bundle l
 the pipelines and the grants. A single data engineering team owns all three layers.
 Business teams give requirements and consume gold read-only.
 
+Data in the platform is classified on three axes:
+
+- By layer: raw (bronze), conformed or enterprise (silver), curated and business-ready (gold).
+- By authority: authoritative, a source of truth, versus derived.
+- By purpose: analytical, the medallion layers, versus operational, a Lakebase OLTP table.
+
 The decision with a known failure mode is where cross-source conforming happens. If
 gold is built per use case straight from each producer's data, every use case re-does
 the integration and the same business concept (active customer, revenue grain) drifts
@@ -118,5 +124,5 @@ re-implements an existing silver concept requires explicit sign-off on the pull 
 
 | Field | Value |
 |:------|:------|
-| Version | 0.2 (draft) |
-| Last Updated | 2026-07-09 |
+| Version | 0.3 (draft) |
+| Last Updated | 2026-07-17 |

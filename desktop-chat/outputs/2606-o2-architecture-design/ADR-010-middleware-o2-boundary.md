@@ -40,7 +40,7 @@ The key principles of the boundary, foundational first. Every decision below is 
 
 8. **Delta by design.** Whether a source sends all its data or only what changed is fixed per source in the contract. The middleware provides the delta when the source cannot, and silver reconciles the result.
 
-9. **Id bridging lives in the middleware.** In the rare case where a use case must relate two SaaS records by their keys and no business field links them, the middleware carries an internal SQLI id to bridge them. O2 could have held that link instead, as secondary business data in silver or in a Lakebase table, but the bridge is a technical relationship with no business meaning, so it stays with the middleware.
+9. **Id bridging lives in the middleware.** In the rare case where a use case must relate two SaaS records by their keys and no business field links them, the middleware carries an internal SQLI id to bridge them. O2 could have held that link instead, as a derived link in silver or a Lakebase table, but the bridge is a technical relationship with no business meaning, so it stays with the middleware.
 
 ---
 
@@ -89,5 +89,5 @@ Every decision traces to a principle in the Rationale, none stands outside it. T
 
 | Field | Value |
 |:------|:------|
-| Version | 1.5 (draft) |
+| Version | 1.6 (draft) |
 | Last Updated | 2026-07-17 |
