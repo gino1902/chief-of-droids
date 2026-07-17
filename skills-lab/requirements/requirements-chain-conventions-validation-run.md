@@ -70,23 +70,29 @@ the check (untraceable change), and adding an ADR under `docs/adr/` made the sam
 base was then restored pristine. Both branches of the point-2 invariant hold on real output, not
 just fixtures.
 
-## Quality finding to carry (not a blocker)
+## Quality finding — found and fixed
 
-The verbatim-copy rule pulls trees.md's internal "⚠️ Unverified" authoring caveat straight into
+The verbatim-copy rule pulled trees.md's internal "⚠️ Unverified" authoring caveat straight into
 the deliverable `CONVENTIONS.md` (seen in V-small and V-data). An authoring note aimed at the
-model now sits in a user-facing contract. Follow-up: have the skill strip authoring caveats
-(the `> ⚠️ Unverified …` lines) when copying a Conventions block into `CONVENTIONS.md`.
+model was sitting in a user-facing contract.
+
+Fixed in trees.md v2.3: the Pass 3 fill rule now drops the `> ⚠️ Unverified …` blockquotes on
+copy, and the reconcile path strips one a prior run left behind. Confirmed by a fresh V-small
+re-run (into `outputs/test-small-fix`): the generated `CONVENTIONS.md` carries no "Unverified"
+line and still passes the drift-check — that run also wired a CI-workflow gate
+(`.github/workflows/lint.yml`), a third gate style, exercising the runner-wired fix once more.
 
 ## Conclusion
 
 The feature works end to end on real skill output across all four goals and the reconcile path.
-The one defect the run surfaced (runner-wired matching) is fixed and re-verified. Remaining, by
-choice: the headless release-gate re-run, and the authoring-caveat strip.
+Both issues the run surfaced are fixed and re-verified: the runner-wired matching in the
+drift-check, and the authoring-caveat leak in the generated contract. Remaining by choice: the
+headless release-gate re-run.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-07-17 |
 | Status       | Final      |

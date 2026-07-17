@@ -16,8 +16,12 @@ Third, write the conventions down. Each goal below carries a Conventions block: 
 import, and promotion rules, plus an Enforcement line naming the real mechanism. That block is
 not just reference for the model — it is the source text for a `CONVENTIONS.md` written at the
 repo root in this pass, the durable contract for the tree. Fill `CONVENTIONS.md` verbatim from
-the locked goal's block, do not reword or re-synthesise. If it already exists, reconcile with a
-minimal approval-gated diff, never regenerate. The lint config and project gate that enforce the
+the locked goal's block, do not reword or re-synthesise — with one exception: drop the
+author-facing caveat lines, the `> ⚠️ Unverified …` blockquotes. Those are notes to whoever
+maintains this reference (confirm a claim before citing it), not part of the contract a project
+ships, so they never belong in the generated `CONVENTIONS.md`. Copy everything else as written.
+If it already exists, reconcile with a minimal approval-gated diff, never regenerate — and if a
+prior run left an `> ⚠️ Unverified …` line in it, drop that line as part of the reconcile. The lint config and project gate that enforce the
 contract are generated at the pass 4 tail, once the stack is confirmed; `CONVENTIONS.md` names
 the config file and runner so the two cannot silently drift.
 
@@ -448,6 +452,6 @@ Sources:
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 2.2        |
-| Last Updated | 2026-07-16 |
+| Version      | 2.3        |
+| Last Updated | 2026-07-17 |
 | Status       | Review     |
