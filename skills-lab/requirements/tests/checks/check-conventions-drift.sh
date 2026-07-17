@@ -17,7 +17,7 @@
 #   -->
 #
 # Three checks:
-#   existence     config file named exists; runner appears in a project gate file
+#   existence     config file named exists; the tool the runner names is wired into a gate
 #   coverage      every folder under a zoned prefix has its path in the config,
 #                 and no config-side drift leaves a zoned folder unenforced
 #   traceability  if CONVENTIONS.md or the config changed since <base-ref> but no

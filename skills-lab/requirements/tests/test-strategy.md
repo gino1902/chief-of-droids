@@ -87,7 +87,7 @@ Three scripts cover most rows because the invariants are shared, not per-row: `c
 
 Every bootstrapping run that reaches Pass 3 writes `CONVENTIONS.md` (the durable structural contract) with a machine-readable enforcement stanza, and the Pass 4 tail generates the project-native lint config and gate that hold it. `settings.json` stays byte-identical, so SM-3's no-mutation check is unaffected by this feature and still passes as written.
 
-`check-conventions-drift.sh <dir> [<base>]` is the lifecycle check for this contract, deterministic and disk-only, built from git, grep, sed, sort. It asserts three things: the config file named in the stanza exists and its runner is wired into a gate (existence), every folder under a zoned prefix has its path in the config (coverage), and any change to the contract or config since `<base>` is traced to a decision record under `decisions/` or `docs/adr/` (traceability). At bootstrap coverage is trivially green because per-feature and per-domain folders are still deferred; the check earns its keep over the project's life as folders arrive and as the contract is edited. The thinking goal sets `config: none`, `runner: review`, `zoned: none`, so only traceability runs.
+`check-conventions-drift.sh <dir> [<base>]` is the lifecycle check for this contract, deterministic and disk-only, built from git, grep, sed, sort. It asserts three things: the config file named in the stanza exists and the tool its runner names is wired into a gate — matched on the tool token, not the whole command, so a pre-commit hook id counts as well as a full husky command (existence); every folder under a zoned prefix has its path in the config (coverage); and any change to the contract or config since `<base>` is traced to a decision record under `decisions/` or `docs/adr/` (traceability). At bootstrap coverage is trivially green because per-feature and per-domain folders are still deferred; the check earns its keep over the project's life as folders arrive and as the contract is edited. The thinking goal sets `config: none`, `runner: review`, `zoned: none`, so only traceability runs.
 
 Applicable rows: chain-test-small (1), chain-test-medium (2), MD-5 (5), SM-3 (6, infra), SM-1 (10), MD-6 (11, code/app), XC-2 (14, thinking). For the committed-base rows among these (MD-5, and the medium base at row 2), pass the base commit to exercise traceability; the others run existence and coverage with no base. Each applicable scenario file now carries the `CONVENTIONS.md` expected output, a drift-check acceptance criterion, and a matching fail condition, and the executable-checks table below cites the invocation per row. MD-6 is the only row that meaningfully exercises zone coverage, since the app tree scaffolds one `apps/<domain>/` per business domain.
 
@@ -114,8 +114,10 @@ Verify prep. The drift-check's coverage reads `git ls-files`, so stage the produ
 
 Pass criteria per run: `CONVENTIONS.md` present with the expected stanza; `check-conventions-drift.sh <dir>` exit 0; `CLAUDE.md` carries the two pointer lines and does not restate the structural rules; `settings.json` written once, no enforcement hook added to it. Evidence — the captured stanza, the drift-check stdout and exit code, and for V-recon the diff against base — is recorded in `requirements-chain-conventions-validation-run.md`.
 
+Outcome (2026-07-17). All six runs passed. Two defects the run surfaced were fixed and re-verified: the drift-check matched the whole runner command rather than the tool token, so a pre-commit gate did not register (drift-check now matches the token); and the verbatim copy leaked trees.md's `> ⚠️ Unverified …` authoring caveat into the generated `CONVENTIONS.md` (Pass 3 fill now strips it, confirmed by a fresh re-run). Full record in `requirements-chain-conventions-validation-run.md`. Remaining by choice: the headless `claude -p` release-gate re-run.
+
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.9        |
+| Version      | 1.10       |
 | Last Updated | 2026-07-17 |
 | Status       | Draft      |

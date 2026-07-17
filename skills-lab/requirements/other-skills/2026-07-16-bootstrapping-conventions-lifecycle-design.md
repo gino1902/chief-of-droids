@@ -172,9 +172,11 @@ error. It parses `CONVENTIONS.md`'s machine-readable enforcement stanza (`config
   change. Compute with `git diff --name-only <base-commit> --` against the contract and config
   paths, and against `decisions/` or the deferred `docs/adr/` path. Contract changed and no
   record added is the drift signal.
-- Existence. The config file named in the stanza exists (`test -f`), and the runner command it
-  names appears in a project gate file (`grep` over `.pre-commit-config.yaml`, `package.json`,
-  `.husky`, CI workflows). Skipped when `config: none` (thinking).
+- Existence. The config file named in the stanza exists (`test -f`), and the tool the runner
+  names is wired into a project gate (`grep` over `.pre-commit-config.yaml`, `package.json`,
+  `.husky`, CI workflows). Match on the tool token, not the whole runner command, so a gate that
+  invokes the tool by framework hook id (pre-commit `id: ruff`) registers as well as one that
+  runs the full command (husky `npx eslint .`). Skipped when `config: none` (thinking).
 
 At bootstrap coverage is trivially satisfied because features and domains are mostly deferred.
 The check earns its keep over the project's life, in CI, as folders are added and as the
