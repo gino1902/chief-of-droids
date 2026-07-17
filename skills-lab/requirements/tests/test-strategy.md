@@ -89,10 +89,33 @@ Every bootstrapping run that reaches Pass 3 writes `CONVENTIONS.md` (the durable
 
 `check-conventions-drift.sh <dir> [<base>]` is the lifecycle check for this contract, deterministic and disk-only, built from git, grep, sed, sort. It asserts three things: the config file named in the stanza exists and its runner is wired into a gate (existence), every folder under a zoned prefix has its path in the config (coverage), and any change to the contract or config since `<base>` is traced to a decision record under `decisions/` or `docs/adr/` (traceability). At bootstrap coverage is trivially green because per-feature and per-domain folders are still deferred; the check earns its keep over the project's life as folders arrive and as the contract is edited. The thinking goal sets `config: none`, `runner: review`, `zoned: none`, so only traceability runs.
 
-Applicable rows: chain-test-small (1), chain-test-medium (2), MD-5 (5), SM-3 (6, infra), SM-1 (10), MD-6 (11, code/app), XC-2 (14, thinking). For the committed-base rows among these (MD-5, and the medium base at row 2), pass the base commit to exercise traceability; the others run existence and coverage with no base. Each applicable scenario file now carries the `CONVENTIONS.md` expected output, a drift-check acceptance criterion, and a matching fail condition, and the executable-checks table below cites the invocation per row. MD-6 is the only row that meaningfully exercises zone coverage, since the app tree scaffolds one `apps/<domain>/` per business domain. Remaining test work, not done in this pass: a dedicated emission scenario that asserts the per-goal stanza values verbatim, run against a real bootstrap once the Phase 2 driver exists.
+Applicable rows: chain-test-small (1), chain-test-medium (2), MD-5 (5), SM-3 (6, infra), SM-1 (10), MD-6 (11, code/app), XC-2 (14, thinking). For the committed-base rows among these (MD-5, and the medium base at row 2), pass the base commit to exercise traceability; the others run existence and coverage with no base. Each applicable scenario file now carries the `CONVENTIONS.md` expected output, a drift-check acceptance criterion, and a matching fail condition, and the executable-checks table below cites the invocation per row. MD-6 is the only row that meaningfully exercises zone coverage, since the app tree scaffolds one `apps/<domain>/` per business domain.
+
+## Conventions feature — validation run
+
+A targeted regression for the `CONVENTIONS.md` + enforcement + drift-check feature (skill v1.12), owned by QA. Its objective is to close the one gap the feature ships with: the drift-check is proven against synthetic fixtures, not real skill output, and the claim "the skill emits this stanza and generates this config" is instruction-level, not observed. This run observes it.
+
+Slice. The feature lives entirely in Pass 3 and the Pass 4 tail, so each run drives `bootstrapping-project` only and stops before brainstorming and writing-requirements. The downstream chain is unaffected and stays covered by the tally rows. The bootstrapping portion of a scenario is a faithful subset, not a new test.
+
+Rows, representative — one live run per distinct drift-check behaviour, ordered bottom-up for diagnosability. SM-1 is dropped because its conventions path is identical to V-data and the upgrade does not touch `CONVENTIONS.md`.
+
+| Run | Borrowed subject | Goal | Expected stanza | Drift-check exercises |
+|:--|:--|:--|:--|:--|
+| V-small | chain-test-small (linkjar) | code/app backend | `zoned: apps/*` | existence + coverage (one domain) |
+| V-data | chain-test-medium (insight-hub) | code/data | `zoned: none` | existence; committed as the base V-recon resets to |
+| V-recon | MD-5 on the V-data base | code/data | unchanged | traceability (contract unchanged, no record → still passes) |
+| V-infra | SM-3 (edge-dns), bootstrap straight through — resume is not under test here | infra | `zoned: none` | existence |
+| V-app | MD-6 (helpdesk) | code/app | `zoned: apps/*`, three domains | coverage, one zone per domain — the meaningful case |
+| V-think | XC-2 step 1 (arch-notes) | thinking | `config: none`, `runner: review`, `zoned: none` | existence and coverage skipped |
+
+Mechanism. One fresh `general-purpose` subagent per run produces the artifacts: no inherited context, so it cannot infer the expected output from the design work; scripted inputs verbatim from the borrowed scenario; it drives the skill as a user would. QA runs the deterministic checks and captures evidence. Known deviation from a pure fresh session: same harness and repo. A headless `claude -p` or manual re-run is the release-gate tier, deferred until the Phase 2 driver exists.
+
+Verify prep. The drift-check's coverage reads `git ls-files`, so stage the produced tree (`git -C <dir> add -A`) before checking. V-data commits its tree; V-recon resets to that commit.
+
+Pass criteria per run: `CONVENTIONS.md` present with the expected stanza; `check-conventions-drift.sh <dir>` exit 0; `CLAUDE.md` carries the two pointer lines and does not restate the structural rules; `settings.json` written once, no enforcement hook added to it. Evidence — the captured stanza, the drift-check stdout and exit code, and for V-recon the diff against base — is recorded in `requirements-chain-conventions-validation-run.md`.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.8        |
-| Last Updated | 2026-07-16 |
+| Version      | 1.9        |
+| Last Updated | 2026-07-17 |
 | Status       | Draft      |

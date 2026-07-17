@@ -58,12 +58,24 @@ if [ -n "$config" ] && [ "$config" != "none" ]; then
 fi
 
 if [ -n "$runner" ] && [ "$runner" != "review" ]; then
-  # a project gate must run the named runner: pre-commit, husky, package scripts, or CI
-  gate_hits=$(grep -RIlF "$runner" \
+  # A project gate may invoke the tool by full command (husky: `npx eslint .`) or by a
+  # framework hook id (pre-commit: `id: ruff`). Match on the tool token, not the whole
+  # runner string, so both styles register. The token is the first runner word that is not
+  # a launcher, a flag, or a bare path.
+  tool=""
+  for t in $runner; do
+    case "$t" in
+      npx|npm|pnpm|yarn|bunx|uv|poetry|run|exec) continue ;;
+      .|-*) continue ;;
+      *) tool="$t"; break ;;
+    esac
+  done
+  [ -z "$tool" ] && tool="$runner"
+  gate_hits=$(grep -RIlF "$tool" \
     "$repo/.pre-commit-config.yaml" "$repo/package.json" "$repo/.husky" \
     "$repo/.github/workflows" "$repo/.gitlab-ci.yml" 2>/dev/null)
-  if [ -n "$gate_hits" ]; then echo "  ok    runner wired     $runner"
-  else echo "  FAIL  runner not wired into any gate   $runner"; fail=1; fi
+  if [ -n "$gate_hits" ]; then echo "  ok    runner wired     $tool (from: $runner)"
+  else echo "  FAIL  runner not wired into any gate   $runner (tool: $tool)"; fail=1; fi
 fi
 
 # --- coverage ----------------------------------------------------------------
