@@ -82,17 +82,28 @@ re-run (into `outputs/test-small-fix`): the generated `CONVENTIONS.md` carries n
 line and still passes the drift-check — that run also wired a CI-workflow gate
 (`.github/workflows/lint.yml`), a third gate style, exercising the runner-wired fix once more.
 
+## Open finding — gate non-determinism (not fixed)
+
+The skill does not pin which project gate it generates. Across the runs the same code/app-backend
+brief produced a husky `.husky/pre-commit` (V-small) and a `.github/workflows/lint.yml`
+(the V-small confirmation re-run); data and infra chose `.pre-commit-config.yaml`. All pass the
+drift-check, which greps every gate style, so correctness holds — but two runs of one brief
+disagreeing on the gate mechanism contradicts the suite's determinism ethos. Recommended fix: pin
+a default gate per stack at the Pass 4 tail. It is a skill behaviour change and needs a confirming
+double-run, so it is left open here rather than slipped in unverified.
+
 ## Conclusion
 
 The feature works end to end on real skill output across all four goals and the reconcile path.
-Both issues the run surfaced are fixed and re-verified: the runner-wired matching in the
-drift-check, and the authoring-caveat leak in the generated contract. Remaining by choice: the
-headless release-gate re-run.
+Two issues the run surfaced are fixed and re-verified: the runner-wired matching in the
+drift-check, and the authoring-caveat leak in the generated contract. One is open by
+recommendation, not fixed: gate non-determinism (above), pending a decision to pin. Remaining by
+choice: the headless release-gate re-run.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-17 |
 | Status       | Final      |
