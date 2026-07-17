@@ -24,6 +24,7 @@ It is independent of the unrelated ADR-001 in the repository's `docs/decisions/`
 | [ADR-007](ADR-007-pipeline-code-python-wheel-dataset-types.md) | Python pipelines over a tested wheel, dataset types fixed per layer | Draft |
 | [ADR-008](ADR-008-adls-bronze-ingestion.md) | ADLS Gen2 to bronze via Auto Loader with managed file events, file-arrival trigger plus availableNow drain | Accepted |
 | [ADR-009](ADR-009-sharepoint-bronze-ingestion.md) | SharePoint to bronze via the standard connector, scheduled drain, as a temporary bridge to ADR-008 | Draft |
+| [ADR-010](ADR-010-middleware-o2-boundary.md) | Middleware and O2 boundary: canonical SQLI data contracts, one-way inbound | Draft |
 
 ---
 
@@ -44,6 +45,10 @@ ADR-008 and ADR-009 are source-specific ingestion decisions. Each is a concise r
 that references its full locked design document in this folder rather than duplicating
 it. ADR-009 is a temporary bridge that retires into ADR-008 when the source repoints to
 ADLS Gen2.
+
+ADR-010 consolidates the middleware and O2 boundary. It grounds on ADR-001 (medallion
+ownership) and ADR-009 (the implemented SharePoint-to-bronze pattern), and states the
+boundary as canonical SQLI data contracts that O2 subscribes to.
 
 ---
 
@@ -71,5 +76,5 @@ and decision. The documents used across the set are:
 
 | Field | Value |
 |:------|:------|
-| Version | 0.2 (draft) |
-| Last Updated | 2026-07-09 |
+| Version | 0.3 (draft) |
+| Last Updated | 2026-07-17 |
