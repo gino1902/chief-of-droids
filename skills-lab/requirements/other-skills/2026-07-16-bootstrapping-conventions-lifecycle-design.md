@@ -227,6 +227,39 @@ Tests.
   re-run, not overwritten.
 - One goal per repo. The contract instantiates a single goal's philosophy.
 
+## Gate pinning — grounding pass (2026-07-18)
+
+The validation run found the project gate was not deterministic: the same code/app-backend brief
+produced a husky hook in one run and a CI workflow in another, because the Pass 4 tail said
+"a `.pre-commit-config.yaml`, husky plus lint-staged, or a CI step, whichever the stack already
+uses", which has no answer on a blank repo. The fix is to pin one default gate per stack, grounded
+in each goal's reference standard rather than chosen by the model. This pass establishes the
+grounded default. It does not yet edit the skill.
+
+| Goal (stack) | Pinned gate | Grounding |
+|:--|:--|:--|
+| code / app (Node, TS) | husky pre-commit that runs the lint script | bulletproof-react recommends husky for pre-commit validation. nodebestpractices names ESLint but is silent on the gate, so it does not contradict. lint-staged is optional, not required by the source. |
+| code / data (Python) | `.pre-commit-config.yaml` using `astral-sh/ruff-pre-commit`, hook ids `ruff-check` and `ruff-format` | ruff's official integration docs name the pre-commit framework with that repo as the way to run ruff at commit time. |
+| infra (Terraform) | `.pre-commit-config.yaml` with terraform fmt, validate, tflint, plus TFLint in CI | HashiCorp Terraform Style Guide, already cited in trees.md. |
+| thinking | none, review is the gate | trees.md, no lint equivalent. |
+
+Notes carried into the skill edit:
+
+- Pinning makes husky the canonical app gate. V-small already produced it; the CI-workflow variant
+  seen in the confirmation re-run becomes a non-conforming choice the pin removes.
+- The V-data run emitted the legacy pre-commit hook id `ruff`. The skill should emit the official
+  current ids `ruff-check` and `ruff-format`. The drift-check tool-token match tolerates either.
+- The escape hatch stays: if a repo already has a gate installed, reconcile to it rather than
+  forcing the default. The pin only removes the free choice on a blank repo.
+
+Sources:
+
+1. [bulletproof-react — project standards](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-standards.md)
+2. [nodebestpractices](https://github.com/goldbergyoni/nodebestpractices)
+3. [ruff — integrations (pre-commit)](https://docs.astral.sh/ruff/integrations/)
+4. [astral-sh/ruff-pre-commit](https://github.com/astral-sh/ruff-pre-commit)
+5. [Terraform Style Guide](https://developer.hashicorp.com/terraform/language/style)
+
 ## Open and deferred
 
 - Which app linter to standardise on when both ESLint zones and `eslint-plugin-boundaries` are
@@ -243,6 +276,6 @@ Tests.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-07-16 |
+| Version      | 1.2        |
+| Last Updated | 2026-07-18 |
 | Status       | Review     |
