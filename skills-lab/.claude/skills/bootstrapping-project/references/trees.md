@@ -26,8 +26,9 @@ contract are generated at the pass 4 tail, once the stack is confirmed; `CONVENT
 the config file and runner so the two cannot silently drift.
 
 `CONVENTIONS.md` ends with a machine-readable enforcement stanza, an HTML comment the lifecycle
-drift-check (`check-conventions-drift.sh`) parses. Write it exactly in this shape, one stanza per
-file:
+drift-check parses. The check ships into the project as `scripts/check-conventions-drift.sh` (the
+pass 4 tail copies it from the skill's `assets/`), so the guard lives with the project rather than
+only in the skill author's suite. Write the stanza exactly in this shape, one stanza per file:
 
 ```
 <!-- enforcement:
@@ -452,6 +453,6 @@ Sources:
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 2.3        |
-| Last Updated | 2026-07-17 |
+| Version      | 2.4        |
+| Last Updated | 2026-07-18 |
 | Status       | Review     |

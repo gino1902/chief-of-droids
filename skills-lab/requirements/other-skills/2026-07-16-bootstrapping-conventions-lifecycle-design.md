@@ -157,11 +157,21 @@ Show the diff, apply only on approval, degrade gracefully where a tool is not ye
 
 ## Drift-check spec, the deterministic script
 
-A script under `requirements/tests/checks/`, invoked as
-`check-conventions-drift.sh <dir> [<base-commit>]`. Deterministic, no skill run, built from
-`git`, `grep`, `sed`, `sort` (no `awk`, no interpreter). Exit 0 pass, 1 drift, 2 usage or lookup
-error. It parses `CONVENTIONS.md`'s machine-readable enforcement stanza (`config`, `runner`,
-`zoned`), the same stanza the skill writes, and runs three checks.
+The canonical script is a skill asset, `.claude/skills/bootstrapping-project/assets/check-conventions-drift.sh`.
+The QA harness reaches it through a symlink at `requirements/tests/checks/check-conventions-drift.sh`,
+and the Pass 4 tail copies it into each bootstrapped project as `scripts/check-conventions-drift.sh`,
+so the guard lives with the project rather than only in the author's suite. One source of truth,
+no divergent copies. Invoked as `check-conventions-drift.sh <dir> [<base-commit>]`. Deterministic,
+no skill run, built from `git`, `grep`, `sed`, `sort` (no `awk`, no interpreter). Exit 0 pass, 1
+drift, 2 usage or lookup error. It parses `CONVENTIONS.md`'s machine-readable enforcement stanza
+(`config`, `runner`, `zoned`), the same stanza the skill writes, and runs three checks.
+
+Wiring into the project (Pass 4 tail): the base pass (existence and coverage, no base argument)
+goes into the generated gate as `bash scripts/check-conventions-drift.sh .`, running on every
+commit. The traceability pass needs a base, which only a pull request has, so its invocation
+`bash scripts/check-conventions-drift.sh . <base>` is added to CI where the platform is confirmed
+and documented in the close report otherwise. This is the change that makes point 2 true in the
+delivered project, not only in QA.
 
 - Coverage. For each `prefix/*` glob in `zoned`, list the prefix's immediate child folders from
   `git ls-files` (via `grep` and `sed`), then require each folder's path to appear in the lint
@@ -276,6 +286,6 @@ Sources:
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
+| Version      | 1.3        |
 | Last Updated | 2026-07-18 |
 | Status       | Review     |

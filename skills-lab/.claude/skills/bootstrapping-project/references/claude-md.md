@@ -168,10 +168,15 @@ Preserve the author's wording everywhere else. Show the diff, apply only on appr
    `CONVENTIONS.md` contract written in pass 3 states the import, dependency, and promotion
    rules; now that the stack is confirmed, make them a 100% gate. Generate, approval-gated: the
    lint config encoding the structural boundaries (ESLint `import/no-restricted-paths` zones for
-   the app goals, TFLint for infra, ruff for data) and the project gate that runs it (a
-   `.pre-commit-config.yaml`, husky plus lint-staged, or a CI step — whichever the stack already
-   uses). These are stack files, so writing them does not touch `settings.json`, whose pass-1
-   freeze stands. Constrain generation two ways: only for tooling the confirmed stack actually
+   the app goals, TFLint for infra, ruff for data) and the project gate that runs it. Pin the
+   gate per stack so two runs of the same brief agree, grounded in each goal's reference standard:
+   a husky pre-commit hook running the lint for the Node/TS app goals (bulletproof-react's
+   recommendation); a `.pre-commit-config.yaml` using `astral-sh/ruff-pre-commit` (official hook
+   ids `ruff-check` and `ruff-format`) for the data goal; a `.pre-commit-config.yaml` with
+   terraform fmt, validate, tflint plus TFLint in CI for infra. If the repo already has a gate
+   installed, reconcile to it rather than forcing the default — the pin only removes the free
+   choice on a blank repo. These are stack files, so writing them does not touch `settings.json`,
+   whose pass-1 freeze stands. Constrain generation two ways: only for tooling the confirmed stack actually
    uses, and only zones for folders that exist — where per-feature or per-domain folders are
    still deferred, leave a documented extend-per-feature marker rather than fabricating zones for
    absent paths (the grounding test applies to config too). Record the config file path and the
@@ -179,7 +184,20 @@ Preserve the author's wording everywhere else. Show the diff, apply only on appr
    goal has no lint equivalent; its gate is review, so generate no config and say so in the
    report. An additive allowlist offer for the runner (for example `Bash(pnpm lint)`) is fine —
    that is the existing pass-1 offer path, not a new mutation.
-3. **Resolve the conduct reference — check, read, apply.** The skill instantiates the *project*
+3. **Deliver and wire the lifecycle drift-check — the guard ships with the project.** The
+   contract's whole point is fidelity over the project's life, so the check that guards it must
+   live in the project, not only in the skill author's test suite. Copy the skill's
+   `assets/check-conventions-drift.sh` to `scripts/check-conventions-drift.sh` in the project and
+   make it executable. Wire its base pass — existence and coverage, run with no base argument —
+   into the gate you just generated, as the line `bash scripts/check-conventions-drift.sh .`, so
+   every commit catches a config that stopped existing or a new domain or feature folder with no
+   zone. The traceability pass needs a base commit to diff against, which only a pull request has,
+   so document its exact invocation `bash scripts/check-conventions-drift.sh . <base>` (base is
+   the branch's merge target) as the CI step to add, and generate that CI step only where the
+   project's CI platform is confirmed — never fabricate a workflow for an unknown platform, the
+   grounding test again. The `thinking` goal ships the script too: its config and coverage are
+   none, but the traceability guard over `CONVENTIONS.md` and `decisions/` still applies.
+4. **Resolve the conduct reference — check, read, apply.** The skill instantiates the *project*
    CLAUDE.md, so the apply target is that file — never the user's global config, and the skill
    installs nothing into the user's environment.
    - **Check** whether the user-level behavioural conduct exists (default location
@@ -202,6 +220,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.7        |
-| Last Updated | 2026-07-16 |
+| Version      | 1.8        |
+| Last Updated | 2026-07-18 |
 | Status       | Review     |

@@ -203,8 +203,9 @@ Written last so it documents the tree that now exists.
 Report what each pass produced and what was deferred (stack-specific hooks, MCP, any
 `🔲` framing gaps). Remind the user that FRAMING.md is theirs to complete before
 substantive work. Name `CONVENTIONS.md` and the generated lint config and gate as the
-structural contract, and point the user at the drift-check they run over the project's life
-(`check-conventions-drift.sh`) so the contract stays faithful. Changing a convention or a lint
+structural contract, and point the user at the drift-check now shipped in the project as
+`scripts/check-conventions-drift.sh` — wired into the gate for existence and coverage, with the
+traceability pass to add in CI against the branch base. Changing a convention or a lint
 zone later is a decision record (an ADR/BDR in `decisions/` or the deferred `docs/adr/`), never
 a silent edit — the drift-check flags a contract change made without one.
 
@@ -228,6 +229,6 @@ a silent edit — the drift-check flags a contract change made without one.
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.12       |
-| Last Updated | 2026-07-16 |
+| Version      | 1.13       |
+| Last Updated | 2026-07-18 |
 | Status       | Review     |
