@@ -38,8 +38,9 @@ zoned: <space-separated prefix/* globs whose child folders must each be zoned, o
 -->
 ```
 
-Per goal: app sets `config` to the ESLint config, `runner` to the lint command, and `zoned` to
-the sides the project actually has — `apps/*` for a backend, `src/features/*` for a frontend,
+Per goal: app sets `config` to the ESLint config, `runner` to the canonical `npx eslint .` (one
+pinned form, never `eslint apps`, since the flat config's `files` glob already scopes it), and
+`zoned` to the sides the project actually has — `apps/*` for a backend, `src/features/*` for a frontend,
 both for fullstack. Do not name a side that was not scaffolded (the same grounding rule as the
 tree itself): a backend-only project writes `zoned: apps/*`, never a `src/features/*` glob for a
 directory that will never exist. Data sets the ruff config, its runner, and `zoned: none` (ruff is
@@ -453,6 +454,6 @@ Sources:
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 2.4        |
+| Version      | 2.5        |
 | Last Updated | 2026-07-18 |
 | Status       | Review     |

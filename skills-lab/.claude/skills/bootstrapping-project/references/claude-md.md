@@ -170,10 +170,12 @@ Preserve the author's wording everywhere else. Show the diff, apply only on appr
    lint config encoding the structural boundaries (ESLint `import/no-restricted-paths` zones for
    the app goals, TFLint for infra, ruff for data) and the project gate that runs it. Pin the
    gate per stack so two runs of the same brief agree, grounded in each goal's reference standard:
-   a husky pre-commit hook running the lint for the Node/TS app goals (bulletproof-react's
-   recommendation); a `.pre-commit-config.yaml` using `astral-sh/ruff-pre-commit` (official hook
-   ids `ruff-check` and `ruff-format`) for the data goal; a `.pre-commit-config.yaml` with
-   terraform fmt, validate, tflint plus TFLint in CI for infra. If the repo already has a gate
+   a husky pre-commit hook for the Node/TS app goals (bulletproof-react's recommendation), whose
+   body is the pinned template below and whose lint runner is the canonical `npx eslint .` — the
+   flat config's `files` glob already scopes it to `apps/`, so there is one right form, not
+   `eslint apps` versus `eslint .`; a `.pre-commit-config.yaml` using `astral-sh/ruff-pre-commit`
+   (official hook ids `ruff-check` and `ruff-format`) for the data goal; a `.pre-commit-config.yaml`
+   with terraform fmt, validate, tflint plus TFLint in CI for infra. If the repo already has a gate
    installed, reconcile to it rather than forcing the default — the pin only removes the free
    choice on a blank repo. These are stack files, so writing them does not touch `settings.json`,
    whose pass-1 freeze stands. Constrain generation two ways: only for tooling the confirmed stack actually
@@ -184,14 +186,28 @@ Preserve the author's wording everywhere else. Show the diff, apply only on appr
    goal has no lint equivalent; its gate is review, so generate no config and say so in the
    report. An additive allowlist offer for the runner (for example `Bash(pnpm lint)`) is fine —
    that is the existing pass-1 offer path, not a new mutation.
+
+   **Pinned app hook — write byte-for-byte, do not paraphrase.** Model-authored prose in the gate
+   is what makes two runs of one brief diverge, so the app husky hook has a fixed body. For the
+   app goal, `.husky/pre-commit` is exactly:
+   ```sh
+   #!/usr/bin/env sh
+   npx eslint .
+   bash scripts/check-conventions-drift.sh .
+   ```
+   No `. husky.sh` sourcing line (deprecated husky v8 style), no comment prose, no `eslint apps`
+   variant. The second line is the drift-check base pass from step 3, already in the template so
+   the file is complete and identical run to run. `CONVENTIONS.md` records `runner: npx eslint .`
+   to match.
 3. **Deliver and wire the lifecycle drift-check — the guard ships with the project.** The
    contract's whole point is fidelity over the project's life, so the check that guards it must
    live in the project, not only in the skill author's test suite. Copy the skill's
    `assets/check-conventions-drift.sh` to `scripts/check-conventions-drift.sh` in the project and
-   make it executable. Wire its base pass — existence and coverage, run with no base argument —
-   into the gate you just generated, as the line `bash scripts/check-conventions-drift.sh .`, so
-   every commit catches a config that stopped existing or a new domain or feature folder with no
-   zone. The traceability pass needs a base commit to diff against, which only a pull request has,
+   make it executable. Wire its base pass — existence and coverage, run with no base argument — as
+   the line `bash scripts/check-conventions-drift.sh .`. For the app goal that line is already in
+   the pinned husky template above, so do not add it twice; for the pre-commit and CI gates, add it
+   as a local hook or step. Either way every commit then catches a config that stopped existing or
+   a new domain or feature folder with no zone. The traceability pass needs a base commit to diff against, which only a pull request has,
    so document its exact invocation `bash scripts/check-conventions-drift.sh . <base>` (base is
    the branch's merge target) as the CI step to add, and generate that CI step only where the
    project's CI platform is confirmed — never fabricate a workflow for an unknown platform, the
@@ -220,6 +236,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.8        |
+| Version      | 1.9        |
 | Last Updated | 2026-07-18 |
 | Status       | Review     |
