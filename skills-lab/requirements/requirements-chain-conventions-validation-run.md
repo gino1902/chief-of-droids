@@ -103,9 +103,18 @@ base pass. But two finer variances remain. The lint runner differed, `npx eslint
 `npx eslint .`, and that difference propagates into the `CONVENTIONS.md` `runner:` stanza, so the
 delivered contract is not byte-consistent run to run. The husky hook body also differed, one bare
 without a shebang, one with a shebang and the older `. husky.sh` sourcing line. The mechanism
-wobble is fixed; the runner value and hook body are still model-chosen. Closing them needs the
-template regime: pin the runner to a canonical `npx eslint .` (the flat config's `files` glob
-already scopes it) and ship the husky hook as a fixed v9 template written verbatim. Not yet done.
+wobble is fixed; the runner value and hook body are still model-chosen.
+
+Finer pin applied and confirmed (2026-07-18, claude-md v1.9 / trees v2.5). The app husky hook is
+now a byte-for-byte template (shebang, `npx eslint .`, the drift-check line, nothing else) and the
+runner is pinned to canonical `npx eslint .` in both the gate and the `CONVENTIONS.md` stanza — the
+flat config's `files` glob already scopes it, so `eslint apps` was a distinction without a
+difference. A confirming double-run (`outputs/test-det-c`, `outputs/test-det-d`) produced a
+byte-identical `.husky/pre-commit` (same SHA `ebc2885…`) and identical `runner:` stanzas, both
+husky-only, both passing the drift-check. App-goal gate determinism is closed. Scope note: the
+data and infra pre-commit gates are grounded and pinned by hook id (`ruff-check`/`ruff-format`,
+terraform fmt/validate/tflint) but were not put through a byte-identical double-run; the app goal,
+the one that wobbled, is the one confirmed.
 
 ## Delivery validation — drift-check ships with the project (2026-07-18)
 
@@ -131,15 +140,15 @@ not only in QA.
 The feature works end to end on real skill output across all four goals and the reconcile path,
 and the traceability guard now ships in the delivered project. Three issues the runs surfaced are
 fixed: the runner-wired matching in the drift-check, the authoring-caveat leak in the generated
-contract, and gate-mechanism non-determinism (grounded and pinned to husky/pre-commit per stack).
-Open: full contract determinism — the double-run showed the runner command and husky hook body
-still vary, closable only with the template regime (pin the runner, ship a fixed hook template).
-Remaining by choice: the headless release-gate re-run.
+contract, gate-mechanism non-determinism (grounded and pinned per stack), and app-goal contract
+determinism (fixed husky template + pinned runner, confirmed byte-identical across a double-run).
+Remaining: a byte-identical double-run for the data and infra gates (grounded-pinned but not yet
+proven), and by choice the headless release-gate re-run.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.5        |
+| Version      | 1.6        |
 | Last Updated | 2026-07-18 |
 | Status       | Final      |
