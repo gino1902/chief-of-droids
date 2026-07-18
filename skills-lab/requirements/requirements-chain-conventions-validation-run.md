@@ -82,15 +82,22 @@ re-run (into `outputs/test-small-fix`): the generated `CONVENTIONS.md` carries n
 line and still passes the drift-check — that run also wired a CI-workflow gate
 (`.github/workflows/lint.yml`), a third gate style, exercising the runner-wired fix once more.
 
-## Open finding — gate non-determinism (not fixed)
+## Gate non-determinism — grounded, pinned, one post-pin run confirms
 
-The skill does not pin which project gate it generates. Across the runs the same code/app-backend
+The skill did not pin which project gate it generated. Across the runs the same code/app-backend
 brief produced a husky `.husky/pre-commit` (V-small) and a `.github/workflows/lint.yml`
-(the V-small confirmation re-run); data and infra chose `.pre-commit-config.yaml`. All pass the
-drift-check, which greps every gate style, so correctness holds — but two runs of one brief
-disagreeing on the gate mechanism contradicts the suite's determinism ethos. Recommended fix: pin
-a default gate per stack at the Pass 4 tail. It is a skill behaviour change and needs a confirming
-double-run, so it is left open here rather than slipped in unverified.
+(the V-small confirmation re-run); data and infra chose `.pre-commit-config.yaml`. All passed the
+drift-check, which greps every gate style, so correctness held, but two runs of one brief
+disagreeing on the gate mechanism contradicted the suite's determinism ethos.
+
+Fixed (2026-07-18). A grounding pass established the default gate per stack from each goal's
+reference standard (husky for Node/TS app per bulletproof-react, pre-commit with
+`astral-sh/ruff-pre-commit` for data, pre-commit fmt/validate/tflint plus TFLint CI for infra),
+recorded with sources in the design doc. The Pass 4 tail now pins these, keeping a
+reconcile-to-existing-gate escape hatch. One post-pin run (the delivery validation below) produced
+husky for the app brief, matching the pin. A dedicated double-run, two post-pin bootstraps of the
+same brief compared for an identical gate, is still the clean confirmation of determinism and is
+not yet done.
 
 ## Delivery validation — drift-check ships with the project (2026-07-18)
 
@@ -113,16 +120,16 @@ not only in QA.
 
 ## Conclusion
 
-The feature works end to end on real skill output across all four goals and the reconcile path.
-Two issues the run surfaced are fixed and re-verified: the runner-wired matching in the
-drift-check, and the authoring-caveat leak in the generated contract. One is open by
-recommendation, not fixed: gate non-determinism (above), pending a decision to pin. Remaining by
-choice: the headless release-gate re-run.
+The feature works end to end on real skill output across all four goals and the reconcile path,
+and the traceability guard now ships in the delivered project. Three issues the runs surfaced are
+fixed: the runner-wired matching in the drift-check, the authoring-caveat leak in the generated
+contract, and gate non-determinism (grounded and pinned). Remaining by choice: a dedicated
+double-run to fully confirm gate determinism, and the headless release-gate re-run.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.3        |
-| Last Updated | 2026-07-17 |
+| Version      | 1.4        |
+| Last Updated | 2026-07-18 |
 | Status       | Final      |
