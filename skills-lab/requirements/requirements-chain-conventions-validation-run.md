@@ -94,10 +94,18 @@ Fixed (2026-07-18). A grounding pass established the default gate per stack from
 reference standard (husky for Node/TS app per bulletproof-react, pre-commit with
 `astral-sh/ruff-pre-commit` for data, pre-commit fmt/validate/tflint plus TFLint CI for infra),
 recorded with sources in the design doc. The Pass 4 tail now pins these, keeping a
-reconcile-to-existing-gate escape hatch. One post-pin run (the delivery validation below) produced
-husky for the app brief, matching the pin. A dedicated double-run, two post-pin bootstraps of the
-same brief compared for an identical gate, is still the clean confirmation of determinism and is
-not yet done.
+reconcile-to-existing-gate escape hatch.
+
+Double-run (2026-07-18). Two post-pin bootstraps of the identical app-backend brief
+(`outputs/test-det-a`, `outputs/test-det-b`). Result is partial. The gate mechanism is now
+deterministic: both chose husky, neither CI nor pre-commit, and both wire the drift-check
+base pass. But two finer variances remain. The lint runner differed, `npx eslint apps` versus
+`npx eslint .`, and that difference propagates into the `CONVENTIONS.md` `runner:` stanza, so the
+delivered contract is not byte-consistent run to run. The husky hook body also differed, one bare
+without a shebang, one with a shebang and the older `. husky.sh` sourcing line. The mechanism
+wobble is fixed; the runner value and hook body are still model-chosen. Closing them needs the
+template regime: pin the runner to a canonical `npx eslint .` (the flat config's `files` glob
+already scopes it) and ship the husky hook as a fixed v9 template written verbatim. Not yet done.
 
 ## Delivery validation — drift-check ships with the project (2026-07-18)
 
@@ -123,13 +131,15 @@ not only in QA.
 The feature works end to end on real skill output across all four goals and the reconcile path,
 and the traceability guard now ships in the delivered project. Three issues the runs surfaced are
 fixed: the runner-wired matching in the drift-check, the authoring-caveat leak in the generated
-contract, and gate non-determinism (grounded and pinned). Remaining by choice: a dedicated
-double-run to fully confirm gate determinism, and the headless release-gate re-run.
+contract, and gate-mechanism non-determinism (grounded and pinned to husky/pre-commit per stack).
+Open: full contract determinism — the double-run showed the runner command and husky hook body
+still vary, closable only with the template regime (pin the runner, ship a fixed hook template).
+Remaining by choice: the headless release-gate re-run.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.4        |
+| Version      | 1.5        |
 | Last Updated | 2026-07-18 |
 | Status       | Final      |
