@@ -92,6 +92,25 @@ disagreeing on the gate mechanism contradicts the suite's determinism ethos. Rec
 a default gate per stack at the Pass 4 tail. It is a skill behaviour change and needs a confirming
 double-run, so it is left open here rather than slipped in unverified.
 
+## Delivery validation — drift-check ships with the project (2026-07-18)
+
+Follow-on to close the highest-value lifecycle gap: the traceability guard previously lived only
+in this QA suite, so a bootstrapped project could not catch an untraceable contract change on its
+own. The skill now delivers the check into the project and wires it. Validated on a fresh Small
+code/app-backend bootstrap (`outputs/test-deliver`, driven by a fresh subagent):
+
+- `scripts/check-conventions-drift.sh` is delivered, executable, and byte-identical to the skill
+  asset (one canonical source, QA reaches it by symlink).
+- The pinned gate is husky (`.husky/pre-commit`), no CI-workflow wobble, and it carries the wiring
+  line `bash scripts/check-conventions-drift.sh .` for the base pass.
+- The traceability pass was documented as a CI step, not fabricated as a workflow, because no CI
+  platform was confirmed in the blank repo. Grounding held.
+
+Traceability proven with the project's own delivered script, against a committed base: the base
+pass passed; an unrecorded edit to `CONVENTIONS.md` failed the check (untraceable change); adding
+an ADR under `docs/adr/` made it pass. Point 2 is now enforceable inside the delivered project,
+not only in QA.
+
 ## Conclusion
 
 The feature works end to end on real skill output across all four goals and the reconcile path.
@@ -104,6 +123,6 @@ choice: the headless release-gate re-run.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.2        |
+| Version      | 1.3        |
 | Last Updated | 2026-07-17 |
 | Status       | Final      |
