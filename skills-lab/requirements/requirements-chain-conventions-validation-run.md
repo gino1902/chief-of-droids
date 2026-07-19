@@ -213,6 +213,55 @@ An already-bootstrapped repo now gains the full contract, enforcement, and guard
 against its existing tree, without reorganising it. The lifecycle half of the goal holds for
 existing projects, not only new ones.
 
+## Parked — headless release-gate re-run
+
+Status: parked, not scheduled. The one validation tier this feature has not exercised. Recorded
+here so it is a deliberate, retrievable decision rather than a silent gap.
+
+Why it is needed. Every run this session was driven by a fresh `general-purpose` subagent. A
+subagent removes the contamination that matters — it does not inherit this conversation, so it
+cannot reverse-engineer the expected output from the design work. But it still shares this
+harness, repo, model, and permission context. It approximates a fresh Claude Code session, it is
+not an independent one. A headless `claude -p` run is a genuinely separate Claude Code process
+with cold state, exercising the real invocation path a first-time user hits (the skill trigger,
+permission prompts, tool approvals). It is the release-gate tier: the check you run before shipping
+a materially changed skill, to confirm it works with nothing of ours in scope.
+
+When to play it. Before releasing a materially changed version of the skill, or in CI once a
+headless driver exists. Not for iterative development — subagent runs already catch the substantive
+defects (this session found six that way). Play it when the cost of a first-time-user failure
+outweighs the run cost: at a release boundary, not on every edit.
+
+Benefit. Highest-fidelity confirmation. No shared context of any kind, a real cold start, and it
+surfaces anything that only shows on the true invocation path — permission-prompt friction, the
+skill trigger, environment assumptions — that a subagent auto-handles and therefore hides.
+
+Tradeoff. Heavier and slower (a full nested Claude Code process per run), depends on the `claude`
+CLI being installed and permissioned, and is harder to make non-interactive: bootstrapping-project
+is a multi-turn interview (goal, size, five framing questions, approvals) while `claude -p` is
+single-shot, so the answers must be front-loaded into the prompt and the skill left to run
+autonomously, or a turn-feeding harness is needed. A cold session also prompts on writes and git
+unless a permission mode or pre-seeded settings make it non-interactive. The marginal confidence
+over subagent runs is real but narrow (mostly the invocation-path and cold-start dimensions), which
+is why it is a release gate, not a per-change check.
+
+Implementation options to decide.
+- Manual, per goal. A human runs `claude -p "<front-loaded brief>"` in a fresh empty dir for each
+  goal, approving prompts, then runs `check-conventions-drift.sh <dir>`. Zero infra, highest
+  fidelity, but manual and unscripted.
+- Scripted headless. A shell script loops the goals, invokes `claude -p` with the brief piped in
+  and a non-interactive permission mode (a sandboxed `--dangerously-skip-permissions`, or a
+  pre-seeded `.claude/settings.json` that pre-approves the needed tools), writes into temp dirs,
+  then runs the drift-check and diffs. Repeatable and CI-able; needs the permission and
+  answer-feeding problems solved.
+- Phase 2 driver. The referenced-but-unbuilt test driver that drives interactive scenarios
+  headlessly and captures evidence — the eventual home for this and the whole scenario suite; the
+  scripted option is the interim.
+
+Decision to make before playing it: how to feed the multi-turn answers non-interactively
+(front-load versus a turn-feeding harness), and which permission mode a cold session uses. Until
+then it stays parked; the subagent tier is the standing bar.
+
 ## Conclusion
 
 The feature works end to end on real skill output across all four goals and the reconcile path,
@@ -235,6 +284,6 @@ re-run.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.10       |
+| Version      | 1.11       |
 | Last Updated | 2026-07-18 |
 | Status       | Final      |
