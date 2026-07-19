@@ -185,13 +185,21 @@ Absence is the trigger: generate what is missing, reconcile what is present, nev
    than forcing the default — the pin only removes the free choice on a blank repo. These are stack
    files, so writing them does not touch `settings.json`, whose pass-1 freeze stands.
 
-   Do not pin the external `rev:` on the pre-commit repos. Write the current release at generation
-   time and leave it there — the project's own `pre-commit autoupdate` or Renovate carries it
-   forward over the project's life, and a scaffolder must not freeze a version that then ages. So
-   two runs may differ on `rev:`, which is expected and correct: the drift-check matches on the tool
-   token, not the version, and a `rev:` bump lives in the gate file, outside the drift-check's
-   traceability paths (`CONVENTIONS.md` and the lint config), so a routine upgrade is never mistaken
-   for a contract change. Constrain generation two ways: only for tooling the confirmed stack actually
+   Resolve the external `rev:` — do not guess it. The grounding test forbids inventing a version,
+   and a guessed tag is usually stale and may not exist, which breaks the developer's first
+   `pre-commit run`. Look up the real current tag at generation time and write that:
+   ```sh
+   git ls-remote --tags --refs --sort=-v:refname https://github.com/astral-sh/ruff-pre-commit \
+     | head -1 | sed 's#.*refs/tags/##'
+   ```
+   and the equivalent for `https://github.com/antonbabenko/pre-commit-terraform`. If the network is
+   unreachable, do not invent a number — write `rev:` with a `# TODO: pin via pre-commit autoupdate`
+   marker and flag it in the close report. This is a real, current starting pin, not a frozen one:
+   from here the project's own `pre-commit autoupdate` or Renovate carries the version forward over
+   the project's life, and the scaffolder never owns the ongoing bump. Because the tag is looked up
+   rather than guessed, two runs made close together resolve the same real latest; and a later
+   `rev:` bump lives in the gate file, outside the drift-check's traceability paths (`CONVENTIONS.md`
+   and the lint config), so a routine upgrade is never mistaken for a contract change. Constrain generation two ways: only for tooling the confirmed stack actually
    uses, and only zones for folders that exist — where per-feature or per-domain folders are
    still deferred, leave a documented extend-per-feature marker rather than fabricating zones for
    absent paths (the grounding test applies to config too). Record the config file path and the
@@ -259,6 +267,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.11       |
+| Version      | 1.12       |
 | Last Updated | 2026-07-18 |
 | Status       | Review     |
