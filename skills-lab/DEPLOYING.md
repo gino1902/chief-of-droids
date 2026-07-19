@@ -83,10 +83,21 @@ bytes that landed.
 - **Target, `<target>/.claude/skills/DEPLOYED.md`** — install record. One row per
   skill: skill, version, package, date, source.
 
+## First run
+
+The mechanism was first exercised for real on 2026-07-19, as a smoke test of the
+tool itself: `bootstrapping-project` deployed into `chief-of-droids` at version
+`53663ce`. Both gates passed without `--force`, the skill landed byte-identical to
+source, both ledgers recorded the run, and the skill was confirmed invocable in the
+target. The run is the first row in `DEPLOYMENTS.md`.
+
+Paths not yet exercised: package runs, `--force` overrides, a separate target repo
+(this deploy went into the enclosing repo), and overwrite of an existing copy.
+
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
-| Last Updated | 2026-07-16 |
+| Version      | 1.2        |
+| Last Updated | 2026-07-19 |
 | Status       | Review     |
