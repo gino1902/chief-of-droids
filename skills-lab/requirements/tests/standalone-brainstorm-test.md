@@ -12,14 +12,14 @@ This is the only scenario where the skill runs fully decoupled, so it is the onl
 
 ## Directory and precedence
 
-Directory: `outputs/test-standalone-brainstorm`, created by this test.
+Directory: `testing/test-standalone-brainstorm`, created by this test.
 
 Precedence: none. Independent of every other scenario.
 
 ## Preconditions
 
 - A fresh session.
-- An empty run directory at `skills-lab/outputs/test-standalone-brainstorm`. Create it before starting.
+- An empty run directory at `skills-lab/testing/test-standalone-brainstorm`. Create it before starting.
 - Session cwd is that directory.
 - No bootstrapping. Do not run `bootstrapping-project`. The run directory holds only the scripted `FRAMING.md` below. There is no `CONCEPTS.md`, no `.claude/` config, and no project tree in the run directory. (`brainstorming-requirements` does not look upward for a `CLAUDE.md`, so an ancestor `CLAUDE.md` in `skills-lab` is irrelevant to this test.)
 
@@ -66,7 +66,7 @@ Answer the interview as scripted:
 
 Let it emit one component slice. Stop there. Do not invoke `writing-requirements`.
 
-## Expected outputs (under `outputs/test-standalone-brainstorm`)
+## Expected outputs (under `testing/test-standalone-brainstorm`)
 
 - `FRAMING.md` — the scripted fixture, unchanged.
 - one component slice at `outputs/capture-command/capture-command.md`, with domain terms (`pile`, `entry`, `title`, `author`, `unread` or similar) backticked or defined in the slice.

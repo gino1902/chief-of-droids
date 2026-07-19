@@ -10,14 +10,14 @@ Exercise the `--type technical` skeleton of `writing-requirements`, which the tw
 
 ## Directory and precedence
 
-Directory: `outputs/test-app`, created by this test (self-contained mini-chain: bootstrap, then brainstorm, then formalise).
+Directory: `testing/test-app`, created by this test (self-contained mini-chain: bootstrap, then brainstorm, then formalise).
 
 Precedence: none against the Medium data base. Sequence it after the iteration ladder if the goal is still iteration coverage; promote it earlier only if the goal switches to formaliser coverage.
 
 ## Preconditions
 
 - A fresh session.
-- The directory `skills-lab/outputs/test-app` exists and is empty. Session cwd is that directory.
+- The directory `skills-lab/testing/test-app` exists and is empty. Session cwd is that directory.
 
 ## Scripted subject — "helpdesk"
 
@@ -45,7 +45,7 @@ Because the slice carries non-functional, security, and observability requiremen
 
 Invoke `writing-requirements ticket-api from outputs/ticket-api/ticket-api.md --type technical`.
 
-## Expected outputs (under `outputs/test-app`)
+## Expected outputs (under `testing/test-app`)
 
 - the Medium+ app project (FRAMING with Tracks, CONCEPTS, app tree, CLAUDE.md).
 - `CONVENTIONS.md` — the app structural contract with an enforcement stanza (`config` the ESLint config, `runner` the lint command, `zoned: apps/*` — helpdesk is a backend service, so no `src/features/*` glob), plus the generated ESLint `import/no-restricted-paths` config and gate. This is the only scenario that meaningfully exercises zone coverage, since the app tree scaffolds one `apps/<domain>/` per business domain.
@@ -57,7 +57,7 @@ Invoke `writing-requirements ticket-api from outputs/ticket-api/ticket-api.md --
 - Every S2 section that has substrate signal renders as content, not `N/A`: `FR`, `CON` (the id invariant), `NFR` (the latency threshold), `SEC` (the read-authorisation rule), `OBS` (the created metric). Sections with no signal (for example `IR`, `DR`, `TR`) may render `N/A` with a Warning, which is acceptable.
 - ERR coverage: each FR of Acquire, Mutate, or Validate shape (create, fetch) has a paired `ERR` entry drawn in the same pass, or an inline opt-out rationale.
 - Bounded scores ✓ on the `NFR` latency requirement (the 300 ms threshold). The `SEC` (read-authorisation) and `OBS` (metric emission) requirements as scripted carry no quantitative threshold, so Bounded scores ✗ and each emits a Bounded Warning. That is correct scoring, not a defect. If you want Bounded ✓ across all three, give the `SEC` and `OBS` requirements numeric thresholds in the slice.
-- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh outputs/test-app` returns 0. Every scaffolded `apps/<domain>/` has a matching `import/no-restricted-paths` zone in the ESLint config (coverage), and the runner is wired into the project gate. A scaffolded domain with no zone is a coverage failure — that is the feature working.
+- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh testing/test-app` returns 0. Every scaffolded `apps/<domain>/` has a matching `import/no-restricted-paths` zone in the ESLint config (coverage), and the runner is wired into the project gate. A scaffolded domain with no zone is a coverage failure — that is the feature working.
 - The structural rules live in `CONVENTIONS.md`, not restated in `CLAUDE.md`; the ESLint config and gate are stack files, so `settings.json` stays byte-identical.
 - No undefined-term warnings, since `CONCEPTS.md` governs the vocabulary.
 - The report Summary reconciles with the body: the Info Resolved cell equals the count of `[INFO]` lines, and the Warning and Blocking Resolved and Unresolved cells equal their `[<SEVERITY>-RESOLVED]` and `[<SEVERITY>-UNRESOLVED]` line counts. Run 2 found the Info count undercounting here; the standalone check is `verify-summary-info-tally.md`.

@@ -10,14 +10,14 @@ Exercise the downstream-to-upstream feedback loop, the second dotted arrow in th
 
 ## Directory and precedence
 
-Directory: `outputs/test-medium`, created by `chain-test-medium.md`, not by this test.
+Directory: `testing/test-medium`, created by `chain-test-medium.md`, not by this test.
 
-Precedence: run against a fresh Medium base (empty `outputs/test-medium`, run `chain-test-medium.md` into it, then run this test), and only after MD-1 (`iteration-rewrite-test.md`) is green, so a failure here points at the loop, not at the re-pass underneath it.
+Precedence: run against a fresh Medium base (empty `testing/test-medium`, run `chain-test-medium.md` into it, then run this test), and only after MD-1 (`iteration-rewrite-test.md`) is green, so a failure here points at the loop, not at the re-pass underneath it.
 
 ## Preconditions
 
-- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `FRAMING.md` and a context-structured `CONCEPTS.md`.
-- Session cwd is `skills-lab/outputs/test-medium`.
+- The base is present from a fresh `chain-test-medium.md` run: `testing/test-medium` holds `FRAMING.md` and a context-structured `CONCEPTS.md`.
+- Session cwd is `skills-lab/testing/test-medium`.
 
 ## Run steps
 
@@ -52,7 +52,7 @@ Re-run `writing-requirements delivery-intake from outputs/delivery-intake/delive
 
 Expected: the R-02 FR now yields a derivable AC (a 30-minute threshold), the no-derivable-AC warning is gone, and the version increments 0.1 to 0.2.
 
-## Expected outputs (under `outputs/test-medium`)
+## Expected outputs (under `testing/test-medium`)
 
 - a slice at `outputs/delivery-intake/delivery-intake.md`, v1 then refined.
 - `requirements/delivery-intake/delivery-intake-requirements.md` and `-report.md`, at 0.1 (pass one) then 0.2 (pass two).

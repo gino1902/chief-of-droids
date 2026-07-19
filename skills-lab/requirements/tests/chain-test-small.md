@@ -9,8 +9,8 @@ Exercise the chain end to end for a Small project: bootstrapping-project → bra
 ## Preconditions
 
 - A fresh session.
-- An empty project directory at `skills-lab/outputs/test-small`. Create it before starting.
-- Session cwd is that directory, so bootstrapping targets it and writing-requirements resolves its repo root there. If the four skills (bootstrapping-project, framing-project, brainstorming-requirements, writing-requirements) are not offered, start from the `skills-lab` root instead and pass `outputs/test-small` as the bootstrapping target path, then keep cwd inside the test project for the writing-requirements step.
+- An empty project directory at `skills-lab/testing/test-small`. Create it before starting.
+- Session cwd is that directory, so bootstrapping targets it and writing-requirements resolves its repo root there. If the four skills (bootstrapping-project, framing-project, brainstorming-requirements, writing-requirements) are not offered, start from the `skills-lab` root instead and pass `testing/test-small` as the bootstrapping target path, then keep cwd inside the test project for the writing-requirements step.
 
 ## Scripted subject — "linkjar"
 
@@ -51,7 +51,7 @@ Let it emit one component slice.
 
 Invoke `writing-requirements link-service from <slice-path> --type generic`, using the slice path just produced.
 
-## Expected outputs (under `outputs/test-small`)
+## Expected outputs (under `testing/test-small`)
 
 - `.claude/settings.json`, `.gitignore`
 - `FRAMING.md` — Small shape: `<!-- goal: code -->` on line 1, the five sections, no `last_updated` frontmatter, no version footer
@@ -65,7 +65,7 @@ Invoke `writing-requirements link-service from <slice-path> --type generic`, usi
 ## Acceptance criteria
 
 - All the above exist; `CONCEPTS.md` is absent; only one component is produced (no fan-out).
-- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh outputs/test-small` returns 0 (config present, runner wired, coverage green — per-domain zones only for domains that exist).
+- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh testing/test-small` returns 0 (config present, runner wired, coverage green — per-domain zones only for domains that exist).
 - The structural rules live in `CONVENTIONS.md`, not restated in `CLAUDE.md`; `CLAUDE.md` carries the two appended pointer lines.
 - The requirements report shows no shape-defect warnings: Title, Scope, Actors extracted; requirements are SHALL/EARS; each has a derivable acceptance criterion.
 - Auto-derived glossary "verify" warnings and a §Constraints N/A are acceptable.
@@ -77,7 +77,7 @@ Small signatures that must be present: FRAMING has no `last_updated` frontmatter
 - A `CONCEPTS.md` was produced (the size branch leaked).
 - `CONVENTIONS.md` is missing, or the structural rules were written into `CLAUDE.md` instead.
 - writing-requirements raised shape-defect warnings (scope not extracted, requirements not SHALL/EARS, title fallback fired).
-- bootstrapping wrote into `skills-lab` root rather than `outputs/test-small`.
+- bootstrapping wrote into `skills-lab` root rather than `testing/test-small`.
 
 ## Record
 

@@ -10,14 +10,14 @@ Exercise `bootstrapping-project` resume. Interrupt it after Pass 1, then re-invo
 
 ## Directory and precedence
 
-Directory: `outputs/test-resume`, created by this test in its first session.
+Directory: `testing/test-resume`, created by this test in its first session.
 
 Precedence: self-contained. Two sessions, session one does Pass 1 only, session two resumes. No dependency on other scenarios.
 
 ## Preconditions
 
 - Two fresh sessions, back to back.
-- The directory `skills-lab/outputs/test-resume` exists and is empty. Session cwd is that directory in both sessions.
+- The directory `skills-lab/testing/test-resume` exists and is empty. Session cwd is that directory in both sessions.
 
 ## Scripted subject — "edge-dns"
 
@@ -29,11 +29,11 @@ A solo infra project: Terraform for one person's personal edge and DNS configura
 
 Invoke `bootstrapping-project`. Goal `infra`. Complete Pass 1 only: approve the baseline `.claude/settings.json` and `.gitignore`. Then stop, do not proceed to Pass 2. End the session.
 
-At this point `outputs/test-resume` holds only `.claude/settings.json` and `.gitignore` (and `.git` if init ran), and no `FRAMING.md`, tree, or `CLAUDE.md`.
+At this point `testing/test-resume` holds only `.claude/settings.json` and `.gitignore` (and `.git` if init ran), and no `FRAMING.md`, tree, or `CLAUDE.md`.
 
 ### Session two — resume
 
-In a new session, cwd still `outputs/test-resume`, re-invoke `bootstrapping-project` with no goal argument. This mirrors a real resume: nothing carries the goal across sessions until the Pass 2 stamp exists, so the skill has to re-elicit it.
+In a new session, cwd still `testing/test-resume`, re-invoke `bootstrapping-project` with no goal argument. This mirrors a real resume: nothing carries the goal across sessions until the Pass 2 stamp exists, so the skill has to re-elicit it.
 
 Expected: the Preamble detects Pass 1 done (settings present), reports it, and resumes at Pass 2. Because no `FRAMING.md` stamp exists yet and no goal argument was passed, the skill must ask for the goal before framing. Answer `infra`. It must not infer the goal from the directory name or any other cue. Continue as a Small infra project:
 
@@ -46,7 +46,7 @@ Expected: the Preamble detects Pass 1 done (settings present), reports it, and r
 - Pass 3: the infra tree (`modules/`, `envs/<env>/`), no code sub-type question, then `CONVENTIONS.md` with the infra structural contract (composition, module, pinning, state-and-secrets, promotion rules) and an enforcement stanza (`config` the TFLint config, `runner` its command, `zoned: none`).
 - Pass 4: the infra `CLAUDE.md` skeleton (plan-first, ground provider args, negative rules found in the repo), pointing at `CONVENTIONS.md`. The enforcement tail generates the TFLint config and its gate (fmt/validate as pre-commit), leaving `settings.json` untouched.
 
-## Expected outputs (under `outputs/test-resume`)
+## Expected outputs (under `testing/test-resume`)
 
 - From session one: `.claude/settings.json`, `.gitignore`.
 - From session two: `FRAMING.md` (five-question Small, `<!-- goal: infra -->` on line one), an infra tree anchor (`modules/`, `envs/<env>/`), `CONVENTIONS.md` (infra contract + TFLint enforcement stanza) with its generated config and gate, and `CLAUDE.md` on the infra skeleton pointing at `CONVENTIONS.md`.
@@ -57,7 +57,7 @@ Expected: the Preamble detects Pass 1 done (settings present), reports it, and r
 - On resume with no goal argument and no stamp yet, the skill asks for the goal rather than guessing, and accepts `infra`. It does not default the goal from the directory name.
 - The goal is `infra` throughout, and the tree matches the infra skeleton (`modules/`, `envs/<env>/`), not a code tree.
 - `CLAUDE.md` uses the infra skeleton with a plan-first rule.
-- `CONVENTIONS.md` exists with the infra contract and passes the drift-check: `check-conventions-drift.sh outputs/test-resume` returns 0 (`zoned: none`, so existence runs, coverage skipped).
+- `CONVENTIONS.md` exists with the infra contract and passes the drift-check: `check-conventions-drift.sh testing/test-resume` returns 0 (`zoned: none`, so existence runs, coverage skipped).
 - `settings.json` from session one is unchanged after session two — the generated TFLint config and gate are stack files, not `settings.json`.
 
 ## Fail conditions

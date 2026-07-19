@@ -4,7 +4,7 @@ A row-by-row retrospective in the form `test-strategy.md` §Retrospective use pr
 
 ## Evidence basis
 
-This retrospective is reconstructed from three sources: the git diff on the three edited test files, the artifacts left under the nine `outputs/test-*` directories, and `test-strategy.md`. There is no single session to read. The strategy's §Session model requires a fresh session per scenario, so the directories are the artifacts those separate sessions left behind. Behavioural criteria that leave no end-state trace, and the three in-place mutation rows, cannot be closed from disk. They need the session transcripts.
+This retrospective is reconstructed from three sources: the git diff on the three edited test files, the artifacts left under the nine `testing/test-*` directories, and `test-strategy.md`. There is no single session to read. The strategy's §Session model requires a fresh session per scenario, so the directories are the artifacts those separate sessions left behind. Behavioural criteria that leave no end-state trace, and the three in-place mutation rows, cannot be closed from disk. They need the session transcripts.
 
 Verdict tags: `[obs]` verified on disk, `[inf]` inferred from indirect evidence, `[beh]` a behavioural criterion with no end-state trace.
 

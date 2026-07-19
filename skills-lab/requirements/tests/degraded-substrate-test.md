@@ -10,14 +10,14 @@ Exercise the safety property the whole no-synthesis design rests on: when substr
 
 ## Directory and precedence
 
-Directory: `outputs/test-wr-degraded`, created by this test.
+Directory: `testing/test-wr-degraded`, created by this test.
 
 Precedence: none. Independent of every other scenario.
 
 ## Preconditions
 
 - A fresh session.
-- The directory `skills-lab/outputs/test-wr-degraded` exists. Session cwd is that directory.
+- The directory `skills-lab/testing/test-wr-degraded` exists. Session cwd is that directory.
 - Do not add a `CLAUDE.md` to the test dir. It must carry none, so the run exercises the fixed Phase 0.5 cwd-anchoring: with no `CLAUDE.md` at cwd, the skill resolves the repo root to cwd itself, emits a warning, and writes outputs under this directory. It no longer walks upward, so nothing escapes to the `skills-lab` root. Before the fix at `e4a0e06` this row needed a scaffold `CLAUDE.md` to contain the escape; that is no longer required, and running without one is now part of what the row proves.
 - Create one fixture `bare.md` with prose only: no `#` H1, no `##` H2, no frontmatter title, no scope language (`covers`, `handles`, `owned by`), and no actor language. Include exactly one requirement-shaped line so functional extraction has something to find, for example: `The system shall store each record when it arrives.` Surround it with a sentence or two of plain prose that names no domain terms.
 
@@ -29,10 +29,10 @@ Invoke `writing-requirements bare-spec from bare.md --type generic`.
 
 The substrate is a valid, non-empty `.md`, so Phase 0 passes and the run proceeds. The degradation shows up in Phases 1 to 5 as `N/A` plus Warnings, not as a halt.
 
-## Expected outputs (under `outputs/test-wr-degraded`)
+## Expected outputs (under `testing/test-wr-degraded`)
 
 - `bare.md`, unchanged.
-- `requirements/bare-spec/bare-spec-requirements.md` and `-report.md`, both written under cwd (`outputs/test-wr-degraded/requirements/bare-spec/`), not at the `skills-lab` root (soft issues do not halt the run).
+- `requirements/bare-spec/bare-spec-requirements.md` and `-report.md`, both written under cwd (`testing/test-wr-degraded/requirements/bare-spec/`), not at the `skills-lab` root (soft issues do not halt the run).
 - In the requirements file: the Title is the slug `bare-spec` verbatim; §Scope In and Out both `N/A`; §Actors `N/A`; one functional requirement extracted from the SHALL line.
 - In the report: a Phase 0 `[WARNING-UNRESOLVED]` that no `CLAUDE.md` was found at cwd and cwd was used as the repo root. This adds one to the warning total versus a run with a `CLAUDE.md` present.
 - In the report: a Warning that the substrate has no H1, H2, or frontmatter title and the slug was used verbatim; Warnings for the `N/A` Scope subsections and Actors.
@@ -45,7 +45,7 @@ The substrate is a valid, non-empty `.md`, so Phase 0 passes and the run proceed
 - The one SHALL line is extracted as a functional requirement, showing degradation is per-section, not all-or-nothing, and that real signal is still captured.
 - The SHALL line's domain object (`record`) is flagged as undefined, not passed silently: FR-001 scores Unambiguous ✗ and a Warning records the term absent from §Glossary. This is the design's intended behaviour on substrate with no `CONCEPTS.md` anchor; the skill must not resolve it by inventing a definition.
 - Both output files are written. The run does not hard-fail on the degradation.
-- Outputs land under cwd: `requirements/bare-spec/` is created inside `outputs/test-wr-degraded`, not at the `skills-lab` root, and a Phase 0 `[WARNING-UNRESOLVED]` records that no `CLAUDE.md` was found at cwd and cwd was used as the repo root.
+- Outputs land under cwd: `requirements/bare-spec/` is created inside `testing/test-wr-degraded`, not at the `skills-lab` root, and a Phase 0 `[WARNING-UNRESOLVED]` records that no `CLAUDE.md` was found at cwd and cwd was used as the repo root.
 - No section carries invented scope, actors, or a fabricated title.
 - No extra artifacts: `writing-requirements` writes only its two output files and does not modify `bare.md` or anything else.
 

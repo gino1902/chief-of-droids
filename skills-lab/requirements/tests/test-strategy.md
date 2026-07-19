@@ -8,7 +8,7 @@ Every scenario runs from a fresh Claude Code session. Nothing carries between sc
 
 Two consequences shape the dependency column below:
 
-- A shared-base scenario does not inherit another session's live state. It re-establishes its base on disk in its own session. For the Medium scenarios that means: empty `outputs/test-medium`, run `chain-test-medium` into it, then run the scenario. The base is consumed from disk, not from a warm session.
+- A shared-base scenario does not inherit another session's live state. It re-establishes its base on disk in its own session. For the Medium scenarios that means: empty `testing/test-medium`, run `chain-test-medium` into it, then run the scenario. The base is consumed from disk, not from a warm session.
 - A "passed" dependency is a diagnostic gate, not a state hand-off. When a row says "after MD-1 passed", it means run MD-1 and confirm it is green before running this one, so a failure localises. The dependent scenario still builds its own base from disk.
 
 Directories under `outputs/` are created empty and left bare. Each scenario's setup (bootstrapping, or its own fixtures) populates its directory. No directory is pre-initialised.

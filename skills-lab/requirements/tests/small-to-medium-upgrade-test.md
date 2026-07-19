@@ -10,14 +10,14 @@ Exercise the mitigation the chain design names for a Small project entering the 
 
 ## Directory and precedence
 
-Directory: `outputs/test-upgrade`, created by this test (self-contained, it bootstraps its own Small base).
+Directory: `testing/test-upgrade`, created by this test (self-contained, it bootstraps its own Small base).
 
 Precedence: run after MD-1, MD-3, and MD-4 are green, so a failure localises to the upgrade rather than to a mechanism underneath it. No shared base, this test builds and upgrades its own.
 
 ## Preconditions
 
 - A fresh session.
-- The directory `skills-lab/outputs/test-upgrade` exists and is empty. Session cwd is that directory.
+- The directory `skills-lab/testing/test-upgrade` exists and is empty. Session cwd is that directory.
 
 ## Scripted subject — "sensordrop"
 
@@ -59,7 +59,7 @@ Re-invoke `brainstorming-requirements from FRAMING.md --target "filing"`. The te
 
 Re-run `writing-requirements filing from <slice-path> --type generic`. The undefined-term warnings from step 3 should be cleared, and the version should increment.
 
-## Expected outputs (under `outputs/test-upgrade`)
+## Expected outputs (under `testing/test-upgrade`)
 
 - Small bootstrap artifacts: five-question `FRAMING.md`, `CLAUDE.md`, a tree anchor, `CONVENTIONS.md` (data contract, `zoned: none`), and no `CONCEPTS.md` initially.
 - After the upgrade: `FRAMING.md` in framing-project shape (frontmatter with `last_updated`, Tracks) and a context-structured `CONCEPTS.md`. `CONVENTIONS.md` is untouched by the upgrade — the framing shift adds domain language, it does not change the structural contract.

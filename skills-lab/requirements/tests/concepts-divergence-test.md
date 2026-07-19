@@ -12,18 +12,18 @@ Scope: this row proves divergence at the `CONCEPTS.md` layer only and does not r
 
 ## Directory and precedence
 
-Directory: `outputs/test-medium`, created by `chain-test-medium.md`, not by this test.
+Directory: `testing/test-medium`, created by `chain-test-medium.md`, not by this test.
 
-Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `chain-test-medium.md` into it, then run this test.
+Precedence: run against a fresh Medium base. Empty `testing/test-medium`, run `chain-test-medium.md` into it, then run this test.
 
 ## Preconditions
 
-- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `FRAMING.md` (three Tracks: Ingestion and transformation, Governance and platform, Exposition and reporting) and a context-structured `CONCEPTS.md`.
-- Session cwd is `skills-lab/outputs/test-medium`.
+- The base is present from a fresh `chain-test-medium.md` run: `testing/test-medium` holds `FRAMING.md` (three Tracks: Ingestion and transformation, Governance and platform, Exposition and reporting) and a context-structured `CONCEPTS.md`.
+- Session cwd is `skills-lab/testing/test-medium`.
 
 ## Reset to the committed base (before acting)
 
-The critical claim is that run 2 adds the Exposition meaning of `owner` without overwriting run 1's Governance meaning, a preservation property provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before the first brainstorm:
+The critical claim is that run 2 adds the Exposition meaning of `owner` without overwriting run 1's Governance meaning, a preservation property provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `testing/test-medium`, reset to it before the first brainstorm:
 
 ```
 git reset --hard <base-commit>
@@ -56,7 +56,7 @@ Invoke `brainstorming-requirements from FRAMING.md --target "report ownership"`,
 
 Here the skill must recognise that `owner` already exists in another context with a different meaning, and handle the divergence rather than collide.
 
-## Expected outputs (under `outputs/test-medium`)
+## Expected outputs (under `testing/test-medium`)
 
 - two slices: `outputs/steward-assignment/steward-assignment.md` and `outputs/report-ownership/report-ownership.md`.
 - `CONCEPTS.md` updated so `owner` appears under both the Governance and platform context (data steward) and the Exposition and reporting context (report analyst), each with its own definition, and the context map carries a row recording that `owner` diverges between the two.
@@ -80,13 +80,13 @@ Here the skill must recognise that `owner` already exists in another context wit
 
 ## Record
 
-Show the two `owner` definitions and the context-map divergence row. Then emit the diff against the committed base as evidence, from inside `outputs/test-medium`:
+Show the two `owner` definitions and the context-map divergence row. Then emit the diff against the committed base as evidence, from inside `testing/test-medium`:
 
 ```
 git diff <base-commit> > ../test-medium.md-7.diff
 ```
 
-Read the diff as the pass check. The only changes allowed are additive: the two new slices (`steward-assignment/`, `report-ownership/`), and `CONCEPTS.md` gaining `owner` under both the Governance and Exposition contexts plus a context-map divergence row. The Governance `owner` entry added by run 1 must still be present after run 2 (no deletion or overwrite in the final `CONCEPTS.md`), no synonym may appear, no requirements file may appear, and `FRAMING.md` must be absent from the diff. Keep `outputs/test-medium.md-7.diff` as the evidence artifact.
+Read the diff as the pass check. The only changes allowed are additive: the two new slices (`steward-assignment/`, `report-ownership/`), and `CONCEPTS.md` gaining `owner` under both the Governance and Exposition contexts plus a context-map divergence row. The Governance `owner` entry added by run 1 must still be present after run 2 (no deletion or overwrite in the final `CONCEPTS.md`), no synonym may appear, no requirements file may appear, and `FRAMING.md` must be absent from the diff. Keep `testing/test-medium.md-7.diff` as the evidence artifact.
 
 ## Note
 

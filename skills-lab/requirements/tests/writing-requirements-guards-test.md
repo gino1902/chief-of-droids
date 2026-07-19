@@ -10,14 +10,14 @@ Confirm the Phase 0 hard-fail guards fire and write nothing. The straight tests 
 
 ## Directory and precedence
 
-Directory: `outputs/test-wr-guards`, created by this test.
+Directory: `testing/test-wr-guards`, created by this test.
 
 Precedence: none. Independent of every other scenario.
 
 ## Preconditions
 
 - A fresh session.
-- The directory `skills-lab/outputs/test-wr-guards` exists and is empty. Session cwd is that directory.
+- The directory `skills-lab/testing/test-wr-guards` exists and is empty. Session cwd is that directory.
 - Create two fixtures in it: a valid `spec.md` (any small requirement-shaped markdown, one backticked term and one `The system shall …` line is enough) and a `spec.txt` with the same content but the wrong extension.
 
 ## Run steps
@@ -31,7 +31,7 @@ Run each invocation and record the outcome. Each must hard-fail at the stated Ph
 5. Substrate not found: `writing-requirements user-auth from missing.md --type generic` → hard-fail, path not found.
 6. Non-markdown substrate: `writing-requirements user-auth from spec.txt --type generic` → hard-fail, substrate is not `.md`.
 
-## Expected outputs (under `outputs/test-wr-guards`)
+## Expected outputs (under `testing/test-wr-guards`)
 
 - The two fixtures only. No directory is created by any sub-case. Sub-cases 1 to 5 halt at Phase 0.2 to 0.4, before the output dir is resolved. Sub-case 6 passes the path check, resolves the root at Phase 0.5, and reaches the Phase 0.8 substrate check, where it hard-fails. Phase 0.6 does not itself `mkdir` (the skill uses Read and Write tools only, so the output dir is created implicitly only when Phase 6 writes a file), and Phase 6 is never reached. So no `requirements/user-auth/` dir, and no `*-requirements.md` or `*-report.md`, is written by any sub-case.
 

@@ -10,18 +10,18 @@ Exercise the canonical upstream-change event: `framing-project` run a second tim
 
 ## Directory and precedence
 
-Directory: `outputs/test-medium`, created by `chain-test-medium.md`, not by this test.
+Directory: `testing/test-medium`, created by `chain-test-medium.md`, not by this test.
 
-Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `chain-test-medium.md` into it, then run this test.
+Precedence: run against a fresh Medium base. Empty `testing/test-medium`, run `chain-test-medium.md` into it, then run this test.
 
 ## Preconditions
 
-- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds a framing-project-shaped `FRAMING.md` (YAML frontmatter with `last_updated`, three Tracks) and a context-structured `CONCEPTS.md`.
-- Session cwd is `skills-lab/outputs/test-medium`.
+- The base is present from a fresh `chain-test-medium.md` run: `testing/test-medium` holds a framing-project-shaped `FRAMING.md` (YAML frontmatter with `last_updated`, three Tracks) and a context-structured `CONCEPTS.md`.
+- Session cwd is `skills-lab/testing/test-medium`.
 
 ## Reset to the committed base (before acting)
 
-The scenario edits `FRAMING.md` in place, so the no-change criteria are only provable against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before invoking anything:
+The scenario edits `FRAMING.md` in place, so the no-change criteria are only provable against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `testing/test-medium`, reset to it before invoking anything:
 
 ```
 git reset --hard <base-commit>
@@ -46,7 +46,7 @@ This refines the approach without introducing or moving any domain term or bound
 
 Let `framing-project` update `FRAMING.md` and decide whether `CONCEPTS.md` needs a change.
 
-## Expected outputs (under `outputs/test-medium`)
+## Expected outputs (under `testing/test-medium`)
 
 - `FRAMING.md` updated in place: the "Our approach" section carries the refined wording; `last_updated` is bumped to today; every other section (Target problem, Who it's for, What success means, Tracks, Not working on) is byte-for-byte unchanged.
 - `CONCEPTS.md` unchanged, because no term or boundary moved.
@@ -67,13 +67,13 @@ Let `framing-project` update `FRAMING.md` and decide whether `CONCEPTS.md` needs
 
 ## Record
 
-Emit the diff against the committed base as a named evidence artifact, from inside `outputs/test-medium`:
+Emit the diff against the committed base as a named evidence artifact, from inside `testing/test-medium`:
 
 ```
 git diff <base-commit> > ../test-medium.md-2.diff
 ```
 
-The diff must contain only `FRAMING.md` changes: the "Our approach" section and the `last_updated` line. `CONCEPTS.md` and every other section must be absent from the diff. If any other path appears, the no-churn rule failed. Keep `outputs/test-medium.md-2.diff` as the evidence artifact.
+The diff must contain only `FRAMING.md` changes: the "Our approach" section and the `last_updated` line. `CONCEPTS.md` and every other section must be absent from the diff. If any other path appears, the no-churn rule failed. Keep `testing/test-medium.md-2.diff` as the evidence artifact.
 
 ## Note
 

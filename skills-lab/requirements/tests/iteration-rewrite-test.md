@@ -10,18 +10,18 @@ Exercise the stateless iteration contract of `writing-requirements`: feed a prio
 
 ## Directory and precedence
 
-Directory: `outputs/test-medium`, created by `chain-test-medium.md`, not by this test.
+Directory: `testing/test-medium`, created by `chain-test-medium.md`, not by this test.
 
-Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `chain-test-medium.md` into it, then run this test. The MD-* tests share this base, so each runs from a fresh chain-test-medium result rather than accumulating in one dir.
+Precedence: run against a fresh Medium base. Empty `testing/test-medium`, run `chain-test-medium.md` into it, then run this test. The MD-* tests share this base, so each runs from a fresh chain-test-medium result rather than accumulating in one dir.
 
 ## Preconditions
 
-- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` at Version 0.1, carrying the canonical base FR set, and `CONCEPTS.md`. Read the base for the actual FR list, do not assume a count. The current base is FR-001 to FR-005; every "FR-005 / FR-006" below is that instance, not a fixed number.
-- Session cwd is `skills-lab/outputs/test-medium`.
+- The base is present from a fresh `chain-test-medium.md` run: `testing/test-medium` holds `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` at Version 0.1, carrying the canonical base FR set, and `CONCEPTS.md`. Read the base for the actual FR list, do not assume a count. The current base is FR-001 to FR-005; every "FR-005 / FR-006" below is that instance, not a fixed number.
+- Session cwd is `skills-lab/testing/test-medium`.
 
 ## Reset to the committed base (before acting)
 
-MD-1 asserts ID and statement byte-stability across the re-pass, provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before preparing the substrate:
+MD-1 asserts ID and statement byte-stability across the re-pass, provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `testing/test-medium`, reset to it before preparing the substrate:
 
 ```
 git reset --hard <base-commit>
@@ -48,7 +48,7 @@ Invoke `writing-requirements ingestion-pipeline from outputs/ingestion-pipeline/
 
 Phase 0.7 reads the prior `ingestion-pipeline-requirements.md` (still 0.1) for ID stability and the version increment. Phase 2 scans the substrate for declared IDs.
 
-## Expected outputs (under `outputs/test-medium`)
+## Expected outputs (under `testing/test-medium`)
 
 - `requirements/ingestion-pipeline/ingestion-pipeline-requirements.md` overwritten to Version 0.2. Every base FR is unchanged in ID and statement; the appended requirement takes the next sequential ID after the base's highest (FR-006 for the current base) and is the retention requirement.
 - `requirements/ingestion-pipeline/ingestion-pipeline-report.md` at Version 0.2.
@@ -68,13 +68,13 @@ Phase 0.7 reads the prior `ingestion-pipeline-requirements.md` (still 0.1) for I
 
 ## Record
 
-Note the version chain (0.1 to 0.2) and the ID-to-content map after the re-pass. Then diff the re-pass output against the committed base, from inside `outputs/test-medium`:
+Note the version chain (0.1 to 0.2) and the ID-to-content map after the re-pass. Then diff the re-pass output against the committed base, from inside `testing/test-medium`:
 
 ```
 git diff <base-commit> -- requirements/ingestion-pipeline/ingestion-pipeline-requirements.md > ../test-medium.md-1.diff
 ```
 
-Every base FR must appear in the diff as unchanged context; the only additions are the next-ID requirement (FR-006 for the current base) and the version bump. Confirm no base FR statement is on a changed line. Keep `outputs/test-medium.md-1.diff` as the evidence artifact.
+Every base FR must appear in the diff as unchanged context; the only additions are the next-ID requirement (FR-006 for the current base) and the version bump. Confirm no base FR statement is on a changed line. Keep `testing/test-medium.md-1.diff` as the evidence artifact.
 
 ## Note
 

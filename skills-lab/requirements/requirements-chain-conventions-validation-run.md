@@ -78,7 +78,7 @@ model was sitting in a user-facing contract.
 
 Fixed in trees.md v2.3: the Pass 3 fill rule now drops the `> ⚠️ Unverified …` blockquotes on
 copy, and the reconcile path strips one a prior run left behind. Confirmed by a fresh V-small
-re-run (into `outputs/test-small-fix`): the generated `CONVENTIONS.md` carries no "Unverified"
+re-run (into `testing/test-small-fix`): the generated `CONVENTIONS.md` carries no "Unverified"
 line and still passes the drift-check — that run also wired a CI-workflow gate
 (`.github/workflows/lint.yml`), a third gate style, exercising the runner-wired fix once more.
 
@@ -97,7 +97,7 @@ recorded with sources in the design doc. The Pass 4 tail now pins these, keeping
 reconcile-to-existing-gate escape hatch.
 
 Double-run (2026-07-18). Two post-pin bootstraps of the identical app-backend brief
-(`outputs/test-det-a`, `outputs/test-det-b`). Result is partial. The gate mechanism is now
+(`testing/test-det-a`, `testing/test-det-b`). Result is partial. The gate mechanism is now
 deterministic: both chose husky, neither CI nor pre-commit, and both wire the drift-check
 base pass. But two finer variances remain. The lint runner differed, `npx eslint apps` versus
 `npx eslint .`, and that difference propagates into the `CONVENTIONS.md` `runner:` stanza, so the
@@ -109,7 +109,7 @@ Finer pin applied and confirmed (2026-07-18, claude-md v1.9 / trees v2.5). The a
 now a byte-for-byte template (shebang, `npx eslint .`, the drift-check line, nothing else) and the
 runner is pinned to canonical `npx eslint .` in both the gate and the `CONVENTIONS.md` stanza — the
 flat config's `files` glob already scopes it, so `eslint apps` was a distinction without a
-difference. A confirming double-run (`outputs/test-det-c`, `outputs/test-det-d`) produced a
+difference. A confirming double-run (`testing/test-det-c`, `testing/test-det-d`) produced a
 byte-identical `.husky/pre-commit` (same SHA `ebc2885…`) and identical `runner:` stanzas, both
 husky-only, both passing the drift-check. App-goal gate determinism is closed. Scope note: the
 data and infra pre-commit gates are grounded and pinned by hook id (`ruff-check`/`ruff-format`,
@@ -173,7 +173,7 @@ seeds a real, current pin rather than a guess, and lookup makes close runs resol
 Follow-on to close the highest-value lifecycle gap: the traceability guard previously lived only
 in this QA suite, so a bootstrapped project could not catch an untraceable contract change on its
 own. The skill now delivers the check into the project and wires it. Validated on a fresh Small
-code/app-backend bootstrap (`outputs/test-deliver`, driven by a fresh subagent):
+code/app-backend bootstrap (`testing/test-deliver`, driven by a fresh subagent):
 
 - `scripts/check-conventions-drift.sh` is delivered, executable, and byte-identical to the skill
   asset (one canonical source, QA reaches it by symlink).
@@ -194,7 +194,7 @@ existing tree, so a repo predating the feature never gained it. That missed the 
 the goal. Fixed: Pass 3 detection keys on `CONVENTIONS.md`, a tree without it is a pre-feature
 bootstrap, and the Pass 4 tail backfills enforcement even when `CLAUDE.md` exists.
 
-Validated against a constructed pre-feature fixture (`outputs/test-backfill`: an app-backend tree
+Validated against a constructed pre-feature fixture (`testing/test-backfill`: an app-backend tree
 plus `CLAUDE.md`, with `CONVENTIONS.md`, the lint config, the gate, and the drift-check removed and
 the CLAUDE.md pointer stripped, committed as the base). A fresh subagent re-invoked the skill.
 Verified from disk against the pre-feature base:

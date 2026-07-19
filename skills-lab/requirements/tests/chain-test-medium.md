@@ -9,8 +9,8 @@ Exercise the chain end to end for a Medium+ project: bootstrapping-project (dele
 ## Preconditions
 
 - A fresh session.
-- An empty project directory at `skills-lab/outputs/test-medium`. Create it before starting.
-- Session cwd is that directory (same cwd caveat as the Small test: if the skills are not offered, start from `skills-lab` root and pass `outputs/test-medium` as the bootstrapping target, keeping cwd inside the test project for the writing-requirements step).
+- An empty project directory at `skills-lab/testing/test-medium`. Create it before starting.
+- Session cwd is that directory (same cwd caveat as the Small test: if the skills are not offered, start from `skills-lab` root and pass `testing/test-medium` as the bootstrapping target, keeping cwd inside the test project for the writing-requirements step).
 
 ## Scripted subject — "insight-hub"
 
@@ -50,7 +50,7 @@ Let it emit one component slice.
 
 Invoke `writing-requirements ingestion-pipeline from <slice-path> --type generic`.
 
-## Expected outputs (under `outputs/test-medium`)
+## Expected outputs (under `testing/test-medium`)
 
 - `.claude/settings.json`, `.gitignore`
 - `FRAMING.md` — framing-project shape: YAML frontmatter with `last_updated`, two to four Tracks, and the injected `<!-- goal: code -->` stamp after the frontmatter
@@ -64,7 +64,7 @@ Invoke `writing-requirements ingestion-pipeline from <slice-path> --type generic
 ## Acceptance criteria
 
 - All the above exist; `CONCEPTS.md` is present and context-structured; the slice's domain terms trace back to `CONCEPTS.md`.
-- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh outputs/test-medium` returns 0 (`zoned: none`, so existence runs and coverage is skipped). The structural rules are in `CONVENTIONS.md`, not restated in `CLAUDE.md`.
+- `CONVENTIONS.md` exists and passes the drift-check: `check-conventions-drift.sh testing/test-medium` returns 0 (`zoned: none`, so existence runs and coverage is skipped). The structural rules are in `CONVENTIONS.md`, not restated in `CLAUDE.md`.
 - The requirements report extracts clean: no undefined-term warnings, no shape-defect warnings. A §Constraints N/A is acceptable.
 
 Medium+ signatures that must be present: FRAMING has `last_updated` frontmatter and a Tracks section; a context-structured `CONCEPTS.md` exists; the slice's terms are sourced from it.
@@ -75,7 +75,7 @@ Medium+ signatures that must be present: FRAMING has `last_updated` frontmatter 
 - `CONVENTIONS.md` is missing, or the structural rules were written into `CLAUDE.md` instead.
 - The report shows undefined-term warnings for terms that are defined in `CONCEPTS.md` (the term-drawing discipline did not hold).
 - Any shape-defect warning (scope not extracted, requirements not SHALL/EARS, title fallback fired).
-- bootstrapping wrote into `skills-lab` root rather than `outputs/test-medium`.
+- bootstrapping wrote into `skills-lab` root rather than `testing/test-medium`.
 
 ## Record
 

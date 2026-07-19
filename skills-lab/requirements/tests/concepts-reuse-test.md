@@ -12,18 +12,18 @@ Scope: this row proves the loop at the brainstorm and `CONCEPTS.md` layer only a
 
 ## Directory and precedence
 
-Directory: `outputs/test-medium`, created by `chain-test-medium.md`, not by this test.
+Directory: `testing/test-medium`, created by `chain-test-medium.md`, not by this test.
 
-Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `chain-test-medium.md` into it, then run this test.
+Precedence: run against a fresh Medium base. Empty `testing/test-medium`, run `chain-test-medium.md` into it, then run this test.
 
 ## Preconditions
 
-- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `FRAMING.md` (three Tracks), a context-structured `CONCEPTS.md` (the Ingestion and transformation context carries `landing zone` and `quality rules`; the Exposition and reporting context carries `cross-team report`), and the ingestion-pipeline slice.
-- Session cwd is `skills-lab/outputs/test-medium`.
+- The base is present from a fresh `chain-test-medium.md` run: `testing/test-medium` holds `FRAMING.md` (three Tracks), a context-structured `CONCEPTS.md` (the Ingestion and transformation context carries `landing zone` and `quality rules`; the Exposition and reporting context carries `cross-team report`), and the ingestion-pipeline slice.
+- Session cwd is `skills-lab/testing/test-medium`.
 
 ## Reset to the committed base (before acting)
 
-The write-back edits `CONCEPTS.md` in place, and the no-drift claim is that existing terms are preserved while only the new one is added. That is provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before brainstorming:
+The write-back edits `CONCEPTS.md` in place, and the no-drift claim is that existing terms are preserved while only the new one is added. That is provable only against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `testing/test-medium`, reset to it before brainstorming:
 
 ```
 git reset --hard <base-commit>
@@ -47,7 +47,7 @@ Answer the interview as scripted:
 
 Let it emit the slice and update `CONCEPTS.md`.
 
-## Expected outputs (under `outputs/test-medium`)
+## Expected outputs (under `testing/test-medium`)
 
 - a slice at `outputs/report-builder/report-builder.md`, using `gold` and `cross-team report` verbatim (backticked), with no synonyms.
 - `CONCEPTS.md` updated in place: `report definition` added under the Exposition and reporting context block; every existing term preserved; no duplicated or forked context blocks.
@@ -66,13 +66,13 @@ Let it emit the slice and update `CONCEPTS.md`.
 
 ## Record
 
-List the terms reused verbatim and the term(s) written back, with the context each landed in. Then emit the diff against the committed base as evidence, from inside `outputs/test-medium`:
+List the terms reused verbatim and the term(s) written back, with the context each landed in. Then emit the diff against the committed base as evidence, from inside `testing/test-medium`:
 
 ```
 git diff <base-commit> > ../test-medium.md-3.diff
 ```
 
-Read the diff as the pass check. The only changes allowed are additive: the new `report-builder/` slice, and a `CONCEPTS.md` addition of `report definition` under the Exposition and reporting context. Every existing `CONCEPTS.md` term must be unchanged in the diff (no rename, no re-definition), no requirements file may appear, and `FRAMING.md` must be absent. Keep `outputs/test-medium.md-3.diff` as the evidence artifact.
+Read the diff as the pass check. The only changes allowed are additive: the new `report-builder/` slice, and a `CONCEPTS.md` addition of `report definition` under the Exposition and reporting context. Every existing `CONCEPTS.md` term must be unchanged in the diff (no rename, no re-definition), no requirements file may appear, and `FRAMING.md` must be absent. Keep `testing/test-medium.md-3.diff` as the evidence artifact.
 
 ## Note
 

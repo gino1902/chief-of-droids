@@ -10,14 +10,14 @@ Confirm the goal-lock invariant of `bootstrapping-project`. Once a goal is stamp
 
 ## Directory and precedence
 
-Directory: `outputs/test-goal-lock`, created by this test.
+Directory: `testing/test-goal-lock`, created by this test.
 
 Precedence: self-contained. Bootstrap a thinking project, then re-invoke with a conflicting goal argument.
 
 ## Preconditions
 
 - A fresh session.
-- The directory `skills-lab/outputs/test-goal-lock` exists and is empty. Session cwd is that directory.
+- The directory `skills-lab/testing/test-goal-lock` exists and is empty. Session cwd is that directory.
 
 ## Scripted subject — "arch-notes"
 
@@ -43,7 +43,7 @@ Re-invoke `bootstrapping-project code` (the argument asserts `code`, the stamp s
 
 Expected: the Preamble reads the goal from the stamp, sees the argument conflicts, stops, and reports the conflict. It makes no changes.
 
-## Expected outputs (under `outputs/test-goal-lock`)
+## Expected outputs (under `testing/test-goal-lock`)
 
 - The thinking project from step 1: `FRAMING.md` (five-question, `<!-- goal: thinking -->`), the thinking tree anchor, `CONVENTIONS.md` (thinking contract, no lint config since review is the gate), `CLAUDE.md` on the thinking skeleton, `.claude/settings.json`.
 - Nothing new or changed from step 2.

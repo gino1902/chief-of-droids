@@ -10,18 +10,18 @@ Exercise `bootstrapping-project` re-invoked on a repo where all four passes have
 
 ## Directory and precedence
 
-Directory: `outputs/test-medium`, created by `chain-test-medium.md`, not by this test.
+Directory: `testing/test-medium`, created by `chain-test-medium.md`, not by this test.
 
-Precedence: run against a fresh Medium base. Empty `outputs/test-medium`, run `chain-test-medium.md` into it, then run this test.
+Precedence: run against a fresh Medium base. Empty `testing/test-medium`, run `chain-test-medium.md` into it, then run this test.
 
 ## Preconditions
 
-- The base is present from a fresh `chain-test-medium.md` run: `outputs/test-medium` holds `.claude/settings.json`, `FRAMING.md` (framing-project shape with `last_updated` and the `<!-- goal: code -->` stamp), `CONCEPTS.md`, `CONVENTIONS.md`, a data-bundle tree anchor, and `CLAUDE.md`.
-- Session cwd is `skills-lab/outputs/test-medium`.
+- The base is present from a fresh `chain-test-medium.md` run: `testing/test-medium` holds `.claude/settings.json`, `FRAMING.md` (framing-project shape with `last_updated` and the `<!-- goal: code -->` stamp), `CONCEPTS.md`, `CONVENTIONS.md`, a data-bundle tree anchor, and `CLAUDE.md`.
+- Session cwd is `skills-lab/testing/test-medium`.
 
 ## Reset to the committed base (before acting)
 
-Reconcile-not-regenerate is a no-change claim across the whole tree, so it is only provable against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `outputs/test-medium`, reset to it before re-invoking bootstrapping:
+Reconcile-not-regenerate is a no-change claim across the whole tree, so it is only provable against the pristine base. `chain-test-medium` commits the base in `test-medium`'s own repo (see its Record step); that commit, `<base-commit>`, is the diff reference. From inside `testing/test-medium`, reset to it before re-invoking bootstrapping:
 
 ```
 git reset --hard <base-commit>
@@ -45,7 +45,7 @@ Expected routing:
 
 Approve nothing that regenerates. Accept only gap-filling reconciliation.
 
-## Expected outputs (under `outputs/test-medium`)
+## Expected outputs (under `testing/test-medium`)
 
 - No new artifacts. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, `CONVENTIONS.md` and its lint config, and the tree are unchanged unless a genuine gap was filled.
 - `CLAUDE.md` either unchanged or minimally reconciled, with its goal stamp and wording intact.
@@ -68,13 +68,13 @@ Approve nothing that regenerates. Accept only gap-filling reconciliation.
 
 ## Record
 
-Note which passes reported done versus reconciled, and confirm the FRAMING rework went to the framing-project branch. Then emit the whole-tree diff against the committed base as evidence, from inside `outputs/test-medium`:
+Note which passes reported done versus reconciled, and confirm the FRAMING rework went to the framing-project branch. Then emit the whole-tree diff against the committed base as evidence, from inside `testing/test-medium`:
 
 ```
 git diff <base-commit> > ../test-medium.md-5.diff
 ```
 
-The diff must be either empty or confined to gap-filling `CLAUDE.md` lines. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, `CONVENTIONS.md` (and its lint config), and the tree must be absent from it. Any of those appearing is a regeneration, not a reconcile. Keep `outputs/test-medium.md-5.diff` as the evidence artifact.
+The diff must be either empty or confined to gap-filling `CLAUDE.md` lines. `settings.json`, `FRAMING.md`, `CONCEPTS.md`, `CONVENTIONS.md` (and its lint config), and the tree must be absent from it. Any of those appearing is a regeneration, not a reconcile. Keep `testing/test-medium.md-5.diff` as the evidence artifact.
 
 | Field        | Value      |
 |:-------------|:-----------|
