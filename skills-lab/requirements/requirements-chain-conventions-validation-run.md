@@ -135,6 +135,32 @@ pass passed; an unrecorded edit to `CONVENTIONS.md` failed the check (untraceabl
 an ADR under `docs/adr/` made it pass. Point 2 is now enforceable inside the delivered project,
 not only in QA.
 
+## Backfill validation — existing repos gain the contract on reconcile (2026-07-19)
+
+The contract previously reached only fresh bootstraps: the Preamble marked Pass 3 done on any
+existing tree, so a repo predating the feature never gained it. That missed the lifecycle half of
+the goal. Fixed: Pass 3 detection keys on `CONVENTIONS.md`, a tree without it is a pre-feature
+bootstrap, and the Pass 4 tail backfills enforcement even when `CLAUDE.md` exists.
+
+Validated against a constructed pre-feature fixture (`outputs/test-backfill`: an app-backend tree
+plus `CLAUDE.md`, with `CONVENTIONS.md`, the lint config, the gate, and the drift-check removed and
+the CLAUDE.md pointer stripped, committed as the base). A fresh subagent re-invoked the skill.
+Verified from disk against the pre-feature base:
+
+- Pass 3 was reported incomplete (tree present, `CONVENTIONS.md` absent) and resumed to backfill.
+- The staged diff is exactly the backfill: added `CONVENTIONS.md`, `eslint.config.js`,
+  `.husky/pre-commit`, `scripts/check-conventions-drift.sh`, and a modified `CLAUDE.md`. Nothing
+  else — `apps/`, `FRAMING.md`, and `settings.json` are absent from the diff.
+- `CLAUDE.md` was reconciled, not regenerated: +2 lines, 0 removed, exactly the `CONVENTIONS.md`
+  pointer added above the existing conduct pointer.
+- The backfilled `.husky/pre-commit` is byte-identical to the pinned template (SHA `ebc2885…`), so
+  the determinism pin holds on the backfill path too. `CONVENTIONS.md` carries no Unverified caveat.
+- The backfilled project's own `scripts/check-conventions-drift.sh` passes.
+
+An already-bootstrapped repo now gains the full contract, enforcement, and guard on a reconcile,
+against its existing tree, without reorganising it. The lifecycle half of the goal holds for
+existing projects, not only new ones.
+
 ## Conclusion
 
 The feature works end to end on real skill output across all four goals and the reconcile path,
@@ -142,6 +168,8 @@ and the traceability guard now ships in the delivered project. Three issues the 
 fixed: the runner-wired matching in the drift-check, the authoring-caveat leak in the generated
 contract, gate-mechanism non-determinism (grounded and pinned per stack), and app-goal contract
 determinism (fixed husky template + pinned runner, confirmed byte-identical across a double-run).
+The contract also now reaches existing repos: backfill on reconcile is implemented and validated,
+so the lifecycle half of the goal holds for projects that predate the feature, not only new ones.
 Remaining: a byte-identical double-run for the data and infra gates (grounded-pinned but not yet
 proven), and by choice the headless release-gate re-run.
 
@@ -149,6 +177,6 @@ proven), and by choice the headless release-gate re-run.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.6        |
+| Version      | 1.7        |
 | Last Updated | 2026-07-18 |
 | Status       | Final      |
