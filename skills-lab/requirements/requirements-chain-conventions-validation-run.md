@@ -116,6 +116,37 @@ data and infra pre-commit gates are grounded and pinned by hook id (`ruff-check`
 terraform fmt/validate/tflint) but were not put through a byte-identical double-run; the app goal,
 the one that wobbled, is the one confirmed.
 
+## Data / infra gate double-run (2026-07-19)
+
+Two post-pin bootstraps each of the data goal (`test-det-data-a/b`, metrics-bundle) and the infra
+goal (`test-det-infra-a/b`, edge-dns), diffed from disk. Neither gate is byte-deterministic, with
+a severity split that matters.
+
+- Data. The gate `.pre-commit-config.yaml` differs run to run: `rev: v0.12.0` vs `v0.9.10`
+  (model-chosen, the skill pins no ruff-pre-commit version) and the local hook name differs. Worse,
+  the `CONVENTIONS.md` `runner:` stanza differs — `ruff check .` vs `uv run ruff check .` — so the
+  data contract itself is not consistent, the same class of gap the app runner had before its pin.
+- Infra. The gate files differ (`rev: v1.96.1` vs `v1.99.0`; local hook id/name; a `force = false`
+  line present in one `.tflint.hcl` and not the other), but the `CONVENTIONS.md` `config:`/`runner:`
+  stanza is identical both runs (`.tflint.hcl` / `tflint`). The infra contract is deterministic;
+  only the supporting gate files vary.
+
+Why: the app goal is byte-deterministic because husky runs local commands with no external version.
+The data and infra gates use the pre-commit framework, which references external repos by `rev:`
+and carries model-authored YAML/HCL, so their gate files vary. The drift-check tolerates all of it
+(tool-token match), so correctness holds; byte-consistency does not.
+
+Two severities, two dispositions:
+- Contract determinism (the fidelity-critical artifact). Infra passes. Data fails on the runner
+  string — cheaply closable by pinning the data runner canonical (`uv run ruff check .`), matching
+  the app runner pin. Recommended.
+- Gate-file byte determinism. Both fail on the external `rev:` and model-authored body. Closing it
+  needs pinned templates with a fixed `rev:`, which trades determinism against version staleness (a
+  pinned rev ages and needs periodic bumping) for a supporting file the drift-check already accepts.
+  Recommended disposition: pin the cheap, no-staleness parts (the local drift-check hook block
+  byte-for-byte, and the data runner), and leave the external `rev:` unpinned and tolerated rather
+  than shipping a staleness liability. Not yet applied — pending the pin/tolerate decision.
+
 ## Delivery validation — drift-check ships with the project (2026-07-18)
 
 Follow-on to close the highest-value lifecycle gap: the traceability guard previously lived only
@@ -170,13 +201,15 @@ contract, gate-mechanism non-determinism (grounded and pinned per stack), and ap
 determinism (fixed husky template + pinned runner, confirmed byte-identical across a double-run).
 The contract also now reaches existing repos: backfill on reconcile is implemented and validated,
 so the lifecycle half of the goal holds for projects that predate the feature, not only new ones.
-Remaining: a byte-identical double-run for the data and infra gates (grounded-pinned but not yet
-proven), and by choice the headless release-gate re-run.
+Open: the data/infra gate double-run showed their contracts are stable except the data runner
+string (cheap pin, recommended), while the gate files themselves vary on the external pre-commit
+`rev:` (recommended tolerated, since pinning trades against version staleness for a file the
+drift-check already accepts). Remaining by choice: the headless release-gate re-run.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.7        |
+| Version      | 1.8        |
 | Last Updated | 2026-07-18 |
 | Status       | Final      |
