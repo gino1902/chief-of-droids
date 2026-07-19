@@ -6,12 +6,13 @@ skill. It explains the idea first, then gives a short runbook.
 
 ## The idea in one paragraph
 
-A project's folder structure implies rules. What may import what. Where code lives. How a piece of
-code graduates from one layer to the next. Those rules usually live in someone's head and slowly
-rot. This workflow writes them down once in a file called `CONVENTIONS.md`, has a linter enforce
-them so they cannot quietly erode, and ships a small script that flags when a rule changes without
-a recorded decision. Structure sits on one side. The rules that guard it sit on the other. You can
-change a rule, but the change has to be a deliberate, recorded decision, never a silent edit.
+A project's folder structure implies rules about what may import what, where code lives, and how a
+piece of code graduates from one layer to the next. Those rules usually live in someone's head and
+slowly rot. This workflow writes them down once in a file called `CONVENTIONS.md`, has a linter
+enforce them so they cannot quietly erode, and ships a small script that flags when a rule changes
+without a recorded decision. The structure is one half of the picture and the rules that guard it
+are the other. You can change a rule, but the change has to be a recorded decision rather than a
+quiet edit.
 
 ## The four artifacts
 
@@ -22,8 +23,7 @@ Four files carry the workflow.
   that runs it.
 - The lint config is the linter that actually encodes the rules. For an app that is an ESLint
   config with import-boundary zones. For data it is a ruff config.
-- The gate is a pre-commit hook that runs the linter, so a bad commit is blocked rather than merely
-  discouraged.
+- The gate is a pre-commit hook that runs the linter and blocks a commit that breaks the rules.
 - `scripts/check-conventions-drift.sh` is the guard. It checks that the contract, the config, and
   the tree still agree, and that any change to the contract is tied to a decision record.
 
@@ -46,17 +46,17 @@ network call, such as the version lookup below, or a delete can still stop to as
 writes the lint config and the gate, copies the guard script into `scripts/`, and looks up the
 linter's real current version with `git ls-remote` instead of guessing one.
 
-That is all Claude Code does. When the session ends, it is gone. It does not watch your commits.
+That is all Claude Code does. Once the session ends it is gone, and it does not watch your commits.
 
 ### Enforcement, outside Claude Code
 
 This is git and your CI. It runs for the life of the project, for everyone who touches the repo,
 whether or not they ever use Claude.
 
-Every time someone runs `git commit`, the gate runs the linter and the guard's basic checks. Does
-the config still exist. Does every folder that should be guarded have a rule. A failure blocks the
-commit. On a pull request, CI runs the guard's traceability check. If `CONVENTIONS.md` or the lint
-config changed but no decision record was added, it flags the change.
+Every time someone runs `git commit`, the gate runs the linter and the guard's basic checks, that
+the config still exists and that every folder needing a rule has one. A failure blocks the commit.
+On a pull request, CI runs the guard's traceability check. If `CONVENTIONS.md` or the lint config
+changed but no decision record was added, it flags the change.
 
 Claude Code is not part of this, and that is on purpose. A rule that only bound Claude's sessions
 would not bind the person who edits the repo in a plain editor. The gate is a normal project file,
@@ -160,6 +160,6 @@ folder needs a lint rule. "contract changed with no decision record" means add t
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-07-19 |
 | Status       | Draft      |
