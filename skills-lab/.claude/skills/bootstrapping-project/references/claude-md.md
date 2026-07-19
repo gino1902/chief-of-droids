@@ -151,6 +151,11 @@ skeleton and propose a minimal diff:
 
 Preserve the author's wording everywhere else. Show the diff, apply only on approval.
 
+The tail below still runs in reconcile mode. On a pre-feature repo — one bootstrapped before the
+contract existed, so it has a tree and a `CLAUDE.md` but no lint config, no gate, and no
+`scripts/check-conventions-drift.sh` — the tail backfills all three against the existing tree.
+Absence is the trigger: generate what is missing, reconcile what is present, never regenerate.
+
 ## Tail — enforcement and Karpathy
 
 1. **Route hard rules to enforcement — propose, never write.** For any hard prohibition you
@@ -236,6 +241,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.9        |
+| Version      | 1.10       |
 | Last Updated | 2026-07-18 |
 | Status       | Review     |

@@ -85,9 +85,14 @@ Run this before any pass.
 2. **Detect what already exists**, to know which passes are done and where to resume:
    - Pass 1: a `.git/` directory at the target root and a `.claude/settings.json`.
    - Pass 2: a `FRAMING.md` at the repo root.
-   - Pass 3: a `CONVENTIONS.md` at the repo root, or any source files or a scaffolded tree
-     (more than just config and framing).
-   - Pass 4: a `CLAUDE.md` at the repo root.
+   - Pass 3: a `CONVENTIONS.md` at the repo root. A repo that has a scaffolded tree or source
+     files but no `CONVENTIONS.md` is a pre-feature bootstrap — treat Pass 3 as incomplete and
+     resume there to backfill the contract against the existing tree (document it, do not
+     re-scaffold). This is what lets an already-bootstrapped repo gain the contract over its life,
+     not only at first creation.
+   - Pass 4: a `CLAUDE.md` at the repo root. Even when it exists, the Pass 4 tail still runs to
+     backfill any missing enforcement (lint config, gate) and to deliver the drift-check, so a
+     pre-feature repo is brought fully up to the contract.
 3. **Resolve the goal.**
    - If `FRAMING.md` exists, read the goal from its `<!-- goal: ... -->` stamp. This is
      the locked goal. If an argument was passed that conflicts with the stamp, stop and
@@ -152,7 +157,10 @@ FRAMING.md is user-owned after creation — never modify it autonomously in a la
 
 1. Read `references/trees.md`.
 2. If the repo already has source files, do not propose a reorganisation. Document the
-   existing structure so pass 4 can describe it, and skip creation.
+   existing structure so pass 4 can describe it, and skip creation. Step 4 still runs: if the
+   repo has no `CONVENTIONS.md`, backfill it against the existing tree (a pre-feature repo gaining
+   the contract). Ground the stanza's `config`, `runner`, and `zoned` in what the tree actually
+   has — the real folders, and the lint tooling the stack already uses if any.
 3. If the repo is empty of source, propose the tree matching the locked goal (for `code`,
    ask the one sub-type question: data or app). Create the directories via `.gitkeep` only
    after the user approves. Leave deferred directories deferred — each directory must be
@@ -229,6 +237,6 @@ a silent edit — the drift-check flags a contract change made without one.
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.13       |
+| Version      | 1.14       |
 | Last Updated | 2026-07-18 |
 | Status       | Review     |
