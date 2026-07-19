@@ -156,7 +156,17 @@ paths — a routine bump is never mistaken for a contract change. A confirming d
 (`test-det-data-c`, `test-det-data-d`) produced `.pre-commit-config.yaml` files that differ on
 exactly one line, the `rev:` (`v0.9.10` vs `v0.9.7`); strip that line and they are identical, and
 both `runner:` stanzas read `uv run ruff check .`. So every goal's contract is now deterministic,
-and the only run-to-run variance left is the external pre-commit `rev:`, tolerated by design.
+and the only run-to-run variance left is the external pre-commit `rev:`.
+
+Real-rev lookup (2026-07-19, claude-md v1.12). The `rev:` diff above also exposed that the
+model-guessed versions were badly stale (`v0.9.x` written against a real latest of `v0.15.22`) and
+could even be non-existent tags, which breaks the first `pre-commit run` and violates the skill's
+own no-inventing-versions grounding rule. Fixed: the Pass 4 tail now resolves the real current tag
+with `git ls-remote --tags --refs --sort=-v:refname <repo> | head -1 | sed …` and writes that,
+falling back to a `# TODO: pin via pre-commit autoupdate` marker only when offline. Confirmed on a
+fresh run (`test-rev`): the skill ran the exact lookup and wrote `rev: v0.15.22`, matching the real
+current tag on disk. The project's autoupdate/Renovate still owns future bumps; the skill now
+seeds a real, current pin rather than a guess, and lookup makes close runs resolve the same value.
 
 ## Delivery validation — drift-check ships with the project (2026-07-18)
 
@@ -214,14 +224,17 @@ The contract also now reaches existing repos: backfill on reconcile is implement
 so the lifecycle half of the goal holds for projects that predate the feature, not only new ones.
 The data/infra gate double-run and its follow-up close the contract-determinism question: the data
 runner and the local hook block are pinned and confirmed identical across a re-run, so every goal's
-`CONVENTIONS.md` is now deterministic. The only run-to-run variance left is the external pre-commit
-`rev:`, left unpinned by design (owned by the project's autoupdate/Renovate, outside the
-drift-check's traceability). Remaining by choice: the headless release-gate re-run.
+`CONVENTIONS.md` is now deterministic. The external pre-commit `rev:` is looked up at generation
+time (a real, current tag, confirmed `v0.15.22`), not guessed, and left for the project's
+autoupdate/Renovate to carry forward — so it is grounded and current, with any residual variance
+only from a genuine upstream release landing between runs, and it sits outside the drift-check's
+traceability so a bump is never a contract change. Remaining by choice: the headless release-gate
+re-run.
 
 ---
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.9        |
+| Version      | 1.10       |
 | Last Updated | 2026-07-18 |
 | Status       | Final      |
