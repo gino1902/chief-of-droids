@@ -159,7 +159,7 @@ folder needs a lint rule. "contract changed with no decision record" means add t
 ---
 
 | Field        | Value      |
-|:-------------|:-----------|
+|--------------|------------|
 | Version      | 1.2        |
 | Last Updated | 2026-07-19 |
 | Status       | Draft      |
