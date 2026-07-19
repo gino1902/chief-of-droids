@@ -179,11 +179,19 @@ Absence is the trigger: generate what is missing, reconcile what is present, nev
    body is the pinned template below and whose lint runner is the canonical `npx eslint .` — the
    flat config's `files` glob already scopes it to `apps/`, so there is one right form, not
    `eslint apps` versus `eslint .`; a `.pre-commit-config.yaml` using `astral-sh/ruff-pre-commit`
-   (official hook ids `ruff-check` and `ruff-format`) for the data goal; a `.pre-commit-config.yaml`
-   with terraform fmt, validate, tflint plus TFLint in CI for infra. If the repo already has a gate
-   installed, reconcile to it rather than forcing the default — the pin only removes the free
-   choice on a blank repo. These are stack files, so writing them does not touch `settings.json`,
-   whose pass-1 freeze stands. Constrain generation two ways: only for tooling the confirmed stack actually
+   (official hook ids `ruff-check` and `ruff-format`) with the canonical runner `uv run ruff check .`
+   for the data goal; a `.pre-commit-config.yaml` with terraform fmt, validate, tflint plus TFLint in
+   CI for infra, runner `tflint`. If the repo already has a gate installed, reconcile to it rather
+   than forcing the default — the pin only removes the free choice on a blank repo. These are stack
+   files, so writing them does not touch `settings.json`, whose pass-1 freeze stands.
+
+   Do not pin the external `rev:` on the pre-commit repos. Write the current release at generation
+   time and leave it there — the project's own `pre-commit autoupdate` or Renovate carries it
+   forward over the project's life, and a scaffolder must not freeze a version that then ages. So
+   two runs may differ on `rev:`, which is expected and correct: the drift-check matches on the tool
+   token, not the version, and a `rev:` bump lives in the gate file, outside the drift-check's
+   traceability paths (`CONVENTIONS.md` and the lint config), so a routine upgrade is never mistaken
+   for a contract change. Constrain generation two ways: only for tooling the confirmed stack actually
    uses, and only zones for folders that exist — where per-feature or per-domain folders are
    still deferred, leave a documented extend-per-feature marker rather than fabricating zones for
    absent paths (the grounding test applies to config too). Record the config file path and the
@@ -210,9 +218,19 @@ Absence is the trigger: generate what is missing, reconcile what is present, nev
    `assets/check-conventions-drift.sh` to `scripts/check-conventions-drift.sh` in the project and
    make it executable. Wire its base pass — existence and coverage, run with no base argument — as
    the line `bash scripts/check-conventions-drift.sh .`. For the app goal that line is already in
-   the pinned husky template above, so do not add it twice; for the pre-commit and CI gates, add it
-   as a local hook or step. Either way every commit then catches a config that stopped existing or
-   a new domain or feature folder with no zone. The traceability pass needs a base commit to diff against, which only a pull request has,
+   the pinned husky template above, so do not add it twice. For the pre-commit gates (data, infra),
+   append this local hook block byte-for-byte, so its id and name do not wobble between runs:
+   ```yaml
+     - repo: local
+       hooks:
+         - id: conventions-drift
+           name: conventions-drift
+           entry: bash scripts/check-conventions-drift.sh .
+           language: system
+           pass_filenames: false
+   ```
+   For a CI gate, add it as a step. Either way every commit then catches a config that stopped
+   existing or a new domain or feature folder with no zone. The traceability pass needs a base commit to diff against, which only a pull request has,
    so document its exact invocation `bash scripts/check-conventions-drift.sh . <base>` (base is
    the branch's merge target) as the CI step to add, and generate that CI step only where the
    project's CI platform is confirmed — never fabricate a workflow for an unknown platform, the
@@ -241,6 +259,6 @@ so it takes the goal stamp as its first line and does not need the version-block
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.10       |
+| Version      | 1.11       |
 | Last Updated | 2026-07-18 |
 | Status       | Review     |

@@ -43,8 +43,10 @@ pinned form, never `eslint apps`, since the flat config's `files` glob already s
 `zoned` to the sides the project actually has — `apps/*` for a backend, `src/features/*` for a frontend,
 both for fullstack. Do not name a side that was not scaffolded (the same grounding rule as the
 tree itself): a backend-only project writes `zoned: apps/*`, never a `src/features/*` glob for a
-directory that will never exist. Data sets the ruff config, its runner, and `zoned: none` (ruff is
-file-level, not zone-level). Infra sets the TFLint config, its runner, and `zoned: none`. Thinking
+directory that will never exist. Data sets the ruff config (`pyproject.toml`), the canonical
+runner `uv run ruff check .` (one pinned form, matching the uv-managed stack), and `zoned: none`
+(ruff is file-level, not zone-level). Infra sets the TFLint config (`.tflint.hcl`), runner
+`tflint`, and `zoned: none`. Thinking
 sets `config: none`, `runner: review`, `zoned: none` — review is its only gate. At bootstrap
 `config` and `runner` may be pending until the pass 4 tail confirms the stack; write the stanza
 with the values the tail will produce, and the tail reconciles them into place when it generates
@@ -454,6 +456,6 @@ Sources:
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 2.5        |
+| Version      | 2.6        |
 | Last Updated | 2026-07-18 |
 | Status       | Review     |
