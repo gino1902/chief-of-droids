@@ -62,6 +62,10 @@ Format: `1.0` for initial release, `1.1`, `1.2` etc. for incremental updates, `2
 
 The footer carries only these three fields. Audit or provenance metadata (target model, target environment, best-practices reference, revision source) belongs in the report that produced or revised the artifact, not in the artifact footer.
 
+## Humanizer scope
+
+The organization instruction to apply the humanizer skill when generating a document or email is scoped to user-facing documents. That means emails, client-facing prose, reports written for people, and in this project the `FRAMING.md` and the run retrospectives. It does not apply to agent-facing artifacts, meaning every `SKILL.md` and skill file, this `CLAUDE.md`, project instructions, prompt templates, agent and tool definitions, and the test suite's scenario specs, strategy, scope map, and checks. Those are read as instructions, where fidelity and predictability outrank sounding human and a humanizer pass can strip structure the artifact needs. This scopes the word "document" in the rule, it does not override the rule.
+
 ## Target and version
 
 These instructions are version-neutral. They target claude-code and do not depend on any single Claude model version.
