@@ -9,13 +9,13 @@
       "files": ["evals/fixtures/cache-requirements.md"],
       "expected_output": "A per-anchor cycle that lays a drift table each pass, applies nothing before arbitration, catches the planted decision and contract drifts, runs goal alignment last with no residual left to catch, and declares convergence on five anchors.",
       "assertions": [
-        "R3 (retain 7 days) is flagged Genuine on decision fidelity as a deferral recorded as a decision",
-        "R4 (at most 1000) is flagged Genuine as an unconfirmed number recorded as decided",
-        "R6 (30 days for audit) is flagged Genuine as a fabricated decision",
-        "The 'ship the read path first' line under Key decisions is flagged Genuine as a recommendation, not a decision",
-        "R5 (reasonably fast) is flagged Genuine on the governing-contract anchor as not testable",
+        "R3 (retain 7 days) is flagged Impactful on decision fidelity as a deferral recorded as a decision",
+        "R4 (at most 1000) is flagged Impactful as an unconfirmed number recorded as decided",
+        "R6 (30 days for audit) is flagged Impactful as a fabricated decision",
+        "The 'ship the read path first' line under Key decisions is flagged Impactful as a recommendation, not a decision",
+        "R5 (reasonably fast) is flagged Impactful on the governing-contract anchor as not testable",
         "No fix is applied before the accept/reject step; the first pass output is a drift table only",
-        "The goal-alignment anchor runs last and surfaces zero Genuine residual drifts, because the per-claim drifts (R3, R4, R6, the Key-decisions line) were already filed under decision fidelity, not re-filed here",
+        "The goal-alignment anchor runs last and surfaces zero Impactful residual drifts, because the per-claim drifts (R3, R4, R6, the Key-decisions line) were already filed under decision fidelity, not re-filed here",
         "The cycle declares convergence once all five anchors are clean on the same version"
       ]
     },
@@ -30,9 +30,9 @@
         "The decision-fidelity anchor is declared unverifiable because no originating record is available, not clean-by-default",
         "The goal-alignment anchor is declared unverifiable because no session goal is recoverable or stated, not clean-by-default",
         "The cycle does NOT declare convergence, and says the unverifiable anchors (decision fidelity and goal alignment) block it until the record and the goal are supplied",
-        "The Approach-versus-Timeline day-two-versus-single-day contradiction is flagged Genuine on internal consistency",
-        "The bracketed 'e.g.' in the Tooling section is flagged Genuine on conventions",
-        "The inline bold and the filler words (robust, harnesses, to ensure) are flagged Genuine on conventions"
+        "The Approach-versus-Timeline day-two-versus-single-day contradiction is flagged Impactful on internal consistency",
+        "The bracketed 'e.g.' in the Tooling section is flagged Impactful on conventions",
+        "The inline bold and the filler words (robust, harnesses, to ensure) are flagged Impactful on conventions"
       ]
     },
     {
@@ -43,8 +43,8 @@
       "expected_output": "A chat-modality pass that audits the pasted recommendation, applies fixes by restating inline with no Edit or version bump, and rotates one anchor per pass.",
       "assertions": [
         "The skill operates in chat modality: no file is read or edited, fixes are applied by restating the corrected text inline",
-        "'the team already agreed' is flagged Genuine on decision fidelity, since the team did not agree",
-        "'releases every Friday' is flagged Genuine, since no cadence was decided",
+        "'the team already agreed' is flagged Impactful on decision fidelity, since the team did not agree",
+        "'releases every Friday' is flagged Impactful, since no cadence was decided",
         "The governing-contract anchor is declared degraded for a chat answer",
         "Only one anchor is audited in the first pass (decision fidelity), not all five at once",
         "No version bump or commit is claimed"
@@ -55,13 +55,13 @@
       "eval_name": "goal-alignment-isolation",
       "prompt": "/qualifying-outputs evals/fixtures/search-index-runbook.md — run the full cycle to convergence. The session goal and the originating decision record are the two ground-truth blocks at the top of the file. There is no owning template for the runbook.",
       "files": ["evals/fixtures/search-index-runbook.md"],
-      "expected_output": "A cycle where decision fidelity, internal consistency, and conventions come up clean, governing contract is declared degraded, and the goal-alignment anchor (running last) is the only one to surface Genuine drift: an off-goal section and a goal-required omission.",
+      "expected_output": "A cycle where decision fidelity, internal consistency, and conventions come up clean, governing contract is declared degraded, and the goal-alignment anchor (running last) is the only one to surface Impactful drift: an off-goal section and a goal-required omission.",
       "assertions": [
         "The decision-fidelity anchor comes up clean: every section present (migration steps, paging, launch announcement) traces to a recorded decision",
         "The governing-contract anchor is declared degraded (no owning template or checklist for the runbook)",
         "The internal-consistency and conventions anchors come up clean",
-        "The goal-alignment anchor flags the 'Launch announcement' section as Genuine scope creep: it traces to a real decision but sits outside the session goal of an on-call migration-and-rollback runbook",
-        "The goal-alignment anchor flags the missing rollback path as a Genuine omission: the session goal requires it and the rollback was decided, yet no runbook section states it, and no earlier anchor tests for absence",
+        "The goal-alignment anchor flags the 'Launch announcement' section as Impactful scope creep: it traces to a real decision but sits outside the session goal of an on-call migration-and-rollback runbook",
+        "The goal-alignment anchor flags the missing rollback path as a Impactful omission: the session goal requires it and the rollback was decided, yet no runbook section states it, and no earlier anchor tests for absence",
         "Goal alignment runs last in the rotation, after the four earlier anchors",
         "No fix is applied before the accept/reject step",
         "The cycle does not declare convergence until the goal-alignment drifts are arbitrated and the anchor is clean on the same version"

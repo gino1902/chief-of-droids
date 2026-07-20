@@ -25,9 +25,9 @@ Anchor: [decision fidelity | governing contract | internal consistency | convent
 — one per pass, not yet used this cycle. Trivial output → single combined pass.
 
 - Audit against the anchor only.
-- Drift table: # | location | says | ground truth | Genuine/Churn | fix
+- Drift table: # | location | says | ground truth | Impactful/Cosmetic | fix
 - Apply nothing; await accept/reject per drift.
-- Zero Genuine drifts → anchor clean. All five clean → converged, stop.
+- Zero Impactful drifts → anchor clean. All five clean → converged, stop.
 ```
 
 </the-pass>
@@ -78,12 +78,12 @@ A degraded anchor (declared in `<setup>`) counts as handled for rotation and con
 
 Classify every finding in the drift table:
 
-- Genuine — changes meaning, scope, or a decision.
-- Churn — cosmetic, with near-zero risk either way.
+- Impactful — changes meaning, scope, or a decision.
+- Cosmetic — near-zero risk either way, changing no meaning, scope, or decision.
 
-Boundary case, a detail present in the output that was never decided. If it fixes a deferred or contested decision (a number, a date, a retention policy, an eviction rule), it is Genuine, however small it looks. If it is a low-risk natural elaboration that commits to nothing contested (a field name, a label, an obvious key), it is Churn. Reason: the risk is in silently resolving something the user still owns, not in the size of the edit.
+Boundary case, a detail present in the output that was never decided. If it fixes a deferred or contested decision (a number, a date, a retention policy, an eviction rule), it is Impactful, however small it looks. If it is a low-risk natural elaboration that commits to nothing contested (a field name, a label, an obvious key), it is Cosmetic. Reason: the risk is in silently resolving something the user still owns, not in the size of the edit.
 
-The split keeps each accept or reject decision cheap. Do not dress a cosmetic finding as a drift to satisfy the request. An anchor is clean when it surfaces zero Genuine drifts on the current output version.
+The split keeps each accept or reject decision cheap. Do not dress a cosmetic finding as a drift to satisfy the request. An anchor is clean when it surfaces zero Impactful drifts on the current output version.
 
 </classify>
 
@@ -104,12 +104,12 @@ Ground truth from the originating conversation: the user said "let's not fix the
 
 Drift table:
 
-| # | location | says | ground truth | Genuine/Churn | fix |
+| # | location | says | ground truth | Impactful/Cosmetic | fix |
 |---|---|---|---|---|---|
-| 1 | line 1 | "we ship on 1 March" | date was deferred, not decided | Genuine | replace with "Rollout date: open, deferred" |
-| 2 | line 2 | "Owner: Priya." | Priya named as owner | Churn | leave |
+| 1 | line 1 | "we ship on 1 March" | date was deferred, not decided | Impactful | replace with "Rollout date: open, deferred" |
+| 2 | line 2 | "Owner: Priya." | Priya named as owner | Cosmetic | leave |
 
-Arbitration by the user: accept 1, reject 2. Apply the accepted fix as a revision, so line 1 becomes "Rollout date: open, deferred". The anchor now surfaces zero Genuine drifts, so decision fidelity is clean for this version. Note what the fix may have dirtied (nothing here) and move to the next anchor.
+Arbitration by the user: accept 1, reject 2. Apply the accepted fix as a revision, so line 1 becomes "Rollout date: open, deferred". The anchor now surfaces zero Impactful drifts, so decision fidelity is clean for this version. Note what the fix may have dirtied (nothing here) and move to the next anchor.
 
 Goal-alignment pass, file modality. Catches what the earlier anchors leave.
 
@@ -117,10 +117,10 @@ Output under audit, an on-call runbook whose session goal is a runbook covering 
 
 Drift table:
 
-| # | location | says | ground truth | Genuine/Churn | fix |
+| # | location | says | ground truth | Impactful/Cosmetic | fix |
 |---|---|---|---|---|---|
-| 1 | Launch announcement section | draft the marketing announcement | goal is an on-call migration and rollback runbook; marketing sits outside it | Genuine | move it out of this runbook |
-| 2 | runbook, absent | no rollback section | goal requires the rollback path, decided as flipping the read flag back | Genuine | add a Rollback section |
+| 1 | Launch announcement section | draft the marketing announcement | goal is an on-call migration and rollback runbook; marketing sits outside it | Impactful | move it out of this runbook |
+| 2 | runbook, absent | no rollback section | goal requires the rollback path, decided as flipping the read flag back | Impactful | add a Rollback section |
 
 Both findings trace to real decisions, so no earlier anchor flagged them. Off-goal scope creep (1) and omission against the goal (2) are exactly this anchor's residual, and absence is invisible to every other anchor. This is the drift a long session accumulates while each single edit looked reasonable.
 
@@ -130,10 +130,10 @@ Output under audit, a recommendation stated in the conversation: "We should adop
 
 Drift table:
 
-| # | location | says | ground truth | Genuine/Churn | fix |
+| # | location | says | ground truth | Impactful/Cosmetic | fix |
 |---|---|---|---|---|---|
-| 1 | the recommendation | "the team already agreed" | discussed, not agreed | Genuine | restate: the team discussed trunk-based development, no decision yet |
-| 2 | the recommendation | "releases every Friday" | no cadence decided | Genuine | restate: release cadence open |
+| 1 | the recommendation | "the team already agreed" | discussed, not agreed | Impactful | restate: the team discussed trunk-based development, no decision yet |
+| 2 | the recommendation | "releases every Friday" | no cadence decided | Impactful | restate: release cadence open |
 
 Arbitration: accept both. Apply by restating the corrected recommendation inline on the next turn, with no Edit, no version bump, and no commit, and say so rather than implying a persisted change. The governing-contract anchor is degraded for a free-form chat answer.
 
@@ -151,24 +151,24 @@ Reason: user arbitration per drift prevents the reviewer silently re-resolving t
 
 <watch-for>
 
-Recurring drift shapes, each a Genuine finding when present:
+Recurring drift shapes, each a Impactful finding when present:
 
 - A user deferral is not a decision. "Not required at this stage" is a deferral recorded as one, not permission to fix the answer.
 - Review rhetoric is not a decision. A phrase from a recommendation, for example "highest-value 20% first", does not belong in a Key decisions section.
 - Conflicting user answers are not resolved silently. When two answers conflict, record the resolution as a visible decision, not a quiet edit.
 - A governing contract is not invented for a free-form output. Declare the anchor degraded and run the rest.
-- A stale version block is Genuine on the conventions anchor when the workspace requires the increment. If material fixes were applied and the repo's rules mandate a version bump, a version left unchanged is a Genuine drift, not cosmetic bookkeeping. Bump it.
-- Scope creep is not progress. An output that grew past the session goal is a Genuine goal-alignment drift even when every addition was individually decided. So is a goal-required point the output never states: absence is invisible to every other anchor, so goal alignment is where it must be caught.
+- A stale version block is Impactful on the conventions anchor when the workspace requires the increment. If material fixes were applied and the repo's rules mandate a version bump, a version left unchanged is a Impactful drift, not cosmetic bookkeeping. Bump it.
+- Scope creep is not progress. An output that grew past the session goal is a Impactful goal-alignment drift even when every addition was individually decided. So is a goal-required point the output never states: absence is invisible to every other anchor, so goal alignment is where it must be caught.
 
 </watch-for>
 
 <convergence>
 
-An anchor is clean when it surfaces zero Genuine drifts on the current output version. The cycle has converged when all five anchors are clean (or declared degraded) on the same version. Say so and stop. Further passes are churn by definition.
+An anchor is clean when it surfaces zero Impactful drifts on the current output version. The cycle has converged when all five anchors are clean (or declared degraded) on the same version. Say so and stop. Further passes are churn by definition.
 
 An unverifiable anchor is neither clean nor degraded: decision fidelity with no originating record (per `<setup>` step 4), or goal alignment with no recoverable session goal (per `<setup>` step 5). It blocks convergence: run the other anchors, but do not declare the cycle converged until the missing ground truth is supplied and the anchor is checked.
 
-A typical cycle runs 5 to 7 passes. A cycle still finding Genuine drifts past 7 passes signals an upstream problem, not a review problem. Flag that rather than looping on.
+A typical cycle runs 5 to 7 passes. A cycle still finding Impactful drifts past 7 passes signals an upstream problem, not a review problem. Flag that rather than looping on.
 
 </convergence>
 
@@ -180,6 +180,6 @@ This skill is version-neutral and targets claude-code. It depends on no single C
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.5        |
-| Last Updated | 2026-07-19 |
+| Version      | 1.6        |
+| Last Updated | 2026-07-20 |
 | Status       | Draft      |
