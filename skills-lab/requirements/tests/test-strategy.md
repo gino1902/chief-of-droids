@@ -36,8 +36,12 @@ Diagnosability, bottom-up. Prove each skill survives its own second run before t
 | 13 | XC-3 (`degraded-substrate-test.md`) | none (fixtures) | `test-wr-degraded` | none | Robustness: thin substrate degrades to N/A + Warning, slug-verbatim title fallback, no fabrication, no hard-fail. Complement to XC-1. | The warning count and `N/A` sections, SHALL line as FR-001, and that outputs land in-dir, not at the `skills-lab` root (repo-root walk not settled). |
 | 14 | XC-2 (`bootstrapping-goal-lock-test.md`) | Small, thinking | `test-goal-lock` | none | Robustness: a conflicting goal argument against a stamped FRAMING stops and reports, no mutation. Only thinking tree/skeleton coverage. | `[beh]` the stop-and-report message on the conflicting goal, plus a `FRAMING.md` diff showing zero mutation. |
 | 15 | OP-1 (`standalone-brainstorm-test.md`) | out of project | `test-standalone-brainstorm` | none | Independent: standalone terminal brainstorm from a bare FRAMING, no project, no `CONCEPTS.md`. Runnable at any point. | Brainstorm output only. No `.claude/`, `.git/`, or `CONCEPTS.md`. |
+| 16 | BC-1 (`bootstrapping-conventions-generation-test.md`) | code/app, data, infra, thinking | `bc1-<goal>` | none | Bootstrapping depth: `CONVENTIONS.md` generated verbatim per goal, stanza correct, no caveat leak, `settings.json` frozen, drift-check base-passes. | The stanza per goal, the verbatim match, the empty `settings.json` diff. |
+| 17 | BC-2 (`bootstrapping-drift-check-test.md`) | code/app | `bc2` | after BC-1 | Bootstrapping depth: drift-check delivered, wired, and the three-state traceability (base passes, unrecorded edit fails, ADR clears). | The three exit codes and the delivered-versus-asset diff. |
+| 18 | BC-3 (`bootstrapping-pinned-contract-test.md`) | app, data, infra | `bc3-<stack>` | after BC-1 | Bootstrapping depth: pinned-contract one-run invariants (canonical runner, husky pinned shape, real-tag rev). | The runner value, the husky-to-pin match, the resolved rev per stack. |
+| 19 | BC-4 (`bootstrapping-backfill-test.md`) | code/app, pre-feature | `bc4` | after BC-1, BC-2 | Bootstrapping depth: backfill on reconcile into a pre-feature repo, additive, tree and `settings.json` untouched. | The additive diff, the `CLAUDE.md` added-versus-removed counts, the delivered drift-check result. |
 
-Project-type coverage across the suite: code/data (rows 1-10), code/app (11), infra (6), thinking (14), plus the out-of-project case (15).
+Project-type coverage across the suite: code/data (rows 1-10), code/app (11), infra (6), thinking (14), plus the out-of-project case (15). The bootstrapping CONVENTIONS feature-depth is rows 16-19, across all four goal types.
 
 ## Deferred — not scheduled
 
@@ -48,6 +52,7 @@ These are in the design doc's Deferred section because the feature is unbuilt. N
 - Visual and blindspot gates (intent only, undefined in writing).
 - Routing architectural boundary decisions to making-architecture-decision.
 - Not scheduled by choice: the grounding-depth delta (Small surfaces more open questions than Medium). A soft comparative metric, parked unless wanted.
+- The predictability audit, cross-run determinism: two bootstraps of an identical brief producing byte-identical output. The FRAMING keeps variance out of the gate, so this runs at a release boundary, not per redeploy. BC-3 covers the gate-side one-run invariants against the pins; this audit owns the two-runs-agree comparison, and `improving-skills-predictability` is its natural tool.
 
 ## Open items to resolve before a clean run
 
@@ -80,8 +85,12 @@ The disk-checkable invariants have scripts under `tests/checks/`, run against a 
 | 13 XC-3 | diff-confined, tally, structural | script the confinement and tally; title-equals-slug and `N/A` sections are structural greps, not yet scripted |
 | 14 XC-2 | diff-confined, conventions-drift, plus `[beh]` | zero-mutation: `check-diff-confined.sh <dir> <step1>` with no allowed globs (empty diff passes); `check-conventions-drift.sh <dir>` (thinking, `config: none`/`review`, existence and coverage skipped); stop-report is `[beh]`, manual |
 | 15 OP-1 | none yet | manual: slice self-contained (terms backticked or defined), no `requirements/` dir |
+| 16 BC-1 | conventions-contract, plus conventions-drift | `check-conventions-contract.sh <dir> <goal>`; `check-conventions-drift.sh <dir>` base-pass per goal |
+| 17 BC-2 | conventions-drift, delivered | diff the delivered script against the skill asset; run the delivered `check-conventions-drift.sh` in the three states and assert exit codes |
+| 18 BC-3 | pinned-contract | `check-pinned-contract.sh <dir> <stack>` |
+| 19 BC-4 | diff-confined, plus conventions-drift | `check-diff-confined.sh --no-deletions <dir> <base> CONVENTIONS.md '<config>' '<gate>' 'scripts/check-conventions-drift.sh' CLAUDE.md`; then the delivered drift-check |
 
-Three scripts cover most rows because the invariants are shared, not per-row: `check-summary-tally.sh` for every report-producing row, `check-diff-confined.sh` for the committed-base confinement rows, and `check-conventions-drift.sh` for the bootstrapping rows that reach Pass 3.
+Five scripts cover the suite because the invariants are shared, not per-row: `check-summary-tally.sh` for every report-producing row, `check-diff-confined.sh` for the committed-base confinement rows, `check-conventions-drift.sh` for the bootstrapping rows that reach Pass 3, `check-conventions-contract.sh` for BC-1's generation invariants, and `check-pinned-contract.sh` for BC-3's pins.
 
 ## CONVENTIONS.md invariant
 
@@ -116,10 +125,12 @@ Pass criteria per run: `CONVENTIONS.md` present with the expected stanza; `check
 
 Outcome (2026-07-17). All six runs passed. Two defects the run surfaced were fixed and re-verified: the drift-check matched the whole runner command rather than the tool token, so a pre-commit gate did not register (drift-check now matches the token); and the verbatim copy leaked trees.md's `> ⚠️ Unverified …` authoring caveat into the generated `CONVENTIONS.md` (Pass 3 fill now strips it, confirmed by a fresh re-run). Full record in `requirements-chain-conventions-validation-run.md`.
 
-Open finding — gate non-determinism. The skill does not pin which project gate it generates. Identical code/app-backend briefs produced a husky `.husky/pre-commit` in one run and a `.github/workflows/lint.yml` in another; data and infra chose `.pre-commit-config.yaml`. The drift-check tolerates any gate (it greps husky, pre-commit, `package.json`, and CI workflows), so correctness is unaffected, but the variance contradicts the suite's determinism ethos ("byte-identical `settings.json` across runs"). Recommended fix: pin a default gate per stack in the skill's Pass 4 tail so two runs of the same brief agree. Not yet applied — it is a skill behaviour change and needs a confirming double-run. Remaining by choice: the headless `claude -p` release-gate re-run.
+Formalised (2026-07-20). The feature-depth these runs validated is now named scenarios BC-1 to BC-4 (priority-table rows 16-19), each with a check: `check-conventions-contract.sh` for BC-1, the delivered `check-conventions-drift.sh` for BC-2, `check-pinned-contract.sh` for BC-3, and `check-diff-confined.sh` for BC-4. The V-runs above are their informal predecessor, kept as the record of the first validation. The BC specs are what the gate selects.
+
+Open finding — gate non-determinism. The skill does not pin which project gate it generates. Identical code/app-backend briefs produced a husky `.husky/pre-commit` in one run and a `.github/workflows/lint.yml` in another; data and infra chose `.pre-commit-config.yaml`. The drift-check tolerates any gate (it greps husky, pre-commit, `package.json`, and CI workflows), so correctness is unaffected, but the variance contradicts the suite's determinism ethos ("byte-identical `settings.json` across runs"). Recommended fix: pin a default gate per stack in the skill's Pass 4 tail so two runs of the same brief agree. Since applied and pinned per stack (2026-07-18 and 2026-07-19), confirmed by double-runs recorded in `requirements-chain-conventions-validation-run.md`. BC-3 asserts the resulting one-run invariants against the pins, and the cross-run two-runs-agree comparison is the parked predictability audit (see Deferred). Remaining by choice: the headless `claude -p` release-gate re-run.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.11       |
-| Last Updated | 2026-07-17 |
+| Version      | 1.12       |
+| Last Updated | 2026-07-20 |
 | Status       | Draft      |

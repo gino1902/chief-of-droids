@@ -17,7 +17,7 @@ Chain order is bootstrapping, then framing, then brainstorming, then writing.
 
 | Skill | Own-behaviour | Seams | Context axis |
 |:--|:--|:--|:--|
-| bootstrapping-project | MD-5 reconcile, SM-3 resume, XC-2 goal-lock, plus the feature-depth set in `testing/` (CONVENTIONS, determinism, drift-check, backfill) | downstream to framing: chain-test-small, chain-test-medium, SM-1 | new vs existing repo, every goal type, Small vs Medium+ |
+| bootstrapping-project | MD-5 reconcile, SM-3 resume, XC-2 goal-lock, and the CONVENTIONS feature-depth as BC-1 contract generation, BC-2 drift-check, BC-3 pinned-contract, BC-4 backfill | downstream to framing: chain-test-small, chain-test-medium, SM-1 | new vs existing repo, every goal type, Small vs Medium+ |
 | framing-project | MD-2 update, SM-1 convert | up from bootstrapping and down to brainstorming: chain-test-medium, MD-3, MD-7 | create vs update, Medium+ only |
 | brainstorming-requirements | MD-3 reuse, MD-7 divergence, OP-1 standalone, MD-4 weak slice | CONCEPTS up from framing and slice down to writing: chain-test-medium, MD-4 | with CONCEPTS vs without, in-project vs standalone |
 | writing-requirements | MD-1 iteration, MD-6 technical, XC-1 guards, XC-3 degraded | slice up from brainstorming: chain-test-small, chain-test-medium, MD-4 | generic vs technical, well-shaped vs degraded slice, first pass vs iteration, target repo-root resolution |
@@ -36,14 +36,16 @@ The full-chain scenarios, chain-test-small and chain-test-medium, belong to ever
 ## Efficiency
 
 - Rework `writing-requirements`, ship into one code Medium project. The gate is MD-1, MD-6, XC-1, XC-3, plus chain-test-medium. Five scenarios, not fifteen.
-- Rework `bootstrapping-project`'s CONVENTIONS feature, ship into code, data, and infra. The gate is MD-5, SM-3, XC-2, both full-chain rows, plus the determinism and CONVENTIONS checks for those three stacks. App and thinking are skipped.
+- Rework `bootstrapping-project`'s CONVENTIONS feature, ship into code, data, and infra. The gate is MD-5, SM-3, XC-2, both full-chain rows, plus BC-1 and BC-3 for those three stacks, BC-2 once, and BC-4 for the existing-repo case. Thinking is skipped.
 
-## Known gap
+## Bootstrapping depth: formalised
 
-`bootstrapping-project`'s own-behaviour set is half-formalised. MD-5, SM-3, and XC-2 are proper scenario specs. The CONVENTIONS, determinism, and drift-check work exists as run dirs in `testing/` and prose in the retrospective, not as named scenarios with checks. While bootstrapping is in gate scope, that depth needs formalising to be selectable and assertable. Step 0 surfaces it on every run until it is closed.
+`bootstrapping-project`'s CONVENTIONS feature-depth is now named scenarios with checks: BC-1 contract generation (`check-conventions-contract.sh`), BC-2 drift-check delivery and traceability (`check-conventions-drift.sh`), BC-3 pinned-contract invariants (`check-pinned-contract.sh`), BC-4 backfill on reconcile (`check-diff-confined.sh`). The gap step 0 flagged is closed, the depth is selectable and assertable.
+
+Parked, out of the gate by design: the cross-run determinism check, meaning two bootstraps of an identical brief producing byte-identical output. The FRAMING keeps variance in a separate predictability audit, run at a release boundary, not on every redeploy. BC-3 covers the gate-side one-run invariants against the pins; the two-runs-agree comparison is the audit's job.
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-07-20 |
 | Status       | Draft      |
