@@ -1,5 +1,12 @@
 # How to Trigger Each Skill
 
+> **Status (2026-07-20):** The skill sections below are stale. The `workspace/skills/` library
+> was retired: seven skills archived to `skills/_archive/`, three moved to
+> `skills-lab/requirements/other-skills/` for re-authoring. The target architecture keeps the
+> official Claude Code config (`.claude/skills/`) as the single source of truth and rewires this
+> file to route Desktop to those native skills. Until that rewrite lands, treat the routing tables
+> below as historical. Rewrite tracked as a task.
+
 > **Scope:** This skills library lives at `workspace/skills/` and is shared across
 > all projects in the workspace. It is **read-only** — never modified from within
 > a project. Changes go through the `creating-skills` workflow only.
