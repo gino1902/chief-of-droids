@@ -1,4 +1,4 @@
-# Pinned-contract invariants test — BC-3
+# Pinned-contract invariants test: BC-3
 
 _These are illustrative fixtures. The subject, scripted answers, and file names below are examples to make the run concrete, not fixed requirements. The acceptance criteria carry the test._
 

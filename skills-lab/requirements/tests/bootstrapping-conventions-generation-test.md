@@ -1,4 +1,4 @@
-# Contract generation test — BC-1
+# Contract generation test: BC-1
 
 _These are illustrative fixtures. The subject, scripted answers, and file names below are examples to make the run concrete, not fixed requirements. The acceptance criteria carry the test._
 
@@ -27,6 +27,7 @@ Directory: `testing/bc1-<goal>`, one per goal exercised. Precedence: none, a sel
 - `CONVENTIONS.md` at the repo root. Its rules block equals the `trees.md` `<goal>` Conventions block verbatim, minus any `> ⚠️ Unverified` authoring blockquote.
 - The stanza (`config` / `runner` / `zoned`) is present and consistent with the generated enforcement, and `zoned` names only folders that exist.
 - Stack-native enforcement (eslint plus husky for app, pre-commit plus ruff for data, pre-commit plus TFLint for infra, none for thinking). No `hooks` key in `settings.json`.
+- The delivered `scripts/check-conventions-drift.sh` base-passes on the generated gate.
 - `settings.json` byte-identical to the Pass 1 baseline.
 - `CLAUDE.md` carries the two pointer lines and does not restate the structural rules.
 
@@ -35,15 +36,17 @@ Directory: `testing/bc1-<goal>`, one per goal exercised. Precedence: none, a sel
 - `CONVENTIONS.md` exists at the root, its rules block matches the `trees.md` `<goal>` block verbatim, and no line contains "Unverified".
 - The `config` / `runner` / `zoned` stanza is present and consistent with the generated enforcement, the stanza naming the config and runner the gate actually uses, and every `zoned` glob resolves to a folder that exists. The canonical `runner` value is BC-3's assertion, not this one.
 - The `settings.json` diff against the Pass 1 baseline is empty, and no enforcement landed as a `settings.json` hook.
+- The delivered `scripts/check-conventions-drift.sh` base-passes on the generated gate, so this goal's gate style (husky, ruff, or TFLint) exercises the drift-check's runner-token matching, the area the cross-gate-style substring bug once hid in.
 - `CLAUDE.md` holds both pointer lines and restates no rule.
 
-Check: `checks/check-conventions-contract.sh <dir> <goal>` (new, greps the stanza, asserts no "Unverified" line, compares the rules block against the `trees.md` source). `settings.json` invariance is checked narrowly, `git diff <pass1> -- .claude/settings.json` must be empty. A fresh bootstrap rewrites the whole tree, so a whole-tree diff-confinement does not apply here. Both one-run, disk-only.
+Check: `checks/check-conventions-contract.sh <dir> <goal>` (new, greps the stanza, asserts no "Unverified" line, compares the rules block against the `trees.md` source). `settings.json` invariance is checked narrowly, `git diff <pass1> -- .claude/settings.json` must be empty. A fresh bootstrap rewrites the whole tree, so a whole-tree diff-confinement does not apply here. The delivered drift-check base pass runs `bash scripts/check-conventions-drift.sh .`, expecting exit 0. All one-run, disk-only.
 
 ## Fail conditions
 
 - `CONVENTIONS.md` absent, its rules re-synthesised or reworded, or it carries an "Unverified" line.
 - The stanza disagrees with the generated enforcement, or a `zoned` glob names an absent folder.
 - `settings.json` changed, or enforcement was written as a `settings.json` hook.
+- The delivered drift-check does not base-pass on the generated gate.
 - `CLAUDE.md` restates the rules or misses a pointer.
 
 ## Record
@@ -56,6 +59,6 @@ One run per goal, scoped by the gate to the goals being deployed. Cross-run byte
 
 | Field        | Value      |
 |:-------------|:-----------|
-| Version      | 1.0        |
+| Version      | 1.1        |
 | Last Updated | 2026-07-20 |
 | Status       | Draft      |

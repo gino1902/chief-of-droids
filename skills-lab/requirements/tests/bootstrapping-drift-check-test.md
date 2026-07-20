@@ -1,4 +1,4 @@
-# Drift-check delivery test — BC-2
+# Drift-check delivery test: BC-2
 
 _These are illustrative fixtures. The subject, scripted answers, and file names below are examples to make the run concrete, not fixed requirements. The acceptance criteria carry the test._
 
@@ -50,7 +50,7 @@ The three exit codes, and the delivered-versus-asset diff being empty.
 
 ## Note
 
-Runs the project's own delivered guard, not the QA copy, which is what proves the guard ships rather than living only in QA.
+Runs the project's own delivered guard, not the QA copy, which is what proves the guard ships rather than living only in QA. Cross-gate-style coverage of the drift-check's runner-token matching is BC-1's job, through its per-goal base pass, so BC-2 stays on one gate style and owns the style-agnostic three-state traceability logic.
 
 | Field        | Value      |
 |:-------------|:-----------|
