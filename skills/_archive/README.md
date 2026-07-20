@@ -1,27 +1,42 @@
-# Archived skills
+# Archived skills — tombstone
 
-Seven skills from the Desktop-era `skills/` library, archived on 2026-07-20. They are kept for
-reference, not for triggering.
+The Desktop-era `skills/` library was retired on 2026-07-20. This folder is a tombstone:
+it keeps the decision record and the recovery pointer, not the skill bodies. The full
+content of every archived skill lives in git history and is recoverable in one command.
+
+## Recovery
+
+The skill directories were removed after being committed and pushed. They last existed intact at:
+
+```
+recovery SHA: d3c8f0c3f1a6426bbb6d7d7fe2b1e9edbf9af337   (on origin/main)
+```
+
+Restore any one skill with:
+
+```
+git checkout d3c8f0c -- skills/_archive/<skill>
+```
+
+For example `git checkout d3c8f0c -- skills/_archive/executing-tasks`. Browse a single file
+without restoring with `git show d3c8f0c:skills/_archive/<skill>/SKILL.md`.
 
 ## Why this generation was archived
 
 A usage review found the whole `skills/` generation frozen and superseded:
 
-- Development frozen. Last commit touching `skills/` was 2026-07-07. Meanwhile `skills-lab/`
+- Development frozen. Last commit touching `skills/` was 2026-07-07, while `skills-lab/`
   ran 115 commits through 2026-07-20, where the successor `.claude/skills/` collection is built.
-- Dormant in Claude Code. Across 499 Claude Code transcripts these skills showed no genuine
-  task-triggered loads. Their references collapse to one router-enumeration session, one
-  file-editing session, and measurement noise.
-- Superseded. Every archived capability has a live `.claude/skills/` successor carrying real
-  traffic, or is obsolete under Claude Code.
+- Dormant in Claude Code. Across 499 transcripts these skills showed no genuine task-triggered
+  loads. References collapsed to one router-enumeration session, one file-editing session, and noise.
+- Superseded. Every archived capability has a live `.claude/skills/` successor, or is obsolete
+  under Claude Code.
 
 Caveat on the evidence. These skills triggered only in Claude Desktop, via the HOW-TO-TRIGGER
-router over Filesystem MCP. Desktop turns carry a `🧭 skills:` routing line that is the true
-usage signal, but it lives in claude.ai account history, not on disk, and a data export was not
-available. So real Desktop volume before the freeze is unmeasured. It does not change the
-decision: a skill that was heavy in Desktop but is now frozen and fully succeeded still retires.
-`measure-triggering.py` in this folder produces the per-skill trigger table if a claude.ai
-export ever becomes available.
+router over Filesystem MCP. Desktop turns carry a `🧭 skills:` routing line that is the true usage
+signal, but it lives in claude.ai account history, not on disk, and no data export was available.
+Real Desktop volume before the freeze is therefore unmeasured. It does not change the decision:
+a skill that was heavy in Desktop but is now frozen and fully succeeded still retires.
 
 ## Succession map
 
@@ -33,29 +48,18 @@ export ever becomes available.
 | `creating-skills` | `improving-skills-predictability` (~75) + `improving-prompt-artifacts` (~64) + `skill-creator` plugin | Function split across successors. |
 | `managing-tasks` | Claude Code native task tools | Platform tooling replaces it. |
 | `managing-sessions` | none | Obsolete premise. Analysed Claude.ai Desktop session history, which does not apply to Claude Code. |
-| `executing-tasks` | none | Retired, not ported. The quality-gate workflow (intent, plan, QA, verify) is unmanageable against native task tools, the Workflow harness, and the requirements-chain. |
+| `executing-tasks` | none | Retired, not ported. The quality-gate workflow is unmanageable against native task tools, the Workflow harness, and the requirements-chain. |
 
-## Transformed — not here
+## Transformed — moved, not archived
 
-Three skills were not archived. They cover a capability with no live successor and were moved to
-`skills-lab/requirements/other-skills/` on 2026-07-20 as transform substrate, to be re-authored as
-native `.claude/skills/` through the requirements-chain. Each carries a `NOTES.md` recording its
-dependencies and dedupe points.
+Three skills with no successor were moved to `skills-lab/requirements/other-skills/` on 2026-07-20
+as transform substrate, to be re-authored as native `.claude/skills/` through the requirements-chain.
+Each carries a `NOTES.md`: `editing-docs`, `architecting-data-platforms`, `reviewing-tech-claims`.
+The old HOW-TO-TRIGGER router moved there too, as substrate for its rewrite into a Desktop
+to `.claude/skills/` bridge.
 
-- `editing-docs` — document-expression layer (docx, pptx, xlsx, minutes, decision records).
-- `architecting-data-platforms` — Databricks / Azure / governance domain knowledge.
-- `reviewing-tech-claims` — verification of technical claims against official docs, ✅ / ⚠️ markers.
+## measure-triggering.py
 
-## HOW-TO-TRIGGER.md is not archived
-
-The router stays live at `skills/HOW-TO-TRIGGER.md`. The target architecture keeps the official
-Claude Code config (`.claude/skills/`) as the single source of truth and wires Claude Desktop to it
-through an updated HOW-TO-TRIGGER, rather than the old per-`skills/` routing. The rewrite is tracked
-as a task.
-
-## How to restore one
-
-```
-git mv skills/_archive/<skill> skills/<skill>
-```
-Prior router content is recoverable from git history before the 2026-07-20 archive commit.
+Kept in this folder. It parses a claude.ai data export and produces the per-skill trigger table
+for these archived skills, the one measurement that on-disk transcripts could not give. It only has
+value against the skills recorded here, so it lives with them rather than in a live tools directory.
