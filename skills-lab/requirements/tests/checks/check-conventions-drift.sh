@@ -1,1 +1,0 @@
-../../../.claude/skills/bootstrapping-project/assets/check-conventions-drift.sh

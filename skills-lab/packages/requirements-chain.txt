@@ -1,5 +1,0 @@
-# requirements-chain — framing through to written requirements
-# One skill directory name per line. Blank lines and # comments ignored.
-framing-project
-brainstorming-requirements
-writing-requirements
