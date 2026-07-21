@@ -14,12 +14,6 @@ Thumbs.db
 *.xlsx
 *.pdf
 
-# Raw ingestion fixtures — scraped sources, kept local only (generated wiki/ is tracked)
-skills-lab/outputs/predictability/ingest-fixture/raw/
-
-# Skill test-run artifacts — local only, not versioned
-skills-lab/testing/
-
 # Session analysis findings — local only, not versioned
 .tasks/sessions-findings/*
 !.tasks/sessions-findings/.gitkeep

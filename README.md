@@ -9,9 +9,10 @@ Workspace for building with Claude Code: authoring and releasing skills, the too
 
 ## Repositories
 
+The skills lab lives outside this tree, as the sibling repository `../skills-lab`. It is where skills are designed, tested, and released, and it must never be added to a chief-of-droids session, so its work-in-progress skills stay out of this repo's skill discovery.
+
 | Repo | Purpose |
 |------|---------|
-| `skills-lab/` | Staging area where skills are designed, tested, and released. |
 | `skills/` | _(describe)_ |
 | `tools/` | _(describe)_ |
 | `docs/` | _(describe)_ |
@@ -22,4 +23,4 @@ Workspace for building with Claude Code: authoring and releasing skills, the too
 
 ## Creating a new project
 
-Bootstrap the new repo, then deploy skills into it with `bash skills-lab/deploy.sh <new-proj> <package-or-skills>` — see `skills-lab/DEPLOYING.md` for details.
+Bootstrap the new repo, then deploy skills into it from the sibling lab with `bash ../skills-lab/deploy.sh <new-proj> <package-or-skills>`. See `../skills-lab/DEPLOYING.md` for details.
