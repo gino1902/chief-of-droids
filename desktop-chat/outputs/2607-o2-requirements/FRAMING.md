@@ -7,7 +7,8 @@ last_updated: 2026-07-09
 
 ## Target problem
 
-Company data is fragmented and not consistently trusted, so cross-team workflows break at the handovers. Finance and operations can't run a clean path from budget and forecast to report, and talent supply stalls from talent request to project deployment across recruitment, training, operations, and sales. Each team's data sits in disconnected places it can't fully trust, so collaboration snaps whenever work crosses a boundary.
+Company data is fragmented and not consistently trusted, so cross-team workflows often break at the handovers. Each team's data sits in disconnected places and tools it can't fully trust, making collaboration difficult whenever work crosses a boundary. For instance, Finance and Operations teams have issues in running a clean path from Budget and Forecast to Report, and Talent Supply are not running with a clear path, rely on too many manual tasks, multiple checks, and cannot be monitored end to end.
+
 
 ## Our approach
 
@@ -15,9 +16,9 @@ We give teams one governed source of trusted data that carries their cross-team 
 
 ## Who it's for
 
-**Customer:** Internal operational teams across the company (HR admin, recruitment and training, finance, operations, service lines, sales, delivery, procurement, marketing, executives). They are hiring the project to run cross-team workflows like budget-to-report and talent-request-to-deployment on trusted data without chasing it at every handover. (No single primary team pinned yet.)
+**Customer:** Internal operational teams across the company (HR admin, recruitment and training, finance, operations, service lines, sales, delivery, procurement, marketing, executives). The will use O2 platform to run cross-team workflows like budget-to-report and talent-request-to-deployment on trusted data without chasing it at every handover.
 
-**Business:** Sponsored by the CEO, delivered by the Transformation team. The result the business owns: shift corp teams from manual work to value work (analysis, anticipation, risk management), raise manager chargeability (revenue and margin), and free sales time for customer-facing work (bookings and revenue).
+**Business Executives:** CEO, Executive Committee. When fully deployed, the platform adoption will result in the shift from manual work to value work for corporate teams (analysis, anticipation, risk management), the increase of managers chargeability (revenue and margin impact), and by freeing sales time for customer-facing work (bookings and revenue impact).
 
 ## What success means
 
