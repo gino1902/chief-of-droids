@@ -12,7 +12,6 @@ alongside the work they document.
 
 | File | What it covers |
 | :--- | :--- |
-| `bootstrapping-guide.md` | How to use the `project-bootstrapping` skill to scaffold a new Claude Desktop project — form, challenge, generation, file write, and post-bootstrap checklist. Includes design decisions from the 2026-03-19 session. |
 | `claude-tool-map.md` | Which Anthropic desktop tool to use for which job — Claude Desktop, Claude Cowork, and Claude Code compared. Decision guide and installation scope. |
 | `executing-tasks-guide.md` | Reference guide for the `executing-tasks` skill — two entry paths, 11-step outer loop flowchart (Elevate theme), step-by-step descriptions, hard gates summary. |
 | `how-to-create-a-skill.md` | Step-by-step account of how the `managing-sessions` skill was designed, challenged, built, live-run, assessed, and committed in a single 3–4 hour session on 2026-03-28. Preserves the philosophy and process for repeating with any new skill. |
