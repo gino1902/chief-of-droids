@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(git reset)",
+      "Bash(git restore --staged *)",
+
+      "Bash(gh auth *)",
+      "Bash(gh api *)",
+      "Bash(gh --version)",
+      "Bash(env)",
+      "Bash(npm --version)",
+      "Bash(command -v claude)",
+
+      "WebFetch(domain:docs.astral.sh)",
+      "WebFetch(domain:docs.databricks.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ],
+    "ask": [
+      "Bash(git reset --hard *)"
+    ]
+  }
+}
