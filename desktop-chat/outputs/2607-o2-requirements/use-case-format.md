@@ -31,6 +31,8 @@ A gate is a binary precondition answering one question: can this initiative move
 | Architecture principles | The use case does not contradict an established ADR. Building on every ADR is not required, the runway is always in progress. Contradiction is what forces rework |
 | Capacity | The team's WIP limit is not reached and a lead is available to conduct the implementation |
 
+A check that has not run yet rules as fail, recorded as pending. The gate stays binary and the use case becomes eligible when the check passes.
+
 ## Dimensions and drivers
 
 Four dimensions: Impact, Adoption, Effort, Confidence. Reach folded into Impact as volume. The score reads as net expected adopted value: incremental value on the metric, times adoption likelihood, gated by effort and confidence. Weights live in the scoring model.
@@ -41,10 +43,10 @@ Impact is computed, not judged: (target minus baseline) times volume. A brief th
 
 | Driver | What it holds |
 |---|---|
-| Success metric | One measurable quantity from the FRAMING outcome family: cost out, freed time, cycle time, revenue, margin |
+| Success metric | The one or two most important measurable quantities from the FRAMING outcome family: cost out, freed time, cycle time, revenue, margin. No more than two, comparability across briefs depends on it |
 | Baseline | Current value on the metric, measured against the best existing alternative. If an incumbent already delivers the outcome, the baseline is what it delivers. This is where the counterfactual lives |
 | Target | Expected value after implementation |
-| Volume | Adopting population times run frequency per period |
+| Volume | Adopting population counted in users (people, not teams) times run frequency per period |
 
 ### Adoption, judged 1 to 5
 
@@ -107,7 +109,9 @@ Each fact is scored once. The rulings:
 | Field | Entry |
 |---|---|
 | Title | <active phrase naming the outcome, not the tool> |
-| Placement | <mega-process / sub-process from process-taxonomy.yaml, one only> |
+| Placement | <mega-process / sub-processes from process-taxonomy.yaml. May span
+several sub-processes when the solution sketch and the rest of the fill cover
+them consistently> |
 | Proposer | <business team> |
 | Lead | <named person available to conduct the implementation> |
 | Sponsor | <named executive owner, empty if none> |
@@ -130,18 +134,19 @@ so, it triggers the Adoption N/A rule.>
 ## Gates
 | Gate | Ruling | Evidence |
 |---|---|---|
-| Data policies (incl. RGPD) | pass / fail | <DPO or governance check, logged> |
-| Security | pass / fail | <security check> |
+| Data policies (incl. RGPD) | pass / fail | <DPO or governance check, logged.
+Not yet run = fail, pending> |
+| Security | pass / fail | <security check. Not yet run = fail, pending> |
 | Architecture principles | pass / fail | <contradicts no established ADR> |
 | Capacity | pass / fail | <WIP headroom, lead available> |
 
 ## Impact
 | Driver | Entry |
 |---|---|
-| Success metric | <one measurable quantity> |
+| Success metric | <the 1 or 2 most important measurable quantities, no more> |
 | Baseline | <current value, against the best existing alternative> |
 | Target | <expected value after implementation> |
-| Volume | <adopting population x run frequency per period> |
+| Volume | <adopting users (people, not teams) x run frequency per period> |
 
 ## Adoption (1 to 5, one justification line each)
 | Driver | Score | Justification |
@@ -178,5 +183,5 @@ so, it triggers the Adoption N/A rule.>
 The format was tested against two reference cases. EPM actual vs forecast passes all gates and scores on real headroom, with its missing Group B feed carried as feed-onboarding work and availability doubt. The PnL-report-in-EPM case fails twice, at the capacity gate and at Impact near zero, because its baseline equals what EPM already delivers. A format that cannot kill that case would not be doing its job.
 
 <!--
-Version: 1.0 | Last Updated: 2026-08-03 | Status: Draft
+Version: 1.1 | Last Updated: 2026-08-03 | Status: Draft
 -->
