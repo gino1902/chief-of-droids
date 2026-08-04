@@ -16,6 +16,26 @@
 # doing this inside Databricks, which needs a dev workspace with the SharePoint
 # UC connection (see ADR-009).
 #
+# PREREQUISITE, and Claude cannot satisfy it:
+#   The claude.ai Microsoft 365 connector must be authenticated BY THE USER,
+#   interactively, before this script can read anything. Run:
+#
+#       /mcp        then select "claude.ai Microsoft 365" and authorise
+#
+#   Claude cannot start that OAuth flow. Calling the connector's authenticate
+#   tool returns an instruction to ask the user to run /mcp. Until the user
+#   does, the connector exposes only its two auth tools in any session, and a
+#   `claude -p` subprocess sees no claude.ai tools whatsoever (verified
+#   2026-08-04). So an unauthenticated run fails at preflight with exit 4, and
+#   no amount of retrying changes that.
+#
+#   UNVERIFIED, and it decides whether this script is usable at all: whether a
+#   `claude -p` subprocess inherits the connector once the user HAS
+#   authenticated. Only the unauthenticated case was tested. Re-run --probe
+#   after authenticating to find out. If preflight still fails, subprocess
+#   isolation is impossible here and the read has to happen in the user's
+#   authenticated session, which puts payload values in that session's context.
+#
 # Usage:
 #   ./o2_payload_schemas.sh --probe            # ONE feed, verify the mechanism
 #   ./o2_payload_schemas.sh                    # all feeds (refuses until probe passed)
@@ -159,14 +179,19 @@ STOP: mcp__claude_ai_Microsoft_365__read_resource is not callable from a
       `claude -p` subprocess in this environment. Nothing was read, and this
       says NOTHING about whether the connector can return file content.
 
-      Verified 2026-08-04: a `claude -p` subprocess in this environment receives
-      NO claude.ai connectors at all, not even their authenticate tools. So this
-      is not an auth problem and authenticating the parent session does not fix
-      it. The subprocess-isolation design cannot work here.
+      FIRST: has the user authenticated the connector? Claude cannot do it.
+      Run /mcp, select "claude.ai Microsoft 365", authorise, then re-run --probe.
+      Until that happens the connector exposes only its auth tools and this
+      failure is expected, not a bug.
 
-      That matters, because the subprocess was the control keeping payload values
-      out of the parent session. Reaching the connector means an interactive
-      session that has it, and then values enter that session's context.
+      Verified 2026-08-04, unauthenticated case only: a `claude -p` subprocess
+      saw no claude.ai tools at all, not even the authenticate pair.
+
+      UNVERIFIED: whether a subprocess inherits the connector after the user has
+      authenticated. If this preflight still fails post-authentication, then
+      subprocess isolation is impossible here, the design of this script is dead,
+      and the read has to happen in the user's authenticated session, which puts
+      payload values in that session's context. Record which case you hit.
 
       Before doing that, try the cheaper route: ask IS for the payload
       specification documents. Field list and grain come from a spec with zero
