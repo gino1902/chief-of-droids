@@ -135,6 +135,49 @@ validate() {
   return 0
 }
 
+# --- preflight: is the connector even reachable from a subprocess? ----------
+# Without this, a missing tool and a connector that cannot return file content
+# are indistinguishable, because the subprocess reports ERROR_NO_CONTENT for
+# both. They have opposite remedies, so they need separate exit codes.
+preflight() {
+  local out
+  out="$(claude -p "Answer with exactly one word and nothing else. Is the tool \
+mcp__claude_ai_Microsoft_365__read_resource available and callable in this session? \
+Reply TOOL_PRESENT or TOOL_ABSENT." \
+    --allowedTools "mcp__claude_ai_Microsoft_365__read_resource" 2>&1 || true)"
+  printf '%s' "$out" | grep -q 'TOOL_ABSENT' && return 1
+  printf '%s' "$out" | grep -q 'TOOL_PRESENT' && return 0
+  echo "preflight returned neither marker:" >&2
+  printf '%s\n' "$out" | head -5 >&2
+  return 1
+}
+
+echo "Preflight: checking the connector is reachable from a subprocess..." >&2
+if ! preflight; then
+  cat >&2 <<'MSG'
+STOP: mcp__claude_ai_Microsoft_365__read_resource is not callable from a
+      `claude -p` subprocess in this environment. Nothing was read, and this
+      says NOTHING about whether the connector can return file content.
+
+      Verified 2026-08-04: a `claude -p` subprocess in this environment receives
+      NO claude.ai connectors at all, not even their authenticate tools. So this
+      is not an auth problem and authenticating the parent session does not fix
+      it. The subprocess-isolation design cannot work here.
+
+      That matters, because the subprocess was the control keeping payload values
+      out of the parent session. Reaching the connector means an interactive
+      session that has it, and then values enter that session's context.
+
+      Before doing that, try the cheaper route: ask IS for the payload
+      specification documents. Field list and grain come from a spec with zero
+      personal data exposure. Only coverage counts genuinely need the data.
+
+      The same connector limitation applies to o2_data_sources.sh, so the
+      inventory cannot be regenerated from a subprocess either.
+MSG
+  exit 4
+fi
+
 # --- run --------------------------------------------------------------------
 TMP="$(mktemp)"; trap 'rm -f "$TMP"' EXIT
 OK=0; FAILED=0
@@ -146,9 +189,10 @@ while IFS=$'\t' read -r branch leaf; do
     --allowedTools "mcp__claude_ai_Microsoft_365__read_resource" || true)"
 
   if printf '%s' "$body" | grep -q 'ERROR_NO_CONTENT'; then
-    echo "STOP: read_resource did not return file content for ${branch}/${leaf}." >&2
-    echo "      The connector cannot read payloads this way. Do not retry the" >&2
-    echo "      other feeds. Escalate: this task needs the Databricks route." >&2
+    echo "STOP: read_resource is callable (preflight passed) but returned no file" >&2
+    echo "      content for ${branch}/${leaf}. That is a real connector limit, not" >&2
+    echo "      a session problem. Do not retry the other feeds. Escalate: this" >&2
+    echo "      task needs the Databricks route and a dev workspace (ADR-009)." >&2
     exit 3
   fi
 
