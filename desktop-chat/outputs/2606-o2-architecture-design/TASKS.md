@@ -1,0 +1,37 @@
+# TASKS.md — O2 architecture design
+
+> Task tracker colocated with the ADR set it serves. Scope: O2 platform architecture
+> decisions, the verifications that gate them, and the requirement artefacts they depend on.
+>
+> Replaces `.tasks/TASKS.md` for this work, which is deprecated. Numbering continues from
+> that tracker's sequence (last entry TASK-091) so identifiers stay unique across the repo
+> and older references keep resolving.
+
+---
+
+## 🔴 Backlog
+
+- TASK-092: Read one sample payload per feed and record the field inventory | target: desktop-chat/outputs/2607-o2-requirements/ | scope: 21 feeds listed in o2-data-sources.md; for each feed record whether a UID field is present, what population it covers, the full field list, and the apparent grain; access is SharePoint through the Microsoft 365 connector, the same path o2_data_sources.sh already uses, but that script deliberately never reads file contents so this is new capability rather than a script change; blocks TASK-094, TASK-095 and TASK-096 because every current statement about grain, keys, data availability and data quality is reasoning rather than fact, and a format written before this would encode imagined fields; deliverable is a per-feed payload note in the same folder | origin: session:2026-08-04 "data-sources DKDK discovery" | ref: 2026-08-04-data-sources-discovery-note.md, Prerequisite section
+- TASK-093: Verify A1 — whether middleware anonymisation destroys the IS user identifier | target: ADR-010-middleware-o2-boundary.md amendment A1 | scope: ADR-010 decision 6 states personal data is filtered at the middleware with encryption and anonymisation before landing; the only candidate cross-producer join key is an IS user identifier, which is personal data by construction; confirm with the middleware and IS teams whether the UID survives landing and in what form; if it does not, no cross-source person entity is buildable by any route including the ADR-010 principle 9 bridging route, and the third option in AD-2 becomes the de facto state whether or not anyone chose it; gates TASK-095 | origin: session:2026-08-04 "data-sources DKDK discovery" | ref: discovery note F9
+- TASK-094: Write AD-1 as an ADR — artefact set and authority model | target: desktop-chat/outputs/2606-o2-architecture-design/ | scope: decide how many artefacts describe inbound data and how authority is marked so an agent knows what it may generate from; options are one flat manifest per feed, or three artefacts (feed contract per landed file family, conformed entity register per business concept, generated landing registry demoted to reconciliation input) with authority marked per section as agreed / external specification / O2-owned, or no artefact at all; grounded on findings F1, F2, F4, F6 and F8; the format specification is a separate downstream artefact modelled on use-case-format.md, not part of this ADR; blocked on TASK-092 | origin: session:2026-08-04 "data-sources DKDK discovery" | ref: discovery note AD-1
+- TASK-095: Write AD-2 as an ADR — does ADR-010 principle 9 extend to person identity | target: desktop-chat/outputs/2606-o2-architecture-design/ | scope: ADR-010 principle 9 assigns id bridging to the middleware and explicitly rejected O2 holding the link in silver or Lakebase; both premises behind it are unsettled for person identity, whether the case is rare (unknown, needs counting across briefs) and whether the bridge carries business meaning (contested judgement, needs a ruling from whoever owns the definition); options are principle 9 holds as written, principle 9 narrows to technical record links with O2 owning a surrogate plus mapping table and ADR-010 superseded in part, or person identity is descoped until the middleware provides the bridge; the second option makes O2 a producer of authoritative master data with stewardship, correction workflow and audit, which is a scope change; interim rule already recorded in the ADR-010 amendment; blocked on TASK-092 and TASK-093 | origin: session:2026-08-04 "data-sources DKDK discovery" | ref: discovery note AD-2, F5, F9
+- TASK-096: Write AD-3 as an ADR — control model for silver | target: desktop-chat/outputs/2606-o2-architecture-design/ | scope: decide what prevents a cross-source join on an entity with no resolved key; options are mandatory generation from the artefact (bundle metadata for resources, metadata-loaded dataset definitions and expectations in the pipeline source), hand-authored silver with post-hoc lineage alerts, or the layered model with generation as the control, a validation pipeline as the runtime gate through job task dependency, data profiling as standing measurement and lineage as backstop; the hand-authored option cannot prevent anything because lineage is emitted at read and write time, established by verification not preference; platform mechanics already verified against six Microsoft Learn pages and recorded in the discovery note, do not re-derive; carry the limits, notably that expectations are row-level only with no cross-table subqueries, that a validation table does not gate its downstream tables, and that metadata-loaded expectations are unsupported in SQL; blocked on TASK-094 | origin: session:2026-08-04 "data-sources DKDK discovery" | ref: discovery note AD-3 and Verified platform mechanics
+- TASK-097: Verify A3 — ADR-010 and ADR-009 conflict on source file removal | target: desktop-chat/outputs/2606-o2-architecture-design/ | scope: ADR-010 decision 2 states the middleware removes the files once they are read; ADR-009's standing checks require manual source cleanup because cleanSource is unsupported on the SharePoint read path; the two may describe different actors, in which case the wording needs tightening rather than a decision; must be settled before the SharePoint phase goes live | origin: session:2026-08-04 "data-sources DKDK discovery" | ref: discovery note F10, ADR-010 amendment A3
+- TASK-098: Add the feed-versus-entity citation rule to use-case-format.md | target: desktop-chat/outputs/2607-o2-requirements/use-case-format.md | scope: a brief cites conformed entities for the Data availability and Data quality drivers, and cites feeds for the Feed onboarding effort driver; the two lookups are different, which is why one artefact could not serve both; also record that the coverage question belongs on the use-case side because quality is segment-scoped rather than feed-scoped, so a France-only use case rates differently from a pan-European one; small edit with a version bump on use-case-format; soft-blocked on TASK-094 since the artefact names must be settled first | origin: session:2026-08-04 "data-sources DKDK discovery" | ref: discovery note F4, F6
+- TASK-099: Take the ADR-010 amendment to its five decision-makers | target: desktop-chat/outputs/2606-o2-architecture-design/ADR-010-middleware-o2-boundary.md | scope: the 2026-08-04 amendment is marked proposed and not agreed; the record was decided on 16 July by Arnaud, Cyril, Pascal, Chirojean and Gilles, so recording principle 3 as deferred and logging A1, A2 and A3 needs their review; nothing in the amendment edits or reverses the agreed text, by design; outcome is either acceptance of the amendment or a revision of principle 3 by the five | origin: session:2026-08-04 "data-sources DKDK discovery" | ref: ADR-010 v1.7
+
+---
+
+## 🟡 In progress
+
+*None.*
+
+---
+
+## ✅ Done
+
+*None.*
+
+<!--
+Version: 1.0 | Last Updated: 2026-08-04 | Status: Draft
+-->
