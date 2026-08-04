@@ -110,10 +110,10 @@ Three consequences:
   a pan-European one, so the coverage question has to be asked on the use-case side and
   answered against the provenance map on the feed side.
 
-### F5. Identity is the binding constraint
+### F5. Identity is the binding constraint, and it is already assigned elsewhere
 
-There is no business join key across sources. The only candidate is a UID, which is an IS
-user identifier.
+There is no business field linking records for the same person across producers. The only
+candidate is a UID, which is an IS user identifier.
 
 That is an identity-provider account, not an HR record, which produces four problems:
 
@@ -127,10 +127,13 @@ That is an identity-provider account, not an HR record, which produces four prob
 - It is the third dependency on IS with no contract behind it, after payload specification
   and the canonicalisation deferral.
 
-Consequence: joining on the natural key is not available. The standard answer is a
-surrogate key in silver plus a mapping table with validity dates and a manual resolution
-path for the population the UID misses. That mapping table is authoritative data created
-by O2, which is a scope change. See AD-2.
+The decision is not open, or not entirely. ADR-010 principle 9 already assigns id bridging
+to the middleware: where a use case must relate two SaaS records by their keys and no
+business field links them, the middleware carries an internal SQLI id, and the ADR
+explicitly considered and rejected O2 holding that link in silver or in Lakebase. So the
+agreed default is middleware-owned bridging, and O2 holding a mapping table would reverse a
+decision taken on 16 July by five named people. Under `use-case-format.md`, the architecture
+principles gate would fail any use case that contradicts it. See AD-2.
 
 > ⚠️ Unverified. No payload has been read. Whether the UID is present in the APP files,
 > the Whoz files or both, and what population it covers, is unknown. Reading one sample
@@ -156,20 +159,52 @@ This also splits the citation path into `use-case-format.md`. A brief cites enti
 data availability and data quality, and cites feeds for feed-onboarding effort. One
 artefact could not serve both lookups.
 
-### F7. ADR-010 misstates the boundary
+### F7. ADR-010 states the boundary as canonical in the present tense, and it is deferred
 
-ADR-010 states the boundary as canonical SQLI data contracts, one way inbound. The
-contracts are real and inbound, but they are not canonical, and will not be until further
-notice (F3). Any agent reading ADR-010 today will assume conformed data arrives.
+ADR-010 principle 3 and decision 1 state that the middleware lands canonical SQLI data
+contracts. Read closely, the ADR's canonical means data shaped to a SQLI-defined format
+rather than a SaaS proprietary format, for tool independence. That is a narrower and
+different claim from the cross-application semantic model IS has deferred.
 
-Amendment required. The deferral should be recorded as a dated assumption with a review
-trigger rather than left as ambient knowledge.
+Both senses are nonetheless deferred today, because payloads are specified per file per
+source application (F2, F3). The defect in ADR-010 is therefore tense and status, not
+intent: an agreed target written as current state.
+
+Amended on 2026-08-04 as a dated amendment section, proposed and not agreed, leaving the
+five-party text intact. The amendment records principle 3 as deferred, separates the two
+senses of canonical, logs the open questions below, and sets the appointment of an owner
+for the cross-application model as the revalidation trigger.
 
 ### F8. The producer column in the source file is wrong for `perso_*`
 
 Rows currently read `ADP & APP if ≠ FR`. Producer is APP for all of them. The ADP and
 manual-entry detail is upstream provenance and belongs in a provenance field (F4). The fix
 lands with the format rather than as a patch to the generated table.
+
+### F9. Middleware anonymisation may already destroy the only candidate join key
+
+Surfaced by reading ADR-010 in full. Decision 6 states that personal data is filtered at
+the middleware, and that encryption and anonymisation happen before landing. The only
+candidate cross-producer key is an IS user identifier, which is personal data by
+construction.
+
+Nobody has checked whether the two collide. If filtering or anonymisation touches the UID,
+no cross-source person entity is buildable by any route, including the middleware bridging
+route in ADR-010 principle 9. That makes this the first question to answer, ahead of any
+ruling on ownership.
+
+Logged as A1 in the ADR-010 amendment.
+
+### F10. ADR-010 and ADR-009 read as conflicting on source file removal
+
+ADR-010 decision 2 states that the middleware removes the files once they are read.
+ADR-009's standing checks require manual source cleanup because `cleanSource` is
+unsupported on the SharePoint read path.
+
+The two may describe different actors, in which case the wording needs tightening rather
+than a decision. Either way it needs verifying before the SharePoint phase goes live.
+
+Logged as A3 in the ADR-010 amendment.
 
 ---
 
@@ -182,6 +217,10 @@ Recorded because the corrections are how the method works, not noise around it.
 | The `ADP & APP if ≠ FR` note is a conforming rule squeezed into a producer column | Producer is always APP. ADP is upstream of APP for France, manual entry elsewhere | Segment-scoped provenance (F4), a better field than the one it replaced |
 | `perso_workers` proves feeds and entities must be separate | It does not. It is a clean single-feed case | The argument re-grounded on the APP-versus-Whoz people overlap and the EPM-versus-APP dimension overlap (F6) |
 | Canonicalisation is blocked on middleware capacity | Middleware implements, IS specifies, and IS has deferred the design | Reclassified from a capacity problem to a missing-owner problem (F3) |
+| ADR-010 misstates the boundary as canonical | The ADR's canonical means SQLI-defined format rather than SaaS proprietary format, which is not the semantic model IS deferred. The defect is tense and status | A narrower, defensible amendment instead of a rewrite of agreed text (F7) |
+| Person identity is foundational rather than rare, so ADR-010 principle 9 does not fit | Whether the case is rare is unknown. One candidate use case neither proves nor disproves it | Demand became something to count across briefs instead of an assumption to argue from (AD-2) |
+| Lineage lets CI reject a pipeline that joins on a blocked entity | Lineage is emitted at read and write time, so it cannot reject anything | Prevention and detection separated into different layers (AD-3) |
+| A validation table can stop downstream work | It does not gate its downstream tables. Validation and downstream must be separate pipelines with a job task dependency | The runtime gate placed at job level rather than inside a pipeline (AD-3) |
 
 ---
 
@@ -189,16 +228,6 @@ Recorded because the corrections are how the method works, not noise around it.
 
 Checked against Microsoft Learn on 2026-08-04. These constrain AD-3 and should not be
 re-derived.
-
-Two claims made during the session were wrong:
-
-- Lineage cannot reject anything. It is emitted at read and write time, so it is post-hoc
-  by construction. Prevention has to come from generation or a static pre-deploy check.
-- A validation table does not gate its downstream tables. Reading one from another dataset
-  does not make that dataset wait. To stop downstream work, validation and downstream must
-  be separate pipelines with the downstream task depending on the validation task in a job.
-
-Mechanics that hold:
 
 | Capability | What the documentation supports | Limits to carry |
 |:-----------|:-------------------------------|:----------------|
@@ -236,22 +265,57 @@ Options:
 
 Grounding: F1, F2, F4, F6, F8.
 
-### AD-2 (proposed). Does O2 become a producer of authoritative identity data
+Sources:
 
-Question: who owns cross-source identity resolution.
+- [o2-data-sources.md](o2-data-sources.md) v1.3 and `o2_data_sources.sh`, the inventory and its generator.
+- [use-case-format.md](use-case-format.md) v1.1, for the citation path a brief needs.
+- ADR-001 medallion layer ownership, for the bronze, silver and gold boundaries the artefacts must match.
+- ADR-003 repository strategy, for the `ingestion/<producer>/`, `silver/<subject_area>/` and `use_cases/<use_case>/` layout the artefacts feed.
+- This session, for the three-layer authority model. No external documentation bears on it.
+
+### AD-2 (proposed). Does ADR-010 principle 9 extend to person identity
+
+Question: ADR-010 principle 9 assigns id bridging to the middleware. Does that hold for
+person identity across APP and Whoz, or is person identity a business entity outside its
+scope.
+
+What is established: no business field links an APP record and a Whoz record for the same
+person, and the only candidate is an IS user identifier.
+
+Principle 9 rests on two premises, and neither is settled for this case:
+
+| Premise | Evidence state | What would settle it |
+|:--------|:---------------|:---------------------|
+| The case is rare | Unknown. One candidate use case needs a cross-producer person, and demand has not been counted in either direction | Count, across the use-case pipeline, how many candidate use cases must relate records from two producers where no business field links them. A brief's placement and solution sketch already reveal this |
+| The bridge is a technical relationship with no business meaning | Contested judgement, not a fact. Arguable in both directions for an identity spanning payroll, staffing and delivery | A ruling by whoever owns the definition. That owner is itself an open item |
 
 Options:
 
-- O2 maintains a UID-to-surrogate mapping table with validity dates, stewardship, a
-  correction workflow and audit. O2 starts producing master data.
-- Push identity resolution back to IS as a prerequisite for cross-source entities.
-- No cross-source person entity. Everything stays source-scoped and use cases are limited
-  to single-producer questions.
+- Principle 9 holds as written. The middleware carries a SQLI person id bridging APP and
+  Whoz, and O2 never resolves identity. Cost: a new middleware requirement specified by IS,
+  on IS lead time, with the cross-source person entity blocked until it lands.
+- Principle 9 is narrowed to technical record-to-record links, and person identity is
+  excluded as a business entity. O2 owns a surrogate key plus mapping table in silver, and
+  ADR-010 is superseded in part. Cost: O2 becomes a producer of authoritative identity data,
+  with stewardship, a correction workflow and audit.
+- Principle 9 holds and person identity is descoped. No cross-source person entity until the
+  middleware provides the bridge, and use cases stay within a single producer.
 
-Grounding: F5, and the authority axis already present in ADR-001.
+Interim rule, decidable now and prejudging none of the three: no cross-source person entity
+is built until A1 is answered and demand has been counted across several briefs. Until then
+use cases stay within a single producer, and `key_strategy` on any person entity reads
+blocked, naming both reasons. Leaving the interim rule unstated is the failure mode, because
+delivery work would settle the question by accident.
 
-This is the decision that changes what O2 is, and delivery work will force it accidentally
-if it is left open.
+Grounding: F5, F9.
+
+Sources:
+
+- ADR-010 middleware and O2 boundary, principle 9 (id bridging), decision 6 (personal-data filtering and anonymisation), and the 2026-08-04 amendment sections A1, A2 and A3.
+- ADR-001 medallion layer ownership, for the authoritative versus derived axis this decision turns on.
+- [use-case-format.md](use-case-format.md) v1.1, for the architecture principles gate that a contradicting use case would fail.
+- [FRAMING.md](FRAMING.md), for the talent-request-to-deployment workflow that raises the cross-producer person requirement.
+- This session, for the UID being the only candidate key. No external documentation bears on it, and no payload has been read.
 
 ### AD-3 (proposed). Control model for silver
 
@@ -267,8 +331,24 @@ Options:
   task dependency, data profiling as standing measurement, lineage as the backstop that
   catches hand-written bypasses.
 
-Grounding: the verified mechanics above. The second option cannot prevent anything, which
-was established by verification rather than by preference.
+The second option cannot prevent anything. That was established by verification rather than
+by preference.
+
+Grounding: the verified platform mechanics above.
+
+Sources, all fetched and verified 2026-08-04:
+
+- Manage data quality with pipeline expectations. https://learn.microsoft.com/en-us/azure/databricks/ldp/expectations
+- Expectation recommendations and advanced patterns. https://learn.microsoft.com/en-us/azure/databricks/ldp/expectation-patterns
+- Lineage in Unity Catalog. https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/data-lineage
+- Lineage system tables reference. https://learn.microsoft.com/en-us/azure/databricks/admin/system-tables/lineage
+- Bundle configuration in Python. https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/python
+- Data profiling. https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/data-quality-monitoring/data-profiling/
+
+Internal sources:
+
+- ADR-001 medallion layer ownership, for gold reading from silver only.
+- ADR-002 deployment unit and ADR-007 pipeline code, referenced through ADR-INDEX rather than read in full this session. ADR-007's Python-pipelines choice is what makes the metadata-loaded expectations pattern available, since it is unsupported in SQL.
 
 ---
 
@@ -287,9 +367,9 @@ fields. AD-2 and the format specification both depend on it.
 
 | Artefact | Action |
 |:---------|:-------|
-| ADR-010 | Amend. The boundary is not canonical. Record the deferral as a dated assumption with a review trigger |
+| ADR-010 | Amended 2026-08-04 to v1.7. Amendment section is proposed, not agreed by the five decision-makers of 16 July, and carries A1, A2, A3 plus the interim rule for person identity |
 | ADR-001 | No change. Conforming in silver is confirmed as the right placement, and the authority axis it defines is what AD-2 turns on |
-| ADR-009 | No change. Landing the whole record as a single VARIANT is the correct response to a payload O2 does not control |
+| ADR-009 | Verify against ADR-010 decision 2 on file removal (F10). No change to the VARIANT landing choice, which is the correct response to a payload O2 does not control |
 | `o2-data-sources.md` | Demote to reconciliation input. Fix the `perso_*` producer column when the format lands |
 | `use-case-format.md` | Add the citation rule: entities for data availability and data quality, feeds for feed-onboarding effort |
 
@@ -311,6 +391,10 @@ fields. AD-2 and the format specification both depend on it.
 > or in the platform monorepo alongside what they generate, and what the promotion path
 > between the two is.
 
+> 🔲 To be defined. How many candidate use cases need to relate records from two producers
+> with no linking business field. Countable from briefs as they accumulate, and it settles
+> the first premise of AD-2.
+
 ---
 
 ## Sources
@@ -324,6 +408,11 @@ Fetched and verified 2026-08-04.
 - Bundle configuration in Python. https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/python
 - Data profiling. https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/data-quality-monitoring/data-profiling/
 
+Read in full this session: ADR-001, ADR-003, ADR-009, ADR-010, ADR-INDEX, `FRAMING.md`,
+`use-case-format.md`, `o2-data-sources.md`, `o2_data_sources.sh`.
+
+Referenced through ADR-INDEX and not read in full: ADR-002, ADR-004 to ADR-008.
+
 Consulted and not adjudicative. `big-book-data-engineering.pdf` and
 `big-book-of-data-engineering-2nd-edition-final.pdf` were extracted and searched. Across
 roughly 65,000 words there are no occurrences of data contract, canonical, surrogate,
@@ -333,5 +422,5 @@ documentation above. Both are practitioner and blog collections, so they neither
 contradict nor extend the claims at stake.
 
 <!--
-Version: 1.0 | Last Updated: 2026-08-04 | Status: Draft
+Version: 1.1 | Last Updated: 2026-08-04 | Status: Draft
 -->
