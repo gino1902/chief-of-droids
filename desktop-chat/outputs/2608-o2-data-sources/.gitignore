@@ -1,0 +1,10 @@
+# Landing area for SharePoint payload exports, local inspection only.
+#
+# Everything here is ignored on purpose. These files carry personal data
+# (workers, leave, CRA, Whoz profiles) and must never enter git history,
+# where removing them needs a history rewrite rather than a delete.
+#
+# Only field paths, types and counts derived from these files belong in the
+# repo, in the payload inventory under 2607-o2-requirements/.
+*
+!.gitignore
