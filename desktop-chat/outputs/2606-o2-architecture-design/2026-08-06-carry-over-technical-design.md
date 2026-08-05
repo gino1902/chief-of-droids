@@ -34,15 +34,24 @@ Nine of the ten records are Draft. Only ADR-008 is Accepted. ADR-009 is Draft an
 an unverified composition. ADR-010 carries an amendment marked proposed and not agreed by its
 five decision-makers.
 
-**2. Four records still disagree with each other.** State as of 2026-08-06:
+**2. The consistency sweep is complete.** Closed 2026-08-06, after this note was first written.
+Five records were corrected, and the corrections changed two things that affect the tree:
 
-| Record | Status | What is wrong |
-|:-------|:-------|:--------------|
-| ADR-003 | Draft, revised 2026-08-06 | Corrected. CI clause removed, vendor recommendation quoted, sharing mechanism stated, directory set grounded in active feeds |
-| ADR-002 | Draft | Says workloads are "deployed through the Databricks CLI in Azure DevOps". This is now the only home of the stale CI clause and needs GitLab |
-| ADR-007 | Draft | Specifies a built wheel under `libraries`. That is the job pattern. Pipelines use an editable environment install, and ADR-005 puts all logic in pipelines |
-| ADR-006 | Draft | Validation says "The Azure DevOps prod stage has a manual approval gate". Its `common/variables.yml` consequence is confirmed correct by the documentation |
-| ADR-INDEX | Draft | Asserts ADR-002 and ADR-003 set the shape every record assumes, does not record the ADR-003 revision, and parks the `<name>.pipeline.yml` and `<name>.job.yml` naming convention inside ADR-003 instead of giving it a record |
+| Record | Outcome |
+|:-------|:--------|
+| ADR-003 | Retained rather than deprecated. CI clause removed, vendor recommendation quoted, sharing mechanism stated, directory set grounded in active feeds |
+| ADR-002 | Sole owner of the CI platform choice, now GitLab. Records that GitLab is not among the integrations Databricks documents, so the wiring is unpaved, and that authentication should use OAuth token federation rather than a stored token |
+| ADR-007 | Delivery mechanism corrected to an editable install declared in `environment.dependencies`. **No wheel is built**, since jobs only orchestrate. Aggregate quality constraints route to a validation dataset plus a job dependency |
+| ADR-006 | Approval gate in GitLab terms, `common/variables.yml` and the permissions block confirmed against the documented patterns, `/Shared` production path downgraded to unverified |
+| ADR-INDEX | Sweep recorded, statuses and revision dates tabulated, the grounding rule for the tree stated |
+
+Two consequences for the skeleton this note hands over. There is no wheel build to scaffold, so
+`artifacts` stays out of the bundle configuration until a job gains a Python task. And any gating
+quality check needs a second pipeline plus a job dependency rather than an expectation, which
+changes the resource count per bundle.
+
+Still true: every record remains Draft except ADR-008, so the skill's locked-ADR precondition is
+still unmet. The sweep made them consistent, not locked.
 
 **3. The skill is not reachable from this repository.** Only `bootstrapping-project` is
 deployed to `chief-of-droids/.claude/skills/`. `writing-technical-design` lives in

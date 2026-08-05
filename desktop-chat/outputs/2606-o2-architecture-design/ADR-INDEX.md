@@ -3,78 +3,128 @@
 | Field | Value |
 |:------|:------|
 | Date | 2026-07-09 |
-| Status | Draft |
-| Scope | Data engineering platform on Azure Databricks with Azure DevOps CI/CD |
+| Revised | 2026-08-06, consistency sweep |
+| Scope | Data engineering platform on Azure Databricks with GitLab CI/CD |
 
 This is a standalone decision log for the Databricks platform, numbered from ADR-001.
 It is independent of the unrelated ADR-001 in the repository's `docs/decisions/`.
+
+> ⚠️ Nothing here is locked. Nine of the ten records are Draft, so none of them may be
+> treated as a constraint that cannot move. `writing-technical-design` requires a locked
+> set, which is why the tree has not been generated. See
+> [the carry-over note](2026-08-06-carry-over-technical-design.md).
 
 ---
 
 ## Records
 
-| ADR | Decision | Status |
-|:----|:---------|:-------|
-| [ADR-001](ADR-001-medallion-layer-ownership.md) | Medallion layer roles and ownership: bronze per producer, silver cross-source conforming, gold per use case | Draft |
-| [ADR-002](ADR-002-deployment-unit-databricks-asset-bundles.md) | Databricks Asset Bundles as the deployment unit, over Terraform | Draft |
-| [ADR-003](ADR-003-repository-strategy-monorepo.md) | Single monorepo with independently deployable bundles and a shared library | Draft |
-| [ADR-004](ADR-004-compute-serverless.md) | Serverless compute for all pipelines and jobs | Draft |
-| [ADR-005](ADR-005-orchestration-declarative-pipelines-jobs.md) | Declarative pipelines for logic, jobs to orchestrate, bronze split from transform | Draft |
-| [ADR-006](ADR-006-environments-dev-staging-prod.md) | Dev, staging and prod on three workspaces, with per-user dev isolation | Draft |
-| [ADR-007](ADR-007-pipeline-code-python-wheel-dataset-types.md) | Python pipelines over a tested wheel, dataset types fixed per layer | Draft |
-| [ADR-008](ADR-008-adls-bronze-ingestion.md) | ADLS Gen2 to bronze via Auto Loader with managed file events, file-arrival trigger plus availableNow drain | Accepted |
-| [ADR-009](ADR-009-sharepoint-bronze-ingestion.md) | SharePoint to bronze via the standard connector, scheduled drain, as a temporary bridge to ADR-008 | Draft |
-| [ADR-010](ADR-010-middleware-o2-boundary.md) | Middleware and O2 boundary: canonical SQLI data contracts, one-way inbound | Draft |
+| ADR | Decision | Status | Revised |
+|:----|:---------|:-------|:--------|
+| [ADR-001](ADR-001-medallion-layer-ownership.md) | Medallion layer roles and ownership: bronze per producer, silver cross-source conforming, gold per use case | Draft | |
+| [ADR-002](ADR-002-deployment-unit-databricks-asset-bundles.md) | Databricks Asset Bundles as the deployment unit, over Terraform, with GitLab as the CI platform | Draft | 2026-08-06 |
+| [ADR-003](ADR-003-repository-strategy-monorepo.md) | Single repository with independently deployable bundles and a shared folder | Draft | 2026-08-06 |
+| [ADR-004](ADR-004-compute-serverless.md) | Serverless compute for all pipelines and jobs | Draft | |
+| [ADR-005](ADR-005-orchestration-declarative-pipelines-jobs.md) | Declarative pipelines for logic, jobs to orchestrate, bronze split from transform | Draft | |
+| [ADR-006](ADR-006-environments-dev-staging-prod.md) | Dev, staging and prod on three workspaces, with per-user dev isolation | Draft | 2026-08-06 |
+| [ADR-007](ADR-007-pipeline-code-python-wheel-dataset-types.md) | Python pipelines over a tested package, dataset types fixed per layer | Draft | 2026-08-06 |
+| [ADR-008](ADR-008-adls-bronze-ingestion.md) | ADLS Gen2 to bronze via Auto Loader with managed file events, file-arrival trigger plus availableNow drain | Accepted | |
+| [ADR-009](ADR-009-sharepoint-bronze-ingestion.md) | SharePoint to bronze via the standard connector, scheduled drain, as a temporary bridge to ADR-008 | Draft, blocked | |
+| [ADR-010](ADR-010-middleware-o2-boundary.md) | Middleware and O2 boundary: SQLI data contracts, one-way inbound | Draft, amended | 2026-08-04 |
+
+---
+
+## The 2026-08-06 consistency sweep
+
+Four records were corrected after the CI toolchain moved to GitLab and after the bundle
+sharing mechanism was verified against the documentation. What changed:
+
+| Record | Correction |
+|:-------|:-----------|
+| ADR-003 | Was briefly treated as deprecated because it named Azure DevOps pipeline files in its layout consequences. That was wrong in scope and discarded a decision Databricks explicitly recommends. The record is retained, the CI clause is removed, and the mechanism by which shared code reaches a bundle is now stated |
+| ADR-002 | Takes sole ownership of the CI platform choice, now GitLab. The deployment-unit half is vendor-recommended; the CI-platform half is unpaved, because Databricks documents Azure DevOps, GitHub Actions and Jenkins but not GitLab |
+| ADR-007 | The delivery mechanism was wrong. A built wheel under `libraries` is the job pattern; pipelines take an editable install declared in `environment.dependencies`. Since jobs only orchestrate, no wheel is consumed at all. Aggregate quality constraints were also impossible as written and now route to a validation dataset plus a job dependency |
+| ADR-006 | Approval gate expressed in GitLab terms, branching language aligned, `common/variables.yml` and the permissions block confirmed against the documented patterns, and the `/Shared` production path downgraded to unverified |
+
+Two lessons from the sweep worth keeping:
+
+A record that mentions a neighbouring concern in passing will be treated as owning it. ADR-003's
+incidental CI mention nearly cost a vendor-recommended decision. One concern per record, and
+cross-reference rather than restate.
+
+Records can agree in prose and disagree in mechanism. ADR-003 and ADR-007 both described shared
+code reaching a bundle and read as compatible while specifying different things. Naming the
+mechanism explicitly is what surfaced it.
 
 ---
 
 ## How the records relate
 
 ADR-001 sets the three-layer ownership model (bronze per producer, silver as the shared
-cross-source conforming layer, gold per use case), and ADR-007 makes the silver layer
-real by giving its conforming logic a tested package to live in. ADR-002 and ADR-003 set
-the tooling and repository shape that every other record assumes. ADR-004, ADR-005 and
-ADR-007 together define how workloads are built and run. ADR-006 defines where they run
-and how they are promoted.
+cross-source conforming layer, gold per use case), and ADR-007 makes the silver layer real by
+giving its conforming logic a tested package to live in. ADR-002 and ADR-003 set the tooling and
+repository shape that every other record assumes, and both were corrected in the sweep above, so
+read their revision notes before relying on them. ADR-004, ADR-005 and ADR-007 together define
+how workloads are built and run. ADR-006 defines where they run and how they are promoted.
 
-Two layout conventions are embedded rather than given their own records: resource file
-naming (`<name>.pipeline.yml`, `<name>.job.yml`) sits in ADR-003, and the per-bundle
-permissions model with production hardening sits in ADR-006.
+Two layout conventions are embedded rather than given their own records: resource file naming
+(`<name>.pipeline.yml`, `<name>.job.yml`) sits in ADR-003, and the per-bundle permissions model
+with production hardening sits in ADR-006. Both would be easier to find as their own records;
+that is a tidy-up, not a decision.
 
-ADR-008 and ADR-009 are source-specific ingestion decisions. Each is a concise record
-that references its full locked design document in this folder rather than duplicating
-it. ADR-009 is a temporary bridge that retires into ADR-008 when the source repoints to
-ADLS Gen2.
+ADR-008 and ADR-009 are source-specific ingestion decisions. Each is a concise record that
+references its full locked design document in this folder rather than duplicating it. ADR-009 is
+a temporary bridge that retires into ADR-008 when the source repoints to ADLS Gen2.
 
-ADR-010 consolidates the middleware and O2 boundary. It grounds on ADR-001 (medallion
-ownership) and ADR-009 (the implemented SharePoint-to-bronze pattern), and states the
-boundary as canonical SQLI data contracts that O2 subscribes to.
+ADR-010 consolidates the middleware and O2 boundary. It grounds on ADR-001 (medallion ownership)
+and ADR-009 (the implemented SharePoint-to-bronze pattern). Its 2026-08-04 amendment records that
+the contracts are not canonical, that canonicalisation is deferred with no owner, and three open
+questions including whether middleware anonymisation destroys the only cross-producer join key.
+The amendment is proposed and not agreed by the record's five decision-makers.
 
 ---
 
-## Sources
+## What grounds the tree
 
-Each record lists, in its own Sources section, only the documents behind its options
-and decision. The documents used across the set are:
-
-- Best practices for Lakeflow Spark Declarative Pipelines — https://learn.microsoft.com/en-us/azure/databricks/ldp/best-practices
-- Best practices and recommended CI/CD workflows on Databricks — https://learn.microsoft.com/en-us/azure/databricks/dev-tools/ci-cd/best-practices
-- Sharing bundles and bundle files — https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/sharing
-- Declarative Automation Bundles project templates — https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/templates
-- Developer best practices on Databricks — https://docs.databricks.com/aws/en/developers/best-practices
+The repository layout is a projection of the feed configuration, not of the taxonomy. A bronze
+bundle exists per producer with at least one active feed, a silver bundle per subject area with
+at least one active feed, and a gold bundle per use case with a go decision. On the 2026-08-06
+configuration that is two bronze, five silver and zero gold, against a taxonomy of 17 subdomains.
+Inputs are [o2-data-sources](../2607-o2-requirements/o2-data-sources.md) and
+[domain-taxonomy](../2607-o2-requirements/domain-taxonomy.md).
 
 ---
 
 ## Open items before lock-in
 
-- `Task` field is TBD on every record, to be filled once ticketed.
-- Decision-maker is a placeholder (Gino), and the consulted parties vary by record and
-  need confirming.
-- Status is Draft throughout. Moving to Decided is the lock-in step.
+- Status is Draft on nine of ten records. Moving to Accepted is the lock-in step, and it is the
+  precondition for generating the tree.
+- `Task` is TBD on every record, to be filled once ticketed.
+- Decision-maker is a placeholder (Gino) on most records, and the consulted parties vary and need
+  confirming. ADR-010 is the exception, carrying five named decision-makers, which is why its
+  amendment needs their review rather than an edit.
+- A slug rule for subject-area names to Python module names does not exist. `finance-fa&c` cannot
+  become a module or bundle name as written. This blocks silver-layer generation.
+- ADR-007's title still says "python wheel" while the record now says no wheel is built. Renaming
+  a record is a bigger move than a sweep.
+- ADR-009 remains blocked on one unverified read composition.
+- Lint tooling is unsettled: Databricks names Pylint with their own plugin, `bootstrapping-project`
+  sets ruff for a data goal and flags its own claim as unverified. Choose deliberately.
 
 ---
 
-| Field | Value |
-|:------|:------|
-| Version | 0.3 (draft) |
-| Last Updated | 2026-07-17 |
+## Sources
+
+Records list their own sources with verification dates. The documents used across the set:
+
+| Source | Verified |
+|:-------|:---------|
+| [Sharing bundles and bundle files](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/sharing) | 2026-08-06 |
+| [Bundle library dependencies](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/library-dependencies) | 2026-08-06 |
+| [Use a private artifact in a bundle](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/artifact-private) | 2026-08-06 |
+| [CI/CD on Azure Databricks](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/ci-cd/) | 2026-08-06 |
+| [Best practices for Lakeflow Spark Declarative Pipelines](https://learn.microsoft.com/en-us/azure/databricks/ldp/best-practices) | 2026-07-09 |
+| [Best practices and recommended CI/CD workflows on Databricks](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/ci-cd/best-practices) | 2026-07-09 |
+| [Declarative Automation Bundles project templates](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/templates) | 2026-07-09 |
+| [Developer best practices on Databricks](https://docs.databricks.com/aws/en/developers/best-practices) | 2026-07-09 |
+
+Version history is git. This index carries no version field.
