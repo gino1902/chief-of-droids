@@ -20,9 +20,9 @@ Feed configuration: one row per declared feed, filenames as patterns rather than
 | AAAA-MM-DD__others_whoz__skill_report.json | active | hr-talents | daily | Whoz | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/others/whoz__skill_report/ | HTTPS |
 | AAAA-MM-DD__others_whoz__talent_report.json | active | hr-talents | daily | Whoz | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/others/whoz__talent_report/ | HTTPS |
 | AAAA-MM-DD__others_whoz__user_report.json | active | hr-talents | daily | Whoz | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/others/whoz__user_report/ | HTTPS |
-| AAAA-MM-DD__perso_collab_status_report.json | active | hr-administration | daily | ADP | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/perso/collab_status_report/ | HTTPS |
-| AAAA-MM-DD__perso_leave_report.json | active | hr-administration | daily | ADP | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/perso/leave_report/ | HTTPS |
-| AAAA-MM-DD__perso_workers.json | active | hr-administration | daily | ADP | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/perso/workers/ | HTTPS |
+| AAAA-MM-DD__perso_collab_status_report.json | active | hr-administration | daily | APP | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/perso/collab_status_report/ | HTTPS |
+| AAAA-MM-DD__perso_leave_report.json | active | hr-administration | daily | APP | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/perso/leave_report/ | HTTPS |
+| AAAA-MM-DD__perso_workers.json | active | hr-administration | daily | APP | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/perso/workers/ | HTTPS |
 | TBD | planned | hr-recruitment | TBD | SmartRecruiters | TBD | TBD | TBD |
 | AAAA-MM-DD__project_ca_collab_report.json | active | finance-fa&c | daily | APP | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/project/ca_collab_report/ | HTTPS |
 | AAAA-MM-DD__project_financial_report.json | active | finance-fa&c | daily | APP | APP | https://sqli468.sharepoint.com/sites/APP_FileShare/Shared Documents/SQLI-INTERNAL/app-reports/project/financial_report/ | HTTPS |

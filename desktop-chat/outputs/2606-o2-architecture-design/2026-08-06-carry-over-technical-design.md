@@ -175,7 +175,21 @@ all of them:
 The documented bundle example uses underscores for both folder and bundle name (`job_bundle`,
 `pipeline_bundle`), so this also matches the vendor shape.
 
-**The five slugs.**
+**The slug is produced by a transform and stored in a column.** Decided 2026-08-06. The transform
+is the authority, so one generator computes every slug and no two consumers can disagree. The
+column is its materialised result, so consumers read a value rather than re-implementing the rule.
+
+The transform, in order:
+
+1. Trim and lowercase.
+2. Replace hyphens and spaces with underscores.
+3. **Delete** every remaining character that is not `a-z`, `0-9` or `_`. Delete, not replace. This
+   step is the whole reason the rule works: replacing would turn `finance-fa&c` into
+   `finance_fa_c`, whereas deleting gives `finance_fac`.
+4. Collapse repeated underscores, then strip leading and trailing ones.
+
+Verified 2026-08-06 against all 17 subdomains: every result is a valid Python identifier, and the
+five active ones reproduce the slugs chosen by hand, so no exception list is needed.
 
 | Display name | Slug |
 |:-------------|:-----|
@@ -187,6 +201,19 @@ The documented bundle example uses underscores for both folder and bundle name (
 
 `finance_fac` is an initialism where the other four are readable words, so it is the one name a
 newcomer has to ask about. Accepted deliberately.
+
+**Where the column lives is still open, and it matters.** The taxonomy workbook is hand-edited,
+so a typed slug column would be overwritten or left stale by the next human save. Three shapes:
+
+| Shape | Drift risk | Visible in Excel |
+|:------|:-----------|:-----------------|
+| Column exists only in the generated YAML and markdown views | None, the workbook stays purely human-authored | No |
+| Column in the workbook as an Excel formula | None, it recomputes itself | Yes |
+| Column in the workbook as typed values rewritten by CI | Real, between edits | Yes |
+
+Prefer the first, or the second if an editor needs to see the slug while working. Avoid the third.
+Note that choosing the formula shape requires `xlsx_to_md.py` to read a formula cell's cached
+value rather than its formula text.
 
 **Renames are breaking.** Unity Catalog lineage is not preserved across renames of catalogs,
 schemas, tables, views or columns, so changing a slug destroys lineage history rather than

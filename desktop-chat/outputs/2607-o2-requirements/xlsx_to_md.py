@@ -45,12 +45,21 @@ for row in ws.iter(f"{NS}row"):
         m = re.match(r"([A-Z]+)", c.get("r") or "A")
         col = m.group(1)
         v, isn = c.find(f"{NS}v"), c.find(f"{NS}is")
+        # A formula cell carries both <f> and its cached <v>. Always take the cached
+        # value: emitting the formula text would put "=LOWER(SUBSTITUTE(...))" into the
+        # markdown instead of the result. Relevant if the slug column is a formula.
         if c.get("t") == "s" and v is not None and v.text:
             val = shared[int(v.text)]
         elif isn is not None:
             val = "".join(x.text or "" for x in isn.iter(f"{NS}t"))
+        elif v is not None and v.text:
+            val = v.text
+        elif c.find(f"{NS}f") is not None:
+            # Formula with no cached value: Excel has never evaluated it. Refuse to
+            # guess, and make the gap visible rather than emitting an empty cell.
+            val = "<uncached formula>"
         else:
-            val = v.text if v is not None and v.text else ""
+            val = ""
         if val.strip():
             cells[col] = val.strip()
     if cells:
