@@ -336,6 +336,25 @@ Options:
   Authority marked per section as agreed, external specification, or O2-owned.
 - No artefact. Configuration stays hand-written and the inventory stays documentation.
 
+#### Sub-case, added 2026-08-06: is a derived identifier data or a transform
+
+Surfaced while designing the project tree. Each subject area needs a slug that serves as the
+directory name, the bundle name, the Python module and the Unity Catalog schema. The values are
+settled as a convention and recorded in the
+[carry-over note](../2606-o2-architecture-design/2026-08-06-carry-over-technical-design.md);
+`finance-fa&c` becomes `finance_fac`. What is not settled is where the slug lives, and that is an
+authority question, which makes it this decision's business rather than a convention's:
+
+| Option | Cost | Failure mode |
+|:-------|:-----|:-------------|
+| Derived, the generator transforms the display name | No field to maintain | Every consumer must implement the same transform and handle every future odd character. Two tools can slug the same subdomain differently and nothing detects it |
+| Authoritative, a `slug` column in the taxonomy | One more column, and a human ruling on odd cases | The column can drift from the display name, which a validator catches cheaply |
+
+The same question will recur for any other derived identifier, so answering it once here is
+worth more than answering it for slugs alone. It also decides whether the taxonomy carries
+O2-owned fields at all, which is the authority axis this decision is about: a slug is neither
+agreed upstream nor observed, it is ours.
+
 Grounding: F1, F2, F4, F6, F8.
 
 Sources:
