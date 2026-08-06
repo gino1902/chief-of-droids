@@ -32,10 +32,15 @@ It is independent of the unrelated ADR-001 in the repository's `docs/decisions/`
 | [ADR-010](ADR-010-middleware-o2-boundary.md) | Middleware and O2 boundary: SQLI data contracts, one-way inbound | Draft, amended | 2026-08-04 |
 | [ADR-011](ADR-011-ingestion-baseline-entity-contract.md) | Ingestion baseline: contract on entities, producing system as configuration | Draft | |
 
-Reserved and not yet written: ADR-012 data ownership model, ADR-013 Unity Catalog isolation and
-domain boundary. Both were split out of an earlier single-record scope that bundled ownership,
-Unity Catalog mechanics and the application role vocabulary. The role vocabulary is a convention
-rather than a decision and folds into ADR-011's terminology.
+> ⚠️ Numbering is not reconciled. ADR-011 is the highest number known to this session, but records
+> are being written in parallel sessions, so 012 onward may already be claimed elsewhere. Reconcile
+> against every in-flight session before assigning a number, and do not reserve numbers in advance.
+
+Two records are scoped and unwritten, deliberately unnumbered until the reconciliation above:
+**data ownership model** and **Unity Catalog isolation and domain boundary**. Both were split out of
+an earlier single-record scope that bundled ownership, Unity Catalog mechanics and the application
+role vocabulary. The role vocabulary is a convention rather than a decision and folds into ADR-011's
+terminology.
 
 ---
 

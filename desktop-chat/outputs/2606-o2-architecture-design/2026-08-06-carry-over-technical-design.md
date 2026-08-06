@@ -1,6 +1,6 @@
 # Carry-over: remaining ADRs, then technical design and project tree
 
-> Handover in two stages. First finish the ADR sequence, ADR-012 and ADR-013, using
+> Handover in two stages. First finish the two scoped records, unnumbered pending reconciliation, using
 > `making-architecture-decision`. Then run `writing-technical-design` against the set to
 > produce the platform skeleton and living design document.
 >
@@ -24,14 +24,14 @@ An earlier scope bundled three decisions into one record. It was split, and ADR-
 | Record | State | What it decides |
 |:-------|:------|:----------------|
 | ADR-011 | Written, Draft | Ingestion baseline: contract on entities, producing system as configuration. Translation mappings where semantics are incompatible, lifespan secondary |
-| ADR-012 | Not written | Data ownership model. Sections 1 and 2 of the interview are already captured: the open question is whether a subdomain has one owning application or several, resolved to human ownership at subdomain grain; the forcing function is the transformation programme; options are federated flow-down (chosen), hybrid with a corporate polyseme tier, entity-grain, and centralised. Sections 3 to 8 remain |
-| ADR-013 | Not written | Unity Catalog isolation and domain boundary. Nothing captured beyond the analysis below |
+| Data ownership model | Not written, unnumbered | Who is accountable for a data definition and at what grain. Sections 1 and 2 are captured: the open question is whether a subdomain has one owning application or several, resolved to human ownership at subdomain grain; the forcing function is the transformation programme; options are federated flow-down (chosen), hybrid with a corporate polyseme tier, entity-grain, and centralised. Sections 3 to 8 remain |
+| Unity Catalog isolation and domain boundary | Not written, unnumbered | Which axis each Unity Catalog level carries, environment or domain. Nothing captured beyond the analysis below |
 
 The application role vocabulary, producer as system of origin and source as system extracted from
 plus relay and consumer, is a convention rather than a decision. It fails the options test the same
 way the slug rule did, and it folds into ADR-011's terminology. It also closes discovery-note F13.
 
-**What ADR-012 must carry, and it is the hard part.** One physical person appears as three
+**What the ownership record must carry, and it is the hard part.** One physical person appears as three
 contractual roles owned by three different domains: Employee in `hr-administration`, Subcontractor
 in `finance-suppliers`, Candidate in `hr-recruitment`, described by Talent Profile in `hr-talents`
 and accounted for by User in `it-users`. The physical person is not modelled at all. Under the
@@ -39,7 +39,7 @@ chosen federated model that is five owners and no arbiter, which practitioner gu
 polyseme cannot have. It is an accepted limit rather than a solved problem, and it needs its
 reopening condition written down.
 
-**What ADR-013 must carry.** Environment and domain can coexist because Unity Catalog separates the
+**What the Unity Catalog record must carry.** Environment and domain can coexist because Unity Catalog separates the
 processing environment (workspace) from the data domain (catalog), joined by workspace-catalog
 binding. Proposed boundary: workspace is the environment, catalog is domain crossed with
 environment, schema is layer and scope, and bronze sits in a platform catalog rather than a domain
@@ -88,9 +88,9 @@ still unmet. The sweep made them consistent, not locked. Locking is a deliberate
 because freezing decisions that rest on unread payloads and an unresolved identity question would
 be worse than carrying them as Draft.
 
-**3. Two ADRs are still unwritten.** ADR-012 and ADR-013 per stage one above. The design run should
-not start before them, since ADR-013 decides the catalog and schema layout the skeleton generates
-into and ADR-012 decides who owns it.
+**3. Two records are still unwritten.** Per stage one above. The design run should
+not start before them, since the Unity Catalog record decides the catalog and schema layout the
+skeleton generates into and the ownership record decides who owns it.
 
 **4. Neither skill is reachable from this repository.** Only `bootstrapping-project` is
 deployed to `chief-of-droids/.claude/skills/`. Both `making-architecture-decision` and
@@ -104,6 +104,12 @@ partly stale. Decide whether the next run updates it or supersedes it.
 
 ## Invocation
 
+**Step zero, before writing either record: reconcile the numbering.** ADR-011 is the highest number
+this session knows about, but records are being written in parallel sessions and 012 onward may
+already be claimed. Check every in-flight session first, then assign. Numbers are deliberately not
+reserved here, because a reservation made in one session is invisible to another and produces two
+records with the same number.
+
 Stage one, twice, once per record:
 
 ```
@@ -111,7 +117,7 @@ making-architecture-decision
 ```
 
 It runs as an interview, one question at a time across eight sections, and it pushes back on weak
-answers rather than transcribing them. ADR-012 starts at section 3, since 1 and 2 are captured.
+answers rather than transcribing them. The ownership record starts at section 3, since 1 and 2 are captured.
 
 Stage two, once the two records exist:
 
