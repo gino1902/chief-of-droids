@@ -30,6 +30,12 @@ It is independent of the unrelated ADR-001 in the repository's `docs/decisions/`
 | [ADR-008](ADR-008-adls-bronze-ingestion.md) | ADLS Gen2 to bronze via Auto Loader with managed file events, file-arrival trigger plus availableNow drain | Accepted | |
 | [ADR-009](ADR-009-sharepoint-bronze-ingestion.md) | SharePoint to bronze via the standard connector, scheduled drain, as a temporary bridge to ADR-008 | Draft, blocked | |
 | [ADR-010](ADR-010-middleware-o2-boundary.md) | Middleware and O2 boundary: SQLI data contracts, one-way inbound | Draft, amended | 2026-08-04 |
+| [ADR-011](ADR-011-ingestion-baseline-entity-contract.md) | Ingestion baseline: contract on entities, producing system as configuration | Draft | |
+
+Reserved and not yet written: ADR-012 data ownership model, ADR-013 Unity Catalog isolation and
+domain boundary. Both were split out of an earlier single-record scope that bundled ownership,
+Unity Catalog mechanics and the application role vocabulary. The role vocabulary is a convention
+rather than a decision and folds into ADR-011's terminology.
 
 ---
 
@@ -74,6 +80,13 @@ that is a tidy-up, not a decision.
 ADR-008 and ADR-009 are source-specific ingestion decisions. Each is a concise record that
 references its full locked design document in this folder rather than duplicating it. ADR-009 is
 a temporary bridge that retires into ADR-008 when the source repoints to ADLS Gen2.
+
+ADR-011 sets what O2 treats as its ingestion baseline, and it grounds on three of the records
+above: ADR-001 for the bronze-source-aligned and silver-conformed split that lets an entity
+contract sit above a per-producer bronze, ADR-010 principle 5 for admitting entities as supply
+paths appear, and ADR-009 for the disposable-bridge precedent. It is the first record whose
+companion document is a locked C4 System Landscape describing what exists, rather than a locked
+design proposing how to build.
 
 ADR-010 consolidates the middleware and O2 boundary. It grounds on ADR-001 (medallion ownership)
 and ADR-009 (the implemented SharePoint-to-bronze pattern). Its 2026-08-04 amendment records that

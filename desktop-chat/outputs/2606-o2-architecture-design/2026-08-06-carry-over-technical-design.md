@@ -1,23 +1,56 @@
-# Carry-over: technical design and project tree
+# Carry-over: remaining ADRs, then technical design and project tree
 
-> Handover for the session that runs `writing-technical-design` against this ADR set to
-> produce the O2 platform artefact skeleton and living design document.
+> Handover in two stages. First finish the ADR sequence, ADR-012 and ADR-013, using
+> `making-architecture-decision`. Then run `writing-technical-design` against the set to
+> produce the platform skeleton and living design document.
 >
-> ⚠️ Preconditions are not met yet. Read the blocking section before invoking anything.
+> ⚠️ The design run's preconditions are not met. Read the blocking section before invoking it.
 
 | Field | Value |
 |:------|:------|
 | Written | 2026-08-06 |
+| Revised | 2026-08-06, after ADR-011 landed and the record scope was split |
 | From session | `o2-sources` |
 | Target | A new repository for the O2 platform, on GitLab |
-| Governing skill | `writing-technical-design`, currently in `skills-lab` and not deployed here |
+| Governing skills | `making-architecture-decision` for stage one, `writing-technical-design` for stage two. Both in `skills-lab` and neither deployed here |
 | No version field | Git history is the version record for this folder |
 
 ---
 
-## What the next session does
+## Stage one, finish the ADR sequence
 
-Turn the locked ADRs plus the feed configuration into two outputs: the artefact skeleton
+An earlier scope bundled three decisions into one record. It was split, and ADR-011 is written.
+
+| Record | State | What it decides |
+|:-------|:------|:----------------|
+| ADR-011 | Written, Draft | Ingestion baseline: contract on entities, producing system as configuration. Translation mappings where semantics are incompatible, lifespan secondary |
+| ADR-012 | Not written | Data ownership model. Sections 1 and 2 of the interview are already captured: the open question is whether a subdomain has one owning application or several, resolved to human ownership at subdomain grain; the forcing function is the transformation programme; options are federated flow-down (chosen), hybrid with a corporate polyseme tier, entity-grain, and centralised. Sections 3 to 8 remain |
+| ADR-013 | Not written | Unity Catalog isolation and domain boundary. Nothing captured beyond the analysis below |
+
+The application role vocabulary, producer as system of origin and source as system extracted from
+plus relay and consumer, is a convention rather than a decision. It fails the options test the same
+way the slug rule did, and it folds into ADR-011's terminology. It also closes discovery-note F13.
+
+**What ADR-012 must carry, and it is the hard part.** One physical person appears as three
+contractual roles owned by three different domains: Employee in `hr-administration`, Subcontractor
+in `finance-suppliers`, Candidate in `hr-recruitment`, described by Talent Profile in `hr-talents`
+and accounted for by User in `it-users`. The physical person is not modelled at all. Under the
+chosen federated model that is five owners and no arbiter, which practitioner guidance says a
+polyseme cannot have. It is an accepted limit rather than a solved problem, and it needs its
+reopening condition written down.
+
+**What ADR-013 must carry.** Environment and domain can coexist because Unity Catalog separates the
+processing environment (workspace) from the data domain (catalog), joined by workspace-catalog
+binding. Proposed boundary: workspace is the environment, catalog is domain crossed with
+environment, schema is layer and scope, and bronze sits in a platform catalog rather than a domain
+one because a producer's feeds span domains. It amends ADR-006, whose catalog-per-environment
+consequence it replaces while the `common/variables.yml` consequence survives.
+
+---
+
+## Stage two, what the design run does
+
+Turn the ADRs plus the feed configuration into two outputs: the artefact skeleton
 that renders the decisions (tree, bundle configuration, pipeline and job resource files,
 code stubs, CI file, README) and a living design document carrying the system-level how.
 
@@ -51,19 +84,36 @@ quality check needs a second pipeline plus a job dependency rather than an expec
 changes the resource count per bundle.
 
 Still true: every record remains Draft except ADR-008, so the skill's locked-ADR precondition is
-still unmet. The sweep made them consistent, not locked.
+still unmet. The sweep made them consistent, not locked. Locking is a deliberate non-goal for now,
+because freezing decisions that rest on unread payloads and an unresolved identity question would
+be worse than carrying them as Draft.
 
-**3. The skill is not reachable from this repository.** Only `bootstrapping-project` is
-deployed to `chief-of-droids/.claude/skills/`. `writing-technical-design` lives in
-`skills-lab/.claude/skills/`. It also carries `disable-model-invocation: true`, so it never
-fires on its own and must be invoked explicitly.
+**3. Two ADRs are still unwritten.** ADR-012 and ADR-013 per stage one above. The design run should
+not start before them, since ADR-013 decides the catalog and schema layout the skeleton generates
+into and ADR-012 decides who owns it.
 
-**4. `2026-07-10-technical-design.md` in this folder predates the ADR-003 revision** and is
+**4. Neither skill is reachable from this repository.** Only `bootstrapping-project` is
+deployed to `chief-of-droids/.claude/skills/`. Both `making-architecture-decision` and
+`writing-technical-design` live in `skills-lab/.claude/skills/`, and both carry
+`disable-model-invocation: true`, so neither fires on its own and each must be invoked explicitly.
+
+**5. `2026-07-10-technical-design.md` in this folder predates the ADR-003 revision** and is
 partly stale. Decide whether the next run updates it or supersedes it.
 
 ---
 
-## Invocation, once unblocked
+## Invocation
+
+Stage one, twice, once per record:
+
+```
+making-architecture-decision
+```
+
+It runs as an interview, one question at a time across eight sections, and it pushes back on weak
+answers rather than transcribing them. ADR-012 starts at section 3, since 1 and 2 are captured.
+
+Stage two, once the two records exist:
 
 ```
 writing-technical-design from desktop-chat/outputs/2606-o2-architecture-design
