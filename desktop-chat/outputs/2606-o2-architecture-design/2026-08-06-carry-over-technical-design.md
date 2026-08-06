@@ -134,7 +134,7 @@ o2-platform/                       new GitLab repo, not inside chief-of-droids
 │   ├── app/  whoz/
 ├── silver/                        one bundle per active subdomain
 │   ├── hr_administration/  hr_talents/  project_master/
-│   ├── project_resources/  finance_fac/
+│   ├── project_resources/  finance_fa_c/
 └── use_cases/                     .gitkeep only, no gold yet
 ```
 
@@ -179,17 +179,21 @@ The documented bundle example uses underscores for both folder and bundle name (
 is the authority, so one generator computes every slug and no two consumers can disagree. The
 column is its materialised result, so consumers read a value rather than re-implementing the rule.
 
-The transform, in order:
+The transform is a single substitution, which is the whole rule:
 
 1. Trim and lowercase.
-2. Replace hyphens and spaces with underscores.
-3. **Delete** every remaining character that is not `a-z`, `0-9` or `_`. Delete, not replace. This
-   step is the whole reason the rule works: replacing would turn `finance-fa&c` into
-   `finance_fa_c`, whereas deleting gives `finance_fac`.
-4. Collapse repeated underscores, then strip leading and trailing ones.
+2. Replace every run of characters outside `a-z0-9` with one underscore.
+3. Strip leading and trailing underscores.
 
-Verified 2026-08-06 against all 17 subdomains: every result is a valid Python identifier, and the
-five active ones reproduce the slugs chosen by hand, so no exception list is needed.
+In one expression: `re.sub(r"[^a-z0-9]+", "_", name.strip().lower()).strip("_")`.
+
+Replacing rather than deleting is deliberate. A disallowed character is a token boundary, so it
+should become a separator rather than vanish. `fa&c` is three tokens, and `finance_fa_c` keeps
+that structure where `finance_fac` would collapse it into a word that does not exist.
+
+Verified 2026-08-06 against all 17 subdomains: every result is a valid Python identifier and none
+collides with a Python keyword. Edge cases behave: repeated separators collapse (`a&&b` gives
+`a_b`), leading and trailing separators are stripped, and uppercase and spaces are handled.
 
 | Display name | Slug |
 |:-------------|:-----|
@@ -197,10 +201,10 @@ five active ones reproduce the slugs chosen by hand, so no exception list is nee
 | hr-talents | `hr_talents` |
 | project-master | `project_master` |
 | project-resources | `project_resources` |
-| finance-fa&c | `finance_fac` |
+| finance-fa&c | `finance_fa_c` |
 
-`finance_fac` is an initialism where the other four are readable words, so it is the one name a
-newcomer has to ask about. Accepted deliberately.
+Because the rule is mechanical and total, there is no exception list and no hand-picked slug. The
+twelve planned subdomains slug cleanly too, so nothing needs revisiting when a feed goes active.
 
 **Where the column lives is still open, and it matters.** The taxonomy workbook is hand-edited,
 so a typed slug column would be overwritten or left stale by the next human save. Three shapes:

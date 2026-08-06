@@ -342,7 +342,7 @@ Surfaced while designing the project tree. Each subject area needs a slug that s
 directory name, the bundle name, the Python module and the Unity Catalog schema. The values are
 settled as a convention and recorded in the
 [carry-over note](../2606-o2-architecture-design/2026-08-06-carry-over-technical-design.md);
-`finance-fa&c` becomes `finance_fac`. What is not settled is where the slug lives, and that is an
+`finance-fa&c` becomes `finance_fa_c`. What is not settled is where the slug lives, and that is an
 authority question, which makes it this decision's business rather than a convention's:
 
 | Option | Cost | Failure mode |
