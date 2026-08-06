@@ -1,4 +1,4 @@
-# ADR-001 — Medallion layer roles and ownership: bronze per producer, silver cross-source, gold per use case (Option A)
+# ADR-001 — Medallion layer roles and ownership: bronze per producer, silver cross-source, gold per business domain (Option A)
 
 | Field | Value |
 |:------|:------|
@@ -8,6 +8,31 @@
 | Decision-makers | Gino, DE lead |
 | Consulted | Business use-case owners |
 | Informed | Wider data team |
+| Revised | 2026-08-06, see Revision note |
+
+---
+
+## Revision note, 2026-08-06
+
+Two corrections, both of the same kind: this record said more than it decided.
+
+**Gold was written as per use case, and its own source says otherwise.** The decision basis
+below quotes the medallion page as saying gold "models a business domain", with "multiple gold
+layers to meet different business needs". Business domain, not use case. The record cited a
+domain-shaped statement and wrote a use-case-shaped rule. Use cases are how gold is delivered,
+one after another, not how it is partitioned. The rule is corrected; the basis quote is
+unchanged because it was right all along.
+
+**Deployment units were asserted, never argued.** The record stated one bundle per producer,
+per subject area and per use case, inside a decision about what the layers mean and who owns
+them. Those are two different questions, and the second was never put to options. Layer
+semantics stay here. The number of deployment units moves to the tree contract, where it can be
+argued against the vendor's own sizing criteria rather than inherited from a phrase.
+
+Neither correction changes the decision this record actually made: conforming happens once, in
+silver, and gold never re-conforms from bronze.
+
+Editing rather than superseding is legitimate only because the status is Draft.
 
 ---
 
@@ -33,11 +58,17 @@ apart across dashboards.
 
 ## Options evaluated
 
-**Option A — Bronze per producer, silver as the shared cross-source conforming layer, gold per use case**
+**Option A — Bronze per producer, silver as the shared cross-source conforming layer, gold per business domain**
 Bronze is raw and source-aligned, one boundary per producer. Silver reads one or more
 bronze tables and produces the validated, conformed enterprise view of each entity,
-organised by subject area rather than by producer. Gold aggregates from silver, one
-boundary per business use case. Conforming happens once, in silver.
+organised by subject area rather than by producer. Gold aggregates from silver, organised
+by the business domain it serves and delivered one use case at a time. Conforming happens
+once, in silver.
+
+<!-- This option was originally written as "gold per use case". Corrected 2026-08-06 so
+the option and the Decision agree, since the source cited in the basis says gold "models a
+business domain". The substance of what was evaluated is unchanged: gold aggregates from
+silver and never re-conforms from bronze. -->
 
 **Option B — Bronze and silver both per producer, integration deferred to gold**
 Silver is source-scoped cleaning only, and cross-source joins happen in each use case's
@@ -56,15 +87,21 @@ becoming a bottleneck.
 
 **Option A chosen. Layer roles and ownership are:**
 
-- **Bronze, per data producer.** Raw, minimal validation, appended incrementally, one
-  bundle per producer. Consumed only by silver, not by analysts.
+- **Bronze, per data producer.** Raw, minimal validation, appended incrementally,
+  source-aligned with one boundary per producer. Consumed only by silver, not by
+  analysts. Producer is the *semantic* boundary here. How many deployment units that
+  maps to is not decided by this record, see the Revision note.
 - **Silver, shared cross-source transformation layer.** Reads one or more bronze (or
   silver) tables and performs cleansing, deduplication, normalisation and joins to
   produce the enterprise view of each entity. Organised by subject area, not by
   producer. Never written directly from ingestion. This is the home of conformed
   definitions.
-- **Gold, per business use case.** Aggregations and dimensional models built from
-  silver, each serving one use case. Multiple golds by business need.
+- **Gold, per business domain, delivered use case by use case.** Aggregations and
+  dimensional models built from silver, organised by the business domain they serve.
+  Multiple golds by business need. Use cases are the increment of *delivery*, not the
+  unit of *partition*: the first use case in a domain creates that domain's gold, and
+  later use cases in the same domain add to it. Corrected 2026-08-06, see the Revision
+  note.
 
 Divergence is now prevented structurally, not just by process: every gold builds on the
 single silver enterprise view rather than re-conforming from bronze. A review of new
@@ -103,11 +140,14 @@ re-implements an existing silver concept requires explicit sign-off on the pull 
 
 ## Consequences
 
-- Bronze bundles are per producer and own raw data only (see ADR-003, ADR-008, ADR-009).
-- Silver bundles are per subject area and own the conformed enterprise view; they are a
-  distinct layer, not part of the producer bundle.
-- Gold bundles are per use case and build only on silver.
-- Repository layout carries three layers: `ingestion/`, `silver/`, `use_cases/`.
+- Bronze owns raw data only and is source-aligned per producer (see ADR-008, ADR-009).
+- Silver owns the conformed enterprise view, organised by subject area; it is a distinct
+  layer, never part of an ingestion boundary.
+- Gold builds only on silver, never on bronze, and is organised by business domain.
+- How many deployment units these three layers become, and the repository layout that
+  carries them, are not settled here. Layout belongs to ADR-003 and the count belongs to
+  the tree contract. This record previously asserted both, which is how a layer-semantics
+  decision came to own a deployment-unit question it never argued.
 - Conformed entity tables live in silver; shared transformation and metric functions
   live in the `common/` package (see ADR-007).
 - Business teams get read-only grants on the gold schemas relevant to their use case,
@@ -117,12 +157,9 @@ re-implements an existing silver concept requires explicit sign-off on the pull 
 
 ## Sources
 
-- What is the medallion lakehouse architecture? (Azure Databricks) — https://learn.microsoft.com/en-us/azure/databricks/lakehouse/medallion
-- Best practices for Lakeflow Spark Declarative Pipelines, section "Organize pipelines with the medallion architecture" — https://learn.microsoft.com/en-us/azure/databricks/ldp/best-practices
+| Source | Bears on | Verified |
+|:-------|:---------|:---------|
+| [What is the medallion lakehouse architecture?](https://learn.microsoft.com/en-us/azure/databricks/lakehouse/medallion) | Silver reads one or more bronze or silver tables and brings sources into an enterprise view; do not write to silver directly from ingestion; gold "models a business domain" with "multiple gold layers to meet different business needs" | 2026-07-09 |
+| [Best practices for Lakeflow Spark Declarative Pipelines](https://learn.microsoft.com/en-us/azure/databricks/ldp/best-practices), section "Organize pipelines with the medallion architecture" | Separating ingestion from transformation | 2026-07-09 |
 
----
-
-| Field | Value |
-|:------|:------|
-| Version | 0.3 (draft) |
-| Last Updated | 2026-07-17 |
+Version history is git. This record carries no version field.
