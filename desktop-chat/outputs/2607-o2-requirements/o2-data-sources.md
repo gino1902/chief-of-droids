@@ -1,8 +1,10 @@
 # O2 data sources
 
-Feed configuration: one row per declared feed, filenames as patterns rather than dated instances. `subdomain` is a foreign key to [domain-taxonomy](domain-taxonomy.xlsx). Rows with `status: planned` are declared gaps with no feed yet, which makes this a coverage matrix rather than an inventory.
+Feed configuration: one row per declared feed, filenames as patterns rather than dated instances. `subdomain` is a foreign key to [domain-taxonomy](domain-taxonomy.md).
 
-> ⚠️ Generated from `o2-data-sources.xlsx`, which is the current source of truth and is **not tracked by git** (root `.gitignore` ignores `*.xlsx`). Edit the workbook, then regenerate this file. AD-4 in the [discovery note](2026-08-04-data-sources-discovery-note.md) proposes moving the source of truth to YAML.
+`status` semantics: **active** = lands and is ingested. **inactive** = lands and is not ingested. **planned** = does not land yet.
+
+> ⚠️ Generated from `o2-data-sources.xlsx`, which is the source of truth and is **not tracked by git** (root `.gitignore` ignores `*.xlsx`). Edit the workbook, then regenerate with `xlsx_to_md.py`.
 
 | filename | status | subdomain | cadence | producer | source | source path | access-protocol |
 |---|---|---|---|---|---|---|---|

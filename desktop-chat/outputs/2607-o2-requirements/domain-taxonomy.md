@@ -1,14 +1,14 @@
 # O2 domain taxonomy
 
-Data domains and subdomains. `subdomain name` is the key referenced by the `subdomain` column in [o2-data-sources](o2-data-sources.md). 5 domains, 17 subdomains.
+Data domains and subdomains. `subdomain name` is the key referenced by the `subdomain` column in [o2-data-sources](o2-data-sources.md).
 
-> ⚠️ Generated from `domain-taxonomy.xlsx`, which is the current source of truth and is **not tracked by git** (root `.gitignore` ignores `*.xlsx`). Edit the workbook, then regenerate this file. AD-4 in the [discovery note](2026-08-04-data-sources-discovery-note.md) proposes moving the source of truth to YAML.
+> ⚠️ Generated from `domain-taxonomy.xlsx`, which is the source of truth and is **not tracked by git** (root `.gitignore` ignores `*.xlsx`). Edit the workbook, then regenerate with `xlsx_to_md.py`.
 
 | domain | subdomain id | subdomain name | main entities | subdomain description |
 |---|---|---|---|---|
 | project | 1 | project-master | Project, Delivery Model | Core project identity, lifecycle, customer, management, and organizational placement data: project code, name, type, state, start and end dates, manager roles, customer references, department, service line, management BU, and signatory BU. |
 | project | 2 | project-delivery | Project Artefact | Project definition and delivery artefacts, including the project charter, scope and work breakdown, project management plans, schedule plans, milestones, governance model and governance artefacts, deliverables, acceptance criteria, and delivery methodology. |
-| project | 3 | project-resources | Staffing Request, Assignment | Project resource demand, staffing requests, assignments, capacity, availability, time allocation, and utilization. Employee skills and career data remain owned by HR Talents. |
+| project | 3 | project-resources | Talent Request, Timesheet | Project resource demand, staffing requests, assignments, capacity, availability, time allocation, and utilization. Employee skills and career data remain owned by HR Talents. |
 | project | 4 | project-control | Project Health | Project monitoring and control data, including approved baselines, budgets, costs, forecasts, progress measures, variances, risks, issues, dependencies, project health, and corrective actions. |
 | hr | 5 | hr-talents | Talent Profile, Training, Certification | Employee skills, competencies, career development, performance, learning, succession, and talent management. |
 | hr | 6 | hr-administration | Company Structure, Employee, Payroll, Absence, People Review | Employee records, employment contracts, organizational assignments, absences, payroll administration, and HR operations. |
@@ -18,7 +18,7 @@ Data domains and subdomains. `subdomain name` is the key referenced by the `subd
 | finance | 10 | finance-planning | Budget, Forecast, Scenario | Enterprise budgeting, forecasting, financial scenarios, management reporting, profitability, and consolidated performance analysis. |
 | finance | 11 | finance-treasury | Cash Position, Bank Account | Cash positions, bank accounts, liquidity, funding, cash forecasting, banking relationships, and financial risk management. |
 | finance | 12 | finance-suppliers | Supplier, Subcontractor | Supplier master and relationship data, including supplier identity, legal and tax details, contacts, banking references, classifications, onboarding status, qualification, risk, compliance, and lifecycle status. |
-| sales | 13 | sales-clients | Client, Segment | Client master and relationship data, including client accounts, contacts, organizational hierarchies, relationships, and account planning. |
+| sales | 13 | sales-clients | Client, Contact | Client master and relationship data, including client accounts, contacts, organizational hierarchies, relationships, and account planning. |
 | sales | 14 | sales-opportunities | Opportunity, Booking | Leads, qualified opportunities, pipeline stages, expected revenue, probability, and win/loss outcomes. |
 | sales | 15 | sales-commercials | Commercial Artefact, Offering Artefact | Pre-signature commercial development, including proposals, quotations, pricing, discounts, rate cards, commercial terms, and negotiations. |
 | sales | 16 | sales-contracts | Contract Artefact | Executed contractual and commercial commitments linked to projects or client agreements, including contractual model, contractual obligations, signed-by, sold-to, invoiced-to, amendments, renewals, project commercial classification, and sales P&L ownership. |
