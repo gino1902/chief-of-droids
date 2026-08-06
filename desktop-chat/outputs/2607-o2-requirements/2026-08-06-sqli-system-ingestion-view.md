@@ -33,30 +33,18 @@ Arrows direction matters to determine the **data entity flow direction**, ie pro
 
 ## Vocabulary
 
-Ingestion edges, meaning the middleware extractions and the Databricks ingestions, use the
-entity names from [domain-taxonomy](domain-taxonomy.md) so the chart and the taxonomy can be
-compared mechanically. Rulings applied 2026-08-06: Company Structure rather than Hierarchy,
-Recognized Revenue and Actual Cost rather than Actuals, Market Job Post rather than Job Market
-data.
+Ingestion edges use the entity names from [domain-taxonomy](domain-taxonomy.md), so the chart
+and the taxonomy compare mechanically. Entity names are singular.
 
-Application-to-application edges keep the source systems' own vocabulary on purpose, because
-those flows are upstream of O2 and renaming them would assert equivalences nobody has checked.
-Three labels differ from taxonomy names as a result: `candidate CV` is a document rather than
-the Candidate entity, and `Employee AP` and `Supplier Invoice` are Unit4-side concepts that may
-or may not equal Account Payable and AP Invoice. Confirm before treating them as the same
-things.
+Application-to-application edges keep the source systems' own vocabulary, because those flows
+are upstream of O2 and renaming them would assert equivalences nobody has checked. So
+`candidate CV` is a document rather than the Candidate entity, and `Employee AP` and
+`Supplier Invoice` are Unit4 concepts that may not equal Account Payable and AP Invoice.
 
-Two labels deliberately keep a qualifier because the taxonomy name is ambiguous across
-subdomains. Resource Booking and Contract Booking both map to an entity named `Booking`, one
-in `project-resources` and one in the sales domain. That is one name in two subdomains, so
-under the flow-down ownership model it carries two owners.
+Two bookings exist and they are different entities. `Resource Booking` in `project-resources`
+is a person booked onto work. `Contract Booking` in `sales-opportunities` is committed revenue.
 
-> 🔲 To be defined. Whether the `Booking` collision is accepted or the two are given distinct
-> names, and which sales subdomain Contract Booking belongs to, since `Booking` currently sits
-> in `sales-opportunities` while `sales-contracts` holds Contract Artefact.
-
-Assignment is not an entity. It is a relation between a person and a project, so it is
-removed from the taxonomy rather than given a producer here.
+Assignment is a relation between a person and a project, not an entity.
 
 ## Reading the arrows
 
@@ -129,13 +117,6 @@ flowchart LR
     DYN["MS Dynamics<br/>[Software System]<br/>Customer data, Sales funnel, Marketing automation, Customer insight"]
     SPO["SharePoint<br/>[Software System]<br/>Data files for ingestion, temporary landing zone per ADR-009"]
     DBX["Databricks<br/>[Software System]<br/>Ingest, transform, serve and govern data"]
-    %% HR and Finance data -> ensure bronze managed storage is firewalled
-    %% ⚠️ Reworded 2026-08-06 with the landing-zone correction. The original read
-    %% "Firewall between Azure Storage and Databricks ... public network access set
-    %% to disabled". That is an Azure Storage account setting and has no equivalent
-    %% on SharePoint Online, so it cannot be applied to the landing zone as drawn.
-    %% It still applies to the Databricks managed storage holding bronze. Open: what
-    %% protects the landing zone itself, since OAuth scoping is not a network control.
   end
 
   SR["smartrecruiters<br/>[Software System]<br/>Talent acquisition management"]
