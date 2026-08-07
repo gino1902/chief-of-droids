@@ -70,9 +70,13 @@ performs.
 here is multi-vehicle. Which, and whether union or join, is unknown until the feed-to-entity
 mapping exists.
 
-**Exercises.** ADR-001, ADR-009, ADR-011, and the unowned question of how many bundles.
+**Exercises.** ADR-001, ADR-009, ADR-011, ADR-012.
 
-**Expected design.** _To derive._ **Verdict.** _Not run._
+**Run 2026-08-07**, substrate `99ae848`, two independent derivations, high agreement.
+**Verdict: Conflict**, since resolved. ADR-012 gave two bundles while ADR-003, ADR-005 and
+ADR-011 still said one per producer. Reconciled in `7fce688`, and a re-derivation of the bundle
+field returns no conflict. Bronze, silver and contract agreed across both runs. Mapping returned
+Gap. Three further gaps found, recorded below.
 
 ---
 
@@ -172,10 +176,13 @@ does not want their tables redeployed.
 which is the harder half and is unwritten. It is also the case that decides whether an owner is a
 real boundary or an accountability, which is the question the bundle count turns on.
 
-**Exercises.** The unwritten ownership record, ADR-006 permissions, and the bundle-count
-question.
+**Exercises.** The unwritten ownership record, ADR-006 permissions, ADR-012.
 
-**Expected design.** _To derive._ **Verdict.** _Not run._
+**Run 2026-08-07**, substrate `99ae848`, two independent derivations, high agreement.
+**Verdict: Conflict**, since resolved for the bundle question only. Both runs also noted the
+outcome ADR-012 predicts: the silver bundle redeploys and the second owner's tables go with it,
+which is that record's stated consequence, and that owner's refusal is exactly the trigger that
+graduates their directory to its own bundle. **Not re-run after reconciliation.**
 
 ---
 
@@ -211,10 +218,13 @@ vehicle is what made its absence visible.
 It is also the case where the bundle-count answer may legitimately differ before and after,
 since the current route has one connection to one site while the planned one lands per producer.
 
-**Exercises.** ADR-008, ADR-009, ADR-011 producing system as mapping, and the bundle-count
-question.
+**Exercises.** ADR-008, ADR-009, ADR-011, ADR-012.
 
-**Expected design.** _To derive._ **Verdict.** _Not run._
+**Run 2026-08-07**, substrate `99ae848`, two independent derivations, high agreement.
+**Verdict: Conflict**, since resolved for the bundle question only. Both runs agreed the route
+change is a path-swap that touches only the read-path block, and that zero bundles change under
+either count. One run independently surfaced the ADR-010 against ADR-009 file-removal question,
+already logged as amendment A3. **Not re-run after reconciliation.**
 
 ---
 
@@ -240,10 +250,54 @@ ADR-002 and ADR-003 have no case because they decide tooling and repository shap
 supply-path change perturbs. That is a real coverage hole for this suite rather than a defect in
 those records: a different instrument would be needed to test them.
 
+## Findings from the first run
+
+2026-08-07, substrate `99ae848`, cases 1, 6 and 8, two independent derivations each. Transcripts
+in `runs/`, which is git-ignored, so these are the surviving record.
+
+**The run worked.** It found a contradiction its own author could not have found by re-reading,
+because a fresh process has none of the author's intent in context. That is the argument for
+running derivations in independent processes rather than in the session that wrote the records.
+
+**Agreement was high and the verdict was still Conflict.** Worth separating: high agreement means
+the records are unambiguous, not that they are right. They were unambiguous and contradictory.
+
+### G1 — Silver has no way to bind its inputs
+
+ADR-012 forbids a producer name appearing anywhere in the tree. No record says how a silver
+pipeline then binds its bronze inputs. The rule has a prohibition and no mechanism.
+
+This is a gap in ADR-012 itself and the sharpest of the four. Remedy: either ADR-012 states the
+binding mechanism, or a convention does and ADR-012 points at it.
+
+### G2 — A retired producer's bronze data has no disposition
+
+When a producer is replaced, nothing states whether its existing bronze tables are retained,
+archived or dropped. Exercised by case 1.1 and by case 4.
+
+Remedy: a consequence in ADR-011 or ADR-001, since it is a lifecycle question about raw data.
+
+### G3 — A third route is uncovered
+
+ADR-008 covers ADLS Gen2 and ADR-009 covers SharePoint. A supply path arriving by neither has no
+record. Both runs on case 1 flagged it, since the case posits a new route without naming it.
+
+Remedy: state in ADR-011 whether a new route needs its own record, or whether the entity contract
+is route-agnostic by construction and any route is admissible once it lands in bronze.
+
+### G4 — The feed-to-entity mapping does not exist
+
+Flagged by every run. ADR-011 admits an entity "when a supply path exists" and nothing records
+which vehicles carry which entities, so that admission test cannot be evaluated. Two subdomains
+already have more entities than vehicles.
+
+Remedy: the artefact itself. It is data rather than a decision.
+
 ## Known blockers on grading
 
-Cases 1 and 3 cannot be graded against real data until the feed-to-entity mapping exists, since
-nothing records which vehicles carry which entities.
+Cases 1 and 3 cannot be graded against real data until G4 is closed.
 
-Cases 1, 6 and 8 all reach the bundle-count question, which no record currently owns. Until it
-is decided they will report the same Gap rather than testing anything else.
+Cases 6 and 8 were not re-run after the reconciliation in `7fce688`. Only the bundle field of
+case 1 was. Re-run all three before treating any verdict as current.
+
+Cases 0, 2, 3, 4, 5 and 7 have never been run.
