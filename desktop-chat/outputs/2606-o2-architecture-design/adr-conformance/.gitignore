@@ -1,0 +1,14 @@
+# Conformance run output. Generated, not authored.
+#
+# A run is a measurement of the ADR set at one substrate SHA, with one model, on
+# one date. It is reproducible from the cases plus that SHA, so committing it
+# would version an artefact that can be regenerated, and would bury the cases
+# under churn every time the suite runs.
+#
+# What survives a run is the finding, not the transcript: a gap, a conflict, or
+# an agreement rate that moved. Those are written into the case file or into a
+# record, both of which are tracked.
+# Ignore the contents, not the directory. Excluding `runs/` itself would stop git
+# descending into it, and a negation cannot re-include a file whose parent is excluded.
+runs/*
+!runs/.gitkeep

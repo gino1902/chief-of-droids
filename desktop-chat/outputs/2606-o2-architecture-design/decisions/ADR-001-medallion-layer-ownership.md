@@ -1,4 +1,4 @@
-# ADR-001 — Medallion layer roles and ownership: bronze per producer, silver cross-source, gold per business domain (Option A)
+# ADR-001 — Medallion layer roles and ownership: bronze source-aligned, silver cross-source, gold per business domain (Option A)
 
 | Field | Value |
 |:------|:------|
@@ -32,6 +32,13 @@ argued against the vendor's own sizing criteria rather than inherited from a phr
 Neither correction changes the decision this record actually made: conforming happens once, in
 silver, and gold never re-conforms from bronze.
 
+**Third correction, 2026-08-07, following ADR-011.** Bronze was described as being organised
+"per data producer" with the producer as its *semantic* boundary. ADR-011 subsequently placed the
+ingestion contract on entities and recorded the producing system as a mapping rather than as the
+contract. Bronze remains source-aligned, which is a structural fact about how records arrive, but
+that alignment is no longer a semantic claim. The wording is corrected and the cross-reference to
+ADR-011 added, which this record previously lacked.
+
 Editing rather than superseding is legitimate only because the status is Draft.
 
 ---
@@ -58,8 +65,8 @@ apart across dashboards.
 
 ## Options evaluated
 
-**Option A — Bronze per producer, silver as the shared cross-source conforming layer, gold per business domain**
-Bronze is raw and source-aligned, one boundary per producer. Silver reads one or more
+**Option A — Bronze source-aligned, silver as the shared cross-source conforming layer, gold per business domain**
+Bronze is raw and source-aligned, organised along the supply path. Silver reads one or more
 bronze tables and produces the validated, conformed enterprise view of each entity,
 organised by subject area rather than by producer. Gold aggregates from silver, organised
 by the business domain it serves and delivered one use case at a time. Conforming happens
@@ -87,10 +94,12 @@ becoming a bottleneck.
 
 **Option A chosen. Layer roles and ownership are:**
 
-- **Bronze, per data producer.** Raw, minimal validation, appended incrementally,
-  source-aligned with one boundary per producer. Consumed only by silver, not by
-  analysts. Producer is the *semantic* boundary here. How many deployment units that
-  maps to is not decided by this record, see the Revision note.
+- **Bronze, source-aligned.** Raw, minimal validation, appended incrementally, organised
+  along the supply path it arrives on. Consumed only by silver, not by analysts. The
+  alignment is *structural*, a fact about how records arrive, not a semantic contract:
+  ADR-011 places the contract on entities and records the producing system as a mapping.
+  How many deployment units this maps to is not decided by this record, see the Revision
+  note.
 - **Silver, shared cross-source transformation layer.** Reads one or more bronze (or
   silver) tables and performs cleansing, deduplication, normalisation and joins to
   produce the enterprise view of each entity. Organised by subject area, not by
@@ -140,7 +149,9 @@ re-implements an existing silver concept requires explicit sign-off on the pull 
 
 ## Consequences
 
-- Bronze owns raw data only and is source-aligned per producer (see ADR-008, ADR-009).
+- Bronze owns raw data only and is source-aligned along the supply path (see ADR-008,
+  ADR-009). What O2 commits to ingest is a set of entities, not a set of producers, and
+  the producing system is configuration (see ADR-011).
 - Silver owns the conformed enterprise view, organised by subject area; it is a distinct
   layer, never part of an ingestion boundary.
 - Gold builds only on silver, never on bronze, and is organised by business domain.

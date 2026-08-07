@@ -12,7 +12,7 @@ It is independent of the unrelated ADR-001 in the repository's `docs/decisions/`
 > ⚠️ Nothing here is locked. Nine of the ten records are Draft, so none of them may be
 > treated as a constraint that cannot move. `writing-technical-design` requires a locked
 > set, which is why the tree has not been generated. See
-> [the carry-over note](2026-08-06-carry-over-technical-design.md).
+> [the carry-over note](../2026-08-06-carry-over-technical-design.md).
 
 ---
 
@@ -107,8 +107,8 @@ The repository layout is a projection of the feed configuration, not of the taxo
 bundle exists per producer with at least one active feed, a silver bundle per subject area with
 at least one active feed, and a gold bundle per use case with a go decision. On the 2026-08-06
 configuration that is two bronze, five silver and zero gold, against a taxonomy of 17 subdomains.
-Inputs are [o2-data-sources](../2607-o2-requirements/o2-data-sources.md) and
-[domain-taxonomy](../2607-o2-requirements/domain-taxonomy.md).
+Inputs are [o2-data-sources](../../2607-o2-requirements/o2-data-sources.md) and
+[domain-taxonomy](../../2607-o2-requirements/domain-taxonomy.md).
 
 ---
 

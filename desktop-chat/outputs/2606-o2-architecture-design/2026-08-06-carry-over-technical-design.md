@@ -122,7 +122,7 @@ answers rather than transcribing them. The ownership record starts at section 3,
 Stage two, once the two records exist:
 
 ```
-writing-technical-design from desktop-chat/outputs/2606-o2-architecture-design
+writing-technical-design from desktop-chat/outputs/2606-o2-architecture-design/decisions
 ```
 
 ---

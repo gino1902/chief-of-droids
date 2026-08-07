@@ -122,7 +122,7 @@ behind it since they reach O2 only through Unit4.
 - ADR-010 middleware and O2 boundary, principle 5, demand-driven change.
 - ADR-009 SharePoint to bronze ingestion, for the disposable-bridge precedent behind lifespan as a
   secondary factor.
-- SQLI System, O2 Ingestion View, [2026-08-06-sqli-system-ingestion-view.md](../2607-o2-requirements/2026-08-06-sqli-system-ingestion-view.md),
+- SQLI System, O2 Ingestion View, [2026-08-06-sqli-system-ingestion-view.md](../../2607-o2-requirements/2026-08-06-sqli-system-ingestion-view.md),
   which defines the baseline: 16 source applications, 31 entities on ingestion edges, three
   manual-entry paths. Cited as a locked C4 System Landscape rather than a design document, unlike
   the ADR-008 and ADR-009 companions, since it describes what exists rather than proposing how to

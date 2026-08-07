@@ -6,7 +6,7 @@
 | Status | Draft |
 | Task | TBD |
 | Decision-makers | Arnaud, Cyril, Pascal, Chirojean, Gilles |
-| Consolidates | [2026-07-16-middleware-o2-boundary-decisions.md](2026-07-16-middleware-o2-boundary-decisions.md) |
+| Consolidates | [2026-07-16-middleware-o2-boundary-decisions.md](../2026-07-16-middleware-o2-boundary-decisions.md) |
 | Amended | 2026-08-04, see [Amendment](#amendment-2026-08-04) before relying on principle 3 or decision 1 |
 
 > ⚠️ Read the amendment first. Principle 3 and decision 1 are written in the present
@@ -90,7 +90,7 @@ Every decision traces to a principle in the Rationale, none stands outside it. T
 > discovered on 2026-08-04 that contradicts the present tense of principle 3 and decision 1,
 > and leaves the revision to the five.
 
-Source: [data-sources discovery note](../2607-o2-requirements/2026-08-04-data-sources-discovery-note.md).
+Source: [data-sources discovery note](../../2607-o2-requirements/2026-08-04-data-sources-discovery-note.md).
 
 ### What was discovered
 

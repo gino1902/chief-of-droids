@@ -161,6 +161,6 @@ twelve months at the time of verification.
 | [Bundle library dependencies](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/library-dependencies) | The three sharing mechanisms, the `uv` and `pyproject.toml` editable-environment pattern, and the pipeline dependency-caching limitation | 2026-08-06 |
 | [Use a private artifact in a bundle](https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/artifact-private) | Why Option B costs more: a private wheel must be downloaded locally before a bundle can reference it | 2026-08-06 |
 | [Developer best practices on Databricks](https://docs.databricks.com/aws/en/developers/best-practices) | Small, focused bundles owned per team | 2026-07-09 |
-| [O2 data sources](../2607-o2-requirements/o2-data-sources.md) and [domain taxonomy](../2607-o2-requirements/domain-taxonomy.md) | The feed configuration that grounds which directories exist | 2026-08-06 |
+| [O2 data sources](../../2607-o2-requirements/o2-data-sources.md) and [domain taxonomy](../../2607-o2-requirements/domain-taxonomy.md) | The feed configuration that grounds which directories exist | 2026-08-06 |
 
 Version history is git. This record carries no version field.

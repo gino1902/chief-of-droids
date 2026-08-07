@@ -8,7 +8,7 @@
 | Decision-makers | Gino, DE lead |
 | Consulted | Platform / Cloud team, Security |
 | Informed | Wider data team |
-| Detailed design | [2026-06-24-sharepoint-to-bronze-ingestion-lock-in.md](2026-06-24-sharepoint-to-bronze-ingestion-lock-in.md) |
+| Detailed design | [2026-06-24-sharepoint-to-bronze-ingestion-lock-in.md](../2026-06-24-sharepoint-to-bronze-ingestion-lock-in.md) |
 
 ---
 
