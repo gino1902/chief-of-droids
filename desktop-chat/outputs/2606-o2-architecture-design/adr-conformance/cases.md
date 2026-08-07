@@ -31,7 +31,7 @@ Every case declares which. Cardinality is fixed per case, never "one or more".
 
 Each with its citation. An element with no citation is a Gap.
 
-`bronze` · `feed-to-entity mapping` · `silver` · `entity contract` · `deployment unit`
+`bronze` · `feed-to-entity mapping` · `silver` · `entity contract` · `which bundle`
 
 ---
 
@@ -70,7 +70,7 @@ performs.
 here is multi-vehicle. Which, and whether union or join, is unknown until the feed-to-entity
 mapping exists.
 
-**Exercises.** ADR-001, ADR-009, ADR-011, and the unowned deployment-unit question.
+**Exercises.** ADR-001, ADR-009, ADR-011, and the unowned question of how many bundles.
 
 **Expected design.** _To derive._ **Verdict.** _Not run._
 
@@ -170,9 +170,9 @@ does not want their tables redeployed.
 
 **Why it exists.** Every other case tests the ingestion model. This one tests the ownership model,
 which is the harder half and is unwritten. It is also the case that decides whether an owner is a
-real boundary or an accountability, which is the question the deployment-unit count turns on.
+real boundary or an accountability, which is the question the bundle count turns on.
 
-**Exercises.** The unwritten ownership record, ADR-006 permissions, and the deployment-unit
+**Exercises.** The unwritten ownership record, ADR-006 permissions, and the bundle-count
 question.
 
 **Expected design.** _To derive._ **Verdict.** _Not run._
@@ -208,10 +208,10 @@ files by a different mechanism to a different location.
 coming: the ADR-009 to ADR-008 migration. Decomposing the supply path into producer, route and
 vehicle is what made its absence visible.
 
-It is also the case where the deployment-unit answer may legitimately differ before and after,
+It is also the case where the bundle-count answer may legitimately differ before and after,
 since the current route has one connection to one site while the planned one lands per producer.
 
-**Exercises.** ADR-008, ADR-009, ADR-011 producing system as mapping, and the deployment-unit
+**Exercises.** ADR-008, ADR-009, ADR-011 producing system as mapping, and the bundle-count
 question.
 
 **Expected design.** _To derive._ **Verdict.** _Not run._
@@ -234,7 +234,7 @@ question.
 | ADR-010 | 2, 5 |
 | ADR-011 | 0, 1, 2, 3, 4, 5, 8 |
 | Ownership record, unwritten | 2, 6, 7 |
-| Deployment-unit decision, unowned | 1, 6, 8 |
+| Bundle count, unowned | 1, 6, 8 |
 
 ADR-002 and ADR-003 have no case because they decide tooling and repository shape, which no
 supply-path change perturbs. That is a real coverage hole for this suite rather than a defect in
@@ -245,5 +245,5 @@ those records: a different instrument would be needed to test them.
 Cases 1 and 3 cannot be graded against real data until the feed-to-entity mapping exists, since
 nothing records which vehicles carry which entities.
 
-Cases 1, 6 and 8 all reach the deployment-unit question, which no record currently owns. Until it
+Cases 1, 6 and 8 all reach the bundle-count question, which no record currently owns. Until it
 is decided they will report the same Gap rather than testing anything else.

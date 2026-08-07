@@ -26,7 +26,7 @@ unchanged because it was right all along.
 **Deployment units were asserted, never argued.** The record stated one bundle per producer,
 per subject area and per use case, inside a decision about what the layers mean and who owns
 them. Those are two different questions, and the second was never put to options. Layer
-semantics stay here. The number of deployment units moves to the tree contract, where it can be
+semantics stay here. How many bundles they become moves to the tree contract, where it can be
 argued against the vendor's own sizing criteria rather than inherited from a phrase.
 
 Neither correction changes the decision this record actually made: conforming happens once, in
@@ -98,7 +98,7 @@ becoming a bottleneck.
   along the supply path it arrives on. Consumed only by silver, not by analysts. The
   alignment is *structural*, a fact about how records arrive, not a semantic contract:
   ADR-011 places the contract on entities and records the producing system as a mapping.
-  How many deployment units this maps to is not decided by this record, see the Revision
+  How many bundles this maps to is not decided by this record, see the Revision
   note.
 - **Silver, shared cross-source transformation layer.** Reads one or more bronze (or
   silver) tables and performs cleansing, deduplication, normalisation and joins to
@@ -155,10 +155,10 @@ re-implements an existing silver concept requires explicit sign-off on the pull 
 - Silver owns the conformed enterprise view, organised by subject area; it is a distinct
   layer, never part of an ingestion boundary.
 - Gold builds only on silver, never on bronze, and is organised by business domain.
-- How many deployment units these three layers become, and the repository layout that
+- How many bundles these three layers become, and the repository layout that
   carries them, are not settled here. Layout belongs to ADR-003 and the count belongs to
   the tree contract. This record previously asserted both, which is how a layer-semantics
-  decision came to own a deployment-unit question it never argued.
+  decision came to own a question about bundles it never argued.
 - Conformed entity tables live in silver; shared transformation and metric functions
   live in the `common/` package (see ADR-007).
 - Business teams get read-only grants on the gold schemas relevant to their use case,

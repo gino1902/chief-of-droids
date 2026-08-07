@@ -119,7 +119,7 @@ The repository layout is a projection of the feed configuration, not of the taxo
 [o2-data-sources](../../2607-o2-requirements/o2-data-sources.md) and
 [domain-taxonomy](../../2607-o2-requirements/domain-taxonomy.md).
 
-**How many deployment units that projection produces is not decided by any record here.** This
+**How many bundles that projection produces is not decided by any record here.** This
 section previously stated a bundle per producer, a bundle per subject area and a bundle per use
 case, giving two bronze, five silver and zero gold. All three rules came from ADR-001's
 consequences, which asserted them without ever putting them to options, and they were removed from
@@ -144,7 +144,7 @@ in any decision, so it is not cited here. Until a record carries it, the count i
   precondition for generating the tree. Locking is a deliberate non-goal for now, because
   freezing decisions that rest on unread payloads and an unresolved identity question would be
   worse than carrying them as Draft.
-- The deployment-unit count is unowned. ADR-001 no longer asserts it and no other record has
+- The bundle count is unowned. ADR-001 no longer asserts it and no other record has
   taken it. Analysis exists but is unrecorded, so anything reading this set will find the
   question open. That is accurate rather than a gap to paper over, but it blocks the tree.
 - The feed-to-entity mapping does not exist. ADR-011 admits an entity "when a supply path
