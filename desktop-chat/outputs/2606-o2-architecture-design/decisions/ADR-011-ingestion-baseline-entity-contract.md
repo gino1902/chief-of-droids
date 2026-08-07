@@ -102,8 +102,10 @@ behind it since they reach O2 only through Unit4.
 - A producer change becomes a mapping edit rather than rework, which is the point of the decision.
 - Every semantically incompatible producer needs a mapping that is maintained, validated and kept
   honest. An unmaintained mapping is worse than none.
-- Bronze stays source-aligned per producer, so a producer change means a new bronze bundle
-  alongside the mapping edit, while silver's entity definitions hold.
+- Bronze stays source-aligned along the supply path, so a producer change is a mapping edit and
+  a configuration edit, while silver's entity definitions hold. It does not create or retire a
+  bundle: under ADR-012 a producer is configuration and never a directory. An earlier version of
+  this line said a producer change means a new bronze bundle, which ADR-012 contradicts.
 - Someone must classify each producer as semantically compatible or not, and that judgement has no
   external test. Getting it wrong on APP is the expensive direction.
 - Finance cannot be ingested at all until an application gains an outbound path, so the supply-path

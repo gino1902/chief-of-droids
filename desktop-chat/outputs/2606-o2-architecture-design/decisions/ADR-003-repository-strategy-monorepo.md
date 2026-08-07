@@ -68,8 +68,13 @@ consuming teams are independent, which they are not.
 
 ## Decision
 
-**Option A chosen. One monorepo, one bundle per producer and per use case, each
-independently deployable, sharing a `common/` library via `sync.paths`.**
+**Option A chosen. One monorepo holding many independently deployable bundles, sharing a
+`common/` library via `sync.paths`.**
+
+How many bundles, and what makes something a bundle rather than a directory, is decided by
+ADR-012 and not here. This record decides that there is one repository holding many bundles; it
+does not decide their number. An earlier version said "one bundle per producer and per use case",
+which ADR-012 contradicts and which this record never argued.
 
 ### Rationale
 
@@ -128,20 +133,19 @@ bundle does not redeploy others. `sync.paths` references to `common/` resolve, a
 
 ## Consequences
 
-- Top-level layout carries the three layers: `common/`, `ingestion/<producer>/`,
-  `silver/<subject_area>/`, `use_cases/<use_case>/`, plus `docs/`. Producer bundles own
-  bronze only, silver bundles own the conformed enterprise view, use-case bundles own gold
-  (see ADR-001). CI configuration lives wherever the chosen platform requires it, and which
+- Top-level layout carries the three layers plus `common/` and `docs/`. Ingestion owns bronze
+  only, silver owns the conformed enterprise view, and gold is organised by business domain
+  (see ADR-001). What appears beneath each layer, and whether it is a directory or a bundle,
+  follows ADR-012: a producer never appears as a directory name. CI configuration lives wherever the chosen platform requires it, and which
   platform that is belongs to ADR-002, not here. This record is deliberately CI-agnostic:
   an earlier version named Azure DevOps pipeline files, which caused the whole record to be
   treated as deprecated on 2026-08-06 when the toolchain moved to GitLab. Only the CI clause
   was stale.
 - Which directories exist at any time is grounded in the feed configuration, not in the
-  taxonomy. A bronze bundle exists per producer having at least one active feed, a silver
-  bundle per subject area having at least one active feed, and a gold bundle per use case
-  with a go decision. On the 2026-08-06 configuration that is two bronze (APP, Whoz), five
-  silver and zero gold, against a taxonomy of 17 subdomains. Directories for planned feeds
-  are created when the feed goes active, not in advance.
+  taxonomy. The rule that turns configuration into structure belongs to ADR-012. This record
+  previously stated that rule itself, as a bundle per producer, per subject area and per use
+  case, which was added on 2026-08-06 and contradicted by ADR-012 on 2026-08-07. It is removed
+  rather than corrected, because stating it here is what let two records own the same question.
 - The two-level grouping means shared references resolve as `../../common`, an accepted
   trade for clearer top-level intent.
 - Bundles are independently deployable despite sharing a repository.

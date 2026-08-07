@@ -76,17 +76,17 @@ the "Use declarative CDC instead of imperative MERGE" section directs `APPLY CHA
 ## Validation
 
 Transformation code appears only in pipeline resources, and jobs contain only
-orchestration tasks. Each producer bundle has a distinct ingestion pipeline and
-transformation pipeline. `databricks bundle validate` passes. Pipeline mode is
+orchestration tasks. Ingestion and transformation are distinct pipelines, never one. `databricks bundle validate` passes. Pipeline mode is
 triggered unless a documented latency need justifies continuous.
 
 ---
 
 ## Consequences
 
-- Each producer bundle carries a bronze ingest pipeline and a job. Each silver bundle
-  carries a conforming pipeline and a job. Each use-case bundle carries a gold pipeline
-  and a job.
+- Each layer carries its own pipeline and its own job: a bronze ingest pipeline, a silver
+  conforming pipeline, a gold pipeline. This record decides that the layers are separate
+  pipelines. It does not decide how those pipelines are grouped into bundles, which is ADR-012.
+  An earlier version said "each producer bundle", which ADR-012 contradicts.
 - Layers are scheduled, monitored and troubleshot independently.
 - CDC sources use `APPLY CHANGES INTO`, avoiding hand-written merge logic.
 - Continuous mode is an explicit, justified exception, not a default.
