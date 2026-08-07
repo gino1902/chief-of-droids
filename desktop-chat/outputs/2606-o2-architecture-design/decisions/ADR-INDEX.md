@@ -41,6 +41,7 @@ conformance derivation reading this directory reads only decisions. See
 | [ADR-009](ADR-009-sharepoint-bronze-ingestion.md) | SharePoint to bronze via the standard connector, scheduled drain, as a temporary bridge to ADR-008 | Accepted, blocked | 2026-08-07 |
 | [ADR-010](ADR-010-middleware-o2-boundary.md) | Middleware and O2 boundary: SQLI data contracts, one-way inbound | Draft, amended | 2026-08-04 |
 | [ADR-011](ADR-011-ingestion-baseline-entity-contract.md) | Ingestion baseline: contract on entities, producing system as configuration | Draft | |
+| [ADR-012](ADR-012-repository-tree-strategy.md) | Repository tree strategy: the tree's shape follows the work, not the data | Draft | |
 
 > ⚠️ Numbering is not reconciled. ADR-011 is the highest number known to this session, but records
 > are being written in parallel sessions, so 012 onward may already be claimed elsewhere. Reconcile
@@ -119,7 +120,15 @@ The repository layout is a projection of the feed configuration, not of the taxo
 [o2-data-sources](../../2607-o2-requirements/o2-data-sources.md) and
 [domain-taxonomy](../../2607-o2-requirements/domain-taxonomy.md).
 
-**How many bundles that projection produces is not decided by any record here.** This
+**ADR-012 decides what governs that projection**: a concept becomes structure only if it changes
+when the organisation changes, and a directory becomes its own bundle only when it has its own
+release gate. The count is an output of that rule, not a decision, and it moves as the
+configuration moves. On the 2026-08-07 configuration it yields two bundles.
+
+The paragraph below records why the count was unowned between 2026-08-06 and 2026-08-07, and is
+kept so nobody reintroduces the removed rules.
+
+**How many bundles that projection produces was not decided by any record here.** This
 section previously stated a bundle per producer, a bundle per subject area and a bundle per use
 case, giving two bronze, five silver and zero gold. All three rules came from ADR-001's
 consequences, which asserted them without ever putting them to options, and they were removed from
@@ -144,9 +153,8 @@ in any decision, so it is not cited here. Until a record carries it, the count i
   precondition for generating the tree. Locking is a deliberate non-goal for now, because
   freezing decisions that rest on unread payloads and an unresolved identity question would be
   worse than carrying them as Draft.
-- The bundle count is unowned. ADR-001 no longer asserts it and no other record has
-  taken it. Analysis exists but is unrecorded, so anything reading this set will find the
-  question open. That is accurate rather than a gap to paper over, but it blocks the tree.
+- ~~The bundle count is unowned.~~ Closed 2026-08-07 by ADR-012, which decides the rule rather
+  than the number.
 - The feed-to-entity mapping does not exist. ADR-011 admits an entity "when a supply path
   exists" and nothing records which feeds carry which entities, so that admission test cannot
   be evaluated. Two subdomains already have more entities than feeds.
