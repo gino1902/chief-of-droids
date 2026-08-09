@@ -50,12 +50,11 @@ Assignment is a relation between a person and a project, not an entity.
 
 Two conventions coexist and they point in opposite directions relative to the data.
 `Push X to` points at the receiver, so the arrow follows the data. `Extract X from` and
-`Ingest X from` point at the provider, so the arrow runs against the data. A consequence worth
-stating plainly: a provider never has an outgoing arrow in this chart, so absence of an outgoing
-arrow says nothing about whether a system supplies data.
+`Ingest X from` point at the provider, so the arrow runs against the data.
 
-That qualifies the Legend, which says arrow direction determines the flow direction. It does,
-but only once the verb is read first.
+The arrow direction always shows which system triggers the flow and which one responds. It shows
+the data direction too, but only once the verb is read first. The tail is the trigger, the head
+is the counterpart.
 
 ## Status of a flow
 
