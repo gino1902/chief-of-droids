@@ -7,7 +7,7 @@
 > Pairs with 2026-06-24-databricks-cicd-promotion-play-DRAFT.md (the workload
 > promotion side, Phase 7) and the o2 SAD environment-strategy block.
 
-The account and workspace layers are set up by different identities. Account-level work (identity federation and Unity Catalog metastore governance) is the account admin's. Subscription-level work (network, storage, and the workspace resource itself) needs Contributor on the subscription or resource group and falls to the platform engineer. Identity and network are independent, so they run in parallel. Workloads land later, repeatedly, through CI/CD. Because this subscription has never run Databricks, it must first be onboarded to the first-party service. The guide has no Phase 0: it places subscribing inside Phase 7 as the step before any automation or workspace creation, so this document treats it as a Phase 7 precondition. The Microsoft.Databricks provider registers as part of the first Terraform or ARM deploy when the deployer holds the register permissions, so the real one-off gate is an Entra Global Admin activating the account console, which is required to use Unity Catalog.
+The account and workspace layers are set up by different identities. Account-level work (identity federation and Unity Catalog metastore governance) is the account admin's. Subscription-level work (network, storage, and the workspace resource itself) needs Contributor on the subscription or resource group and falls to the platform engineer. Identity and network are independent, so they run in parallel. Workloads land later, repeatedly, through CI/CD. Because this subscription has never run Databricks, it must first be onboarded to the first-party service. The guide has no Phase 0: it places subscribing inside Phase 7 as the step before any automation or workspace creation, so this document treats it as a Phase 7 precondition. The deploying identity needs the Microsoft.Databricks register permissions unless those providers are already registered in the subscription, so the real one-off gate is an Entra Global Admin activating the account console, which is required to use Unity Catalog.
 
 ## Sequence
 
@@ -27,7 +27,7 @@ sequenceDiagram
     participant CICD as CI/CD (bundles, service principal)
 
     Note over PE,AZ: Phase 7 precondition · Subscribe to Azure Databricks (first-party service, one-off)
-    Note over PE,AZ: Microsoft.Databricks provider registers during the first Terraform or ARM deploy if the deployer holds the register permissions, otherwise register by hand
+    Note over PE,AZ: Deployer needs the Microsoft.Databricks register permissions unless those providers are already registered in the subscription
 
     Note over GA,ACC: Phase 1 · Bootstrap the account, the other half of subscribing (one-off)
     GA->>ACC: First sign-in to the account console, activates it for the tenant
@@ -73,10 +73,10 @@ sequenceDiagram
 ## Reading the diagram
 
 - The `par` block is the key ordering claim. Identity federation and network are independent, so the guide allows them in parallel. Everything after the block depends on at least one of them.
-- Subscribing and the bootstrap are one-off. The guide numbers its phases 1 to 10 and treats subscribing as the first step inside Phase 7, so the precondition label here is this document's framing, not the guide's. On Azure there is no separate Databricks contract to sign, it is a first-party service billed through the subscription. The `Microsoft.Databricks` provider registers during the first Terraform or ARM deploy when the deployer holds the `register/action` permissions, so the real gate is the account-console activation: an Entra Global Admin signs in once to activate it, which is required to use Unity Catalog. After that first login the role becomes account admin and the Global Admin grant can be dropped.
+- Subscribing and the bootstrap are one-off. The guide numbers its phases 1 to 10 and treats subscribing as the first step inside Phase 7, so the precondition label here is this document's framing, not the guide's. On Azure there is no separate Databricks contract to sign, it is a first-party service billed through the subscription. On the provider, the docs state only that the `register/action` permissions are not required if those providers are already registered in the subscription, so plan for the deploying identity to hold them and do not rely on a documented auto-registration step. Either way the real gate is the account-console activation: an Entra Global Admin signs in once to activate it, which is required to use Unity Catalog. After that first login the role becomes account admin and the Global Admin grant can be dropped.
 - The workspace step needs Contributor access on the subscription or resource group, plus Network Contributor on the VNet for VNet injection, which is why it is the platform engineer's, not the account admin's. Note how the creator picks up workspace admin. An account admin who creates a workspace gets it directly. Anyone else with subscription-level Contributor or Owner gets it on first login to the workspace and keeps it even after that Azure role is removed, so subscription Contributor is part of the Databricks admin surface and should be audited as such.
 - Secure cluster connectivity (SCC) is the default posture for classic compute. Under SCC both subnets are private and all compute-to-control-plane traffic is outbound, which is why a new VNet after 31 March 2026 (when new Azure VNets default to no outbound internet) needs an explicit egress path: a NAT gateway on the host subnet. The docs are inconsistent here. Phase 4 puts the NAT gateway on the public (host) subnet, while the VNet injection page attaches it to both subnets to get stable egress IPs. Use both subnets if you need to allow-list your egress IPs with an external service.
-- Subnets must be at least /26, but most production workloads need /23 or larger. Node capacity is one IP per node in each subnet, minus the five addresses Azure reserves per subnet, so a /26 caps a workspace at 59 cluster nodes and a /23 at 507. The same arithmetic gives the published examples: a /17 subnet allows 32,763 nodes and a /25 allows 123.
+- Subnets must be at least /26, but most production workloads need /23 or larger. Node capacity works out as one IP per node in each subnet, minus the five addresses Azure reserves per subnet. The published examples are a /17 subnet at 32,763 nodes and a /25 at 123. Applying that same model to the sizes above, which the docs do not tabulate, a /26 gives 59 nodes and a /23 gives 507. Treat those two as derived rather than quoted.
 - This is a new account, so its Unity Catalog metastore is automatically created and assigned. Phase 3 is verify-and-bind, not create.
 - Identity federation, automatic identity management and JIT provisioning are all default-on for a new account too, so the account admin verifies them rather than enabling them. There is no SSO step on Azure: Entra-backed login is on by default for both the account console and workspaces, for all customers. The Phase 1 page's generic advice to authenticate via SSO with your identity provider is cross-cloud wording and does not describe an Azure action.
 - The guide recommends building one administrative workspace per region first, restricted to platform admins, because Unity Catalog APIs are workspace APIs. That is why the workspace (Phase 2) precedes Unity Catalog governance (Phase 3).
@@ -87,7 +87,7 @@ sequenceDiagram
 
 | Step | From where | Where to | By whom | When |
 | :--- | :--- | :--- | :--- | :--- |
-| Subscribe to Azure Databricks (Phase 7 precondition) | Azure subscription | Account console plus provider | Global Admin activates console, provider registers on the first Terraform or ARM deploy | One-off, before everything |
+| Subscribe to Azure Databricks (Phase 7 precondition) | Azure subscription | Account console plus provider | Global Admin activates console, deploying identity holds the provider register permissions | One-off, before everything |
 | Bootstrap account admin | Account console | Databricks account | Entra Global Admin | One-off, first login only |
 | Verify identity federation, automatic identity management, JIT | Account console | Entra ID and account | Account admin | Early, parallel with network |
 | VNet, subnets, NAT gateway | Terraform on the subscription | Azure data plane | Platform engineer (Network Contributor on VNet) | Parallel with identity |
@@ -106,7 +106,7 @@ The guide gives three execution modes, pick by situation.
 
 ## Sources
 
-Verified against Microsoft Learn, re-verified 2026-08-10 with a per-claim check, pages updated June to August 2026.
+Verified against Microsoft Learn. Claims re-verified per claim on 2026-08-10 against the pages that own them, updated June to August 2026. Not every source listed below was refetched in that pass, and no claim above rests solely on one that was not.
 
 - Production planning, 10 phases and design-to-implementation: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/
 - Phase 1, account and identity, admin roles, first-login bootstrap, automatic identity management: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/account-setup
@@ -120,5 +120,5 @@ Verified against Microsoft Learn, re-verified 2026-08-10 with a per-claim check,
 - Mermaid sequence diagram syntax: https://mermaid.js.org/syntax/sequenceDiagram.html
 
 <!--
-Version: 1.6 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.7 | Last Updated: 2026-08-10 | Status: Draft
 -->
