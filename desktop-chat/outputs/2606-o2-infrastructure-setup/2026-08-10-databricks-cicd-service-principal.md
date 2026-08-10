@@ -4,9 +4,10 @@
 > a GitLab pipeline. Covers the two kinds of service principal, the four
 > authentication routes, and the OIDC federation build.
 > Pairs with 2026-06-25-databricks-infra-setup-sequence.md (Phase 1 identity and
-> Phase 7 promotion) and the CI/CD promotion play.
+> Phase 7 promotion) and ../202606-env-setup/2026-06-24-databricks-cicd-promotion-play-DRAFT.md
+> (the promotion play).
 
-A service principal is the non-human identity that deploys bundles, runs jobs and applies Unity Catalog grants. Databricks advises against running automation under a user's personal access token: the service principal can be scoped independently of any person, disabled on its own, and it survives that person leaving. Jobs can also be set to run as the service principal rather than as their owner.
+A service principal is the non-human identity that deploys bundles, runs jobs and applies Unity Catalog grants. The grants go through Terraform, the API or SQL rather than through a bundle: bundles cover jobs, pipelines, dashboards, model serving endpoints and MLflow objects, and Phase 7 of the deployment guide keeps Unity Catalog under Terraform. Databricks advises against running automation under a user's personal access token: the service principal can be scoped independently of any person, disabled on its own, and it survives that person leaving. Jobs can also be set to run as the service principal rather than as their owner.
 
 ## Two kinds on Azure
 
@@ -111,20 +112,20 @@ GitLab's default `sub` is `project_path:{group}/{project}:ref_type:{type}:ref:{b
 - The subject is the entire security boundary. Pin the prod policy to a protected branch and protect that branch in GitLab, or any branch in the project can deploy to production.
 - Switch the sub claim to immutable components. GitLab's projects API accepts `ci_id_token_sub_claim_components`, set to something like `["project_id", "ref_type", "ref"]`. Confirmed on docs.gitlab.com, which carries no last-updated date. With the default path-based subject, renaming the group breaks authentication, and a future project reusing the old path would match the policy.
 - Deactivate rather than delete. Deleting a service principal from the account stops its compute, fails its jobs and breaks anything shared with Run as Owner. Deactivation blocks authentication and keeps the permissions.
-- Pin the CLI version in the runner image rather than installing on every run, so a CLI release cannot change the pipeline's behaviour on a day nobody deployed.
+- Pin the CLI version in the runner image rather than installing on every run, so a CLI release cannot change the pipeline's behaviour on a day nobody deployed. Bundles need v0.218.0 or above, so pin at or above that floor.
 - The limit is 20 federation policies per service principal. Multiple policies on one service principal are only for the same logical identity arriving through different providers, not for different workloads.
 - Account and workspace limits are 10,000 combined users and service principals and 5,000 groups, counted per account and again per workspace. One service principal per environment stays far inside that.
 
 ## Effect on the setup sequence
 
-Phase 1 of the provisioning sequence says the account admin registers OAuth M2M service principals for automation. Under this recommendation that step changes shape: the admin still creates the service principals in Phase 1, but generates no OAuth secrets and instead attaches a federation policy once the GitLab project and its protected branches exist. That makes the policy step depend on the repository, so it lands later than the rest of Phase 1.
+The provisioning sequence carries this recommendation as of its version 1.8. Phase 1 creates the service principals for automation and prefers OIDC token federation over OAuth M2M secrets. The consequence for ordering is that the federation policy cannot be written until the GitLab project and its protected branches exist, so the policy step depends on the repository and lands later than the rest of Phase 1, even though the service principals themselves are created early.
 
 ## Open questions
 
 > 🔲 To be defined — awaiting user input
 
 - Whether a federation policy can attach to an Entra ID managed service principal as well as a Databricks managed one. The docs describe policies as attaching to "a service principal in your Databricks account" without distinguishing the two. Test before designing around it if tenant governance forces Entra managed.
-- Whether automatic identity management carries a pricing tier requirement. Check in the account console. The service principal cap question is closed: 10,000 combined users and service principals per account and per workspace.
+- Whether automatic identity management carries a pricing tier requirement. Check in the account console. The tiers are Standard, Premium and Trial, and role-based access control is documented as Premium only, but no page states a tier for automatic identity management. The service principal cap question is closed: 10,000 combined users and service principals per account and per workspace, plus 5,000 groups.
 
 ## Sources
 
@@ -136,11 +137,13 @@ Verified against Microsoft Learn and GitLab Docs, per claim, 2026-08-10. Databri
 - Entra service principal authentication, ARM_ variables, recommendation to prefer OAuth M2M: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/auth/azure-sp
 - Configure a federation policy, CLI and API, 20-policy limit, one identity per service principal: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/auth/oauth-federation-policy
 - GitLab CI/CD workload identity federation, env-oidc, id_tokens block: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/auth/provider-gitlab
-- Workload identity federation in CI/CD, provider list: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/auth/oauth-federation-provider
+- Workload identity federation in CI/CD, full provider list, strength of recommendation: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/auth/oauth-federation-provider
+- Bundle command group, `-t, --target` on deploy: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/cli/bundle-commands
+- Declarative Automation Bundles, what bundles deploy, CLI v0.218.0 floor: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/
 - Automatic identity management, default on after 1 August 2025, SCIM does not sync service principals: https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/automatic-identity-management/
 - GitLab ID tokens, sub claim format, ci_id_token_sub_claim_components: https://docs.gitlab.com/ci/secrets/id_token_authentication/
 - GitLab connect to cloud services, claim reference: https://docs.gitlab.com/ci/cloud_services/
 
 <!--
-Version: 1.2 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.3 | Last Updated: 2026-08-10 | Status: Draft
 -->
