@@ -16,8 +16,30 @@ Four identities do the work. Get them lined up first, because two of them are ha
 | :--- | :--- | :--- |
 | Platform engineer | Steps 1 to 5 | Contributor on the subscription or resource group, plus Network Contributor on the VNet |
 | Entra Global Admin | Steps 6 and 7 only | A real Microsoft Entra ID Global Administrator, needed once |
-| Account admin | Steps 8 to 12, 15 to 17 | Created in step 7 |
+| Account admin | Steps 8 to 17 | Created in step 7 |
 | Test user | Step 18 | A named human who is not an admin anywhere |
+
+The account admin assigns themselves to the workspace as a workspace admin in step 10, which is what lets them run steps 13 to 17. Account admin is an account-level role and carries no workspace access on its own. Skip that half of step 10 and the first `CREATE CATALOG` in step 15 is refused.
+
+## Preconditions
+
+The steps below assume a tenant that has never run Databricks and a subscription with no network standards of its own. On a company subscription both are usually false. Answer these five before step 1, because each one changes the runbook rather than just delaying it.
+
+Does a Databricks account already exist in this tenant? Sign in at https://accounts.azuredatabricks.net and look. If one exists, steps 6 and 7 have already happened, you are probably not an account admin, and getting the role is a request to whoever holds it. Budget days, not minutes. Do not attempt the Global Admin bootstrap against an existing account.
+
+When was that account created? This sets three defaults and you cannot infer them. Automatic identity management is on by default only for accounts created after 1 August 2025, and JIT provisioning only for accounts created after 1 May 2025. On an older account, step 8 is an enable rather than a verify, and until it is on, the Entra group in step 9 will not appear for step 10 to select.
+
+Is serverless SQL available and enabled for this account and region? Step 13 assumes it is. If serverless is unavailable or centrally disabled, that step becomes a classic cluster, and the group then needs CAN RESTART on that cluster rather than CAN USE on a warehouse, because CAN ATTACH TO alone will not start a stopped cluster.
+
+Who owns IP address space, and is there a hub-spoke topology? The `10.10.0.0/21` in step 3 is an example, not a recommendation. Get the range allocated properly. If a route table forces `0.0.0.0/0` to a central firewall, the NAT gateway in step 4 is redundant or in conflict, and that is a conversation with the network team before you apply anything.
+
+Will Azure Policy allow this? Step 4 creates a public IP, which many company subscriptions deny outright. Check the policy assignments on the target subscription, along with any mandatory tagging, before the first apply rather than after it.
+
+## Terraform scaffolding
+
+Steps 2 to 5 give resource blocks only. Supply your own `provider "azurerm"` block with a `features {}` stanza, your state backend, and run `terraform init` before the apply in step 5. Resource names here follow no company convention and are meant to be replaced.
+
+## Decisions
 
 Decisions already made, so the runbook does not ask again. Classic workspace with VNet injection. Premium tier. Serverless SQL warehouse for compute. A dedicated proving catalog rather than the auto-created workspace catalog, because the workspace catalog grants every workspace user `USE CATALOG` by default and would hide a broken grant chain instead of proving a working one.
 
@@ -218,20 +240,24 @@ One group in Microsoft Entra ID. Add the named test user as a member. Do not cre
 
 Check: the group appears in the account console under User management, Groups, within about ten minutes, marked as External.
 
-## 10. Add the group to the workspace with entitlements
+## 10. Add the group and yourself to the workspace
 
 Owner: account admin
 
 This is the step the whole runbook turns on, and it is the one most likely to be done wrong from memory.
 
-Account console, Workspaces, click the workspace, Permissions tab, Add permissions. Select the Entra group. Assign the permission level `USER`, not `ADMIN`. Then assign both of these entitlements explicitly:
+Account console, Workspaces, click the workspace, Permissions tab, Add permissions. Two assignments here, not one.
+
+The Entra group gets the permission level `USER`, not `ADMIN`, plus both of these entitlements assigned explicitly:
 
 - Workspace access, which covers notebooks, jobs, models and pipelines
 - Databricks SQL access, which covers the SQL editor, queries, dashboards and warehouses
 
+Then add yourself, the account admin, with the permission level `ADMIN`. Being an account admin gives you no access to any workspace, and steps 13 to 17 are all work inside this one. Doing it now saves discovering it at step 15.
+
 > ⚠️ Do not rely on the `users` group to supply these. Databricks began rolling out a change on 15 June 2026 in which entitlements are granted explicitly when a principal is added to a workspace, and the `users` and `admins` system groups no longer carry assignable entitlements. It auto-enabled on 27 July 2026 for workspaces that had not opted in or out, and is enforced everywhere on 14 September 2026. A workspace created today therefore starts in the new behaviour, where the `users` group grants nothing. Older guidance that says these entitlements arrive by default is describing the old behaviour.
 
-Check: the group is listed on the workspace Permissions tab with both entitlements shown against it.
+Check: the workspace Permissions tab lists the group as User with both entitlements against it, and you as Admin. Then open the workspace URL yourself and confirm you land inside it.
 
 ## 11. Verify the metastore exists and the workspace is attached
 
@@ -255,7 +281,7 @@ Check: run `SELECT CURRENT_METASTORE();` from the SQL editor in the workspace. I
 
 ## 13. Create the SQL warehouse
 
-Owner: workspace admin
+Owner: account admin, working in the workspace as the admin they became in step 10
 
 In the workspace, SQL Warehouses, Create SQL warehouse. Serverless. Size small is enough to prove the path.
 
@@ -263,7 +289,7 @@ Check: start it and wait for the state to read Running.
 
 ## 14. Grant the group CAN USE on the warehouse
 
-Owner: workspace admin
+Owner: account admin, working in the workspace as the admin they became in step 10
 
 On the warehouse row, open the kebab menu, click Permissions, select the Entra group, and assign Can use. Can view is not enough, because those users cannot run queries. Can manage is more than the group needs.
 
@@ -364,5 +390,5 @@ Verified against Microsoft Learn on 2026-08-10. Steps 1 to 5 and 6 to 8 restate 
 - azurerm_databricks_workspace, custom_parameters arguments and the sku values: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/databricks_workspace
 
 <!--
-Version: 1.1 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.2 | Last Updated: 2026-08-10 | Status: Draft
 -->
