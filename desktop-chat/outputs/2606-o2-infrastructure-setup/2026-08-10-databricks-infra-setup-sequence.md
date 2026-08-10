@@ -52,7 +52,7 @@ sequenceDiagram
     end
 
     Note over PE,WS: Phase 2 · Workspace (needs Contributor on the subscription or resource group)
-    PE->>AZ: Deploy workspace into the VNet (Terraform or ARM)
+    PE->>AZ: Deploy workspace into the VNet (Terraform)
     AZ->>WS: Create workspace, managed resource group, workspace storage
     WS-->>PE: Running, creator added as workspace admin
 
@@ -97,7 +97,7 @@ sequenceDiagram
 | Bootstrap account admin | Account console | Databricks account | Entra Global Admin | One-off, first login only |
 | Verify identity federation, automatic identity management, JIT | Account console | Entra ID and account | Account admin | Early, parallel with network |
 | VNet, subnets, NAT gateway | Terraform on the subscription | Azure data plane | Platform engineer (Network Contributor on VNet) | Parallel with identity |
-| Workspace | Terraform or ARM | Azure managed RG | Platform engineer (Contributor on subscription or RG) | After network |
+| Workspace | Terraform | Azure managed RG | Platform engineer (Contributor on subscription or RG) | After network |
 | ADLS Gen2 bronze | Terraform | Azure storage | Platform engineer | After or with workspace |
 | Unity Catalog metastore, check and bind, create if absent | Account console or Terraform | Account, bound to workspace | Account admin | After workspace and storage |
 | Workload deploy (bundles) | CI/CD runner | Workspace | Service principal (OIDC token federation, OAuth M2M as fallback) | Repeats per release |
@@ -129,5 +129,5 @@ Verified against Microsoft Learn. Claims re-verified per claim on 2026-08-10 aga
 - Mermaid sequence diagram syntax: https://mermaid.js.org/syntax/sequenceDiagram.html
 
 <!--
-Version: 1.10 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.11 | Last Updated: 2026-08-10 | Status: Draft
 -->
