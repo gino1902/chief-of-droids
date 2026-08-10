@@ -7,7 +7,7 @@
 > Pairs with 2026-06-24-databricks-cicd-promotion-play-DRAFT.md (the workload
 > promotion side, Phase 7) and the o2 SAD environment-strategy block.
 
-The account and workspace layers are set up by different identities. Account-level work (identity federation and Unity Catalog metastore governance) is the account admin's. Subscription-level work (network, storage, and the workspace resource itself) needs Contributor on the subscription or resource group and falls to the platform engineer. Identity and network are independent, so they run in parallel. Workloads land later, repeatedly, through CI/CD. Because this subscription has never run Databricks, it must first be onboarded to the first-party service in Phase 0. The Microsoft.Databricks provider usually auto-registers on the first Terraform or ARM deploy, so the real one-off gate is an Entra Global Admin activating the account console, which is required to use Unity Catalog.
+The account and workspace layers are set up by different identities. Account-level work (identity federation and Unity Catalog metastore governance) is the account admin's. Subscription-level work (network, storage, and the workspace resource itself) needs Contributor on the subscription or resource group and falls to the platform engineer. Identity and network are independent, so they run in parallel. Workloads land later, repeatedly, through CI/CD. Because this subscription has never run Databricks, it must first be onboarded to the first-party service. The guide has no Phase 0: it places subscribing inside Phase 7 as the step before any automation or workspace creation, so this document treats it as a Phase 7 precondition. The Microsoft.Databricks provider registers as part of the first Terraform or ARM deploy when the deployer holds the register permissions, so the real one-off gate is an Entra Global Admin activating the account console, which is required to use Unity Catalog.
 
 ## Sequence
 
@@ -26,8 +26,8 @@ sequenceDiagram
     participant ADLS as ADLS Gen2 (bronze)
     participant CICD as CI/CD (bundles, service principal)
 
-    Note over PE,AZ: Phase 0 · Subscribe to Azure Databricks (first-party service, one-off)
-    Note over PE,AZ: Microsoft.Databricks provider auto-registers on the first Terraform or ARM deploy, register by hand only if needed
+    Note over PE,AZ: Phase 7 precondition · Subscribe to Azure Databricks (first-party service, one-off)
+    Note over PE,AZ: Microsoft.Databricks provider registers during the first Terraform or ARM deploy if the deployer holds the register permissions, otherwise register by hand
 
     Note over GA,ACC: Phase 1 · Bootstrap the account, the other half of subscribing (one-off)
     GA->>ACC: First sign-in to the account console, activates it for the tenant
@@ -36,20 +36,20 @@ sequenceDiagram
 
     par Identity and network run in parallel
         Note over AA,ENTRA: Phase 1 · Identity federation
-        AA->>ACC: Configure SSO with Entra, verify automatic identity management (default-on for this new account)
+        AA->>ACC: Verify automatic identity management and JIT (both default-on for this new account), no SSO to configure on Azure
         ACC->>ENTRA: Sync users, nested groups, service principals
         ENTRA-->>ACC: Identities federated at account level
-        AA->>ACC: Register OAuth M2M service principals for automation
+        AA->>ACC: Create service principals for automation, prefer OIDC token federation over OAuth M2M secrets
     and
         Note over PE,NET: Phase 4 · Network (VNet injection)
-        PE->>AZ: Provision VNet (/16 to /24), host and container subnets (/26 floor, /23 typical), SCC, NAT gateway on the host subnet
+        PE->>AZ: Provision VNet (/16 to /24), host and container subnets (/26 floor, /23 typical), SCC, NAT gateway on the host subnet (both subnets if stable egress IPs are needed)
         AZ-->>PE: Data-plane network ready
     end
 
     Note over PE,WS: Phase 2 · Workspace (needs Contributor on the subscription or resource group)
     PE->>AZ: Deploy workspace into the VNet (Terraform or ARM)
     AZ->>WS: Create workspace, managed resource group, workspace storage
-    WS-->>PE: Running, creator added as workspace admin
+    WS-->>PE: Running, creator gains workspace admin (via the Azure Contributor login path unless they are already an account admin)
 
     Note over PE,ADLS: Phase 5 · Data storage
     PE->>ADLS: Provision ADLS Gen2, bronze container
@@ -73,28 +73,28 @@ sequenceDiagram
 ## Reading the diagram
 
 - The `par` block is the key ordering claim. Identity federation and network are independent, so the guide allows them in parallel. Everything after the block depends on at least one of them.
-- Phase 0 and the bootstrap are one-off. On Azure there is no separate Databricks contract to sign, it is a first-party service billed through the subscription. The `Microsoft.Databricks` provider usually auto-registers on the first Terraform or ARM deploy, so the real gate is the account-console activation: an Entra Global Admin signs in once to activate it, which is required to use Unity Catalog. After that first login the role becomes account admin and the Global Admin grant can be dropped.
-- The workspace step needs Contributor access on the subscription or resource group, plus Network Contributor on the VNet for VNet injection, which is why it is the platform engineer's, not the account admin's.
-- Secure cluster connectivity (SCC) is the default posture for classic compute. Under SCC both subnets are private and all compute-to-control-plane traffic is outbound, which is why a new VNet after 31 March 2026 (when new Azure VNets default to no outbound internet) needs an explicit egress path: a NAT gateway on the host subnet.
-- Subnets must be at least /26, but most production workloads need /23 or larger. A /26 caps a workspace at roughly 29 cluster nodes, a /23 at about 253.
+- Subscribing and the bootstrap are one-off. The guide numbers its phases 1 to 10 and treats subscribing as the first step inside Phase 7, so the precondition label here is this document's framing, not the guide's. On Azure there is no separate Databricks contract to sign, it is a first-party service billed through the subscription. The `Microsoft.Databricks` provider registers during the first Terraform or ARM deploy when the deployer holds the `register/action` permissions, so the real gate is the account-console activation: an Entra Global Admin signs in once to activate it, which is required to use Unity Catalog. After that first login the role becomes account admin and the Global Admin grant can be dropped.
+- The workspace step needs Contributor access on the subscription or resource group, plus Network Contributor on the VNet for VNet injection, which is why it is the platform engineer's, not the account admin's. Note how the creator picks up workspace admin. An account admin who creates a workspace gets it directly. Anyone else with subscription-level Contributor or Owner gets it on first login to the workspace and keeps it even after that Azure role is removed, so subscription Contributor is part of the Databricks admin surface and should be audited as such.
+- Secure cluster connectivity (SCC) is the default posture for classic compute. Under SCC both subnets are private and all compute-to-control-plane traffic is outbound, which is why a new VNet after 31 March 2026 (when new Azure VNets default to no outbound internet) needs an explicit egress path: a NAT gateway on the host subnet. The docs are inconsistent here. Phase 4 puts the NAT gateway on the public (host) subnet, while the VNet injection page attaches it to both subnets to get stable egress IPs. Use both subnets if you need to allow-list your egress IPs with an external service.
+- Subnets must be at least /26, but most production workloads need /23 or larger. Node capacity is one IP per node in each subnet, minus the five addresses Azure reserves per subnet, so a /26 caps a workspace at 59 cluster nodes and a /23 at 507. The same arithmetic gives the published examples: a /17 subnet allows 32,763 nodes and a /25 allows 123.
 - This is a new account, so its Unity Catalog metastore is automatically created and assigned. Phase 3 is verify-and-bind, not create.
-- Identity federation, automatic identity management and JIT provisioning are all default-on for a new account too. The account admin verifies them and configures SSO with Entra, rather than enabling them.
+- Identity federation, automatic identity management and JIT provisioning are all default-on for a new account too, so the account admin verifies them rather than enabling them. There is no SSO step on Azure: Entra-backed login is on by default for both the account console and workspaces, for all customers. The Phase 1 page's generic advice to authenticate via SSO with your identity provider is cross-cloud wording and does not describe an Azure action.
 - The guide recommends building one administrative workspace per region first, restricted to platform admins, because Unity Catalog APIs are workspace APIs. That is why the workspace (Phase 2) precedes Unity Catalog governance (Phase 3).
-- Bronze uses an external location on ADLS Gen2, which the guide endorses for raw or landing data. Silver and gold should prefer Unity Catalog managed tables, where the metastore manages the storage layout.
-- The CI/CD `loop` is the only repeating part. Account and workspace infra is set up once per environment, workloads promote continuously. It is the environment-promotion pattern within Phase 7 (Infrastructure as Code), using bundles deployed as a service principal, and is the subject of the separate CI/CD promotion play.
+- Bronze uses a Unity Catalog volume on an external location over ADLS Gen2. Volumes are what the guide names for landing, raw and unstructured data, on the grounds that third parties often need direct access to those paths. Silver and gold should prefer Unity Catalog managed tables, where the metastore manages the storage layout, and the guide's blanket recommendation is managed tables with no storage-level access granted to containers.
+- The CI/CD `loop` is the only repeating part. Account and workspace infra is set up once per environment, workloads promote continuously. It is the environment-promotion pattern within Phase 7 (Infrastructure as Code), using bundles deployed as a service principal, and is the subject of the separate CI/CD promotion play. Prefer OIDC token federation for that service principal so the pipeline holds no Databricks secret at all.
 
 ## From where, where to, by whom, when
 
 | Step | From where | Where to | By whom | When |
 | :--- | :--- | :--- | :--- | :--- |
-| Subscribe to Azure Databricks | Azure subscription | Account console plus provider | Global Admin activates console, provider auto-registers on Terraform or ARM deploy | One-off, before everything |
+| Subscribe to Azure Databricks (Phase 7 precondition) | Azure subscription | Account console plus provider | Global Admin activates console, provider registers on the first Terraform or ARM deploy | One-off, before everything |
 | Bootstrap account admin | Account console | Databricks account | Entra Global Admin | One-off, first login only |
-| Identity federation, SSO, automatic identity management | Account console | Entra ID and account | Account admin | Early, parallel with network |
+| Verify identity federation, automatic identity management, JIT | Account console | Entra ID and account | Account admin | Early, parallel with network |
 | VNet, subnets, NAT gateway | Terraform on the subscription | Azure data plane | Platform engineer (Network Contributor on VNet) | Parallel with identity |
 | Workspace | Terraform or ARM | Azure managed RG | Platform engineer (Contributor on subscription or RG) | After network |
 | ADLS Gen2 bronze | Terraform | Azure storage | Platform engineer | After or with workspace |
 | Unity Catalog metastore, verify and bind | Account console or Terraform | Account, bound to workspace | Account admin | After workspace and storage |
-| Workload deploy (bundles) | CI/CD runner | Workspace | Service principal (OAuth M2M) | Repeats per release |
+| Workload deploy (bundles) | CI/CD runner | Workspace | Service principal (OIDC token federation, OAuth M2M as fallback) | Repeats per release |
 
 ## When strategy
 
@@ -106,7 +106,7 @@ The guide gives three execution modes, pick by situation.
 
 ## Sources
 
-Verified against Microsoft Learn, re-verified 2026-06-26, pages updated March to June 2026.
+Verified against Microsoft Learn, re-verified 2026-08-10 with a per-claim check, pages updated June to August 2026.
 
 - Production planning, 10 phases and design-to-implementation: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/
 - Phase 1, account and identity, admin roles, first-login bootstrap, automatic identity management: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/account-setup
@@ -116,9 +116,9 @@ Verified against Microsoft Learn, re-verified 2026-06-26, pages updated March to
 - Phase 5, Storage, workspace versus data storage, managed tables preferred with external locations and volumes for raw landing, Access Connector flow: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/storage
 - Workspace creation, managed resource group, creator becomes workspace admin: https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/create-workspace
 - VNet injection, two subnets at least /26, VNet /16 to /24, NAT gateway for egress after 31 March 2026: https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/vnet-inject
-- Declarative Automation Bundles (formerly Databricks Asset Bundles), deploy jobs and pipelines, run as service principal in CI/CD: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/
+- Declarative Automation Bundles, deploy jobs and pipelines, run as service principal in CI/CD: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/
 - Mermaid sequence diagram syntax: https://mermaid.js.org/syntax/sequenceDiagram.html
 
 <!--
-Version: 1.5 | Last Updated: 2026-06-26 | Status: Draft
+Version: 1.6 | Last Updated: 2026-08-10 | Status: Draft
 -->
