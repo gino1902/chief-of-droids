@@ -31,17 +31,24 @@ Owner: platform engineer
 az provider register --namespace Microsoft.Databricks
 ```
 
+The azurerm provider registers resource providers itself by default, so this step is really a permissions check. Do it by hand first, because finding out that the deploying identity lacks the register permission is much cheaper here than inside an apply.
+
 Check: `az provider show -n Microsoft.Databricks --query registrationState -o tsv` returns `Registered`. It can sit on `Registering` for a few minutes.
+
+Steps 2 to 5 are one Terraform configuration, not four applies. The workspace consumes the NSG association IDs of both subnets, so the network and the workspace resolve as a single dependency graph and Terraform orders them for you. Author the blocks in the order below, run one `terraform apply` at the end of step 5, then run the four checks. Each step still owns its own check.
 
 ## 2. Create the resource group
 
 Owner: platform engineer
 
-```bash
-az group create --name rg-o2-databricks --location <region>
+```hcl
+resource "azurerm_resource_group" "this" {
+  name     = "rg-o2-databricks"
+  location = "<region>"
+}
 ```
 
-Check: `az group show -n rg-o2-databricks --query properties.provisioningState -o tsv` returns `Succeeded`.
+Check: after the apply, `az group show -n rg-o2-databricks --query properties.provisioningState -o tsv` returns `Succeeded`.
 
 ## 3. Create the VNet and the two subnets
 
@@ -49,22 +56,64 @@ Owner: platform engineer
 
 Use a /21 VNet with a /23 host subnet and a /23 container subnet. The two subnets must be the same size and neither may be used by anything else.
 
-```bash
-az network vnet create \
-  --resource-group rg-o2-databricks \
-  --name vnet-o2-databricks \
-  --address-prefix 10.10.0.0/21
+Bare subnets are not enough. Both subnets must carry a delegation to `Microsoft.Databricks/workspaces` and both must have a network security group associated, or the workspace deployment in step 5 fails. One NSG serves both subnets. Do not write any rules into it. Databricks auto-provisions and manages the rules it needs through the delegation, and the docs tell you not to modify or delete them.
 
-az network vnet subnet create \
-  --resource-group rg-o2-databricks --vnet-name vnet-o2-databricks \
-  --name snet-host --address-prefix 10.10.0.0/23
+```hcl
+resource "azurerm_virtual_network" "this" {
+  name                = "vnet-o2-databricks"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  address_space       = ["10.10.0.0/21"]
+}
 
-az network vnet subnet create \
-  --resource-group rg-o2-databricks --vnet-name vnet-o2-databricks \
-  --name snet-container --address-prefix 10.10.2.0/23
+resource "azurerm_network_security_group" "this" {
+  name                = "nsg-o2-databricks"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+}
+
+resource "azurerm_subnet" "host" {
+  name                 = "snet-host"
+  resource_group_name  = azurerm_resource_group.this.name
+  virtual_network_name = azurerm_virtual_network.this.name
+  address_prefixes     = ["10.10.0.0/23"]
+
+  delegation {
+    name = "databricks"
+    service_delegation {
+      name = "Microsoft.Databricks/workspaces"
+    }
+  }
+}
+
+resource "azurerm_subnet" "container" {
+  name                 = "snet-container"
+  resource_group_name  = azurerm_resource_group.this.name
+  virtual_network_name = azurerm_virtual_network.this.name
+  address_prefixes     = ["10.10.2.0/23"]
+
+  delegation {
+    name = "databricks"
+    service_delegation {
+      name = "Microsoft.Databricks/workspaces"
+    }
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "host" {
+  subnet_id                 = azurerm_subnet.host.id
+  network_security_group_id = azurerm_network_security_group.this.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "container" {
+  subnet_id                 = azurerm_subnet.container.id
+  network_security_group_id = azurerm_network_security_group.this.id
+}
 ```
 
-Check: `az network vnet subnet list -g rg-o2-databricks --vnet-name vnet-o2-databricks -o table` lists both subnets with those prefixes.
+The `service_delegation` block omits `actions`, which is optional, so Azure applies the actions the delegation requires. If your provider version rejects that, take the action list from the Azure subnet delegation reference.
+
+Check: after the apply, `az network vnet subnet show -g rg-o2-databricks --vnet-name vnet-o2-databricks -n snet-host --query "[delegations[0].serviceName, networkSecurityGroup.id]" -o tsv` returns `Microsoft.Databricks/workspaces` and an NSG ID. Run the same command for `snet-container`.
 
 ## 4. Attach a NAT gateway to both subnets
 
@@ -72,21 +121,39 @@ Owner: platform engineer
 
 Since 31 March 2026 new Azure VNets default to private with no outbound internet access, so the workspace has no egress until you give it one. Attach the gateway to both subnets, not just the host subnet, so your egress IPs are stable enough to allow-list later.
 
-```bash
-az network public-ip create -g rg-o2-databricks -n pip-o2-nat \
-  --sku Standard --allocation-method Static
+```hcl
+resource "azurerm_public_ip" "nat" {
+  name                = "pip-o2-nat"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
 
-az network nat gateway create -g rg-o2-databricks -n nat-o2-databricks \
-  --public-ip-addresses pip-o2-nat
+resource "azurerm_nat_gateway" "this" {
+  name                = "nat-o2-databricks"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  sku_name            = "Standard"
+}
 
-az network vnet subnet update -g rg-o2-databricks \
-  --vnet-name vnet-o2-databricks -n snet-host --nat-gateway nat-o2-databricks
+resource "azurerm_nat_gateway_public_ip_association" "this" {
+  nat_gateway_id       = azurerm_nat_gateway.this.id
+  public_ip_address_id = azurerm_public_ip.nat.id
+}
 
-az network vnet subnet update -g rg-o2-databricks \
-  --vnet-name vnet-o2-databricks -n snet-container --nat-gateway nat-o2-databricks
+resource "azurerm_subnet_nat_gateway_association" "host" {
+  subnet_id      = azurerm_subnet.host.id
+  nat_gateway_id = azurerm_nat_gateway.this.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "container" {
+  subnet_id      = azurerm_subnet.container.id
+  nat_gateway_id = azurerm_nat_gateway.this.id
+}
 ```
 
-Check: `az network vnet subnet show -g rg-o2-databricks --vnet-name vnet-o2-databricks -n snet-host --query natGateway.id -o tsv` returns an ID, and the same command for `snet-container` returns the same ID.
+Check: after the apply, `az network vnet subnet show -g rg-o2-databricks --vnet-name vnet-o2-databricks -n snet-host --query natGateway.id -o tsv` returns an ID, and the same command for `snet-container` returns the same ID.
 
 ## 5. Deploy the workspace
 
@@ -94,9 +161,28 @@ Owner: platform engineer
 
 Premium tier. Anything below it loses the group-based access control this runbook depends on.
 
-Deploy by ARM template or Terraform, not by `az databricks workspace create`, because the CLI does not expose the VNet injection parameters. The deployment must set the custom VNet ID, the public subnet name (`snet-host`), the private subnet name (`snet-container`) and no-public-IP, which turns on secure cluster connectivity.
+The two association arguments are what force the ordering. They reference the association resources from step 3, so Terraform builds the NSG associations before the workspace without any `depends_on`. Note that `public_subnet_name` is the host subnet and `private_subnet_name` is the container subnet. Setting `no_public_ip` to true is what turns on secure cluster connectivity.
 
-> ⚠️ Unverified. The exact ARM parameter names for VNet injection were not fetched in this pass. Check them against the VNet injection page before you write the template.
+```hcl
+resource "azurerm_databricks_workspace" "this" {
+  name                        = "adb-o2"
+  resource_group_name         = azurerm_resource_group.this.name
+  location                    = azurerm_resource_group.this.location
+  sku                         = "premium"
+  managed_resource_group_name = "rg-o2-databricks-managed"
+
+  custom_parameters {
+    virtual_network_id                                   = azurerm_virtual_network.this.id
+    public_subnet_name                                   = azurerm_subnet.host.name
+    private_subnet_name                                  = azurerm_subnet.container.name
+    public_subnet_network_security_group_association_id  = azurerm_subnet_network_security_group_association.host.id
+    private_subnet_network_security_group_association_id = azurerm_subnet_network_security_group_association.container.id
+    no_public_ip                                         = true
+  }
+}
+```
+
+Run `terraform apply` now. Steps 2 to 5 land together.
 
 Check: the workspace URL opens, and the platform engineer lands inside as a workspace admin. Workspace creation adds the creator as a workspace admin outright, so if you see the admin settings gear, this passed.
 
@@ -274,8 +360,9 @@ Verified against Microsoft Learn on 2026-08-10. Steps 1 to 5 and 6 to 8 restate 
 - Principal syntax and backticking rules: https://learn.microsoft.com/en-us/azure/databricks/sql/language-manual/sql-ref-principal
 - Creating a catalog, CREATE CATALOG on the metastore: https://learn.microsoft.com/en-us/azure/databricks/catalogs/create-catalog
 - Catalogs open to all workspaces by default: https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/access-control/workspace-catalog-binding
-- VNet injection, subnet floor, NAT gateway and the 31 March 2026 egress default: https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/vnet-inject
+- VNet injection, subnet floor, NAT gateway and the 31 March 2026 egress default, the NSG and delegation requirement on both subnets, and the rule set Databricks auto-provisions and manages: https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/vnet-inject
+- azurerm_databricks_workspace, custom_parameters arguments and the sku values: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/databricks_workspace
 
 <!--
-Version: 1.0 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.1 | Last Updated: 2026-08-10 | Status: Draft
 -->
