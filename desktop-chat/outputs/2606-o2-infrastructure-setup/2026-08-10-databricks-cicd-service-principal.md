@@ -3,7 +3,7 @@
 > How the CI/CD identity works on Azure Databricks, and the recommended setup for
 > a GitLab pipeline. Covers the two kinds of service principal, the four
 > authentication routes, and the OIDC federation build.
-> Pairs with 2026-06-25-databricks-infra-setup-sequence.md (Phase 1 identity and
+> Pairs with 2026-08-10-databricks-infra-setup-sequence.md (Phase 1 identity and
 > Phase 7 promotion) and ../202606-env-setup/2026-06-24-databricks-cicd-promotion-play-DRAFT.md
 > (the promotion play).
 
