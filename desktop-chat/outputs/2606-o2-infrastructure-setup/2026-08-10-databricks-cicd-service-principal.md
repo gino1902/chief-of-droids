@@ -34,6 +34,8 @@ Two provisioning facts that catch people out. SCIM never syncs service principal
 
 OAuth access tokens last one hour and the CLI and SDKs refresh them. A service principal can hold up to five OAuth secrets, each valid up to 730 days, which is a rotation obligation you avoid entirely by federating.
 
+Databricks does not treat federation as merely preferable. It strongly recommends workload identity federation for automated workloads wherever possible, on the grounds that removing secret management and rotation makes it more secure than the other mechanisms. Documented providers are GitHub Actions, Azure DevOps Pipelines, GitLab CI/CD, CircleCI, AWS IAM workloads, Jenkins, Terraform Cloud and Atlassian Bitbucket Pipelines.
+
 ## Recommendation for GitLab
 
 Databricks managed service principals, one per environment, each with a GitLab OIDC federation policy pinned to project and ref. No secret in GitLab and no Entra app registration.
@@ -44,7 +46,7 @@ The pipeline here deploys bundles and applies grants. It does not need direct AD
 
 1. Create `gitlab-cicd-dev`, `gitlab-cicd-staging` and `gitlab-cicd-prod` as Databricks managed service principals. One external identity per service principal, which keeps audit attribution clean and lets you revoke one environment alone.
 2. Assign each to its workspace with the entitlements it needs. None of them goes in the `admins` group.
-3. Grant permissions to a Databricks group per environment and add the service principal to that group, rather than granting object by object. The group must be a Databricks-native group, not an Entra group synced by automatic identity management. Synced groups are immutable in Databricks, so a Databricks managed service principal cannot be added to one. If you need these service principals inside your Entra group structure, they have to be Entra ID managed instead.
+3. Grant permissions to a Databricks group per environment and add the service principal to that group, rather than granting object by object. Use a Databricks-native group, not an Entra group synced by automatic identity management. The docs state that membership of groups managed by automatic identity management cannot be updated in Databricks, even with the immutable external groups preview disabled, and adding a member is such an update. It follows that a Databricks managed service principal cannot join a synced group, though the docs do not spell out that case, so test it if you want to try. If these service principals must sit inside your Entra group structure, make them Entra ID managed instead.
 4. Decode a real GitLab ID token and read its actual `iss` and `sub` before writing any policy.
 5. Create one federation policy per service principal, as account admin.
 6. Set the four variables in the GitLab job and let the CLI do the exchange.
@@ -98,18 +100,18 @@ sequenceDiagram
 
 ## Getting the issuer and subject right
 
-This is where the setup fails, and the Databricks pages disagree with each other on GitLab. One shows the issuer as `https://gitlab.com/example-group`, another as `https://gitlab.example.com`. GitLab issues `iss` as the instance URL, so SaaS is `https://gitlab.com` and self-managed is your instance URL.
+This is where the setup fails, and the Databricks pages disagree with each other on GitLab. One shows the issuer as `https://gitlab.com/example-group`, another as `https://gitlab.example.com`. GitLab documents `iss` as the domain of the GitLab instance and illustrates it with `https://gitlab.example.com`, from which SaaS resolves to `https://gitlab.com` and self-managed to your own instance URL. That resolution is inference from the documented rule, not a value either publisher prints.
 
-> ⚠️ Unverified — the Databricks GitLab example issuer looks wrong. Decode an actual token and use its `iss` verbatim.
+> ⚠️ Unverified — the Databricks GitLab example issuer looks wrong, and the GitLab pages carry no last-updated date, so their currency cannot be judged. Decode an actual token and use its `iss` verbatim.
 
-GitLab's default `sub` is `project_path:{group}/{project}:ref_type:{type}:ref:{ref}`, where the ref type is a branch, a tag or a merge request. Add a throwaway job that prints the JWT payload, read the two claims, then delete the job.
+GitLab's default `sub` is `project_path:{group}/{project}:ref_type:{type}:ref:{branch_name}`, where the ref type is a branch, a tag or a merge request. Add a throwaway job that prints the JWT payload, read the two claims, then delete the job. That decode is the real verification step, not a precaution.
 
 ## Guardrails
 
 - The subject is the entire security boundary. Pin the prod policy to a protected branch and protect that branch in GitLab, or any branch in the project can deploy to production.
-- Switch the sub claim to immutable components. GitLab's projects API accepts `ci_id_token_sub_claim_components` set to something like `["project_id", "ref_type", "ref"]`. With the default path-based subject, renaming the group breaks authentication, and a future project reusing the old path would match the policy.
+- Switch the sub claim to immutable components. GitLab's projects API accepts `ci_id_token_sub_claim_components`, set to something like `["project_id", "ref_type", "ref"]`. Confirmed on docs.gitlab.com, which carries no last-updated date. With the default path-based subject, renaming the group breaks authentication, and a future project reusing the old path would match the policy.
 - Deactivate rather than delete. Deleting a service principal from the account stops its compute, fails its jobs and breaks anything shared with Run as Owner. Deactivation blocks authentication and keeps the permissions.
-- Pin the CLI version in the runner image. The install script Databricks shows fetches the current release, which makes the pipeline sensitive to releases nobody chose.
+- Pin the CLI version in the runner image rather than installing on every run, so a CLI release cannot change the pipeline's behaviour on a day nobody deployed.
 - The limit is 20 federation policies per service principal. Multiple policies on one service principal are only for the same logical identity arriving through different providers, not for different workloads.
 - Account and workspace limits are 10,000 combined users and service principals and 5,000 groups, counted per account and again per workspace. One service principal per environment stays far inside that.
 
@@ -126,7 +128,7 @@ Phase 1 of the provisioning sequence says the account admin registers OAuth M2M 
 
 ## Sources
 
-Verified against Microsoft Learn and GitLab Docs, 2026-08-10. Databricks pages updated January to July 2026.
+Verified against Microsoft Learn and GitLab Docs, per claim, 2026-08-10. Databricks pages updated January to July 2026. The two GitLab pages carry no last-updated date, so every GitLab-sourced claim here is content-confirmed but not freshness-checked.
 
 - Service principals for CI/CD, why not a user PAT, supported platforms: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/auth/service-principals
 - Manage service principals, Databricks managed versus Entra ID managed, deactivation, OAuth over PAT: https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/manage-service-principals
@@ -140,5 +142,5 @@ Verified against Microsoft Learn and GitLab Docs, 2026-08-10. Databricks pages u
 - GitLab connect to cloud services, claim reference: https://docs.gitlab.com/ci/cloud_services/
 
 <!--
-Version: 1.1 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.2 | Last Updated: 2026-08-10 | Status: Draft
 -->
