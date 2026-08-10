@@ -6,7 +6,19 @@
 > Carved out of 2026-08-10-databricks-infra-setup-sequence.md, which stays as the
 > design artefact and holds the reasoning this runbook deliberately omits.
 
-Success here means bar 3. The user logs in, starts a serverless SQL warehouse, and reads a table they do not own. Bars 1 and 2, seeing the workspace and starting compute, both leave a user who has technically connected and can do nothing.
+## What counts as done
+
+Step 18 is the finish line: a named non-admin user signs in, starts a serverless
+SQL warehouse, and reads a table they do not own.
+
+Two weaker finish lines are easy to mistake for that one.
+
+| Stops at | Proves | Why it is not enough |
+| :--- | :--- | :--- |
+| The user sees the workspace | Sign-in and workspace assignment work | They can open nothing inside it |
+| The user starts compute | Compute permissions work | No data is readable, so there is no work to do |
+
+Both leave a user who has connected and can do nothing.
 
 ## Before you start
 
@@ -19,29 +31,61 @@ Four identities do the work. Get them lined up first, because two of them are ha
 | Account admin | Steps 8 to 17 | Created in step 7 |
 | Test user | Step 18 | A named human who is not an admin anywhere |
 
-The account admin assigns themselves to the workspace as a workspace admin in step 10, which is what lets them run steps 13 to 17. Account admin is an account-level role and carries no workspace access on its own. Skip that half of step 10 and the first `CREATE CATALOG` in step 15 is refused.
+Account admin is an account-level role and carries no workspace access on its own.
+That is why the account admin assigns themselves to the workspace as a workspace
+admin in step 10. Skip that half of step 10 and the first `CREATE CATALOG` in
+step 15 is refused.
 
 ## Preconditions
 
-The steps below assume a tenant that has never run Databricks and a subscription with no network standards of its own. On a company subscription both are usually false. Answer these five before step 1, because each one changes the runbook rather than just delaying it.
+The steps below assume a tenant that has never run Databricks and a subscription with no network standards of its own. On a company subscription both are usually false. Answer these five before step 1. Each one changes the runbook rather than just delaying it.
 
-Does a Databricks account already exist in this tenant? Sign in at https://accounts.azuredatabricks.net and look. If one exists, steps 6 and 7 have already happened, you are probably not an account admin, and getting the role is a request to whoever holds it. Budget days, not minutes. Do not attempt the Global Admin bootstrap against an existing account.
+1. Does a Databricks account already exist in this tenant? Sign in at
+   https://accounts.azuredatabricks.net and look. If one exists, steps 6 and 7
+   have already happened, you are probably not an account admin, and getting the
+   role is a request to whoever holds it. Budget days, not minutes. Do not
+   attempt the Global Admin bootstrap against an existing account.
 
-When was that account created? This sets three defaults and you cannot infer them. Automatic identity management is on by default only for accounts created after 1 August 2025, and JIT provisioning only for accounts created after 1 May 2025. On an older account, step 8 is an enable rather than a verify, and until it is on, the Entra group in step 9 will not appear for step 10 to select.
+2. When was that account created? This sets three defaults and you cannot infer
+   them. Automatic identity management is on by default only for accounts created
+   after 1 August 2025, and JIT provisioning only for accounts created after
+   1 May 2025. On an older account, step 8 is an enable rather than a verify, and
+   until it is on, the Entra group in step 9 will not appear for step 10 to
+   select.
 
-Is serverless SQL available and enabled for this account and region? Step 13 assumes it is. If serverless is unavailable or centrally disabled, that step becomes a classic cluster, and the group then needs CAN RESTART on that cluster rather than CAN USE on a warehouse, because CAN ATTACH TO alone will not start a stopped cluster.
+3. Is serverless SQL available and enabled for this account and region? Step 13
+   assumes it is. If serverless is unavailable or centrally disabled, that step
+   becomes a classic cluster, and the group then needs CAN RESTART on that
+   cluster rather than CAN USE on a warehouse, because CAN ATTACH TO alone will
+   not start a stopped cluster.
 
-Who owns IP address space, and is there a hub-spoke topology? The `10.10.0.0/21` in step 3 is an example, not a recommendation. Get the range allocated properly. If a route table forces `0.0.0.0/0` to a central firewall, the NAT gateway in step 4 is redundant or in conflict, and that is a conversation with the network team before you apply anything.
+4. Who owns IP address space, and is there a hub-spoke topology? The
+   `10.10.0.0/21` in step 3 is an example, not a recommendation. Get the range
+   allocated properly. If a route table forces `0.0.0.0/0` to a central firewall,
+   the NAT gateway in step 4 is redundant or in conflict, and that is a
+   conversation with the network team before you apply anything.
 
-Will Azure Policy allow this? Step 4 creates a public IP, which many company subscriptions deny outright. Check the policy assignments on the target subscription, along with any mandatory tagging, before the first apply rather than after it.
+5. Will Azure Policy allow this? Step 4 creates a public IP, which many company
+   subscriptions deny outright. Check the policy assignments on the target
+   subscription, along with any mandatory tagging, before the first apply rather
+   than after it.
 
 ## Terraform scaffolding
 
 Steps 2 to 5 give resource blocks only. Supply your own `provider "azurerm"` block with a `features {}` stanza, your state backend, and run `terraform init` before the apply in step 5. Resource names here follow no company convention and are meant to be replaced.
 
+Those four steps are one Terraform configuration, not four applies. The workspace consumes the NSG association IDs of both subnets, so the network and the workspace resolve as a single dependency graph and Terraform orders them for you. Author the blocks in the order below, run one `terraform apply` at the end of step 5, then run the four checks. Each step still owns its own check.
+
 ## Decisions
 
-Decisions already made, so the runbook does not ask again. Classic workspace with VNet injection. Premium tier. Serverless SQL warehouse for compute. A dedicated proving catalog rather than the auto-created workspace catalog, because the workspace catalog grants every workspace user `USE CATALOG` by default and would hide a broken grant chain instead of proving a working one.
+These are already settled, so the runbook does not ask again.
+
+- Classic workspace with VNet injection
+- Premium tier
+- Serverless SQL warehouse for compute
+- A dedicated proving catalog rather than the auto-created workspace catalog. The
+  workspace catalog grants every workspace user `USE CATALOG` by default, so it
+  would hide a broken grant chain instead of proving a working one.
 
 ---
 
@@ -53,11 +97,9 @@ Owner: platform engineer
 az provider register --namespace Microsoft.Databricks
 ```
 
-The azurerm provider registers resource providers itself by default, so this step is really a permissions check. Do it by hand first, because finding out that the deploying identity lacks the register permission is much cheaper here than inside an apply.
+The azurerm provider registers resource providers itself by default, so this step is a permissions check. Do it by hand first, because finding out that the deploying identity lacks the register permission is much cheaper here than inside an apply.
 
 Check: `az provider show -n Microsoft.Databricks --query registrationState -o tsv` returns `Registered`. It can sit on `Registering` for a few minutes.
-
-Steps 2 to 5 are one Terraform configuration, not four applies. The workspace consumes the NSG association IDs of both subnets, so the network and the workspace resolve as a single dependency graph and Terraform orders them for you. Author the blocks in the order below, run one `terraform apply` at the end of step 5, then run the four checks. Each step still owns its own check.
 
 ## 2. Create the resource group
 
@@ -236,7 +278,7 @@ Check: the toggle reads Enabled, and typing part of a known Entra user's name in
 
 Owner: Entra admin
 
-One group in Microsoft Entra ID. Add the named test user as a member. Do not create it in Databricks. Automatic identity management uses Entra as the source of record, so a Databricks-side group would be a second thing to maintain and could not be updated from Entra.
+Create one group in Microsoft Entra ID and add the named test user as a member. Do not create the group in Databricks. Automatic identity management uses Entra as the source of record, so a Databricks-side group would be a second thing to maintain and could not be updated from Entra.
 
 Check: the group appears in the account console under User management, Groups, within about ten minutes, marked as External.
 
@@ -244,7 +286,7 @@ Check: the group appears in the account console under User management, Groups, w
 
 Owner: account admin
 
-This is the step the whole runbook turns on, and it is the one most likely to be done wrong from memory.
+Most failures at step 18 trace back to this step. Follow it as written rather than from memory.
 
 Account console, Workspaces, click the workspace, Permissions tab, Add permissions. Two assignments here, not one.
 
@@ -281,7 +323,7 @@ Check: run `SELECT CURRENT_METASTORE();` from the SQL editor in the workspace. I
 
 ## 13. Create the SQL warehouse
 
-Owner: account admin, working in the workspace as the admin they became in step 10
+Owner: account admin, working inside the workspace as the admin from step 10
 
 In the workspace, SQL Warehouses, Create SQL warehouse. Serverless. Size small is enough to prove the path.
 
@@ -289,7 +331,7 @@ Check: start it and wait for the state to read Running.
 
 ## 14. Grant the group CAN USE on the warehouse
 
-Owner: account admin, working in the workspace as the admin they became in step 10
+Owner: account admin, working inside the workspace as the admin from step 10
 
 On the warehouse row, open the kebab menu, click Permissions, select the Entra group, and assign Can use. Can view is not enough, because those users cannot run queries. Can manage is more than the group needs.
 
@@ -299,7 +341,7 @@ Check: the Permissions dialog lists the group with Can use against it.
 
 Owner: account admin
 
-Run this from the SQL editor on the warehouse from step 13. Creating a catalog needs `CREATE CATALOG` on the metastore. An account admin can grant privileges directly on a metastore, so an account admin can give themselves this if the statement is refused.
+Run this from the SQL editor on the warehouse from step 13. Creating a catalog needs `CREATE CATALOG` on the metastore. If the statement is refused, grant it to yourself. An account admin can grant privileges directly on a metastore.
 
 ```sql
 CREATE CATALOG IF NOT EXISTS o2_proving;
@@ -346,7 +388,7 @@ They open the workspace URL, sign in with Entra, open the SQL editor, select the
 SELECT * FROM o2_proving.demo.connectivity_check;
 ```
 
-Check: the row comes back. That is the whole runbook proved end to end. If it does, the identity chain, the workspace assignment, the entitlements, the warehouse permission, the metastore attachment and the grant chain are all working, because a failure in any one of them stops this query.
+Check: the row comes back. That one result proves the identity chain, the workspace assignment, the entitlements, the warehouse permission, the metastore attachment and the grant chain, because a failure in any one of them stops this query.
 
 ---
 
@@ -365,7 +407,14 @@ Read the error rather than re-running the earlier steps.
 
 ## Scope
 
-Deliberately not here: the GitLab CI/CD service principal, which has its own note, the governance model, catalog design beyond the one proving catalog, Private Link, exfiltration controls, multi-region, and ADLS Gen2 with storage credentials and external locations. Step 15 creates a managed catalog on metastore root storage, so no external storage is needed to reach bar 3.
+Deliberately not here:
+
+- The GitLab CI/CD service principal, which has its own note
+- The governance model, and catalog design beyond the one proving catalog
+- Private Link, exfiltration controls, multi-region
+- ADLS Gen2 with storage credentials and external locations
+
+Step 15 creates a managed catalog on metastore root storage, so no external storage is needed to finish step 18.
 
 ## Sources
 
@@ -390,5 +439,5 @@ Verified against Microsoft Learn on 2026-08-10. Steps 1 to 5 and 6 to 8 restate 
 - azurerm_databricks_workspace, custom_parameters arguments and the sku values: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/databricks_workspace
 
 <!--
-Version: 1.2 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.3 | Last Updated: 2026-08-10 | Status: Draft
 -->

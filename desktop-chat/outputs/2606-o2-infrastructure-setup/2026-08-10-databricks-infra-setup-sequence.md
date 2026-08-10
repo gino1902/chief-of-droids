@@ -6,7 +6,7 @@
 > account/identity pages.
 > Pairs with ../202606-env-setup/2026-06-24-databricks-cicd-promotion-play-DRAFT.md
 > (the workload promotion side, Phase 7), 2026-08-10-databricks-cicd-service-principal.md
-> (the CI/CD identity), 2026-08-10-databricks-user-onboarding-runbook.md (the
+> (the CI/CD identity), dbr-RG-to-working-non-admin-user.md (the
 > executable path carved out of this document, resource group to a working
 > non-admin user) and the o2 SAD environment-strategy material.
 > 🔲 To be defined — the SAD environment-strategy section has no artefact of that
