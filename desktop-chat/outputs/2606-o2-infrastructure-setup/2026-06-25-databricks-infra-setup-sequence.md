@@ -4,8 +4,11 @@
 > four questions: from where, where to, by whom, when. Grounded on the Microsoft
 > Learn production planning guide (10 phases) and the workspace creation and
 > account/identity pages.
-> Pairs with 2026-06-24-databricks-cicd-promotion-play-DRAFT.md (the workload
-> promotion side, Phase 7) and the o2 SAD environment-strategy block.
+> Pairs with ../202606-env-setup/2026-06-24-databricks-cicd-promotion-play-DRAFT.md
+> (the workload promotion side, Phase 7), 2026-08-10-databricks-cicd-service-principal.md
+> (the CI/CD identity) and the o2 SAD environment-strategy material.
+> 🔲 To be defined — the SAD environment-strategy section has no artefact of that
+> name; nearest is ../2606-o2-architecture-design/2026-06-13-sad-stakeholder-note-first-sessions.md.
 
 The account and workspace layers are set up by different identities. Account-level work (identity federation and Unity Catalog metastore governance) is the account admin's. Subscription-level work (network, storage, and the workspace resource itself) needs Contributor on the subscription or resource group and falls to the platform engineer. Identity and network are independent, so they run in parallel. Workloads land later, repeatedly, through CI/CD. Because this subscription has never run Databricks, it must first be onboarded to the first-party service. The guide has no Phase 0: it places subscribing inside Phase 7 as the step before any automation or workspace creation, so this document treats it as a Phase 7 precondition. The deploying identity needs the Microsoft.Databricks register permissions unless those providers are already registered in the subscription, so the real one-off gate is an Entra Global Admin activating the account console, which is required to use Unity Catalog.
 
@@ -29,7 +32,7 @@ sequenceDiagram
     Note over PE,AZ: Phase 7 precondition · Subscribe to Azure Databricks (first-party service, one-off)
     Note over PE,AZ: Deployer needs the Microsoft.Databricks register permissions unless those providers are already registered in the subscription
 
-    Note over GA,ACC: Phase 1 · Bootstrap the account, the other half of subscribing (one-off)
+    Note over GA,ACC: Phase 1 · Bootstrap the account, the identity half of getting started (one-off)
     GA->>ACC: First sign-in to the account console, activates it for the tenant
     ACC-->>GA: Promoted to first account admin
     GA->>AA: Assign 2 to 3 account admins (use a group)
@@ -49,7 +52,7 @@ sequenceDiagram
     Note over PE,WS: Phase 2 · Workspace (needs Contributor on the subscription or resource group)
     PE->>AZ: Deploy workspace into the VNet (Terraform or ARM)
     AZ->>WS: Create workspace, managed resource group, workspace storage
-    WS-->>PE: Running, creator gains workspace admin (via the Azure Contributor login path unless they are already an account admin)
+    WS-->>PE: Running, creator added as workspace admin
 
     Note over PE,ADLS: Phase 5 · Data storage
     PE->>ADLS: Provision ADLS Gen2, bronze container
@@ -74,7 +77,8 @@ sequenceDiagram
 
 - The `par` block is the key ordering claim. Identity federation and network are independent, so the guide allows them in parallel. Everything after the block depends on at least one of them.
 - Subscribing and the bootstrap are one-off. The guide numbers its phases 1 to 10 and treats subscribing as the first step inside Phase 7, so the precondition label here is this document's framing, not the guide's. On Azure there is no separate Databricks contract to sign, it is a first-party service billed through the subscription. On the provider, the docs state only that the `register/action` permissions are not required if those providers are already registered in the subscription, so plan for the deploying identity to hold them and do not rely on a documented auto-registration step. Either way the real gate is the account-console activation: an Entra Global Admin signs in once to activate it, which is required to use Unity Catalog. After that first login the role becomes account admin and the Global Admin grant can be dropped.
-- The workspace step needs Contributor access on the subscription or resource group, plus Network Contributor on the VNet for VNet injection, which is why it is the platform engineer's, not the account admin's. Note how the creator picks up workspace admin. An account admin who creates a workspace gets it directly. Anyone else with subscription-level Contributor or Owner gets it on first login to the workspace and keeps it even after that Azure role is removed, so subscription Contributor is part of the Databricks admin surface and should be audited as such.
+- The workspace step needs Contributor access on the subscription or resource group, plus Network Contributor on the VNet for VNet injection, which is why it is the platform engineer's, not the account admin's. Creating the workspace adds the creator's account as a workspace admin outright. Separately, anyone holding subscription-level Contributor or Owner who did not create it still gains workspace admin on first login and keeps it after that Azure role is removed, so subscription Contributor belongs on the list of Databricks admin surfaces to audit.
+- This is a classic workspace deployed by VNet injection, which is a deliberate choice against the guide's default. Phase 2 now recommends starting with serverless workspaces and switching to classic only for specific network or compliance requirements, and the workspace creation page warns that classic creation with a Databricks-managed VNet will be deprecated, pointing to serverless or VNet injection. VNet injection is the supported classic route, so this sequence is on a current path, chosen for network control over the data plane.
 - Secure cluster connectivity (SCC) is the default posture for classic compute. Under SCC both subnets are private and all compute-to-control-plane traffic is outbound, which is why a new VNet after 31 March 2026 (when new Azure VNets default to no outbound internet) needs an explicit egress path: a NAT gateway on the host subnet. The docs are inconsistent here. Phase 4 puts the NAT gateway on the public (host) subnet, while the VNet injection page attaches it to both subnets to get stable egress IPs. Use both subnets if you need to allow-list your egress IPs with an external service.
 - Subnets must be at least /26, but most production workloads need /23 or larger. Node capacity works out as one IP per node in each subnet, minus the five addresses Azure reserves per subnet. The published examples are a /17 subnet at 32,763 nodes and a /25 at 123. Applying that same model to the sizes above, which the docs do not tabulate, a /26 gives 59 nodes and a /23 gives 507. Treat those two as derived rather than quoted.
 - This is a new account, so its Unity Catalog metastore is automatically created and assigned. Phase 3 is verify-and-bind, not create.
@@ -114,11 +118,11 @@ Verified against Microsoft Learn. Claims re-verified per claim on 2026-08-10 aga
 - Phase 7, Infrastructure as Code, Terraform versus Declarative Automation Bundles, subscribe to Azure Databricks as the first step, Contributor access requirement, environment promotion: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/iac
 - Phase 4, Network, secure cluster connectivity default, subnet /26 floor and /23 typical, NAT gateway on the host subnet: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/network
 - Phase 5, Storage, workspace versus data storage, managed tables preferred with external locations and volumes for raw landing, Access Connector flow: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/storage
-- Workspace creation, managed resource group, creator becomes workspace admin: https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/create-workspace
 - VNet injection, two subnets at least /26, VNet /16 to /24, NAT gateway for egress after 31 March 2026: https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/vnet-inject
-- Declarative Automation Bundles, deploy jobs and pipelines, run as service principal in CI/CD: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/
+- Declarative Automation Bundles (formerly known as Databricks Asset Bundles), deploy jobs and pipelines, run as service principal in CI/CD, CLI v0.218.0 or above: https://learn.microsoft.com/en-us/azure/databricks/dev-tools/bundles/
+- Workspace creation, creator automatically added as a workspace admin, managed resource group, pricing tiers, classic managed-VNet deprecation notice: https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/create-workspace
 - Mermaid sequence diagram syntax: https://mermaid.js.org/syntax/sequenceDiagram.html
 
 <!--
-Version: 1.7 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.8 | Last Updated: 2026-08-10 | Status: Draft
 -->
