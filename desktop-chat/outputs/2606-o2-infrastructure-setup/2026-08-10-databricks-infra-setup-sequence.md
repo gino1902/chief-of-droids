@@ -6,7 +6,9 @@
 > account/identity pages.
 > Pairs with ../202606-env-setup/2026-06-24-databricks-cicd-promotion-play-DRAFT.md
 > (the workload promotion side, Phase 7), 2026-08-10-databricks-cicd-service-principal.md
-> (the CI/CD identity) and the o2 SAD environment-strategy material.
+> (the CI/CD identity), 2026-08-10-databricks-user-onboarding-runbook.md (the
+> executable path carved out of this document, resource group to a working
+> non-admin user) and the o2 SAD environment-strategy material.
 > 🔲 To be defined — the SAD environment-strategy section has no artefact of that
 > name; nearest is ../2606-o2-architecture-design/2026-06-13-sad-stakeholder-note-first-sessions.md.
 
@@ -58,7 +60,7 @@ sequenceDiagram
     PE->>ADLS: Provision ADLS Gen2, bronze container
 
     Note over AA,WS: Phase 3 · Unity Catalog governance
-    AA->>UC: Verify the auto-created metastore (one per region, auto-created for this new account)
+    AA->>UC: Check for a metastore in the workspace region, create one if absent
     AA->>UC: Add storage credential (Access Connector identity) and external location to ADLS
     AA->>WS: Bind workspace to the metastore
     UC-->>WS: Governed data access available
@@ -81,7 +83,7 @@ sequenceDiagram
 - This is a classic workspace deployed by VNet injection, which is a deliberate choice against the guide's default. Phase 2 now recommends starting with serverless workspaces and switching to classic only for specific network or compliance requirements, and the workspace creation page warns that classic creation with a Databricks-managed VNet will be deprecated, pointing to serverless or VNet injection. VNet injection is the supported classic route, so this sequence is on a current path, chosen for network control over the data plane.
 - Secure cluster connectivity (SCC) is the default posture for classic compute. Under SCC both subnets are private and all compute-to-control-plane traffic is outbound, so the VNet needs an explicit egress path: a NAT gateway on the host subnet. This is no longer a future condition. Since 31 March 2026, new Azure VNets default to private configurations with no outbound internet access, so any VNet provisioned for this build starts without egress and will not get it by default. Existing workspaces are unaffected. The docs are inconsistent here. Phase 4 puts the NAT gateway on the public (host) subnet, while the VNet injection page attaches it to both subnets to get stable egress IPs. Use both subnets if you need to allow-list your egress IPs with an external service.
 - Subnets must be at least /26, but most production workloads need /23 or larger. Node capacity works out as one IP per node in each subnet, minus the five addresses Azure reserves per subnet. The published examples are a /17 subnet at 32,763 nodes and a /25 at 123. Applying that same model to the sizes above, which the docs do not tabulate, a /26 gives 59 nodes and a /23 gives 507. Treat those two as derived rather than quoted.
-- This is a new account, so its Unity Catalog metastore is automatically created and assigned. Phase 3 is verify-and-bind, not create.
+- Phase 3 is check-then-create-if-absent, not verify-and-bind. New workspaces have been enabled for Unity Catalog automatically since 9 November 2023, and that automatic enablement attaches the workspace to a metastore that already exists in its region. Attachment is not creation. No page states that the metastore itself is created automatically in a region that has none, and the create-metastore page is still written for exactly that case, telling you to follow it only if you have a workspace and no metastore in its region. So the account admin checks first and may have to create. The account console Workspaces list has a Metastore column for the check, and `SELECT CURRENT_METASTORE();` confirms attachment from inside the workspace.
 - Identity federation, automatic identity management and JIT provisioning are all default-on for a new account too, so the account admin verifies them rather than enabling them. There is no SSO step on Azure: Entra-backed login is on by default for both the account console and workspaces, for all customers. The Phase 1 page's generic advice to authenticate via SSO with your identity provider is cross-cloud wording and does not describe an Azure action.
 - The guide recommends building one administrative workspace per region first, restricted to platform admins, because Unity Catalog APIs are workspace APIs. That is why the workspace (Phase 2) precedes Unity Catalog governance (Phase 3).
 - Bronze uses a Unity Catalog volume on an external location over ADLS Gen2. Volumes are what the guide names for landing, raw and unstructured data, on the grounds that third parties often need direct access to those paths. Silver and gold should prefer Unity Catalog managed tables, where the metastore manages the storage layout, and the guide's blanket recommendation is managed tables with no storage-level access granted to containers.
@@ -97,7 +99,7 @@ sequenceDiagram
 | VNet, subnets, NAT gateway | Terraform on the subscription | Azure data plane | Platform engineer (Network Contributor on VNet) | Parallel with identity |
 | Workspace | Terraform or ARM | Azure managed RG | Platform engineer (Contributor on subscription or RG) | After network |
 | ADLS Gen2 bronze | Terraform | Azure storage | Platform engineer | After or with workspace |
-| Unity Catalog metastore, verify and bind | Account console or Terraform | Account, bound to workspace | Account admin | After workspace and storage |
+| Unity Catalog metastore, check and bind, create if absent | Account console or Terraform | Account, bound to workspace | Account admin | After workspace and storage |
 | Workload deploy (bundles) | CI/CD runner | Workspace | Service principal (OIDC token federation, OAuth M2M as fallback) | Repeats per release |
 
 ## When strategy
@@ -115,6 +117,9 @@ Verified against Microsoft Learn. Claims re-verified per claim on 2026-08-10 aga
 - Production planning, 10 phases and design-to-implementation: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/
 - Phase 1, account and identity, admin roles, first-login bootstrap, automatic identity management: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/account-setup
 - Phase 3, Unity Catalog, single metastore per region, storage credential and external location, workspace binding: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/unity-catalog
+- Creating a metastore, and the case of a workspace whose region has none: https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/create-metastore
+- Automatic Unity Catalog enablement for new workspaces since 9 November 2023, assign to workspace steps: https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/enable-workspaces
+- Metastore checks, account console Metastore column and CURRENT_METASTORE: https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/setup-uc
 - Phase 7, Infrastructure as Code, Terraform versus Declarative Automation Bundles, subscribe to Azure Databricks as the first step, Contributor access requirement, environment promotion: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/iac
 - Phase 4, Network, secure cluster connectivity default, subnet /26 floor and /23 typical, NAT gateway on the host subnet: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/network
 - Phase 5, Storage, workspace versus data storage, managed tables preferred with external locations and volumes for raw landing, Access Connector flow: https://learn.microsoft.com/en-us/azure/databricks/lakehouse-architecture/deployment-guide/storage
@@ -124,5 +129,5 @@ Verified against Microsoft Learn. Claims re-verified per claim on 2026-08-10 aga
 - Mermaid sequence diagram syntax: https://mermaid.js.org/syntax/sequenceDiagram.html
 
 <!--
-Version: 1.9 | Last Updated: 2026-08-10 | Status: Draft
+Version: 1.10 | Last Updated: 2026-08-10 | Status: Draft
 -->
