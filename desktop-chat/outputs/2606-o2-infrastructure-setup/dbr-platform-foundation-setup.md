@@ -31,7 +31,7 @@ Two weaker finish lines are easy to mistake for it.
 
 The gate is per step, not up front. An ADR must be Accepted before the first
 step that consumes it, and not before. The `First consumed` column below is
-therefore a deadline, one per ADR. Steps 1, 2, 3, 17, 25 and 26 consume no ADR
+therefore a deadline, one per ADR. Steps 1, 2, 3, 18, 25 and 26 consume no ADR
 and can run against an empty decision record.
 
 ### ADRs
@@ -41,18 +41,18 @@ order they must be accepted in, which is not the same order.
 
 | ADR | Subject | First consumed | Also consumed by | Depends on |
 | :--- | :--- | :--- | :--- | :--- |
-| 🔲 | Non-human identity model | 4 | 15 | — |
+| 🔲 | Non-human identity model | 4 | 16 | — |
 | 🔲 | Deployment model | 5 | Every step that changes state | — |
-| 🔲 | Catalog and schema model | 5 | 7, 12, 13 | Workspace topology |
+| 🔲 | Catalog and schema model | 5 | 7, 13, 14 | Workspace topology |
 | 🔲 | Network posture | 6 | 24 | Serverless or classic posture |
 | 🔲 | Access Connector and external location granularity | 7 | 8 | Catalog and schema model, Metastore root storage |
 | 🔲 | File event mechanism | 8 | — | Access Connector granularity |
-| 🔲 | Workspace topology | 9 | 16, 21 | — |
-| 🔲 | Ownership and grant model | 9 | 11, 14, 15 | Workspace topology, Catalog and schema model |
-| 🔲 | Secret scope model | 10 | — | — |
-| 🔲 | Metastore root storage and MANAGED LOCATION policy | 12 | — | Workspace topology |
-| 🔲 | Serverless or classic posture | 18 | 20 | — |
-| 🔲 | Tagging and budget route | 18 | 19 | Serverless or classic posture |
+| 🔲 | Workspace topology | 9 | 10, 17 | — |
+| 🔲 | Ownership and grant model | 9 | 12, 15, 16 | Workspace topology, Catalog and schema model |
+| 🔲 | Secret scope model | 11 | — | — |
+| 🔲 | Metastore root storage and MANAGED LOCATION policy | 13 | — | Workspace topology |
+| 🔲 | Serverless or classic posture | 19 | 21 | — |
+| 🔲 | Tagging and budget route | 19 | 20 | Serverless or classic posture |
 | 🔲 | Legacy surface posture | 22 | — | — |
 | 🔲 | Data protection model | 23 | — | Catalog and schema model |
 
@@ -74,8 +74,8 @@ Connector granularity and the ownership and grant model, then the rest.
 
 | Role | Needed for | Held by |
 | :--- | :--- | :--- |
-| Account admin | 4, 6, 11, 14, 15, 16, 17, 19, 21, 23 | 🔲 |
-| Workspace admin | 1, 2, 7, 10, 12, 13, 18, 20, 22 | gmourgues@sqli.com |
+| Account admin | 4, 6, 10, 12, 15, 16, 17, 18, 20, 23 | 🔲 |
+| Workspace admin | 1, 2, 7, 11, 13, 14, 19, 21, 22 | gmourgues@sqli.com |
 | Platform engineer | 3, 5, 8, 25 | 🔲 |
 | Entra admin | 9 | 🔲 |
 | Network team | 24 | 🔲 |
@@ -85,6 +85,28 @@ Workspace admin is not granted to a person here. It arrives through an Entra
 group and materialises as membership of the workspace `admins` group. The
 control point is therefore Entra group membership, not anything inside
 Databricks.
+
+### What to ask the account admin for
+
+Ten steps need an account-level Databricks role that nobody running this sequence
+is likely to hold. Raise them as one request rather than ten interruptions. Step
+numbers are not a request, so this is what to actually ask for.
+
+| Request | Unblocks |
+| :--- | :--- |
+| A federation policy per CI service principal, once the repository and its protected branches exist | 4 |
+| A network connectivity configuration in the workspace region, attached to this workspace, with a private endpoint rule per storage subresource | 6 |
+| Assign entitlements to each group on this workspace. Do this early, because steps 11 and 21 cannot finish without it | 10 |
+| Assign the metastore admin role to a named group | 12 |
+| Catalog grants, service principal grants and catalog to workspace bindings | 15, 16, 17 |
+| Enable the system table schemas | 18 |
+| Create the serverless budget policy | 20 |
+| Classification tags, column masks and row filters | 23 |
+| Set the display name on the account-level service principal record, if it is empty | 4 |
+
+The first two carry the longest lead times. The network connectivity
+configuration also needs someone on the Azure side to approve a private endpoint
+request, so it is two people and not one.
 
 ### Tooling
 
@@ -106,7 +128,7 @@ databricks auth login --host https://<workspace-host>
 The Databricks CLI matters earlier than it looks. It reads metastore state
 without any compute existing, which is the only way to complete step 1 before a
 warehouse exists, and creating a warehouse early would land untagged compute
-ahead of the policies in step 18. Homebrew will refuse the Databricks formula
+ahead of the policies in step 19. Homebrew will refuse the Databricks formula
 until the tap is trusted: `brew trust --formula databricks/tap/databricks`.
 
 ### Provisioned baseline
@@ -140,12 +162,38 @@ able to read it.
 | Compute | A `Serverless Starter Warehouse` from provisioning, stopped and untagged. No clusters. Anything else is residue | `databricks -p "$P" warehouses list -o json` and `clusters list` |
 | IaC repo | Exists, and the CI principal can apply to it. See [[2026-08-10-databricks-cicd-service-principal]] | 🔲 record the repo location here |
 
+Run it as one script rather than eleven commands. A table of checks gets skimmed,
+and a row that nobody runs is worse than no row, because it reads as verified.
+
+```bash
+P=<profile>
+RG=<workspace-resource-group>
+
+echo "== workspace resources =="
+az resource list -g "$RG" --resource-type Microsoft.Databricks/workspaces --query "[].id" -o tsv
+echo "== operator azure rights =="
+az role assignment list --assignee "$(az ad signed-in-user show --query id -o tsv)" --all --include-groups -o table
+echo "== metastore =="
+databricks -p "$P" metastores summary
+echo "== storage credentials =="
+databricks -p "$P" storage-credentials list -o json
+echo "== external locations =="
+databricks -p "$P" external-locations list -o json
+echo "== catalogs =="
+databricks -p "$P" catalogs list -o json
+echo "== you =="
+databricks -p "$P" current-user me
+echo "== compute =="
+databricks -p "$P" warehouses list -o json
+databricks -p "$P" clusters list -o json
+```
+
 > [!warning] The baseline is not neutral
 > The workspace catalog arrives with open default grants. Every workspace user
 > holds `USE CATALOG` on it, plus `USE SCHEMA`, `CREATE TABLE`, `CREATE VOLUME`,
 > `CREATE MODEL`, `CREATE FUNCTION` and `CREATE MATERIALIZED VIEW` on its
 > `default` schema. That is a live open door from the moment the workspace
-> exists. Step 14 decides what happens to it. Do not discover it at step 26.
+> exists. Step 15 decides what happens to it. Do not discover it at step 26.
 
 ### Environment checks
 
@@ -235,7 +283,7 @@ Deliberately not here:
 
 **Why it matters**
 
-- Step 12 branches on whether the metastore carries a root storage location
+- Step 13 branches on whether the metastore carries a root storage location
 - With no root, every catalog must name an explicit `MANAGED LOCATION`
 - With a root set, a catalog created without `MANAGED LOCATION` inherits it
   silently, and the managed data lands in storage you may not own
@@ -243,7 +291,7 @@ Deliberately not here:
   your workspace existed
 
 **What getting the execution wrong costs** The read changes nothing. Skipping it
-turns step 12 from a decision into an accident.
+turns step 13 from a decision into an accident.
 
 **The play**
 
@@ -274,7 +322,7 @@ Result for this deployment, read 2026-08-11:
 | Owner | `System user` |
 | Delta Sharing | `INTERNAL`, external access disabled |
 
-Passed. No metastore root, so nothing to unwind before step 12.
+Passed. No metastore root, so nothing to unwind before step 13.
 
 ### 2. Confirm serverless availability and enablement in region
 
@@ -282,18 +330,18 @@ Passed. No metastore root, so nothing to unwind before step 12.
 
 **Why it matters**
 
-- Steps 18 and 20 consume the serverless or classic posture ADR, which cannot be
+- Steps 19 and 20 consume the serverless or classic posture ADR, which cannot be
   decided without this
 - Two independent conditions, either of which can be false alone: the region
   supports serverless, and the workspace has it enabled
-- If serverless is out, step 20 becomes a classic cluster with a different
+- If serverless is out, step 21 becomes a classic cluster with a different
   permission model
-- Step 19 loses its subject, since a serverless budget policy governs nothing
+- Step 20 loses its subject, since a serverless budget policy governs nothing
   without serverless spend
 
 **What getting the execution wrong costs** The read is free. Assuming the answer
 costs a compute policy and a budget route built around compute that does not
-exist, discovered at step 20.
+exist, discovered at step 21.
 
 **The play**
 
@@ -344,7 +392,7 @@ Network standards are settled upstream by the Terraform and are out of this step
 
 - Policy denials are silent until an apply fails. A missing tag fails the
   deployment, it does not warn
-- The enforced tag names bind step 18. A different vocabulary on the Databricks
+- The enforced tag names bind step 19. A different vocabulary on the Databricks
   side gives two schemes and cost reporting that cannot be joined across them
 - Step 8 cannot create a file event queue if `Microsoft.EventGrid` is
   unregistered, and registering it needs subscription rights the operator may not
@@ -514,7 +562,7 @@ written until the repository and its protected branches do.
 > An existing automation rule places the deployment principal in `admins`, which
 > is also where its `CREATE CATALOG` and `CREATE EXTERNAL LOCATION` privileges
 > come from. Replacing that with explicit grants on the principal is possible and
-> is parked as a note against step 14. Do not attempt it before those grants
+> is parked as a note against step 15. Do not attempt it before those grants
 > exist, or the next deploy fails.
 
 > [!info] The owner splits, and here is where
@@ -688,220 +736,20 @@ Inventory result for this deployment, read 2026-08-11:
 | Members | Two |
 | Convention | One group per resource group |
 
-### 10. Create secret scopes and scope ACLs
-
-`Category: foundation` · `Owner: workspace admin` · `Inputs: the principals that receive scope ACLs, from step 9, usable here only once assigned to the workspace at step 21` · `Prerequisite: 🔲 ADR secret scope model` · `Impact: Rework 2d`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-> [!warning] Secret ACLs use a different principal namespace from Unity Catalog
-> A Unity Catalog grant accepts `account users`. A secret scope ACL rejects it
-> and requires a principal that exists in the workspace, such as `users`. So a
-> group created in Entra at step 9 cannot hold a scope ACL until it is assigned
-> to the workspace at step 21, eleven steps later.
->
-> Either create the scopes here and apply the ACLs after step 21, or move this
-> step. Observed by attempting both principals against a live scope.
-
-### 11. Set the metastore admin to the group
-
-`Category: foundation` · `Owner: account admin` · `Inputs: the metastore admin group, from step 9; the metastore ID, from step 1` · `Prerequisite: 🔲 ADR ownership and grant model` · `Impact: Adjustable`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-> [!info] Starting state
-> No metastore admin is assigned. The metastore reports `System user` as owner,
-> which is what an automatically provisioned metastore looks like. Assignment is
-> account admin only, and it is not something a workspace admin can work around.
-
-### 12. Create catalogs with explicit MANAGED LOCATION
-
-`Category: foundation` · `Owner: workspace admin` · `Inputs: metastore root storage state, from step 1; the external location that will hold managed data, from step 7` · `Prerequisite: 🔲 ADR metastore root storage, 🔲 ADR catalog and schema model` · `Impact: Lossy`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-> [!warning] What you create is open, what Databricks provisions is not
-> A catalog created here arrives with `isolation_mode: OPEN`, visible to every
-> workspace on the metastore, and owned by the person who ran the command. The
-> workspace catalog that provisioning created is `ISOLATED` and owned by a group.
-> Step 16 closes the first, step 14 owns the second. Observed by creating a
-> catalog as a workspace admin through the CLI.
-
-> [!warning] Impact downgraded from Irreversible, and why that is not a reprieve
-> `ALTER CATALOG SET MANAGED LOCATION` exists on Databricks SQL and Runtime 18.1
-> and above, so the setting is changeable. It does not move managed tables and
-> volumes that already exist. The setting is adjustable, the data already written
-> is not, which is `Lossy` rather than `Irreversible`. On an empty catalog the
-> distinction is academic. One table in, and it is not.
-
-### 13. Create schemas
-
-`Category: foundation` · `Owner: workspace admin` · `Inputs: the catalogs, from step 12` · `Prerequisite: 🔲 ADR catalog and schema model` · `Impact: Adjustable`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-### 14. Apply catalog-level grants
-
-`Category: foundation` · `Owner: account admin` · `Inputs: the catalogs and schemas, from steps 12 and 13; the groups, from step 9` · `Prerequisite: 🔲 ADR ownership and grant model` · `Impact: Adjustable`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-> [!warning] Starting state
-> This step also owns the workspace catalog decision. Close it, keep it, or
-> delete it, and say so explicitly. Leaving it alone is a decision too, and it is
-> the one that leaves every workspace user able to create tables in it.
-
-> [!info] Parked from step 4
-> The deployment principal holds `CREATE CATALOG` and `CREATE EXTERNAL LOCATION`
-> through membership of `admins`, which also gives it everything else a workspace
-> admin can do. Granting those two privileges to the principal directly is the
-> narrower alternative. If it is taken up, the grants land here and the demotion
-> follows this step, never before it. The demotion itself is one checkbox,
-> Admin access, on the principal's detail page under Workspace settings,
-> Identity and access.
-
-### 15. Grant the service principals their catalog access
-
-`Category: foundation` · `Owner: account admin` · `Inputs: the CI principals, from step 4; the catalogs and schemas, from steps 12 and 13` · `Prerequisite: 🔲 ADR ownership and grant model, 🔲 ADR non-human identity model` · `Impact: Adjustable`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-### 16. Apply catalog to workspace bindings
-
-`Category: foundation` · `Owner: account admin` · `Inputs: the catalogs, from step 12; the list of workspaces on this metastore, from the baseline` · `Prerequisite: 🔲 ADR workspace topology` · `Impact: Adjustable`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-> [!info] Starting state
-> The objects created upstream are already `ISOLATION_MODE_ISOLATED`, so they are
-> bound to this workspace rather than open to the metastore. Anything this
-> sequence creates is open by default unless bound. The metastore is shared with
-> at least one other workspace, so open means open to it too.
-
-### 17. Enable the system table schemas
-
-`Category: foundation` · `Owner: account admin` · `Inputs: none` · `Prerequisite: none` · `Impact: Lossy`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-> [!warning] Run this as early as an account admin is available
-> It sits at 17 because that is where it fits the narrative, not because it has
-> to wait. System tables collect from the moment they are enabled and never
-> backfill, so every day it is late is a day of audit and billing history that
-> does not exist. It consumes no ADR and depends on no other step.
-
-### 18. Create compute policies with enforced tags
-
-`Category: compute` · `Owner: workspace admin` · `Inputs: the tag names enforced by Azure Policy, from step 3` · `Prerequisite: 🔲 ADR serverless or classic posture, 🔲 ADR tagging and budget route` · `Impact: Rework 5d`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-> [!warning] This does not cover SQL warehouses
-> Compute policies govern clusters and jobs. Serverless SQL spend is tagged by
-> the budget policy at step 19, which is account admin work. A warehouse also
-> accepts tags directly at creation, and nothing enforces them.
->
-> So four tagging mechanisms exist across the estate: Azure Policy on Azure
-> resources, compute policies on clusters and jobs, budget policies on
-> serverless, and per-warehouse tags set by whoever creates the warehouse. They
-> share one vocabulary and nothing reconciles them. Steps 18 and 19 are
-> complementary, not alternatives, and doing this one alone leaves serverless
-> spend unattributable.
-
-### 19. Create the serverless budget policy
-
-`Category: compute` · `Owner: account admin` · `Inputs: the tag scheme, from step 18` · `Prerequisite: 🔲 ADR tagging and budget route` · `Impact: Lossy`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-### 20. Create SQL warehouses and set permissions
-
-`Category: compute` · `Owner: workspace admin` · `Inputs: the compute policies, from step 18; the groups that get CAN USE, from step 9` · `Prerequisite: 🔲 ADR serverless or classic posture` · `Impact: Adjustable`
-
-**Why it matters** 🔲
-
-**What getting the execution wrong costs** 🔲
-
-**The play** 🔲
-
-**Check** 🔲
-
-> [!warning] The workspace does not start policy-clean
-> A `Serverless Starter Warehouse` already exists from provisioning, stopped and
-> carrying no tags. Step 18 cannot reach back and tag it. Decide whether it is
-> deleted, tagged or kept, and record which. Compute created before the policies
-> exist stays untagged, and nothing fixes that after the fact.
-
-> [!warning] The API default is not the UI default
-> Through the UI the default warehouse type is serverless. Through the SQL
-> warehouses API with default parameters it is classic. To get serverless from
-> the API, set `warehouse_type` to `pro` and `enable_serverless_compute` to
-> `true`. Set both explicitly rather than relying on either default, because this
-> runbook deploys from the repo and not from the UI.
-
-### 21. Assign entitlements to each group
+### 10. Assign entitlements to each group
 
 `Category: admin` · `Owner: account admin` · `Inputs: the groups, from step 9` · `Prerequisite: 🔲 ADR workspace topology` · `Impact: Adjustable`
+
+> [!warning] This step is why the two after it work
+> Workspace-level permissions resolve against principals that exist in the
+> workspace, and a group created in Entra does not until it is assigned here. So
+> the ACLs at step 11 and the warehouse permissions at step 21 both depend on
+> this step having run.
+>
+> It sits at 10 for that reason and not for narrative tidiness. Databricks has
+> two principal namespaces: Unity Catalog grants accept account-level principals,
+> workspace permissions do not. Any step granting a workspace permission needs
+> this one first.
 
 **Why it matters** 🔲
 
@@ -928,6 +776,233 @@ Inventory result for this deployment, read 2026-08-11:
 > starts in the new behaviour. Guidance saying these entitlements arrive by
 > default is describing the old one.
 
+### 11. Create secret scopes and scope ACLs
+
+`Category: foundation` · `Owner: workspace admin` · `Inputs: the principals that receive scope ACLs, from step 9, usable here only once assigned to the workspace at step 10` · `Prerequisite: 🔲 ADR secret scope model` · `Impact: Rework 2d`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+> [!warning] Secret ACLs use a different principal namespace from Unity Catalog
+> A Unity Catalog grant accepts `account users`. A secret scope ACL rejects it
+> and requires a principal that exists in the workspace, such as `users`. A group
+> created in Entra at step 9 therefore cannot hold a scope ACL until step 10 has
+> assigned it to the workspace.
+>
+> Observed by attempting both principals against a live scope.
+
+### 12. Set the metastore admin to the group
+
+`Category: foundation` · `Owner: account admin` · `Inputs: the metastore admin group, from step 9; the metastore ID, from step 1` · `Prerequisite: 🔲 ADR ownership and grant model` · `Impact: Adjustable`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+> [!info] Starting state
+> No metastore admin is assigned. The metastore reports `System user` as owner,
+> which is what an automatically provisioned metastore looks like. Assignment is
+> account admin only, and it is not something a workspace admin can work around.
+
+### 13. Create catalogs with explicit MANAGED LOCATION
+
+`Category: foundation` · `Owner: workspace admin` · `Inputs: metastore root storage state, from step 1; the external location that will hold managed data, from step 7` · `Prerequisite: 🔲 ADR metastore root storage, 🔲 ADR catalog and schema model` · `Impact: Lossy`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+> [!warning] What you create is open, what Databricks provisions is not
+> A catalog created here arrives with `isolation_mode: OPEN`, visible to every
+> workspace on the metastore, and owned by the person who ran the command. The
+> workspace catalog that provisioning created is `ISOLATED` and owned by a group.
+> Step 17 closes the first, step 15 owns the second. Observed by creating a
+> catalog as a workspace admin through the CLI.
+
+> [!warning] Impact downgraded from Irreversible, and why that is not a reprieve
+> `ALTER CATALOG SET MANAGED LOCATION` exists on Databricks SQL and Runtime 18.1
+> and above, so the setting is changeable. It does not move managed tables and
+> volumes that already exist. The setting is adjustable, the data already written
+> is not, which is `Lossy` rather than `Irreversible`. On an empty catalog the
+> distinction is academic. One table in, and it is not.
+
+### 14. Create schemas
+
+`Category: foundation` · `Owner: workspace admin` · `Inputs: the catalogs, from step 13` · `Prerequisite: 🔲 ADR catalog and schema model` · `Impact: Adjustable`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** The schema existing proves nothing. Write to it.
+
+- Create a table, insert a row, read it back, drop the table
+- Pass means the managed location is genuinely writable, not merely registered
+
+This is the one checkpoint in the sequence and it earns its place here. Steps 15
+to 26 all assume the storage path works. Finding out at step 26 that it does not
+means unwinding thirteen steps of grants, bindings and compute that were built on
+a path Unity Catalog could never write to.
+
+```bash
+databricks -p "$P" api post /api/2.0/sql/statements --json @<file>
+```
+
+with a statement of `CREATE TABLE <catalog>.<schema>.probe (id INT)`, then an
+`INSERT`, then a `SELECT`, then `DROP TABLE`. A warehouse has to exist to run it,
+so either use one that is already there or bring step 21 forward for this check
+alone.
+
+### 15. Apply catalog-level grants
+
+`Category: foundation` · `Owner: account admin` · `Inputs: the catalogs and schemas, from steps 13 and 14; the groups, from step 9` · `Prerequisite: 🔲 ADR ownership and grant model` · `Impact: Adjustable`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+> [!warning] Starting state
+> This step also owns the workspace catalog decision. Close it, keep it, or
+> delete it, and say so explicitly. Leaving it alone is a decision too, and it is
+> the one that leaves every workspace user able to create tables in it.
+
+> [!info] Parked from step 4
+> The deployment principal holds `CREATE CATALOG` and `CREATE EXTERNAL LOCATION`
+> through membership of `admins`, which also gives it everything else a workspace
+> admin can do. Granting those two privileges to the principal directly is the
+> narrower alternative. If it is taken up, the grants land here and the demotion
+> follows this step, never before it. The demotion itself is one checkbox,
+> Admin access, on the principal's detail page under Workspace settings,
+> Identity and access.
+
+### 16. Grant the service principals their catalog access
+
+`Category: foundation` · `Owner: account admin` · `Inputs: the CI principals, from step 4; the catalogs and schemas, from steps 13 and 14` · `Prerequisite: 🔲 ADR ownership and grant model, 🔲 ADR non-human identity model` · `Impact: Adjustable`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+### 17. Apply catalog to workspace bindings
+
+`Category: foundation` · `Owner: account admin` · `Inputs: the catalogs, from step 13; the list of workspaces on this metastore, from the baseline` · `Prerequisite: 🔲 ADR workspace topology` · `Impact: Adjustable`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+> [!info] Starting state
+> The objects created upstream are already `ISOLATION_MODE_ISOLATED`, so they are
+> bound to this workspace rather than open to the metastore. Anything this
+> sequence creates is open by default unless bound. The metastore is shared with
+> at least one other workspace, so open means open to it too.
+
+### 18. Enable the system table schemas
+
+`Category: foundation` · `Owner: account admin` · `Inputs: none` · `Prerequisite: none` · `Impact: Lossy`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+> [!warning] Run this as early as an account admin is available
+> It sits at 17 because that is where it fits the narrative, not because it has
+> to wait. System tables collect from the moment they are enabled and never
+> backfill, so every day it is late is a day of audit and billing history that
+> does not exist. It consumes no ADR and depends on no other step.
+
+### 19. Create compute policies with enforced tags
+
+`Category: compute` · `Owner: workspace admin` · `Inputs: the tag names enforced by Azure Policy, from step 3` · `Prerequisite: 🔲 ADR serverless or classic posture, 🔲 ADR tagging and budget route` · `Impact: Rework 5d`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+> [!warning] This does not cover SQL warehouses
+> Compute policies govern clusters and jobs. Serverless SQL spend is tagged by
+> the budget policy at step 20, which is account admin work. A warehouse also
+> accepts tags directly at creation, and nothing enforces them.
+>
+> So four tagging mechanisms exist across the estate: Azure Policy on Azure
+> resources, compute policies on clusters and jobs, budget policies on
+> serverless, and per-warehouse tags set by whoever creates the warehouse. They
+> share one vocabulary and nothing reconciles them. Steps 19 and 20 are
+> complementary, not alternatives, and doing this one alone leaves serverless
+> spend unattributable.
+
+### 20. Create the serverless budget policy
+
+`Category: compute` · `Owner: account admin` · `Inputs: the tag scheme, from step 19` · `Prerequisite: 🔲 ADR tagging and budget route` · `Impact: Lossy`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+### 21. Create SQL warehouses and set permissions
+
+`Category: compute` · `Owner: workspace admin` · `Inputs: the compute policies, from step 19; the groups that get CAN USE, from step 9, usable here only once assigned to the workspace at step 10` · `Prerequisite: 🔲 ADR serverless or classic posture` · `Impact: Adjustable`
+
+**Why it matters** 🔲
+
+**What getting the execution wrong costs** 🔲
+
+**The play** 🔲
+
+**Check** 🔲
+
+> [!warning] The workspace does not start policy-clean
+> A `Serverless Starter Warehouse` already exists from provisioning, stopped and
+> carrying no tags. Step 19 cannot reach back and tag it. Decide whether it is
+> deleted, tagged or kept, and record which. Compute created before the policies
+> exist stays untagged, and nothing fixes that after the fact.
+
+> [!warning] The API default is not the UI default
+> Through the UI the default warehouse type is serverless. Through the SQL
+> warehouses API with default parameters it is classic. To get serverless from
+> the API, set `warehouse_type` to `pro` and `enable_serverless_compute` to
+> `true`. Set both explicitly rather than relying on either default, because this
+> runbook deploys from the repo and not from the UI.
+
 ### 22. Apply admin settings
 
 `Category: admin` · `Owner: workspace admin` · `Inputs: the current workspace settings, read in the play` · `Prerequisite: 🔲 ADR legacy surface posture` · `Impact: Rework 10d`
@@ -949,7 +1024,7 @@ Inventory result for this deployment, read 2026-08-11:
 
 ### 23. Apply classification tags, column masks, row filters
 
-`Category: protection` · `Owner: account admin` · `Inputs: the schemas and tables to protect, from step 13; the groups the masks discriminate between, from step 9` · `Prerequisite: 🔲 ADR data protection model` · `Impact: Rework 8d`
+`Category: protection` · `Owner: account admin` · `Inputs: the schemas and tables to protect, from step 14; the groups the masks discriminate between, from step 9` · `Prerequisite: 🔲 ADR data protection model` · `Impact: Rework 8d`
 
 **Why it matters** 🔲
 
@@ -981,7 +1056,7 @@ Inventory result for this deployment, read 2026-08-11:
 
 ### 25. Configure monitoring and alerting
 
-`Category: protection` · `Owner: platform engineer` · `Inputs: the system tables, from step 17` · `Prerequisite: none` · `Impact: Adjustable`
+`Category: protection` · `Owner: platform engineer` · `Inputs: the system tables, from step 18` · `Prerequisite: none` · `Impact: Adjustable`
 
 **Why it matters** 🔲
 
@@ -993,7 +1068,7 @@ Inventory result for this deployment, read 2026-08-11:
 
 ### 26. Acceptance test
 
-`Category: acceptance` · `Owner: test user` · `Inputs: a principal that can write to ADLS, from steps 4 and 15; the bronze catalog and schema, from steps 12 and 13; a warehouse the test user can use, from step 20; the test user's group membership and entitlements, from steps 9 and 21` · `Prerequisite: none` · `Impact: Adjustable`
+`Category: acceptance` · `Owner: test user` · `Inputs: a principal that can write to ADLS, from steps 4 and 16; the bronze catalog and schema, from steps 13 and 14; a warehouse the test user can use, from step 21; the test user's group membership and entitlements, from steps 9 and 10` · `Prerequisite: none` · `Impact: Adjustable`
 
 **Why it matters** 🔲
 
@@ -1016,12 +1091,12 @@ Read the error rather than re-running the earlier steps.
 | A classic cluster cannot reach the storage account but serverless can | Step 6, the private endpoint from your own VNet is missing |
 | The file lands but no event fires | Step 8, file events are not enabled on the location created at step 7 |
 | The event fires but Auto Loader cannot read the queue | Step 8, the queue role assignment |
-| Auto Loader runs but cannot write the table | Step 12 or 13, the catalog or schema has no usable managed location |
-| The table is created but the group cannot see the catalog | Step 14, `USE CATALOG` is missing |
-| The catalog is visible but the table is not | Step 14, `USE SCHEMA` is missing |
-| The table is visible but the query is denied | Step 14, `SELECT` is missing |
-| The group member has no warehouse to run on | Step 20, no `CAN USE` on the warehouse |
-| The group member cannot open the SQL editor at all | Step 21, the Databricks SQL access entitlement was not assigned explicitly |
+| Auto Loader runs but cannot write the table | Step 13 or 14, the catalog or schema has no usable managed location |
+| The table is created but the group cannot see the catalog | Step 15, `USE CATALOG` is missing |
+| The catalog is visible but the table is not | Step 15, `USE SCHEMA` is missing |
+| The table is visible but the query is denied | Step 15, `SELECT` is missing |
+| The group member has no warehouse to run on | Step 21, no `CAN USE` on the warehouse |
+| The group member cannot open the SQL editor at all | Step 10, the Databricks SQL access entitlement was not assigned explicitly |
 | Everything works for you and nothing works for them | You are a workspace admin. Test as the test user, on their credentials, or you are testing nothing |
 
 ## Sources
@@ -1035,7 +1110,7 @@ Fetched and verified 2026-08-11. Everything in Preconditions rests on these four
   workspace catalog default grants.
 - [Manage Unity Catalog metastores](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-metastore).
   Metastore-level storage is optional and absent from automatically created
-  metastores. Account console navigation for steps 1 and 11.
+  metastores. Account console navigation for steps 1 and 12.
 - [Specify a managed storage location in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/managed-storage).
   Managed storage precedence, and `ALTER CATALOG SET MANAGED LOCATION` on
   Databricks Runtime 18.1 and above, which affects only objects created after
@@ -1050,7 +1125,7 @@ Added 2026-08-11 for step 2:
   The serverless, system tables and ingestion tables by region.
 - [SQL warehouse types](https://learn.microsoft.com/en-us/azure/databricks/compute/sql-warehouse/warehouse-types).
   Classic, pro and serverless capabilities, and the differing UI and API
-  defaults, used at step 20.
+  defaults, used at step 21.
 
 Added 2026-08-11 for step 6:
 
@@ -1064,7 +1139,7 @@ Added 2026-08-11 for step 6:
 Carried from [[dbr-RG-to-working-non-admin-user]], verified there on 2026-08-10:
 
 - [Workspace entitlements and the 15 June 2026 system group change](https://learn.microsoft.com/en-us/azure/databricks/security/auth/entitlements),
-  used at step 21.
+  used at step 10.
 
 > [!todo] 🔲 Steps 7 to 26 are not yet sourced
 > Verify per claim before status leaves Draft.
