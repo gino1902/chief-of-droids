@@ -4,7 +4,8 @@
 > Terraform knowledge and no Databricks knowledge.
 > Findings come from testing the sequence in [[dbr-platform-foundation-setup]]
 > against the workspace `DBR-DATABRICKS-DEV` on 2026-08-11. Everything created
-> during that test has been deleted.
+> during that test has been deleted. One change was not a creation and remains:
+> a display name set on the existing service principal, described below.
 
 Short answer: yes, changes are needed, and the biggest one is something that is
 missing rather than something that is wrong. The storage path that the data
@@ -119,6 +120,23 @@ One thing to know if you find older internal guidance: allowlisting Databricks
 serverless IP ranges on a storage firewall stopped being supported in June 2026.
 Private endpoints or a network security perimeter are what remain.
 
+### Group assignment before anything that grants a workspace permission
+
+This only matters if the code manages Databricks groups and permissions, but if
+it does, it will bite.
+
+Databricks has two permission systems that resolve principals differently. Unity
+Catalog grants, which cover data, accept a group that exists at the Databricks
+account level. Workspace permissions, which cover secret scopes, warehouses,
+clusters and jobs, only accept a principal that has been assigned to the
+workspace.
+
+So a group can exist, be visible in the account, hold data permissions, and still
+be rejected when you try to give it access to a secret scope. We hit exactly
+that. The fix is ordering: assign the group to the workspace first. If the
+Terraform resources do not reference each other, the graph will not know to do
+that, and an apply can fail on a race that succeeds on the retry.
+
 ### A lifecycle question, not yet a change
 
 Workspaces are regenerated into the same persistent resource group. If the
@@ -128,7 +146,7 @@ lifecycle, but that is a decision rather than a defect.
 
 ## Rights that no code change replaces
 
-An account admin. Nine of the twenty-six setup steps need an account-level
+An account admin. Ten of the twenty-six setup steps need an account-level
 Databricks role. It is not an Azure role, Terraform cannot grant it, and the
 sequence cannot finish without someone holding it.
 
@@ -158,5 +176,5 @@ that needs a Databricks account admin. Creating something by hand shows the
 platform allows it. It does not show that the Terraform will produce it.
 
 <!--
-Version: 1.0 | Last Updated: 2026-08-11 | Status: Draft
+Version: 1.1 | Last Updated: 2026-08-11 | Status: Draft
 -->
