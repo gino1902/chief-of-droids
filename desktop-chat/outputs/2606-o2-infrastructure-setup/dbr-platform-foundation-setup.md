@@ -845,10 +845,10 @@ Secured by Perimeter is the trap in route A. It stops serverless reading externa
 locations and returns `PERMISSION_DENIED`. Applying route A's rules and then route
 B's end state is the mistake that looks like a permissions bug.
 
-> [!todo] 🔲 The build detail has no home yet
-> The step-by-step for both routes belongs with step 7's storage work in
-> [[2026-08-11-databricks-terraform-changes]], and has not been written there.
-> Until it is, the table above is the only record of it. Do not delete it first.
+The build itself is change 5 in [[2026-08-11-databricks-terraform-changes]], with
+the Terraform resource names for route B and the portal steps for route A. The
+table above is the summary you need to raise the request and record the answer,
+not a second copy of the procedure.
 
 **Check** Both compute planes, separately, because they take different paths.
 

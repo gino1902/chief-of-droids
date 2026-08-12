@@ -146,8 +146,16 @@ answer.
 
 ### Storage account constraints
 
-- `is_hns_enabled` cannot be set after creation. Wrong means replace, not amend
+- `is_hns_enabled` can be added after creation, but only through a one-way
+  migration that disables writes while it runs and fails validation if immutable
+  storage, soft delete, snapshots or encryption scopes are enabled, or if page
+  blobs are present. Set it at creation. Getting it wrong is a migration under a
+  write freeze rather than a replacement, which is cheaper than previously stated
+  here and still not something to schedule
 - Four tags at creation: `owner`, `environment`, `cost_center`, `project`
+- Keep the account name to 44 characters or fewer if change 5 takes route A. A
+  perimeter association is named `{resourceName}-{perimeter-guid}` and must fit
+  Azure's 80-character field
 - Consider `shared_access_key_enabled = false` and a default network action of
   Deny. Nothing currently forces either
 
@@ -209,6 +217,16 @@ no data processing charges.
   returns `PERMISSION_DENIED`
 - Needs a Databricks account admin, Contributor or Owner on the resource, and
   rights to create perimeter resources
+- Two constraints that arrive with the perimeter: Azure Backup is unsupported on
+  an associated storage account, and object replication and static websites are
+  too. The first lands on the data protection decision
+- Databricks and Azure Storage disagree about transition mode. Databricks
+  "recommends remaining in transition mode indefinitely". The Azure Storage page
+  calls it a staging step and says it is "crucial" to reach enforced. Enforced
+  mode stops honouring trusted services and can deny service endpoint traffic
+  "even when an inbound rule allows 0.0.0.0/0", which is how classic compute
+  usually reaches storage from your VNet. Databricks has the better argument here,
+  but a security review citing the Azure page will challenge it
 
 ### Route B, private endpoints via NCC
 
@@ -217,18 +235,23 @@ no data processing charges.
   Catalog, `blob` for model serving
 - `databricks_mws_ncc_binding` to the workspace
 - A second private endpoint from your own VNet for classic compute
-- **End state: Public network access Disabled**, after both are approved
+- **End state: Public network access Disabled**, after both are approved. The
+  source presents this as optional hardening rather than a requirement, so route B
+  works without it. Route A's end state, by contrast, is prescribed
 - Not a single apply. Each rule sits `PENDING` until someone with rights on the
   storage account approves it in the portal
+- Requires the Premium plan and a Databricks account admin
 - Limits: 10 NCCs per region, 100 private endpoints per region, 50 workspaces per
   NCC. Databricks bills networking costs for serverless connections
 
-> Whether network security perimeter is available in France Central is 🔲
-> unverified. If not, route B is the only option.
+> Network security perimeter is generally available in all Azure public cloud
+> regions, so France Central is covered and route A is open. Read 2026-08-12,
+> closing an earlier open question.
 
 ### Allow trusted Microsoft services
 
-- Route A cannot connect without it
+- Route A cannot connect without it, in transition mode. Enforced mode ignores
+  trusted services entirely, which is one more reason to stay in transition
 - Under route B's Disabled end state, network rules do not apply and the setting
   is probably inert. 🔲 Unverified. Enable it anyway, do not rely on it
 
@@ -293,8 +316,10 @@ in its own configuration. Your call.
 
 ## Tested and not tested
 
-Eleven of the 25 steps exercised. Full coverage table in
-[[dbr-platform-foundation-setup]] under "Proven against a live workspace".
+Eleven of the 24 steps exercised. Full coverage table in
+[[dbr-platform-foundation-setup]] under "Proven against a live workspace". That
+runbook split its admin settings step on 2026-08-12, so it now runs 1 to 19, 20a,
+20b, 21, 22, 23.
 
 **Worked**, as a workspace admin: service principal, account group with
 entitlements, tagged ADLS account with hierarchical namespace and container,
@@ -324,6 +349,12 @@ Fetched 2026-08-11:
 - [Admin privileges in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/admin-privileges), 2026-06-23
 - [Databricks administration overview](https://learn.microsoft.com/en-us/azure/databricks/admin/admin-concepts), 2026-07-28
 
+Fetched 2026-08-12, carried from the runbook's sourcing pass:
+
+- [Upgrade Azure Blob Storage with Azure Data Lake Storage capabilities](https://learn.microsoft.com/en-us/azure/storage/blobs/upgrade-to-data-lake-storage-gen2-how-to), 2025-11-03. The one-way hierarchical namespace migration, correcting change 1
+- [What is a network security perimeter?](https://learn.microsoft.com/en-us/azure/private-link/network-security-perimeter-concepts), 2026-07-08. Generally available in all public cloud regions, the 44-character name limit, service endpoint traffic unsupported
+- [Network Security Perimeter for Azure Storage](https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security-perimeter), 2025-07-27. Enforced mode ignores trusted services, Azure Backup unsupported, and the transition-mode advice that contradicts Databricks
+
 Fetched 2026-08-12:
 
 - [Manage external locations](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/manage-external-locations), 2026-08-11. The four file event roles, only one of which this platform needs
@@ -335,5 +366,5 @@ Fetched 2026-08-12:
 - [Databricks Terraform provider](https://github.com/databricks/terraform-provider-databricks/blob/master/docs/index.md), provider alias split and resource names
 
 <!--
-Version: 4.0 | Last Updated: 2026-08-12 | Status: Draft
+Version: 4.1 | Last Updated: 2026-08-12 | Status: Draft
 -->
