@@ -74,10 +74,10 @@ Connector granularity and the ownership and grant model, then the rest.
 
 | Role | Needed for | Held by |
 | :--- | :--- | :--- |
-| Account admin | 4, 6, 10, 12, 15, 16, 17, 18, 20, 23 | 🔲 |
-| Workspace admin | 1, 2, 7, 11, 13, 14, 19, 21, 22 | gmourgues@sqli.com |
+| Account admin | 4, 6, 12, 15, 16, 18, 20, 23 | 🔲 |
+| Workspace admin | 1, 2, 7, 9, 10, 11, 13, 14, 17, 19, 21, 22 | gmourgues@sqli.com |
 | Platform engineer | 3, 5, 8, 25 | 🔲 |
-| Entra admin | 9 | 🔲 |
+| Entra admin | 9, only if the group is created in Entra rather than pulled in | 🔲 |
 | Network team | 24 | 🔲 |
 | Test user | 26 | 🔲 |
 
@@ -88,25 +88,30 @@ Databricks.
 
 ### What to ask the account admin for
 
-Ten steps need an account-level Databricks role that nobody running this sequence
-is likely to hold. Raise them as one request rather than ten interruptions. Step
-numbers are not a request, so this is what to actually ask for.
+Eight steps need an account-level Databricks role that nobody running this
+sequence is likely to hold. Raise them as one request rather than eight
+interruptions. Step numbers are not a request, so this is what to actually ask
+for.
 
 | Request | Unblocks |
 | :--- | :--- |
 | A federation policy per CI service principal, once the repository and its protected branches exist | 4 |
-| A network connectivity configuration in the workspace region, attached to this workspace, with a private endpoint rule per storage subresource | 6 |
-| Assign entitlements to each group on this workspace. Do this early, because steps 11 and 21 cannot finish without it | 10 |
+| Serverless network access to the ADLS account, either a network security perimeter rule or a network connectivity configuration with private endpoint rules | 6 |
 | Assign the metastore admin role to a named group | 12 |
-| Catalog grants, service principal grants and catalog to workspace bindings | 15, 16, 17 |
+| Catalog grants and service principal grants | 15, 16 |
 | Enable the system table schemas | 18 |
 | Create the serverless budget policy | 20 |
 | Classification tags, column masks and row filters | 23 |
 | Set the display name on the account-level service principal record, if it is empty | 4 |
 
-The first two carry the longest lead times. The network connectivity
-configuration also needs someone on the Azure side to approve a private endpoint
-request, so it is two people and not one.
+The first two carry the longest lead times. Step 6 also needs someone on the
+Azure side, so it is two people and not one.
+
+> [!info] Three things are not on this list, and were until tested
+> Creating account groups, assigning them to the workspace with entitlements, and
+> binding a catalog to workspaces are all workspace admin actions. Verified in
+> the UI on 2026-08-12 by doing them. Asking an account admin for any of the
+> three wastes their time and yours.
 
 ### Tooling
 
@@ -200,7 +205,7 @@ databricks -p "$P" clusters list -o json
 Two things the baseline cannot tell you, both cheap, both of which have already
 changed this plan once.
 
-**Someone holds account admin.** Ten steps need it, and it does not flow from the
+**Someone holds account admin.** Eight steps need it, and it does not flow from the
 Entra group that makes you a workspace admin. If nobody in the account holds it,
 a Microsoft Entra ID Global Administrator must sign in to the account console
 once, which auto-creates their account admin role, and then delegate it under
@@ -208,11 +213,15 @@ User management, Roles tab. There is no other route. The fastest test of whether
 you hold it: open `accounts.azuredatabricks.net`. An account admin lands on the
 console with a left nav. Everyone else gets a workspace picker.
 
-**How many workspaces share the region.** A metastore is one per region, so
-another workspace in the same region shares yours, along with whatever an earlier
-owner already set on it. A greenfield workspace does not imply a greenfield
-metastore, and the metastore is usually older than the workspace by a wide
-margin.
+**Who else is on the metastore.** A metastore is one per region and it is
+multi-tenant. Expect catalogs owned by people outside your workspace, created
+years before it. Their names and schema names are visible to you from Catalog
+Explorer without any grant, and yours are visible to them unless step 17 binds
+them. A greenfield workspace does not imply a greenfield metastore.
+
+Read 2026-08-12: `metastore_azure_francecentral` was created in June 2024 and
+carries catalogs owned by a user who is not in this workspace, with schemas dated
+October 2024. One of them is already called `bronzes`.
 
 > [!todo] 🔲 To be defined
 > What steps 1 to 3 assume about the tenant and subscription beyond the above.
@@ -240,6 +249,10 @@ Each step carries the same fields.
   what should have changed, not by the command not erroring. One negative
   read-back is not proof of failure: reads can lag writes and two endpoints can
   disagree, so read again and read a second surface before concluding
+- **Clean up** — any check that creates something ends with the command that
+  removes it, in the same step. Never leave the reader to remember. A runbook
+  that leaves residue teaches the reader to leave residue, and residue in a
+  shared resource group outlives the person who made it
 
 Impact values: `Irreversible`, `Lossy`, `Rework Nd`, `Adjustable`.
 
@@ -692,7 +705,7 @@ az storage account list -g <resource-group> \
 
 ### 9. Create account groups, including the metastore admin group
 
-`Category: foundation` · `Owner: Entra admin` · `Inputs: existing Entra groups and their sync mode, read in the play below` · `Prerequisite: 🔲 ADR workspace topology, 🔲 ADR ownership and grant model` · `Impact: Adjustable`
+`Category: foundation` · `Owner: workspace admin, with an Entra admin only if the group must be created in Entra` · `Inputs: existing Entra groups and their sync mode, read in the play below` · `Prerequisite: 🔲 ADR workspace topology, 🔲 ADR ownership and grant model` · `Impact: Adjustable`
 
 **Why it matters**
 
@@ -738,7 +751,7 @@ Inventory result for this deployment, read 2026-08-11:
 
 ### 10. Assign entitlements to each group
 
-`Category: admin` · `Owner: account admin` · `Inputs: the groups, from step 9` · `Prerequisite: 🔲 ADR workspace topology` · `Impact: Adjustable`
+`Category: admin` · `Owner: workspace admin` · `Inputs: the groups, from step 9` · `Prerequisite: 🔲 ADR workspace topology` · `Impact: Adjustable`
 
 > [!warning] This step is why the two after it work
 > Workspace-level permissions resolve against principals that exist in the
@@ -908,7 +921,7 @@ alone.
 
 ### 17. Apply catalog to workspace bindings
 
-`Category: foundation` · `Owner: account admin` · `Inputs: the catalogs, from step 13; the list of workspaces on this metastore, from the baseline` · `Prerequisite: 🔲 ADR workspace topology` · `Impact: Adjustable`
+`Category: foundation` · `Owner: catalog owner, which is a workspace admin for anything created here` · `Inputs: the catalogs, from step 13; the list of workspaces on this metastore, from the baseline` · `Prerequisite: 🔲 ADR workspace topology` · `Impact: Adjustable`
 
 **Why it matters** 🔲
 
