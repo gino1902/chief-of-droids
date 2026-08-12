@@ -158,7 +158,7 @@ able to read it.
 | Workspace configuration | Premium, no public IP | `az resource show --ids <id> --query "{sku:sku.name, noPublicIp:properties.parameters.enableNoPublicIp.value}"` |
 | Operator Azure rights | Enough to tell which later steps are yours | `az role assignment list --assignee <your-object-id> --all --include-groups -o table` |
 | Metastore attached | A metastore in the workspace region | `databricks -p "$P" metastores summary` |
-| Access connector | One, in the workspace infrastructure resource group | `access_connector_id` in the storage credential below |
+| Access connector | One, in the workspace's managed resource group, which you will not be able to read directly | `access_connector_id` in the storage credential below |
 | Storage credential | One, named after the workspace, `ISOLATION_MODE_ISOLATED`, owned by `_workspace_admins_<workspace>` | `databricks -p "$P" storage-credentials list -o json` |
 | External location | One, on the workspace Unity Catalog storage container | `databricks -p "$P" external-locations list -o json` |
 | File events | `effective_enable_file_events: true` with a managed AQS queue | Same command as above |
@@ -287,6 +287,34 @@ Deliberately not here:
 - Multi-region and disaster recovery
 - Network design beyond what steps 6 and 24 require. The hub and spoke topology
   itself is upstream
+
+## Proven against a live workspace
+
+Exercised on 2026-08-11 and 2026-08-12 against a real workspace, using throwaway
+objects that were deleted afterwards. This proves the platform permits the step
+and that the operator holds the rights for it. It does not mean the step is done,
+and it does not mean the Terraform will produce the same result.
+
+| Step | What was exercised | Verdict |
+| :--- | :--- | :--- |
+| 1, 2, 3 | The reads, in full | Passed |
+| 4 | Created a Databricks managed principal with a display name, as a workspace admin | Creation works. Federation untested |
+| 5 | Created a tagged ADLS account with hierarchical namespace and a container | Passed, and an untagged create was refused first, so the deny policy bites |
+| 6 | Nothing | Untested. Needs an account admin |
+| 7, 8 | Attempted the prerequisites | **Failed.** The operator cannot write role assignments and cannot read the access connector |
+| 9, 10 | Created an account group with entitlements, as a workspace admin | Passed |
+| 11 | Created a scope, a secret and an ACL | Passed, and it exposed that account-level principals are refused here |
+| 13, 14 | Created a catalog with an explicit managed location and a schema, then wrote and read a table | Passed. The managed storage path works end to end |
+| 15, 16 | Granted a group and a service principal on a catalog | Passed |
+| 17 | Confirmed the binding controls are present and editable | Passed |
+| 19 | Created a compute policy with an enforced tag | Passed |
+| 21 | Created a serverless warehouse with tags | Passed |
+| 12, 18, 20, 23 | Nothing | Untested. Need an account admin |
+| 22, 24, 25, 26 | Nothing | Untested |
+
+The two that failed are the important ones. Steps 7 and 8 cannot be performed
+from the operator's position at all, which is why the storage path has to come
+from the Terraform. See [[2026-08-11-databricks-terraform-changes]].
 
 ---
 
@@ -537,8 +565,9 @@ az ad sp show --id <application-id> --query "{name:displayName, appId:appId}"
 not by the command not erroring.
 
 - `service-principals get` returns the display name you set
-- Read it again after ten minutes. A reverted name means the principal is synced
-  from Entra and the name has to be changed there instead
+- If it does not, wait and read again. The write propagates on a delay and an
+  immediate read can show nothing. Only a name that appears and then reverts
+  means Entra is the source and the change belongs there
 - No CI principal appears in `admins`
 - A pipeline run on a non-protected branch fails to authenticate against the
   production policy
@@ -611,10 +640,10 @@ hand.
 **Check** 🔲
 
 > [!warning] Do not close the network yet
-> Leave public network access as it is. Step 6 closes it, after the private
-> endpoints exist and have been approved. Closing it first locks out the very
-> connections you are about to create, and the resulting failures read as
-> permission errors rather than network ones.
+> Leave public network access as it is. Step 6 decides what the end state should
+> be, and it differs by route. Closing it here locks out the very connections you
+> are about to create, and the failures read as permission errors rather than
+> network ones.
 
 ### 6. Open the serverless path to ADLS
 
@@ -623,41 +652,51 @@ hand.
 **Why it matters**
 
 - Serverless compute runs in the Databricks-managed plane, not in your VNet. A
-  storage account restricted to private endpoints refuses it, and the failure
-  reads as a permissions error
-- A network connectivity configuration is the mechanism. It is account-level,
-  one per region, and attaches to workspaces
-- Restricting the storage account also locks out classic compute, which needs its
-  own private endpoint from your VNet. Doing one and not the other breaks half
+  storage account with a firewall refuses it, and the failure reads as a
+  permissions error
+- Two routes exist and they end in different states. Choosing is what the network
+  posture ADR is for
+- Either route also affects classic compute, which reaches the storage account
+  from your VNet and needs its own path. Doing one and not the other breaks half
   your compute
 - Allowlisting Databricks serverless subnet IDs stopped being supported on
-  9 June 2026. What remains is private endpoints through an NCC, or a network
-  security perimeter allowlisting the `AzureDatabricksServerless` service tag
+  9 June 2026, so older internal guidance is wrong
 
-**What getting the execution wrong costs** Each private endpoint is approved on
-the Azure side by someone with rights on the storage account, so a mistake costs
-another approval round rather than a retry.
+**What getting the execution wrong costs** Both routes need someone on the Azure
+side, so a mistake costs another round with another person rather than a retry.
 
 **The play** 🔲
 
 **Check** 🔲
 
-> [!warning] The order is the whole difficulty
-> 1. The storage account exists, so its resource ID exists. Step 5
-> 2. Account admin creates the NCC in the workspace region and attaches it to the
->    workspace. Wait ten minutes and restart serverless compute
-> 3. One private endpoint rule per subresource. `dfs` for Unity Catalog, `blob`
->    as well for model serving or SecureConnect
-> 4. Someone with rights on the storage account approves each request in the
->    Azure portal. Rules stay `PENDING` until then and reach `ESTABLISHED` after
-> 5. A separate private endpoint from your own VNet, for classic compute
-> 6. Only now set public network access to Disabled
+> [!warning] Two routes, and blending them is the failure mode
+> **Route A, network security perimeter.** What Databricks recommends for storage
+> in the workspace region. Associate the account with a perimeter, leave it in
+> transition mode, add an inbound rule for the regional
+> `AzureDatabricksServerless` service tag. End state: keep public network access
+> on **Enabled from selected networks**. Setting it to Secured by Perimeter stops
+> serverless reading external locations and returns `PERMISSION_DENIED`.
+>
+> **Route B, private endpoints through a network connectivity configuration.** For
+> dedicated private connectivity. Create the NCC in the workspace region, attach
+> it to the workspace, add one private endpoint rule per subresource, `dfs` for
+> Unity Catalog and `blob` as well for model serving. Each rule sits `PENDING`
+> until someone with rights on the storage account approves it in the portal. Add
+> a separate private endpoint from your own VNet for classic compute. End state:
+> only now set public network access to **Disabled**.
+>
+> The end states are opposites. Applying route A's rule set and then route B's end
+> state is the mistake that looks like a permissions bug.
 
-> [!info] Limits and cost
-> Premium plan, account admin, 10 NCCs per region, 100 private endpoints per
-> region, 50 workspaces per NCC. France Central supports private connectivity.
-> Databricks bills networking costs when serverless workloads connect to your
-> resources.
+> [!info] Either route
+> Enable **Allow trusted Microsoft services to access this resource** on the
+> storage account. File events need it and Databricks cannot connect without it
+> once public access is restricted.
+>
+> Route B limits: 10 NCCs per region, 100 private endpoints per region, 50
+> workspaces per NCC. Databricks bills networking costs when serverless connects
+> to your resources. Whether network security perimeter is available in France
+> Central is 🔲 unverified; if it is not, route B is the only option.
 
 ### 7. Register the ADLS external location
 
@@ -698,10 +737,35 @@ az storage account list -g <resource-group> \
 
 **Check** 🔲
 
-> [!info] Starting state
-> File events are already enabled on the workspace external location, with a
-> managed AQS queue. That is the pattern to match, not a reason to skip the step.
-> The location created at step 7 has no queue until you give it one.
+> [!info] This step verifies rather than enables
+> File events are on by default for every new external location, so the one
+> created at step 7 probably already has them. What this step confirms is that
+> they actually configured, because they silently do not when the storage
+> credential lacks the roles below. If the credential is short, external location
+> creation shows a validation warning and offers Force create, which produces a
+> location with file events off.
+
+> [!warning] File events need three more role assignments than reading does
+> All on the Access Connector's managed identity. Three on the storage account,
+> one on the resource group containing it.
+>
+> | Role | Scope |
+> | :--- | :--- |
+> | Storage Blob Data Contributor | Storage account |
+> | Storage Queue Data Contributor | Storage account |
+> | Storage Account Contributor | Storage account |
+> | EventGrid Data Contributor | Resource group |
+>
+> Without the last two you configure the queue and the Event Grid subscription by
+> hand for every location, and Databricks will not support that setup. Also
+> enable Allow trusted Microsoft services on the storage account.
+>
+> Two live Microsoft pages disagree on the fourth role. The June 2026 ADLS page
+> calls it EventGrid EventSubscription Contributor, the August 2026 page calls it
+> EventGrid Data Contributor. The fresher name is written here. If file events
+> fail to configure, check that first.
+>
+> None of these can be granted by the operator. See step 7.
 
 ### 9. Create account groups, including the metastore admin group
 
@@ -710,9 +774,13 @@ az storage account list -g <resource-group> \
 **Why it matters**
 
 - Entra is the source of record for identity here, which is how workspace admin
-  reaches a human at all. Groups are created in Entra, not in Databricks. A
-  Databricks-side group would be a second thing to maintain and could not be
-  updated from Entra
+  reaches a human at all. A group that already exists in Entra should be pulled
+  in rather than duplicated, because a Databricks-side copy is a second thing to
+  maintain and cannot be updated from Entra
+- A workspace admin can do either from Settings, Identity and access, Manage next
+  to Groups. The picker searches Entra directly and offers to create a new
+  account group. An Entra admin is needed only when the group has to originate in
+  Entra
 - The house convention is usually one group per resource group, which models
   deployment rights rather than data access. This step adds a data-shaped set
   alongside, not instead
@@ -869,8 +937,8 @@ Inventory result for this deployment, read 2026-08-11:
 
 This is the one checkpoint in the sequence and it earns its place here. Steps 15
 to 26 all assume the storage path works. Finding out at step 26 that it does not
-means unwinding thirteen steps of grants, bindings and compute that were built on
-a path Unity Catalog could never write to.
+means unwinding twelve steps of grants, bindings and compute that were built on a
+path Unity Catalog could never write to.
 
 ```bash
 databricks -p "$P" api post /api/2.0/sql/statements --json @<file>
@@ -934,8 +1002,11 @@ alone.
 > [!info] Starting state
 > The objects created upstream are already `ISOLATION_MODE_ISOLATED`, so they are
 > bound to this workspace rather than open to the metastore. Anything this
-> sequence creates is open by default unless bound. The metastore is shared with
-> at least one other workspace, so open means open to it too.
+> sequence creates is open by default unless bound.
+>
+> Open means open to a multi-tenant metastore carrying other teams' catalogs, not
+> to one anonymous sibling workspace. Binding is the only thing that stops your
+> catalog names appearing in their Catalog Explorer.
 
 ### 18. Enable the system table schemas
 
@@ -950,7 +1021,7 @@ alone.
 **Check** 🔲
 
 > [!warning] Run this as early as an account admin is available
-> It sits at 17 because that is where it fits the narrative, not because it has
+> It sits at 18 because that is where it fits the narrative, not because it has
 > to wait. System tables collect from the moment they are enabled and never
 > backfill, so every day it is late is a day of audit and billing history that
 > does not exist. It consumes no ADR and depends on no other step.
@@ -1081,7 +1152,7 @@ alone.
 
 ### 26. Acceptance test
 
-`Category: acceptance` · `Owner: test user` · `Inputs: a principal that can write to ADLS, from steps 4 and 16; the bronze catalog and schema, from steps 13 and 14; a warehouse the test user can use, from step 21; the test user's group membership and entitlements, from steps 9 and 10` · `Prerequisite: none` · `Impact: Adjustable`
+`Category: acceptance` · `Owner: test user` · `Inputs: a principal that can write to ADLS, from step 4 with its storage access from the role assignments at step 7; the bronze catalog and schema, from steps 13 and 14; a warehouse the test user can use, from step 21; the test user's group membership and entitlements, from steps 9 and 10` · `Prerequisite: none` · `Impact: Adjustable`
 
 **Why it matters** 🔲
 
@@ -1114,7 +1185,10 @@ Read the error rather than re-running the earlier steps.
 
 ## Sources
 
-Fetched and verified 2026-08-11. Everything in Preconditions rests on these four.
+Fetched and verified on the dates shown. Preconditions rests on all of them, not
+on any one.
+
+Fetched 2026-08-11:
 
 - [Databricks administration overview](https://learn.microsoft.com/en-us/azure/databricks/admin/admin-concepts).
   Establishing the first account admin, and what a non-account-admin sees.
@@ -1149,12 +1223,34 @@ Added 2026-08-11 for step 6:
   the requirement that classic compute also use private endpoints once a
   resource is restricted.
 
+Fetched 2026-08-12, for the owner corrections and the file event roles:
+
+- [Manage groups](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/manage-groups).
+  Workspace admins can create account groups and assign them to a workspace.
+  Steps 9 and 10.
+- [Workspace-catalog binding](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/access-control/workspace-catalog-binding).
+  Binding needs metastore admin, catalog owner or `MANAGE`, not account admin.
+  Step 17.
+- [Manage service principals](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/manage-service-principals).
+  Creation is documented, renaming an existing principal is not. Step 4.
+- [Manage external locations](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/manage-external-locations).
+  File events on by default, and the four role assignments. Step 8. Dated
+  2026-08-11 and it contradicts the June ADLS page on the EventGrid role name.
+- [Configure an Azure network security perimeter](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/serverless-firewall-config).
+  Route A, and why Secured by Perimeter breaks serverless. Step 6.
+- [Delete a workspace](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/delete-workspace).
+  The workspace catalog, managed resource group, storage and access connector all
+  survive deletion unless force deleted.
+- [Deploy a workspace using the Azure Portal](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/create-workspace).
+  No templates or sample catalogs at creation. Workspace type Hybrid means
+  classic.
+
 Carried from [[dbr-RG-to-working-non-admin-user]], verified there on 2026-08-10:
 
 - [Workspace entitlements and the 15 June 2026 system group change](https://learn.microsoft.com/en-us/azure/databricks/security/auth/entitlements),
   used at step 10.
 
-> [!todo] 🔲 Steps 7 to 26 are not yet sourced
+> [!todo] 🔲 Steps 12, 15, 16, 20, 22 to 26 are not yet sourced
 > Verify per claim before status leaves Draft.
 
 <!--
