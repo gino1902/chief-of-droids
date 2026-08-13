@@ -3,30 +3,18 @@
 > One ordered sequence from a provisioned workspace to check the readiness for work. 
 > Decisions are not taken here. They arrive as accepted ADRs, and each step names the one it
 > consumes.
-
-This runbook assumes one configuration and does not generalise beyond it: a
-Terraform-provisioned, VNet-injected, Premium workspace, automatically enabled
-for Unity Catalog, where workspace admin reaches a human through an Entra group
-and account admin is held elsewhere. The workspace already contains infrastructure. It contains no work.
-
-## What counts as done
-
-Step 23 is the finish line: **data arrives in a governed bronze table by an
-automated path, and a group member who did not create it reads it.** Deployed
-from the repo, not from the UI.
-
-Source-neutral on purpose. The first real source is SharePoint, which is
-temporary, and the mechanism will change. What must hold is the governed
-destination and the read, not any one ingestion route.
+>
+>This runbook assumes one configuration and does not generalise beyond it: a
+>Terraform-provisioned, VNet-injected, Premium workspace, automatically enabled
+>for Unity Catalog, where workspace admin reaches a human through an Entra group
+>and account admin is held elsewhere. The workspace already contains infrastructure. It contains no work.
 
 ## Preconditions
 
 ### Entry condition
 
 The gate is per step, not up front. An ADR must be Accepted before the first
-step that consumes it, and not before. The `First consumed` column below is
-therefore a deadline, one per ADR. Steps 1, 2, 3, 16, 22 and 23 consume no ADR
-and can run against an empty decision record.
+step that consumes it. See `First consumed` column below.
 
 ### ADRs
 
@@ -65,7 +53,9 @@ order they must be accepted in, which is not the same order.
 >   perimeter. Container immutability and lifecycle policies are unaffected, being
 >   storage account features rather than a backup service
 
-Acceptance order, derived from the `Depends on` column. Workspace topology first,
+### Acceptance order
+
+Derived from the `Depends on` column. Workspace topology first,
 then metastore root storage and the catalog and schema model, then the data
 protection model, then Access Connector granularity and the ownership and grant
 model, then the rest. Serverless or classic posture and network posture form a
@@ -82,29 +72,9 @@ separate chain, in that order, and neither waits on anything above.
 > - Nothing on this list can safely lag. Every deadline in the table is the step
 >   that consumes it earliest, including the two that used to read later
 
-### Identities
+### Roles
 
-Two roles own this file and run it end to end. Two contribute by request and
-never drive it. The test user is a subject, not a reader.
-
-| Role | Relationship to this file | Needed for | Held by |
-| :--- | :--- | :--- | :--- |
-| Workspace admin | Owner | 1, 2, the resource group scope of 3, 4, the verification half of 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20a, 20b, and the system tables half of 22 | gmourgues@sqli.com |
-| Databricks account admin | Owner | 16, the build half of 6, and two parts of 4, the federation policy and the display name. Account-wide budgets at 22 | 🔲 |
-| Platform engineer | Contributor, by request | 5, the Azure side of 6 and 7, and any policy scope above the resource group at 3 | 🔲 |
-| Entra admin | Contributor, by request | 8, for every group that does not already exist in Entra, and for every membership change afterwards | 🔲 |
-| Test user | Subject of the acceptance test | 23 | 🔲 |
-
-Step 21 is the exception and belongs to no role above. Its owner is the table
-owner or a user holding `MANAGE`, which workspace admin does not confer, so it
-follows whoever creates the tables.
-
-Workspace admin is not granted to a person here. It arrives through an Entra
-group and materialises as membership of the workspace `admins` group. The
-control point is therefore Entra group membership, not anything inside
-Databricks.
-
-### What to ask the Databricks account admin for
+#### Databricks account admin
 
 Account admin here is a Databricks account console role. It is not an Azure role
 and holding Owner or Contributor in Azure does not confer it.
@@ -122,7 +92,7 @@ numbers are not a request, so this is what to actually ask for.
 The first carries the longest lead time and needs someone on the Azure side too,
 so it is two people and not one.
 
-### What to ask the platform engineer for
+#### Platform engineer
 
 The contributor who terraforms the workspace. Everything Azure-side that this
 sequence depends on and cannot reach, because neither owner role holds Azure
@@ -139,7 +109,7 @@ rights beyond Contributor on one resource group.
 The second row needs an Azure network owner as well, so it is the same two-person
 request as the account admin's first row. Raise both together.
 
-### What to ask the Entra admin for
+#### Entra admin
 
 The contributor who owns the directory. Group provenance is Entra, so every group
 this sequence uses either exists there already or waits on this request.
@@ -202,52 +172,24 @@ databricks auth login --host https://<workspace-host>
 State the workspace should already be in at step 1, produced upstream, not by
 this sequence.
 
-- Verify before step 1, not during
-- A failing row stops the sequence. It is a question for the Terraform. A manual
-  fix drifts from state and the next apply reverts it
-- Resolve the workspace identity first. Every Azure-side step scopes off it, and
-  the managed resource group is not it. That group holds what Databricks
-  provisions for itself and you will usually not be able to read it
-
-| Expect | Expected value | Check |
-| :--- | :--- | :--- |
-| Workspace identity | A resource ID whose `workspaceUrl` matches your host, plus its resource group and managed resource group | In each resource group you can read: `az resource list -g <rg> --resource-type Microsoft.Databricks/workspaces`, then `az resource show --ids <id> --query "{url:properties.workspaceUrl, rg:resourceGroup, managedRg:properties.managedResourceGroupId}"` until `url` matches |
-| Workspace configuration | Premium, no public IP | `az resource show --ids <id> --query "{sku:sku.name, noPublicIp:properties.parameters.enableNoPublicIp.value}"` |
-| Operator Azure rights | Specifically: whether you can write role assignments, and whether you can read the managed resource group. Those two decide steps 5 and 7 | `az role assignment list --assignee <your-object-id> --all --include-groups -o table`. The `--include-groups` flag is not optional, since the grant usually arrives through a group |
-| Metastore attached | A metastore in the workspace region | `databricks -p "$P" metastores summary` |
-| Access connector | One, in the workspace's managed resource group, which you will not be able to read directly | `access_connector_id` in the storage credential below |
-| Storage credential | One, named after the workspace, `ISOLATION_MODE_ISOLATED`, owned by `_workspace_admins_<workspace>` | `databricks -p "$P" storage-credentials list -o json` |
-| External location | One, before this sequence runs. Step 7 adds more | `databricks -p "$P" external-locations list -o json` |
-| Workspace catalog | `MANAGED_CATALOG` named after the workspace, storage root inside that container | `databricks -p "$P" catalogs list -o json` |
-| Your workspace admin | Direct membership of the `admins` group | `databricks -p "$P" current-user me` |
-| Compute | A `Serverless Starter Warehouse` from provisioning, stopped and untagged. No clusters. Anything else is residue | `databricks -p "$P" warehouses list -o json` and `clusters list` |
-| IaC repo | Exists, and the CI principal can apply to it. See [[2026-08-10-databricks-cicd-service-principal]] | 🔲 record the repo location here |
-
-Run it as one script rather than eleven commands. A table of checks gets skimmed,
-and a row that nobody runs is worse than no row, because it reads as verified.
+- Go on https://portal.azure.com/#home, then Resources groups. 
+- Click on the RG holding the workspace resources (eg RG-DATABRICKS-DEV for instance)
+- Click on the Databricks resource (DBR-DATABRICKS-DEV)
+- Copy the Resource Group, Subscription id and Workspace URL (top), you will need for the tests.
+- Launch Workspace
+  
+Capture the Workspace profile returned by the command.
 
 ```bash
-P=<profile>
-RG=<workspace-resource-group>
 
-echo "== workspace resources =="
-az resource list -g "$RG" --resource-type Microsoft.Databricks/workspaces --query "[].id" -o tsv
-echo "== operator azure rights =="
-az role assignment list --assignee "$(az ad signed-in-user show --query id -o tsv)" --all --include-groups -o table
-echo "== metastore =="
-databricks -p "$P" metastores summary
-echo "== storage credentials =="
-databricks -p "$P" storage-credentials list -o json
-echo "== external locations =="
-databricks -p "$P" external-locations list -o json
-echo "== catalogs =="
-databricks -p "$P" catalogs list -o json
-echo "== you =="
-databricks -p "$P" current-user me
-echo "== compute =="
-databricks -p "$P" warehouses list -o json
-databricks -p "$P" clusters list -o json
+URL = <url>
+databricks auth login --host "$URL"
+
 ```
+
+For the tests to follow:
+- SUB=<subscription-id>
+- RG=<workspace-resource-group>
 
 > [!info] File events are on and this platform does not use them
 > Provisioning enables file events on the workspace's own external location, with
@@ -311,61 +253,7 @@ Two things the baseline cannot tell you. Both cheap, both consequential.
 
 ## How to read a step
 
-Each step carries the same fields.
-
-- **Category.** Gate, foundation, compute, admin, protection, acceptance
-- **Owner, inputs, prerequisite, impact.** One line, machine-readable
-- **Inputs.** The facts this step consumes and where each was produced, either a
-  baseline row or an earlier step. Every input names a producer. One that names
-  none is a missing step. A step with an unstated input runs against the wrong
-  thing without telling you
-- **Prerequisite.** An ADR named here carries 🔲 until Accepted, and a step with
-  any 🔲 cannot start. An ADR also carries its own `Depends on` chain, so
-  accepting one whose dependency is open unblocks nothing
-- **When to use.** One sentence, in the reader's own terms, and only on steps
-  where declining is a real option. Test it by asking whether a competent reader
-  could answer "not me". If nobody could, cut the field rather than write a
-  sentence everyone agrees with. Absent therefore means the step is forced by an
-  earlier one, and its presence is itself a signal
-- **Why it matters.** What the step is for and what breaks without it. Not why
-  the option was chosen, which belongs in the ADR
-- **What getting the execution wrong costs.** Irreversible, lossy, rework in
-  days, or adjustable
-- **The play.** The commands or clicks
-- **Check.** What passes or fails. A step that writes is checked by reading back
-  what changed, not by the command not erroring. One negative read-back is not
-  proof of failure, since reads lag writes and endpoints disagree. Read again,
-  and read a second surface
-- **Clean up.** Any check that creates something ends with the command that
-  removes it, in the same step. A runbook that leaves residue teaches the reader
-  to leave residue, and residue in a shared resource group outlives whoever made
-  it
-- **Sources.** Last field in the step. The pages its claims rest on, each with
-  the date it was fetched, and a re-read carries both dates. A source consumed by
-  several steps is repeated in full under each, so a step is readable on its own.
-  A claim with no source here is either observed against the live workspace, and
-  says so, or it is a gap
-
 Impact values: `Irreversible`, `Lossy`, `Rework Nd`, `Adjustable`.
-
-A step earns its number by changing state, or by producing a read that a decision
-is waiting on. Anything that merely asserts the world is as expected belongs in
-the provisioned baseline instead.
-
-## How a step is written
-
-These rules govern every edit to this document.
-
-- Bullets where the content is a list. Prose only for a single idea
-- Cut anything a field already states. Do not restate `Impact` in words
-- One idea per bullet. Bullets in the same category merge
-- No justification that belongs to a later step
-- No session narrative. The reader was not there
-- Results tables carry readings, not conclusions
-- A result observed under a working assumption names that assumption. An
-  unqualified finding reads as a general truth and quietly turns a throwaway into
-  a decision
-- Keep only what changes the reader's behaviour. Everything else goes
 
 ## Scope
 
@@ -424,38 +312,7 @@ Deliberately not here:
   workspaces" and classic compute cannot interact with it, so it is unavailable
   to this VNet-injected workspace.
 
-## Proven against a live workspace
-
-Exercised 2026-08-11 and 2026-08-12 with throwaway objects, since deleted. Proves
-the platform permits the step and the operator holds the rights. Does not mean
-the step is done, or that the Terraform produces the same result.
-
-| Step | What was exercised | Verdict |
-| :--- | :--- | :--- |
-| 1, 2, 3 | The reads, in full | Passed |
-| 4 | Created a Databricks managed principal with a display name, as a workspace admin | Creation works. Federation untested |
-| 5 | Created a tagged storage account with hierarchical namespace and a container | Passed, and an untagged create was refused first, so the deny policy bites |
-| 6 | Nothing | Untested. Needs a Databricks account admin |
-| 7 | Attempted the prerequisites | **Failed.** The operator cannot write role assignments and cannot read the access connector |
-| 8, 9 | Created an account group with entitlements, as a workspace admin | The mechanism works, but the group provenance ADR now forbids creating one. The pull-in path is untested |
-| 10 | Created a scope, a secret and an ACL | Passed, and it exposed that account-level principals are refused here |
-| 11, 12 | Created a catalog with an explicit managed location and a schema, then wrote and read a table | Passed. The managed storage path works end to end |
-| 13, 14 | Granted a group and a service principal on a catalog | Passed |
-| 15 | Confirmed the binding controls are present and editable | Passed |
-| 17 | Created a compute policy with an enforced tag | Passed |
-| 19 | Created a serverless warehouse with tags | Passed |
-| 16 | Read the `system` catalog, then called the enable endpoint | Refused. Confirms a Databricks account admin is required, and that only two schemas are on |
-| 18, 21 | Nothing | Untested. Step 18 was assumed to need a Databricks account admin and does not, so a workspace admin can exercise it |
-| 20a, 20b, 22, 23 | Nothing | Untested |
-
-Step 7 is the one that failed, and it is the reason the storage path has to come
-from the Terraform. See [[2026-08-11-databricks-terraform-changes]].
-
-Steps 11 and 12 were proved against the workspace's own Unity Catalog container,
-not against the durable account at step 5. The mechanism is proven, the target is
-not.
-
-## Run order
+## Run order - to review
 
 A step number is an identifier, not a position. Numbers stay fixed so every
 `from step N` reference holds, and this section says what order to run them in.
@@ -535,19 +392,6 @@ databricks -p "$P" metastores summary
   rather than clearing it, and it is an account admin action. The semantics are
   in the source below
 
-Result for this deployment, read 2026-08-11:
-
-| Field | Value |
-| :--- | :--- |
-| Metastore | `metastore_azure_francecentral`, `8633a12b-9fd0-4252-9276-8c78717b6584` |
-| Region | `francecentral` |
-| Created | 2024-06-09, by `System user` |
-| `storage_root` | Absent |
-| Owner | `System user` |
-| Delta Sharing | `INTERNAL`, external access disabled |
-
-Passed. No metastore root, so nothing to unwind before step 11.
-
 **Sources**
 
 - [Manage Unity Catalog metastores](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-metastore),
@@ -559,91 +403,6 @@ Passed. No metastore root, so nothing to unwind before step 11.
   own, as their catalog-level managed location, without interrupting access, and
   may create an external location named `prior_metastore_root_location`.
 
-### 2. Confirm serverless availability and enablement in region
-
-`Category: gate` · `Owner: workspace admin` · `Inputs: region, from step 1` · `Prerequisite: Databricks CLI authenticated` · `Impact: Adjustable`
-
-**When to use** When you do not want to design steps 17, 18 and 19 around
-serverless that this region may not offer.
-
-**Why it matters**
-
-- Steps 17 and 19 consume the serverless or classic posture ADR, which cannot be
-  decided without this
-- Serverless SQL warehouses and serverless compute for notebooks, jobs and
-  pipelines are separate mechanisms on separate configuration paths. Step 19
-  needs the first, step 17 the second, and this step reads both
-- Neither is switched on. Warehouses require the Premium plan and a supporting
-  region, compute requires Unity Catalog and a supporting region, and a workspace
-  meeting those has them already. Region is the condition that actually varies
-- If serverless is out, step 19 becomes a pro SQL warehouse rather than a classic
-  cluster, so the permission model is unchanged. What changes is location: pro
-  and classic compute sits in your Azure subscription, which makes step 6's
-  serverless path unnecessary and a path from your own VNet mandatory
-- Step 18 loses its subject, since a serverless budget policy governs nothing
-  without serverless spend
-
-**What getting the execution wrong costs** The read is free. Assuming the answer
-costs a compute policy and a budget route built around compute that does not
-exist, discovered at step 19.
-
-**The play**
-
-- The workspace config is authoritative for enablement, the regional table for
-  availability
-- The config does not return the region. Take it from step 1
-- Read the whole regional row. Several serverless features are regional in their
-  own right
-- Neither read needs an account admin or compute. Do not create a warehouse to
-  find out
-
-```bash
-P=<profile>
-databricks -p "$P" warehouses get-workspace-warehouse-config
-```
-
-Then find the region in the Serverless availability table in
-[Features with limited regional availability](https://learn.microsoft.com/en-us/azure/databricks/resources/feature-region-support).
-
-**Check**
-
-- Pass means `enable_serverless_compute` is `true` and the region shows a tick
-  under serverless compute
-- Serverless needs no enablement in most workspaces. A `false` is someone's
-  deliberate act, so ask before flipping it
-
-Result for this deployment, read 2026-08-11:
-
-| Field | Value |
-| :--- | :--- |
-| `enable_serverless_compute` | `true` |
-| Warehouse types enabled | `CLASSIC` and `PRO` |
-| `security_policy` | `DATA_ACCESS_CONTROL` |
-| Region, from `metastores summary` | `francecentral` |
-| Region support | Serverless compute and SQL warehouses ✓, serverless workspaces ✓, default storage ✓, private connectivity ✓, Databricks Apps ✓ |
-| Not available in `francecentral` | Model Training forecasting, Lakebase Autoscaling, serverless standalone pipelines |
-| System tables in `francecentral` | ✓ |
-
-Passed. Serverless is available and enabled.
-
-**Sources**
-
-- [Connect to serverless compute](https://learn.microsoft.com/en-us/azure/databricks/compute/serverless/),
-  fetched 2026-08-11, re-read 2026-08-12. Serverless is available by default in
-  most workspaces and needs no enablement, given Unity Catalog and a supporting
-  region. The page covers notebooks, jobs and Lakeflow pipelines only, and states
-  that serverless SQL warehouses, model serving and AI features use serverless
-  infrastructure independently, on their own configuration paths. That split is
-  why this step reads two things.
-- [Set up serverless SQL warehouses](https://learn.microsoft.com/en-us/azure/databricks/admin/sql/serverless),
-  fetched 2026-08-12. Enabled by default, and the requirements are the Premium
-  plan and a supporting region.
-- [Features with limited regional availability](https://learn.microsoft.com/en-us/azure/databricks/resources/feature-region-support),
-  fetched 2026-08-11. The regional table this step reads, covering serverless,
-  system tables and ingestion tables.
-- [SQL warehouse types](https://learn.microsoft.com/en-us/azure/databricks/compute/sql-warehouse/warehouse-types),
-  fetched 2026-08-11. Classic, pro and serverless capabilities, and the differing
-  UI and API defaults.
 
 ### 3. Read what Azure will refuse
 
@@ -651,8 +410,7 @@ Passed. Serverless is available and enabled.
 
 Network standards are settled upstream by the Terraform and are out of this step.
 
-**When to use** When you want step 5's storage account created rather than
-refused, and step 17 to enforce the same tag names Azure already does.
+**When to use** When you want to verify step 5's storage is still present after Workspace regeneration, and step 17 to enforce the same tag names Azure already does.
 
 **Why it matters**
 
@@ -684,15 +442,25 @@ there that then waits on someone else.
 SUB=<subscription-id>
 RG=<workspace-resource-group>
 
-az policy assignment list --scope "/subscriptions/$SUB/resourceGroups/$RG" \
-  --disable-scope-strict-match \
+SCOPE="/subscriptions/$SUB/resourceGroups/$RG"
+
+az account set --subscription "$SUB"
+
+echo "== assignments =="
+az policy assignment list --scope "$SCOPE" --disable-scope-strict-match \
   --query "[].{name:name, policy:policyDefinitionId, enforcement:enforcementMode}" -o json
 
-az policy definition show --name <definition-guid> \
-  --query "{name:displayName, effect:policyRule.then.effect, mode:mode}"
+echo "== definitions =="
+az policy assignment list --scope "$SCOPE" --disable-scope-strict-match \
+  --query "[].policyDefinitionId" -o tsv | sort -u | sed 's|.*/||' | while read -r d; do
+    echo "-- $d"
+    az policy definition show --name "$d" \
+      --query "{name:displayName, effect:policyRule.then.effect, mode:mode}" -o json
+  done
 
+echo "== providers =="
 az provider show -n Microsoft.EventGrid --query registrationState -o tsv
-az provider show -n Microsoft.Storage --query registrationState -o tsv
+az provider show -n Microsoft.Storage  --query registrationState -o tsv
 ```
 
 **Check**
