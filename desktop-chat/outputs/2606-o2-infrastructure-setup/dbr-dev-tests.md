@@ -54,21 +54,19 @@ Every test below assumes this is done and that you hold workspace admin.
 
 ---
 
-## Catalog isolation without a binding
+## Check an isolated catalog is still reachable
 
-`ISOLATED` does not bind the current workspace. The binding list is a separate
-object, and an empty one means no workspace at all.
+On a shared metastore every other tenant's workspace can see your catalogs, so
+you set them `ISOLATED`. That does not bind your own workspace: the binding list
+is a separate object, and an empty one means no workspace at all, including
+yours. Get this wrong and you lock yourself out of your own data.
 
 ```bash
 databricks -p <profile> catalogs update <catalog> --json '{"isolation_mode":"ISOLATED"}'
 databricks -p <profile> workspace-bindings get-bindings catalog <catalog>
 ```
 
-Expected:
-
-```json
-{ "bindings": [] }
-```
+Expected: no binding for `<workspace-id>`.
 
 Query the catalog:
 
@@ -88,8 +86,8 @@ Bind it, then repeat the same query:
 databricks -p <profile> workspace-bindings update-bindings catalog <catalog> --json '{"add":[{"workspace_id":<workspace-id>,"binding_type":"BINDING_TYPE_READ_WRITE"}]}'
 ```
 
-Pass: the statement returns `"state": "SUCCEEDED"` and lists the catalog's
-schemas.
+Pass: the statement returns `"state": "SUCCEEDED"` rather than erroring. An empty
+catalog lists no schemas and still passes.
 
 - `catalogs get` works throughout. It reads the metastore, which is not
   workspace-scoped, so only a query tells you whether compute can reach the
@@ -97,11 +95,12 @@ schemas.
 - Isolation is between workspaces, never between catalogs. Grants separate
   catalogs.
 
-## Development mode renames the resources
+## Check the same code deploys to two targets
 
-`mode: development` prefixes every resource name, schemas included. A target
-without a mode does not, so code that hardcodes a name works in one target and
-fails in the other.
+Dev and staging run the same source tree against different catalogs. What breaks
+that is `mode: development`, which prefixes every resource name, schemas
+included. A target without a mode does not, so anything hardcoding a name works
+in one target and fails in the other.
 
 Build the bundle. `databricks.yml`:
 
@@ -213,7 +212,7 @@ between them.
   through every failed run above. Read `bundle summary` to know what exists, not
   the deploy's exit code.
 
-## CI authentication over OIDC
+## Check the CI pipeline can authenticate without a secret
 
 The pipeline authenticates as a service principal with no secret anywhere. Until
 a federation policy exists it cannot succeed, but it still produces the token
@@ -286,7 +285,7 @@ Why those two variables are in the file:
 `DATABRICKS_OIDC_TOKEN_ENV` is the right variable name for a generic OIDC
 provider. The CLI echoes it back as `oidc_token_env`.
 
-## Run a job as a service principal to test a grant
+## Check a grant is enforced against someone who owns nothing
 
 You own everything you created here, and an owner holds every privilege on it. So
 your own queries never test a grant, they only test that you are the owner.
@@ -362,7 +361,7 @@ apart.
 - `CREATE TABLE IF NOT EXISTS` on an existing table needs no privilege. The
   denial lands on the first statement that writes.
 
-## Put managed tables on your own storage account
+## Check managed tables can live on storage you own
 
 Everything on the workspace's own container dies with the workspace. This puts
 managed tables on a storage account in a resource group you control.
@@ -439,7 +438,7 @@ exists. Nothing else changes.
 - The role goes on the container, so it is one assignment per container. Prod
   with a container per catalog needs one each.
 
-## Tag compute and warehouses
+## Check tags land on compute and on warehouses
 
 Databricks compute is the largest line on the bill. Untagged, you cannot say
 which project or environment spent it, and the tags on your Azure resources do
@@ -491,7 +490,7 @@ databricks -p <profile> warehouses stop <warehouse-id>
 Compute created before the policy existed stays untagged and no policy reaches
 back to fix it. The provisioned starter warehouse is the usual case.
 
-## Find out what the platform will refuse before you build on it
+## Check what the platform will refuse before building on it
 
 Three reads. They cost nothing and they decide how the later entries have to be
 written. Skipping them means discovering the answers as failed applies.
@@ -509,7 +508,8 @@ and your data lands somewhere you do not own.
 az policy assignment list --scope "/subscriptions/<subscription>/resourceGroups/<rg>" --disable-scope-strict-match --query "[].{name:name, effect:policyDefinitionId, enforcement:enforcementMode, params:parameters}" -o json
 ```
 
-This tells you which tags every `az create` must carry. Miss one and the policy
+This tells you which tags every resource you create in that group must carry.
+Miss one and the policy
 refuses the request with `403` before it reaches the resource provider, unless
 `enforcementMode` reads `DoNotEnforce`, in which case the create succeeds and the
 resource is quietly marked non-compliant instead.
@@ -596,7 +596,7 @@ That is the request: an Entra app registration, admin consent, a client secret,
 and a user OAuth flow to mint the refresh token. Note there is no federation
 option, so this route needs a secret.
 
-## Can an Azure VM reach GitLab and the workspace
+## Check an Azure VM can reach GitLab and the workspace
 
 The runner polls both outbound. Test before anyone builds a VM, because the
 answer decides whether it can sit in Azure at all.
