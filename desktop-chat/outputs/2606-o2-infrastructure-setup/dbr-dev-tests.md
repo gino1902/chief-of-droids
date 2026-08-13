@@ -509,11 +509,13 @@ and your data lands somewhere you do not own.
 az policy assignment list --scope "/subscriptions/<subscription>/resourceGroups/<rg>" --disable-scope-strict-match --query "[].{name:name, effect:policyDefinitionId, enforcement:enforcementMode, params:parameters}" -o json
 ```
 
-This tells you which tags every `az create` must carry, and whether the policy
-actually blocks anything. Take the keys from each assignment's `tagName`
-parameter rather than its name, because the name is a label someone chose.
-`enforcementMode: DoNotEnforce` means the policy marks resources non-compliant
-and blocks nothing, so a create succeeding tells you nothing about your tags.
+This tells you which tags every `az create` must carry. Miss one and the policy
+refuses the request with `403` before it reaches the resource provider, unless
+`enforcementMode` reads `DoNotEnforce`, in which case the create succeeds and the
+resource is quietly marked non-compliant instead.
+
+Take the keys from each assignment's `tagName` parameter rather than its name,
+because the name is a label someone chose.
 
 Assignments above the resource group do not appear unless you can read that
 scope. Unreadable is an acceptable answer, unknown is not.
@@ -528,12 +530,11 @@ Both must read `Registered` or the storage entry fails at its first create.
 Pass: you can state the `storage_root`, the tag keys, the enforcement mode, the
 scopes you could not read, and both provider states.
 
-## Get an Entra group into the workspace without creating a second one
+## Check the group came from Entra and not from Databricks
 
-People get access through Entra groups. If a group is created inside Databricks
-instead of pulled from Entra, its membership drifts and nothing reconciles the
-two, so you end up with two answers to who has access. This gets a group in and
-proves which kind you got.
+Both kinds look the same in the workspace. A group created in Databricks has its
+own membership list that nobody syncs, so two answers to who has access appear
+and drift apart. Three fields tell you which kind you have.
 
 Read it in Entra first:
 
@@ -565,11 +566,11 @@ Check the `entitlements` it arrived with. Observed: `workspace-access`,
 `databricks-sql-access` and `workspace-consume`, none of them requested. The
 default is not minimal.
 
-## Find out what a source connector needs before requesting anything
+## Check a source connector exists before asking for credentials
 
-A Lakeflow Connect source needs credentials from someone else, usually an app
-registration and admin consent. Before raising that, check the connector exists
-on this workspace and find out exactly which credentials it wants.
+Every Lakeflow Connect source needs credentials someone else has to produce. Two
+rejected calls tell you whether the connector exists on this workspace and
+exactly which credentials to ask for, without setting anything up.
 
 Two creates, one with a type that cannot exist. Neither creates anything, because
 both are rejected:
@@ -665,10 +666,9 @@ is orphaned rather than dropped.
 
 ## Check the role assignment actually covers the container
 
-Someone else grants the connector's identity its role, and they may grant it at
-storage account or resource group scope rather than on the container. That works,
-but it does not show up where you would look for it, so check the write rather
-than the role list.
+The role list is not proof. A role granted at storage account or resource group
+scope covers the container without appearing on it, and a role on the container
+can still be the wrong one. The write either works or it does not.
 
 ```bash
 az role assignment list --scope "/subscriptions/<subscription>/resourceGroups/<rg>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" --include-inherited --query "[].{principal:principalId, role:roleDefinitionName, scope:scope}" -o table
