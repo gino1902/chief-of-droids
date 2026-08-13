@@ -953,10 +953,12 @@ namespace is replaced, not amended. Data already written moves by hand.
 
 `Category: gate` · `Owner: workspace admin to verify, Databricks account admin with an Azure network owner to build` · `Inputs: storage account resource ID, from step 5; workspace region, from step 1; the route taken, from the network posture ADR` · `Prerequisite: 🔲 ADR network posture` · `Impact: Rework 4d`
 
-The path is not built here. Route A is entirely Azure-side and route B is built in
-the Databricks account console, and both are owned outside this sequence. What
-belongs here is the request, the record of which route was taken, and the proof
-that it works.
+The path is not built here. Route A is built in the Azure portal and route B in
+the Databricks account console, and both are owned outside this sequence. Neither
+is purely Azure work: route A's own requirements list a Databricks account admin
+alongside Contributor or Owner on the resource and rights to create perimeter
+resources. What belongs here is the request, the record of which route was taken,
+and the proof that it works.
 
 **When to use** When the posture ADR picked serverless and the step 5 account is
 firewalled, since nothing you write from your own VNet can admit serverless.
@@ -996,15 +998,19 @@ test, with grants and bindings already built on it.
 | | Route A, network security perimeter | Route B, private endpoints via NCC |
 | :--- | :--- | :--- |
 | Use when | Storage sits in the workspace region | Dedicated private connectivity is required |
-| Built where | Azure portal only | Databricks account console, then an Azure-side approval |
+| Built where | Azure portal, by someone who is also a Databricks account admin | Databricks account console, then an Azure-side approval |
 | Mechanism | Perimeter left in transition mode, inbound rule for the regional `AzureDatabricksServerless` service tag | One private endpoint rule per subresource, `dfs` for Unity Catalog and `blob` for model serving |
 | Waits on | Nothing after the rule is added | Each rule sits `PENDING` until someone with rights on the account approves it |
 | End state | Public network access stays **Enabled from selected networks** | Public network access may be set to **Disabled**, which the source presents as optional hardening |
 | Classic compute | Allow its IPs on the resource | Give it its own private endpoint from your VNet |
 
 Secured by Perimeter is the trap in route A. It stops serverless reading external
-locations and returns `PERMISSION_DENIED`. Applying route A's rules and then route
-B's end state is the mistake that looks like a permissions bug.
+locations and returns `PERMISSION_DENIED`, typically
+`Request for user delegation key is not authorized`. Applying route A's rules and
+then route B's end state is the mistake that looks like a permissions bug. Azure
+recommends Secured by Perimeter for resources in a perimeter and Databricks
+explicitly tells you not to set it, so the portal will nudge you towards the
+break.
 
 The build itself is change 5 in [[2026-08-11-databricks-terraform-changes]], with
 the Terraform resource names for route B and the portal steps for route A. The
@@ -1018,6 +1024,19 @@ not a second copy of the procedure.
 - From a classic cluster: the same statement succeeds
 - Route B only: every private endpoint rule reads `ESTABLISHED`, never `PENDING`
 
+The `LIST` cannot run before step 7. Serverless reaches storage through a Unity
+Catalog external location rather than through credentials in Spark properties, so
+an external location must already cover the path and the caller needs
+`READ FILES` on it. Step 7 declares this step as an input, so register the
+external location first and verify afterwards. The two steps interleave rather
+than queue.
+
+Diagnostics live on the perimeter, not on the storage account. Configure
+diagnostic settings on the network security perimeter to see which rule allowed or
+denied a request. The storage account's own `StorageRead` and `StorageWrite`
+categories record data access and never record perimeter rule evaluation, so a
+denied request leaves no trace where you would look for it first.
+
 > [!warning] A general egress test proves nothing here
 > Reaching public endpoints from a serverless notebook, such as
 > `login.microsoftonline.com`, exercises Databricks' internet egress. This step
@@ -1025,9 +1044,12 @@ not a second copy of the procedure.
 > path under different controls. Only the `LIST` above tests it.
 
 > [!info] Either route
-> - Enable **Allow trusted Microsoft services** on the storage account. Route A
->   cannot connect without it in transition mode. Under route B's Disabled end
->   state it is probably inert, 🔲 unverified
+> - **Allow trusted Microsoft services** on the storage account. Re-read
+>   2026-08-13: the route A page does not mention it, and describes transition mode
+>   as evaluating perimeter rules first and falling back to the resource firewall,
+>   which says nothing about trusted services either way. ⚠️ Unverified in both
+>   directions now, where it previously read as a requirement. Do not treat it as
+>   one until a source says so
 > - Route B limits: 10 NCCs per region, 100 private endpoints per region, 50
 >   workspaces per NCC. Databricks bills networking costs for serverless
 >   connections
@@ -1035,6 +1057,13 @@ not a second copy of the procedure.
 >   in all Azure public cloud regions, Storage is an onboarded resource type, and
 >   ADLS Gen2 is covered for HTTPS operations. Read 2026-08-12, closing an earlier
 >   open question about France Central
+> - Route A covers serverless SQL warehouses, jobs, notebooks, Lakeflow pipelines
+>   and model serving endpoints. The service tag is supported only for perimeter
+>   inbound rules targeting Azure Storage in the workspace's own region, so it does
+>   nothing for any other resource type
+> - Prefer the regional tag, `AzureDatabricksServerless.<region>`, over the global
+>   one. Some regions keep secondary artifact storage in a different region, and
+>   those need a second tag
 
 > [!warning] The two publishers disagree about transition mode
 > - Databricks: "Azure Databricks recommends remaining in transition mode
@@ -1065,13 +1094,24 @@ not a second copy of the procedure.
   setting public network access to Disabled is presented as optional hardening
   rather than a required end state.
 - [Configure an Azure network security perimeter](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/serverless-firewall-config),
-  fetched 2026-08-12. Route A, and why Secured by Perimeter breaks serverless.
-  "Configuring a firewall also affects connectivity from classic compute
-  resources. You must also update your resource access rules to allow the IPs for
-  connections from classic compute resources." The service tag works only against
-  Azure Storage in the workspace's region, the regional tag is preferred over the
-  global one, and transition mode is recommended indefinitely rather than as a
-  staging step.
+  fetched 2026-08-12, re-read 2026-08-13, page dated 2026-08-07. Route A, and why
+  Secured by Perimeter breaks serverless: it returns `PERMISSION_DENIED`, "such as
+  `Request for user delegation key is not authorized`", and the page says to keep
+  the resource on Enabled from selected networks "even though Azure recommends
+  Secured by Perimeter for resources in a perimeter". Route A requires an Azure
+  Databricks account administrator, Contributor or Owner on the resource, and
+  rights to create perimeter resources. Perimeter coverage is serverless SQL
+  warehouses, jobs, notebooks, Lakeflow pipelines and model serving endpoints. The
+  service tag is "supported only for NSP inbound rules targeting Azure Storage
+  (including ADLS Gen2) in the workspace's region". The verification `LIST` needs
+  an external location covering the path and `READ FILES` on it. Diagnostic
+  settings belong on the perimeter, since resource logs "do not record NSP rule
+  evaluation". The regional tag is preferred over the global one, and transition
+  mode is recommended indefinitely rather than as a staging step. The page does not
+  mention Allow trusted Microsoft services at all. "Configuring a firewall also
+  affects connectivity from classic compute resources. You must also update your
+  resource access rules to allow the IPs for connections from classic compute
+  resources."
 - [What is a network security perimeter?](https://learn.microsoft.com/en-us/azure/private-link/network-security-perimeter-concepts),
   fetched 2026-08-12. Generally available in all Azure public cloud regions, so
   route A is open in France Central. Storage is an onboarded resource type.
@@ -1542,17 +1582,35 @@ you accept that enabling it lands on every workspace sharing this metastore.
 **Why it matters**
 
 - Audit, billing and lineage history begins at enablement and never backfills.
-  ⚠️ Unverified — the system tables page documents retention but says nothing
-  about data from before enablement, and this step's whole urgency rests on it
+  ⚠️ Unverified after a targeted re-read on 2026-08-13. The page documents
+  per-table retention and says nothing either way about data from before
+  enablement, and this step's whole urgency rests on it. One cheap test settles it:
+  enable one schema and query for a timestamp older than the enablement
 - Step 22 consumes it, so being late costs history and holds up monitoring.
   Nothing else in the sequence reads it
 - Retention is a rolling window, and not a uniform one. 365 days for audit and
-  billing, 180 for MLflow, 90 for node timeline, 30 for inbound network events,
-  indefinite for a handful. Anything needed beyond its window has to be copied out
-- Enabling them does not make them readable. Account admins and metastore admins
-  have access by default, everyone else needs `USE CATALOG` on `system` plus
-  `USE SCHEMA` and `SELECT` on each schema. Make that grant here, in the same
-  request, because step 22's owner cannot make it for themselves
+  billing, 180 for MLflow, 90 for node timeline and model serving usage, 30 for
+  inbound network events, 13 months for data classification results, indefinite for
+  node types, pricing, workspaces and data quality monitoring
+- Anything needed beyond its window has to be copied out, and the publisher
+  discourages exactly that. Databricks "highly discourages you from moving this data
+  outside the platform because it can expose sensitive data and put your deployment
+  at risk", and puts the security of anything exported on you. So the retention
+  window is a real constraint rather than an inconvenience to engineer around, and
+  going past it is a decision with an owner
+- A firewalled environment may need one more thing. Enabling system tables "might
+  need network access to the system tables Blob storage endpoint", which is the same
+  class of problem as step 6 and is not covered by step 6's work
+- Enabling them does not make them readable. Default access belongs to users
+  holding the account admin and metastore admin roles together, not either one
+  alone. Everyone else needs `USE CATALOG` on `system` plus `USE SCHEMA` and
+  `SELECT` on each schema
+- This metastore has no metastore admin. It was created by automatic enablement, so
+  the role was never assigned, and an account admin alone cannot grant on a catalog
+  they do not own. Assigning a metastore admin is therefore part of this request,
+  not a later tidy-up. Without it nobody can read what this step enables
+- Make the grants here, in the same request. Step 22's owner cannot make them for
+  themselves
 
 **What getting the execution wrong costs**
 
@@ -1588,8 +1646,22 @@ databricks api put \
   /api/2.0/unity-catalog/metastores/<metastore-id>/systemschemas/<schema>
 ```
 
-> ⚠️ Unverified. The enable call could not be run from this position. Only the
-> refusal is proven.
+- Then grant, once per schema, as the metastore admin. Enabling without granting
+  leaves the data collected and unreadable
+
+```sql
+GRANT USE CATALOG ON CATALOG system TO `<group>`;
+GRANT USE SCHEMA ON SCHEMA system.access TO `<group>`;
+GRANT SELECT ON SCHEMA system.access TO `<group>`;
+```
+
+- Repeat the two schema grants for every schema enabled above. Backtick the
+  principal. A service principal is named by its application ID, not its display
+  name
+
+> ⚠️ Unverified. Neither the enable call nor the grants could be run from this
+> position. Only the refusal is proven. The `GRANT` syntax follows the documented
+> pattern for catalogs and schemas rather than an example for `system`.
 
 **Check**
 
@@ -1613,13 +1685,29 @@ Result for this deployment, read 2026-08-11:
 
 **Sources**
 
-- [Monitor account activity with system tables](https://learn.microsoft.com/en-us/azure/databricks/admin/system-tables/),
-  fetched 2026-08-12. Enablement is per metastore and needs privilege model 1.0.
-  Each table has a free retention period, 30 to 365 days or indefinite depending on
-  the table. Querying needs `USE CATALOG` on `system` plus `USE SCHEMA` and
-  `SELECT` on each schema for anyone who is not an account or metastore admin. The
-  page does not state whether data predating enablement is available, which is why
-  this step carries a flag.
+- [System tables reference](https://learn.microsoft.com/en-us/azure/databricks/admin/system-tables/),
+  fetched 2026-08-12, re-read 2026-08-13, page dated 2026-08-10. Enablement is per
+  metastore and the metastore "needs to be on Unity Catalog Privilege Model Version
+  1.0". "Users with both the account admin and metastore admin roles have access to
+  system tables by default", and the page notes in the same section that an account
+  created after November 9, 2023 "might not have a metastore admin by default". To
+  allow anyone else, "the admin must grant users the following permissions:
+  `USE CATALOG` on the system catalog, `USE SCHEMA` on the system schemas, and
+  `SELECT` on the system schemas". Retention is per table, 30 days to indefinite.
+  Exports carry a warning: Databricks "highly discourages you from moving this data
+  outside the platform". Enabling "might need network access to the system tables
+  Blob storage endpoint". `system.operational_data` and `system.lineage` are
+  deprecated and empty. Still silent on whether data predating enablement is
+  available, after a targeted re-read, which is why this step keeps its flag.
+- [Manage privileges in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/),
+  fetched 2026-08-13. The `GRANT` pattern this step's play follows,
+  `GRANT <privilege-type> ON <securable-type> <securable-name> TO <principal>`, with
+  worked examples on a catalog and a schema. Grants can be made by the object owner,
+  the owner of the containing catalog or schema, a holder of `MANAGE`, or a metastore
+  admin. An account admin can grant on a metastore but is not listed as able to grant
+  on a catalog they do not own, which is why a metastore admin has to exist first. A
+  principal goes in backticks, and a service principal is named by its
+  applicationId.
 - [Admin privileges in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/admin-privileges),
   fetched 2026-08-11. Lists "Enable system tables" among the account admin
   capabilities, "Enable system tables and control who can access them". That is the
@@ -1687,7 +1775,7 @@ Result for this deployment, read 2026-08-11:
 
 ### 18. Create the serverless usage policy
 
-`Category: compute` · `Owner: workspace admin. A billing admin only to see every policy in the account` · `Inputs: the tag scheme, from step 17` · `Prerequisite: 🔲 ADR tagging and budget route` · `Impact: Lossy`
+`Category: compute` · `Owner: workspace admin, or a holder of Serverless usage policy: Manager. The account-level billing admin role to see and manage every policy in the account` · `Inputs: the tag scheme, from step 17` · `Prerequisite: 🔲 ADR tagging and budget route` · `Impact: Lossy`
 
 Called a budget policy until recently. The documentation now says serverless usage
 policy, which describes it better.
@@ -1707,7 +1795,12 @@ run here and their cost has to be attributed to something.
   existing notebooks, jobs and pipelines are not assigned a policy when their owner
   is granted one. Each has to be updated by hand
 - A user holding several policies who selects none gets whichever sorts first
-  alphabetically. That is a misattribution nobody notices until the bill
+  alphabetically. That is a misattribution nobody notices until the bill. Assigning
+  exactly one policy per user removes it outright, because a single assignment
+  applies automatically with nothing to select
+- Two attribution holes survive any assignment scheme. A pipeline triggered by a
+  job does not inherit the job's policy and needs its own, and a policy ID stored
+  on an asset outlives the policy itself, applying no tags and reporting no error
 
 **What getting the execution wrong costs** 🔲
 
@@ -1718,14 +1811,22 @@ run here and their cost has to be attributed to something.
 **Sources**
 
 - [Attribute usage with serverless usage policies](https://learn.microsoft.com/en-us/azure/databricks/admin/usage/budget-policies),
-  fetched 2026-08-12. Public Preview, and renamed from budget policy. It applies cost
-  attribution tags and does not cap spend. "You must be a workspace admin to create
-  serverless usage policies", with the billing admin role needed only to view every
-  policy in the account. It covers notebooks, jobs, pipelines, serving endpoints,
-  Lakebase and Apps, never SQL warehouses, and "do not apply tags to classic compute
-  resources". Changes affect only usage initiated afterwards, existing assets are not
-  assigned a policy automatically, and a user with several policies who picks none
-  gets the first alphabetically.
+  fetched 2026-08-12, re-read 2026-08-13, page dated 2026-07-10. Still Public
+  Preview, and renamed from budget policy. It applies cost attribution tags and does
+  not cap spend. "You must be a workspace admin to create serverless usage
+  policies", non-admins can manage one with Serverless usage policy: Manager, and
+  the billing admin role is needed to view and manage all policies in the account,
+  not only to view them. It covers notebooks, jobs, pipelines, serving endpoints,
+  Lakebase and Apps, never SQL warehouses, and "Serverless usage policies do not
+  apply tags to classic compute resources". "Policy changes are only applied to
+  usage initiated after the policy update", existing assets are not assigned a
+  policy automatically, and "If a user doesn't select a policy, the setting defaults
+  to whichever policy comes first alphabetically". A single assigned policy "is
+  automatically applied to the user's newly created resources". Two silent gaps:
+  "Pipelines triggered by jobs do not inherit the job's serverless usage policy",
+  and "Policy IDs stored with an asset remain even if the policy is deleted. These
+  policies do not apply any tags." Development-mode pipelines take 24 hours to pick
+  up a tag change.
 
 ### 19. Create SQL warehouses and set permissions
 
@@ -1901,9 +2002,10 @@ look.
 
 **Why it matters**
 
-- It has a horizon. System table retention runs from 30 days to 365 by table, so
-  anything monitoring must answer beyond that window has to be copied somewhere
-  else before it ages out
+- It has a horizon. System table retention runs from 30 days to indefinite by
+  table, with most at 365, so anything monitoring must answer beyond a table's own
+  window has to be copied somewhere else before it ages out. Step 16 records why
+  copying it out is not a free choice
 - Budgets alert, they do not cap. Databricks is explicit that they are not "a way
   to ensure an absolute spend cap on final billed amounts", and notification can
   trail usage by up to 24 hours
@@ -1930,10 +2032,11 @@ look.
   use this feature as a way to ensure an absolute spend cap on final billed amounts."
   Notification can lag usage by up to 24 hours, and `system.billing.usage` updates every
   few hours, so the three sources disagree at any given moment by design.
-- [Monitor account activity with system tables](https://learn.microsoft.com/en-us/azure/databricks/admin/system-tables/),
-  fetched 2026-08-12. The per-table retention window, 30 to 365 days or indefinite,
-  which sets this step's horizon. Also the grants a reader who is not an account or
-  metastore admin needs.
+- [System tables reference](https://learn.microsoft.com/en-us/azure/databricks/admin/system-tables/),
+  fetched 2026-08-12, re-read 2026-08-13. The per-table retention window, 30 days to
+  indefinite, which sets this step's horizon, and the grants a reader who holds
+  neither the account admin nor the metastore admin role needs. Also the reason
+  copying data out to beat retention is not a free choice.
 
 ### 23. Acceptance test
 
@@ -1988,5 +2091,5 @@ Read the error rather than re-running the earlier steps.
 >   fetched. A source consumed by several steps appears in full under each
 
 <!--
-Version: 3.2 | Last Updated: 2026-08-13 | Status: Draft
+Version: 3.3 | Last Updated: 2026-08-13 | Status: Draft
 -->
