@@ -39,16 +39,16 @@ order they must be accepted in, which is not the same order.
 | 🔲 | Non-human identity model | 4 | 14 | Group provenance |
 | 🔲 | Deployment model | 5 | Every step that changes state | none |
 | 🔲 | Catalog and schema model | 5 | 7, 11, 12 | Workspace topology |
+| 🔲 | Data protection model | 5 | 21 | Catalog and schema model |
+| 🔲 | Serverless or classic posture | 6 | 17, 19 | none |
 | 🔲 | Network posture | 6 | none | Serverless or classic posture |
 | 🔲 | Access Connector and external location granularity | 7 | none | Catalog and schema model, Metastore root storage |
 | 🔲 | Workspace topology | 8 | 9, 15 | none |
 | 🔲 | Ownership and grant model | 8 | 13, 14 | Workspace topology, Catalog and schema model |
 | 🔲 | Secret scope model | 10 | none | none |
 | 🔲 | Metastore root storage and MANAGED LOCATION policy | 11 | none | Workspace topology |
-| 🔲 | Serverless or classic posture | 17 | 19 | none |
 | 🔲 | Tagging and budget route | 17 | 18 | Serverless or classic posture |
 | 🔲 | Legacy surface posture | 20a | 20b | none |
-| 🔲 | Data protection model | 21 | 5 | Catalog and schema model |
 
 > [!info] Three carry content that is settled
 > - **Group provenance.** Accepted. Every group is inherited from Entra. No group
@@ -65,28 +65,39 @@ order they must be accepted in, which is not the same order.
 >   perimeter. Container immutability and lifecycle policies are unaffected, being
 >   storage account features rather than a backup service
 
-Acceptance order, derived from the `Depends on` column: workspace topology first,
-then metastore root storage and the catalog and schema model, then Access
-Connector granularity and the ownership and grant model, then the rest.
+Acceptance order, derived from the `Depends on` column. Workspace topology first,
+then metastore root storage and the catalog and schema model, then the data
+protection model, then Access Connector granularity and the ownership and grant
+model, then the rest. Serverless or classic posture and network posture form a
+separate chain, in that order, and neither waits on anything above.
 
-> [!warning] Two ADRs are due earlier than their row suggests
-> - Network posture is consumed at step 6, which is early. Serverless cannot
->   reach firewalled storage without it
-> - It depends on serverless or classic posture, so that one is also due before
->   step 6 despite showing 19
-> - Both are owned outside this team. Start them first
-> - Only the data protection ADR at step 21 can genuinely lag, and only while
->   nothing sensitive has landed
+> [!warning] Three bind in the first two blocks, and two of them are not yours
+> - Serverless or classic posture then network posture, both due before step 6.
+>   Serverless cannot reach firewalled storage without them, and both are owned
+>   outside this team. Start them first
+> - The data protection model is due at step 5, not at step 21. Azure retention
+>   and immutability are container-level settings and prod uses one container per
+>   catalog, so settling it after step 5 means changing container policy on
+>   containers that already hold data
+> - Nothing on this list can safely lag. Every deadline in the table is the step
+>   that consumes it earliest, including the two that used to read later
 
 ### Identities
 
-| Role | Needed for | Held by |
-| :--- | :--- | :--- |
-| Databricks account admin | 6, 16, 18, and the federation policy half of 4 | 🔲 |
-| Workspace admin | 1, 2, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20a, 20b, 21 | gmourgues@sqli.com |
-| Platform engineer | 3, 5, 22 | 🔲 |
-| Entra admin | 8, for every group that does not already exist in Entra, and for every membership change afterwards | 🔲 |
-| Test user | 23 | 🔲 |
+Two roles own this file and run it end to end. Two contribute by request and
+never drive it. The test user is a subject, not a reader.
+
+| Role | Relationship to this file | Needed for | Held by |
+| :--- | :--- | :--- | :--- |
+| Workspace admin | Owner | 1, 2, the resource group scope of 3, 4, the verification half of 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20a, 20b, and the system tables half of 22 | gmourgues@sqli.com |
+| Databricks account admin | Owner | 16, the build half of 6, and two parts of 4, the federation policy and the display name. Account-wide budgets at 22 | 🔲 |
+| Platform engineer | Contributor, by request | 5, the Azure side of 6 and 7, and any policy scope above the resource group at 3 | 🔲 |
+| Entra admin | Contributor, by request | 8, for every group that does not already exist in Entra, and for every membership change afterwards | 🔲 |
+| Test user | Subject of the acceptance test | 23 | 🔲 |
+
+Step 21 is the exception and belongs to no role above. Its owner is the table
+owner or a user holding `MANAGE`, which workspace admin does not confer, so it
+follows whoever creates the tables.
 
 Workspace admin is not granted to a person here. It arrives through an Entra
 group and materialises as membership of the workspace `admins` group. The
@@ -98,8 +109,8 @@ Databricks.
 Account admin here is a Databricks account console role. It is not an Azure role
 and holding Owner or Contributor in Azure does not confer it.
 
-Three steps and one half-step need it. Raise them as one request. Step numbers
-are not a request, so this is what to actually ask for.
+Two steps and two parts of step 4 need it. Raise them as one request. Step
+numbers are not a request, so this is what to actually ask for.
 
 | Request | Unblocks |
 | :--- | :--- |
@@ -111,6 +122,37 @@ are not a request, so this is what to actually ask for.
 The first carries the longest lead time and needs someone on the Azure side too,
 so it is two people and not one.
 
+### What to ask the platform engineer for
+
+The contributor who terraforms the workspace. Everything Azure-side that this
+sequence depends on and cannot reach, because neither owner role holds Azure
+rights beyond Contributor on one resource group.
+
+| Request | Unblocks |
+| :--- | :--- |
+| The durable storage account: hierarchical namespace and the four enforced tags at creation, containers per the environment shape, in its own Terraform state | 5 |
+| The Azure side of the serverless path, route A or route B per the network posture ADR, and a record of which was taken | 6 |
+| An access connector in a resource group you control, with its own storage credential, and Storage Blob Data Contributor on the containers | 7 |
+| `Microsoft.Storage` registered on the subscription, if step 3 could not confirm it | 5 |
+| Any deny-effect policy above the resource group scope, which step 3 cannot read from here | 3 |
+
+The second row needs an Azure network owner as well, so it is the same two-person
+request as the account admin's first row. Raise both together.
+
+### What to ask the Entra admin for
+
+The contributor who owns the directory. Group provenance is Entra, so every group
+this sequence uses either exists there already or waits on this request.
+
+| Request | Unblocks |
+| :--- | :--- |
+| Every group the ownership and grant model names that the directory does not have | 8 |
+| Source of authority conversion for any group where `onPremisesSyncEnabled` is true, so membership becomes cloud-managed | 8, and every membership change after it |
+| Membership changes on inherited groups, permanently, since Databricks cannot edit them | 8, 13, 19, 23 |
+
+The third row is not a one-off. It is the standing cost of the group provenance
+ADR, and it lands on whoever holds this role for as long as the platform runs.
+
 > [!warning] Do not over-assign this role
 > A workspace admin in an auto-enabled workspace holds `CREATE CATALOG`,
 > `CREATE EXTERNAL LOCATION`, `CREATE STORAGE CREDENTIAL` and
@@ -121,6 +163,15 @@ so it is two people and not one.
 >
 > Assume workspace admin and test. The default assumption is wrong more often
 > than it is right.
+
+**Sources**
+
+- [Admin privileges in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/admin-privileges),
+  fetched 2026-08-11. The metastore privileges a workspace admin holds by default
+  in an auto-enabled workspace. The page lists ten, of which the warning above
+  names the four that matter here. It also states that workspace admins "can
+  create objects but cannot make grants on or change ownership of existing
+  objects they do not own". That is the one limit on the role.
 
 ### Tooling
 
@@ -211,13 +262,27 @@ databricks -p "$P" clusters list -o json
 > - Live from the moment the workspace exists. Step 13 decides its fate. Do not
 >   discover it at step 23
 
+**Sources**
+
+- [Admin privileges in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/admin-privileges),
+  fetched 2026-08-11. The workspace catalog default grants, verbatim: every
+  workspace user receives `USE CATALOG`, plus `USE SCHEMA`, `CREATE TABLE`,
+  `CREATE VOLUME`, `CREATE MODEL`, `CREATE FUNCTION` and
+  `CREATE MATERIALIZED VIEW` on its `default` schema. Workspace admins are its
+  default owners.
+- [Manage external locations](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/manage-external-locations),
+  fetched 2026-08-12. File events are on by default.
+- [Deploy a workspace using the Azure Portal](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/create-workspace),
+  fetched 2026-08-12. No templates or sample catalogs at creation, so anything
+  else in the workspace is residue. Workspace type Hybrid means classic.
+
 ### Environment checks
 
 Two things the baseline cannot tell you. Both cheap, both consequential.
 
 **Someone holds Databricks account admin.**
 
-- Three steps and one half-step need it. It does not flow from the Entra group
+- Two steps and two parts of step 4 need it. It does not flow from the Entra group
   that makes you a workspace admin, nor from any Azure role
 - Test: open `accounts.azuredatabricks.net`. An account admin gets a console with
   a left nav, everyone else gets a workspace picker
@@ -237,6 +302,12 @@ Two things the baseline cannot tell you. Both cheap, both consequential.
 
 > [!todo] 🔲 To be defined
 > What steps 1 to 3 assume about the tenant and subscription beyond the above.
+
+**Sources**
+
+- [Databricks administration overview](https://learn.microsoft.com/en-us/azure/databricks/admin/admin-concepts),
+  fetched 2026-08-11. Establishing the first account admin, and what a
+  non-account-admin sees.
 
 ## How to read a step
 
@@ -269,6 +340,11 @@ Each step carries the same fields.
   removes it, in the same step. A runbook that leaves residue teaches the reader
   to leave residue, and residue in a shared resource group outlives whoever made
   it
+- **Sources.** Last field in the step. The pages its claims rest on, each with
+  the date it was fetched, and a re-read carries both dates. A source consumed by
+  several steps is repeated in full under each, so a step is readable on its own.
+  A claim with no source here is either observed against the live workspace, and
+  says so, or it is a gap
 
 Impact values: `Irreversible`, `Lossy`, `Rework Nd`, `Adjustable`.
 
@@ -333,6 +409,21 @@ Deliberately not here:
 >   write those files. Unity Catalog hands out the path and the credential, it does
 >   not carry the bytes
 
+**Sources**
+
+- [Managed versus external assets in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/managed-versus-external),
+  fetched 2026-08-12. Managed means Unity Catalog owns the location and the
+  lifecycle, not that Databricks holds the data. "The data files always remain in
+  your cloud account."
+- [Connect to cloud object storage using Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/),
+  fetched 2026-08-12. An external location is a path plus a storage credential,
+  and assigning a managed storage location "must reference an external location
+  object".
+- [Default storage in Databricks](https://learn.microsoft.com/en-us/azure/databricks/storage/default-storage),
+  fetched 2026-08-12. Catalogs on it are "only available in serverless
+  workspaces" and classic compute cannot interact with it, so it is unavailable
+  to this VNet-injected workspace.
+
 ## Proven against a live workspace
 
 Exercised 2026-08-11 and 2026-08-12 with throwaway objects, since deleted. Proves
@@ -364,50 +455,42 @@ Steps 11 and 12 were proved against the workspace's own Unity Catalog container,
 not against the durable account at step 5. The mechanism is proven, the target is
 not.
 
-## Order challenge
+## Run order
 
-Each step is pushed as late as its consumers allow. A step's earliest consumer is
-the first later step that cannot run without its output, and the step can sit
-anywhere above that. Recorded only. The numbering below is unchanged, so a
-position in this table is a finding, not an instruction.
+A step number is an identifier, not a position. Numbers stay fixed so every
+`from step N` reference holds, and this section says what order to run them in.
+What each step requires is in its own `Inputs` field, which names a producer for
+every input. That is the constraint. This is the plan.
 
-Constraints here are relative, not absolute slots. A step held before another
-moves whenever that other one moves, so a chain travels together and is only
-pinned by the last consumer in it.
+The driver is fail fast. A test that can condemn a workspace generation sits as
+early as its inputs allow, and work that only rearranges permissions sits after
+it.
 
-| Step | Earliest consumer | Can sit as late as | Why it can move |
-| :--- | :--- | :--- | :--- |
-| 1 | 11, which branches on the root storage state | Immediately before 11 | Only step 2 reads anything from it, and only the region string, which the baseline's Azure read also yields |
-| 2 | 6, through the network posture ADR's dependency on the serverless or classic ADR | Immediately before 5 | Its declared consumers are 17, 18 and 19, but the ADR chain pulls it forward to 6 |
-| 3 | 5, which needs the enforced tag names at creation | Immediately before 5 | Inputs come from the baseline, not from 1 or 2 |
-| 4 | 14, which grants the CI principals | Immediately before 14 | Inputs are read in the play and from the baseline IaC repo row. Independent of 1, 2 and 3 |
-| 5 | 6, which needs the storage account resource ID | Immediately before 6, and 6 itself moves | Fixed relative to 6 and 7, not to the numbering. Nothing consumes the 5, 6, 7 chain until 11, so the three travel together and can sit after the identity work |
-| 6 | 7, which needs a working network path | Immediately before 7, carrying 5 with it | Splits in two. The verification is pinned between 5 and 7 and moves only with that chain. The request is not: it depends on nothing in this sequence and should be raised at step 1, since it has the longest lead time and two owners |
-| 7 | 11, which needs the external location that holds managed data | Immediately before 11, carrying 5 and 6 with it | End of the storage chain, and nothing between 7 and 11 touches it. The identity work at 8, 9 and 10 can run entirely in parallel |
-| 8 | 9, which assigns entitlements to the groups | Immediately before 9 | Head of the identity chain, independent of storage. Raise the Entra requests at step 1 regardless: a missing group is a directory ticket, and so is converting source of authority on a synced one |
-| 9 | 10, which resolves scope ACLs against workspace principals | Immediately before 10, carrying 8 with it | Moves with the identity chain. Also gates 19, but 10 comes first. Nothing in the storage chain waits on it |
-| 10 | None in this sequence | Anywhere after 9, or nowhere | No later step reads a secret. If the secret scope model ADR names no consumer, this is the one step with nothing downstream of it, and 9's earliest consumer becomes 19 instead |
-| 11 | 12, which creates schemas inside the catalogs | Immediately before 12 | Where the storage and identity chains finally meet. It needs 7's external location and, for the grants at 13, nothing from 8. So it can start as soon as the storage chain lands, whatever the identity chain has reached |
-| 12 | 13, which grants on the catalogs and schemas | Immediately before 13 | Cannot move earlier either. Its write test needs a warehouse, so it depends backwards on 19 unless the provisioned starter warehouse is still there. That is the only backwards dependency in the sequence |
-| 13 | 23, the acceptance read | Immediately before 23 | The longest slack in the sequence. Nothing between 14 and 22 reads a grant. Do it early regardless: it owns the workspace catalog decision, and that surface has been open since the workspace was created |
-| 14 | 23, the automated write | Immediately before 23 | Same slack as 13, and independent of it. One grants humans, the other grants the pipeline, and neither reads the other's output |
-| 15 | None in this sequence | Anywhere after 11 | The second step with nothing downstream. Binding gates other tenants, and every step here runs inside this workspace. The reason to do it early is exposure time, not order: catalogs created at 11 are visible to the whole metastore until it is done |
-| 16 | 22, which reads the system tables | Immediately before 22 | Consumes nothing, so it could be first. It is a request to a Databricks account admin, and if the backfill claim holds then every day it waits is a day of history lost, which argues for raising it at step 1 with the step 6 request |
-| 17 | 18, which takes the tag scheme | Immediately before 18 | Not 19. Step 19's inputs claimed to consume the compute policies, but policies do not govern SQL warehouses. That input has been removed |
-| 18 | None in this sequence | Anywhere after 17 | Fourth step with nothing downstream. It feeds cost reporting, which no step here reads |
-| 19 | 23, which runs as the test user | Immediately before 23 | But 12's write test needs a warehouse, so in practice it comes earlier or borrows the provisioned starter warehouse. That backwards pull is the only thing holding it in place |
-| 20a | 12, whose write test is the first SQL run against these semantics | Immediately before 12 | Sits at 20 by category, not by dependency. It is the second step after 6 that is placed later than its real consumer |
-| 20b | None in this sequence | Anywhere after 13 | Nothing reads a workspace setting. It pairs with 13, since together they decide whether a grant is the only way in |
-| 21 | None in this sequence | Anywhere after 12, and after 20a | Nothing reads a mask. The dependency runs the other way: it needs 20a settled first, or the filters fail open without saying so |
-| 22 | None in this sequence | Last, or never | Reads 16 and the tag scheme, and nothing reads it. But every day it is absent is a day of cost and access nobody is watching, and system table retention is already counting down |
-| 23 | Nothing. It is the finish line | Last by definition | The only step that cannot move. Its real prerequisites are 12, 13, 14 and 19, which is four of the five steps carrying the most slack in this table |
+| Block | Steps | Why here |
+| :--- | :--- | :--- |
+| 0, condemn or continue | The provisioned baseline, 1, 2, the resource group scope of 3, 20a | Every read is free, and a failure is a question for the Terraform rather than something to fix by hand. 20a joins them because it requires nothing and step 12 cannot write before it is settled |
+| 1, requests | The account admin's four asks, the platform engineer's five, the Entra admin's three | Other people's queues. Raised on day one and then left running. Step 6's carries two owners, and step 16 loses a day of history for every day it waits |
+| 2, build | Storage: 5, 6's verification, 7, 11. Identity: 4, 8, 9. Compute: 17, then 19 | Storage and identity are independent until they meet at 11. Compute joins them so that step 12 runs on tagged compute |
+| 3, checkpoint | 12 | Its write test proves the managed location and the serverless path from step 6 in one statement. Failure unwinds 11 alone, not the grants |
+| 4, exposure and permissions | 15, 13, 14, 20b | 15 leads, because catalogs created at 11 are visible across the metastore until bound. 13 carries the workspace catalog decision, open since the workspace was created |
+| 5, cost and protection | 18, 21, 22 | Nothing reads 18 except 22, and 21 needs 12 and 20a both settled |
+| 6, acceptance | 10, only if its ADR names a consumer, then 23 | Step 10 is the one step with nothing downstream of it here |
 
-Recorded order for the gate block: **4, 3, 1, 2**. Step 4 leads because its
-federation half waits on a repository that does not exist yet, so starting it
-first buys lead time on the only part with an external dependency. The rest is
-tooling, not data: 1, 2 and 4 need the Databricks CLI authenticated, 3 needs the
-Azure CLI, and 3 is the platform engineer's while the others are the workspace
-admin's, so it can run alongside rather than after.
+Putting compute in block 2 costs three things, stated so they are chosen rather
+than discovered.
+
+- Two ADRs come due earlier. Serverless or classic posture and tagging and budget
+  route are needed in block 2 rather than at step 17. With network posture already
+  due before step 6, three ADRs bind inside the first two blocks and two of them
+  are owned outside this team
+- Tagged means tagged by hand. Compute policies do not govern SQL warehouses, so
+  step 19 sets the warehouse tags at creation and nothing enforces them
+- The provisioned starter warehouse is decided in block 2, not left to step 19. A
+  tagged warehouse exists before step 12, so the untagged one has no remaining use
+
+Two dependencies run backwards against the numbering and both land on step 12. It
+needs the SQL semantics from 20a and compute from 19. Block 0 and block 2 resolve
+them, which is the whole reason the blocks exist.
 
 ---
 
@@ -449,8 +532,8 @@ databricks -p "$P" metastores summary
 - Pass means you can state from output whether `storage_root` is present
 - Absent needs no action
 - Present means stop. Removing a root pushes it down into existing catalogs
-  rather than clearing it. See
-  [Manage Unity Catalog metastores](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-metastore)
+  rather than clearing it, and it is an account admin action. The semantics are
+  in the source below
 
 Result for this deployment, read 2026-08-11:
 
@@ -464,6 +547,17 @@ Result for this deployment, read 2026-08-11:
 | Delta Sharing | `INTERNAL`, external access disabled |
 
 Passed. No metastore root, so nothing to unwind before step 11.
+
+**Sources**
+
+- [Manage Unity Catalog metastores](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-metastore),
+  fetched 2026-08-11, re-read 2026-08-12. Metastore-level storage is optional and
+  absent from automatically created metastores, so absent is the expected
+  reading. Account console navigation. The removal semantics: the path
+  cannot be modified once set, only removed and re-added, by an account admin.
+  Removal pushes the root down into catalogs that have no storage root of their
+  own, as their catalog-level managed location, without interrupting access, and
+  may create an external location named `prior_metastore_root_location`.
 
 ### 2. Confirm serverless availability and enablement in region
 
@@ -532,9 +626,28 @@ Result for this deployment, read 2026-08-11:
 
 Passed. Serverless is available and enabled.
 
+**Sources**
+
+- [Connect to serverless compute](https://learn.microsoft.com/en-us/azure/databricks/compute/serverless/),
+  fetched 2026-08-11, re-read 2026-08-12. Serverless is available by default in
+  most workspaces and needs no enablement, given Unity Catalog and a supporting
+  region. The page covers notebooks, jobs and Lakeflow pipelines only, and states
+  that serverless SQL warehouses, model serving and AI features use serverless
+  infrastructure independently, on their own configuration paths. That split is
+  why this step reads two things.
+- [Set up serverless SQL warehouses](https://learn.microsoft.com/en-us/azure/databricks/admin/sql/serverless),
+  fetched 2026-08-12. Enabled by default, and the requirements are the Premium
+  plan and a supporting region.
+- [Features with limited regional availability](https://learn.microsoft.com/en-us/azure/databricks/resources/feature-region-support),
+  fetched 2026-08-11. The regional table this step reads, covering serverless,
+  system tables and ingestion tables.
+- [SQL warehouse types](https://learn.microsoft.com/en-us/azure/databricks/compute/sql-warehouse/warehouse-types),
+  fetched 2026-08-11. Classic, pro and serverless capabilities, and the differing
+  UI and API defaults.
+
 ### 3. Read what Azure will refuse
 
-`Category: gate` · `Owner: platform engineer` · `Inputs: workspace resource group and operator role assignments, both from the baseline` · `Prerequisite: none` · `Impact: Adjustable`
+`Category: gate` · `Owner: workspace admin for the resource group scope, platform engineer for anything above it` · `Inputs: workspace resource group and operator role assignments, both from the baseline` · `Prerequisite: none` · `Impact: Adjustable`
 
 Network standards are settled upstream by the Terraform and are out of this step.
 
@@ -555,8 +668,8 @@ refused, and step 17 to enforce the same tag names Azure already does.
   Contributor on one resource group — ⚠️ Unverified
 
 **What getting the execution wrong costs** Both reads are free. The cost is late
-discovery: an apply denied at step 5, or a provider request raised at step 8 that
-then waits on someone else.
+discovery: an apply denied at step 5, or a provider registration request raised
+there that then waits on someone else.
 
 **The play**
 
@@ -584,9 +697,9 @@ az provider show -n Microsoft.Storage --query registrationState -o tsv
 
 **Check**
 
-- You can name every deny-effect policy applying to what steps 5, 6, 8 and 24
-  create, and name the scopes you could not read. Unreadable is an acceptable
-  answer, unknown is not
+- You can name every deny-effect policy applying to what steps 5, 6 and 7 create,
+  and name the scopes you could not read. Unreadable is an acceptable answer,
+  unknown is not
 - Both providers read `Registered`, or a request is open with someone who can
   register them
 
@@ -611,6 +724,20 @@ here and would still stop an apply.
 > - Skips child resources with no tags of their own, such as the NIC behind a
 >   private endpoint. That is why untagged resources sit under a deny policy
 >   without tripping it
+
+**Sources**
+
+- [Azure Policy deny effect](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effect-deny),
+  fetched 2026-08-12. Deny prevents the request before it reaches the resource
+  provider and returns `403 (Forbidden)`. Existing resources matching a deny
+  definition are marked non-compliant rather than removed.
+- [Azure resource providers and types](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types),
+  fetched 2026-08-12. A subscription must be registered for a provider before its
+  resources can be created, and `/register/action` is included in Contributor and
+  Owner. The page does not state the scope that permission is needed at, which is
+  why this step carries a flag. It also states that ARM template and Bicep
+  deployments auto-register the providers they declare, which says nothing about
+  Terraform.
 
 ### 4. Create the CI/CD service principals
 
@@ -732,6 +859,24 @@ written until the repository and its protected branches do.
 > - Observed only for a Databricks managed principal created through the SCIM
 >   API. Linking an Entra managed one at workspace level is 🔲 untested
 
+**Sources**
+
+- [Service principals](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/service-principals),
+  fetched 2026-08-12. Databricks managed is the recommendation for Databricks
+  automation, Entra ID managed only where a process "must authenticate with Azure
+  Databricks and other Azure resources at the same time". That test is the identity
+  model table above. The creator becomes service principal manager, which does not
+  confer the service principal user role needed to run jobs as it.
+- [Manage service principals](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/manage-service-principals),
+  fetched 2026-08-12. Creation is documented, renaming an existing principal is
+  not. Deactivation is named as preferable to removal, which is "a destructive
+  action": deletion stops compute, fails jobs and breaks Run as Owner sharing. A
+  workspace admin cannot delete an account-level principal.
+- [Automatic identity management](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/automatic-identity-management/),
+  fetched 2026-08-12. Why a Databricks managed principal cannot join an Entra
+  group, so these identities are granted directly at step 14. Carried from
+  [[2026-08-10-databricks-cicd-service-principal]], verified there.
+
 ### 5. Create the durable storage account for managed data
 
 `Category: foundation` · `Owner: platform engineer` · `Inputs: enforced tag names, from step 3` · `Prerequisite: 🔲 ADR catalog and schema model, 🔲 ADR deployment model` · `Impact: Rework 3d`
@@ -787,6 +932,22 @@ namespace is replaced, not amended. Data already written moves by hand.
 - 🔲 Resource blocks and the apply
 
 **Check** 🔲
+
+**Sources**
+
+- [Delete a workspace](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/delete-workspace),
+  fetched 2026-08-12. Databricks "converts the managed resource group into a
+  regular resource group", retaining the Unity Catalog container and the access
+  connector in it. That is this step's second bullet. Deleting the resource group
+  through the portal does not force delete it.
+- [Upgrade Azure Blob Storage with Azure Data Lake Storage capabilities](https://learn.microsoft.com/en-us/azure/storage/blobs/upgrade-to-data-lake-storage-gen2-how-to),
+  fetched 2026-08-12. A hierarchical namespace can be enabled after creation, but
+  "an upgrade is one-way", writes are disabled while it runs, and it will not pass
+  validation while immutable storage, soft delete, blob snapshots or encryption
+  scopes are enabled, or while page blobs are present.
+- [What is a network security perimeter?](https://learn.microsoft.com/en-us/azure/private-link/network-security-perimeter-concepts),
+  fetched 2026-08-12. Resource names are limited to 44 characters for a perimeter
+  association to fit, which binds the naming here under route A.
 
 ### 6. Confirm the serverless path to the managed storage account
 
@@ -890,9 +1051,44 @@ not a second copy of the procedure.
 > - Azure Backup is not supported on an account associated with a perimeter,
 >   which lands on the data protection ADR at step 21
 
+**Sources**
+
+- [Serverless compute plane networking](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/),
+  fetched 2026-08-11. What an NCC is, and the end of serverless subnet
+  allowlisting on 9 June 2026, leaving two routes and not three.
+- [Configure private connectivity to Azure resources](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/serverless-private-link),
+  fetched 2026-08-11, re-read 2026-08-12. Route B: NCC creation, private endpoint
+  rules, the Azure-side approval, and the limits. "If you configure your Azure
+  resource to only accept connections from private endpoints, any connection to
+  the resource from your classic Databricks compute resources also must use
+  private endpoints." Route B needs the Premium plan and an account admin, and
+  setting public network access to Disabled is presented as optional hardening
+  rather than a required end state.
+- [Configure an Azure network security perimeter](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/serverless-firewall-config),
+  fetched 2026-08-12. Route A, and why Secured by Perimeter breaks serverless.
+  "Configuring a firewall also affects connectivity from classic compute
+  resources. You must also update your resource access rules to allow the IPs for
+  connections from classic compute resources." The service tag works only against
+  Azure Storage in the workspace's region, the regional tag is preferred over the
+  global one, and transition mode is recommended indefinitely rather than as a
+  staging step.
+- [What is a network security perimeter?](https://learn.microsoft.com/en-us/azure/private-link/network-security-perimeter-concepts),
+  fetched 2026-08-12. Generally available in all Azure public cloud regions, so
+  route A is open in France Central. Storage is an onboarded resource type.
+  Service endpoint traffic "is not supported" and "can be denied even when an
+  inbound rule allows 0.0.0.0/0".
+- [Network Security Perimeter for Azure Storage](https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security-perimeter),
+  fetched 2026-08-12. Perimeter rules override the account's own firewall. ADLS
+  Gen2 is covered for HTTPS operations. Enforced mode does not honour trusted
+  services. Azure Backup, object replication and static websites are unsupported
+  on an associated account. This page's advice to move to enforced mode is the
+  Azure half of the disagreement above.
+- [Set up serverless SQL warehouses](https://learn.microsoft.com/en-us/azure/databricks/admin/sql/serverless),
+  fetched 2026-08-12. Storage firewalls must admit the serverless compute nodes.
+
 ### 7. Register the external locations over it
 
-`Category: foundation` · `Owner: workspace admin` · `Inputs: the containers, from step 5; a working network path, from step 6; an access connector and storage credential` · `Prerequisite: 🔲 ADR catalog and schema model, 🔲 ADR Access Connector granularity, 🔲 ADR deployment model` · `Impact: Rework 3d`
+`Category: foundation` · `Owner: workspace admin` · `Inputs: the containers, from step 5; a working network path, from step 6; the workspace's own access connector and storage credential, from the baseline, or a durable pair from the platform engineer, which no step here produces` · `Prerequisite: 🔲 ADR catalog and schema model, 🔲 ADR Access Connector granularity, 🔲 ADR deployment model` · `Impact: Rework 3d`
 
 **Why it matters**
 
@@ -919,10 +1115,32 @@ az storage account list -g <resource-group> \
 
 > [!info] Which access connector
 > - The existing one sits in the workspace's managed resource group, so its
->   principal ID is not readable by the operator and it dies with the workspace
+>   principal ID is not readable by the operator. It survives the workspace rather
+>   than dying with it, in a resource group Databricks converts to an ordinary one,
+>   unless the workspace is force deleted. Unmanaged and unreadable, not absent
 > - A connector in a resource group you control is the durable choice, and needs
->   its own storage credential
+>   its own storage credential. No step here creates it. It is a request to the
+>   platform engineer, raised with the rest of the storage chain
 > - The granularity ADR decides. Either way the role assignment is one, not four
+
+**Sources**
+
+- [Manage external locations](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/manage-external-locations),
+  fetched 2026-08-12. File events are on by default, and the four role assignments
+  they need. Only Storage Blob Data Contributor survives now that no files land in
+  storage. The page is dated 2026-08-11 and contradicts the June ADLS page on the
+  EventGrid role name.
+- [Connect to cloud object storage using Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/),
+  fetched 2026-08-12. An external location is a path plus a storage credential,
+  and a managed storage location "must reference an external location object".
+  Nothing else puts these here.
+- [Delete a workspace](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/delete-workspace),
+  fetched 2026-08-13. "The DBFS storage account and access connector in the
+  managed resource group are retained unless you force delete them", and
+  Databricks "converts the managed resource group into a regular resource group".
+  So the workspace's own connector outlives the workspace unless force deletion is
+  chosen explicitly, by the portal checkbox, `-ForceDeletion`, `--force-deletion`
+  or `--force-deletion-types`.
 
 ### 8. Pull the Entra groups into the account
 
@@ -1002,6 +1220,26 @@ Inventory result for this deployment, read 2026-08-11:
 | Members | Two |
 | Convention | One group per resource group |
 
+**Sources**
+
+- [Manage groups](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/manage-groups),
+  fetched 2026-08-12. Workspace admins can create account groups and assign them
+  to a workspace. The group provenance ADR uses only the second half, so this
+  step pulls in rather than creates.
+- [Automatic identity management](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/automatic-identity-management/),
+  fetched 2026-08-12. On by default for accounts created after 1 August 2025.
+  Entra is the source of truth and membership of a synced group cannot be updated
+  in Databricks. Carried from
+  [[2026-08-10-databricks-cicd-service-principal]], verified there.
+- [Configure Group Source of Authority (SOA) in Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/identity/hybrid/how-to-group-source-of-authority-configure),
+  fetched 2026-08-12. A synced group is read-only in the cloud, "any write
+  attempts to the group in the cloud fail", and its fields are greyed out in the
+  admin centre. Source of authority converts per group with a Graph PATCH setting
+  `isCloudManaged`, needing Hybrid Administrator, the
+  `Group-OnPremisesSyncBehavior.ReadWrite.All` scope, an Entra Free licence and a
+  current sync client. Nested groups convert one at a time, lowest first. After
+  conversion `onPremisesSyncEnabled` reads null, the same as a cloud-native group.
+
 ### 9. Assign entitlements to each group
 
 `Category: admin` · `Owner: workspace admin` · `Inputs: the groups, from step 8` · `Prerequisite: 🔲 ADR workspace topology` · `Impact: Adjustable`
@@ -1040,6 +1278,14 @@ Inventory result for this deployment, read 2026-08-11:
 > - A workspace provisioned today starts in the new behaviour. Guidance saying
 >   entitlements arrive by default describes the old one
 
+**Sources**
+
+- [Workspace entitlements](https://learn.microsoft.com/en-us/azure/databricks/security/auth/entitlements),
+  verified 2026-08-10 in [[dbr-RG-to-working-non-admin-user]]. The 15 June 2026
+  system group change and its enforcement dates.
+- [Manage groups](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/manage-groups),
+  fetched 2026-08-12. Assigning an account group to a workspace.
+
 ### 10. Create secret scopes and scope ACLs
 
 `Category: foundation` · `Owner: workspace admin` · `Inputs: the principals that receive scope ACLs, from step 8, usable here only once assigned to the workspace at step 9` · `Prerequisite: 🔲 ADR secret scope model` · `Impact: Rework 2d`
@@ -1066,6 +1312,11 @@ identity cannot carry for it.
 > [!warning] Observed
 > `account users` is accepted on a catalog grant and rejected on a scope ACL,
 > where the workspace-level `users` group works. Tested against a live scope.
+
+**Sources**
+
+- [Access control lists](https://learn.microsoft.com/en-us/azure/databricks/security/auth/access-control/),
+  fetched 2026-08-12. The secret scope ACL levels.
 
 ### 11. Create catalogs with explicit MANAGED LOCATION
 
@@ -1099,6 +1350,18 @@ identity cannot carry for it.
 > - It does not move managed tables and volumes that already exist
 > - The setting is adjustable, the data already written is not. Academic on an
 >   empty catalog, not academic one table in
+
+**Sources**
+
+- [Manage Unity Catalog metastores](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-metastore),
+  fetched 2026-08-11, re-read 2026-08-12. With no metastore root, every catalog
+  must name a dedicated location registered as an external location. That is the
+  branch this step takes.
+- [Specify a managed storage location in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/managed-storage),
+  fetched 2026-08-11. Managed storage precedence, and
+  `ALTER CATALOG SET MANAGED LOCATION` on Databricks Runtime 18.1 and above, which
+  affects only objects created after the change. That is the whole of why this step
+  is `Lossy` rather than `Irreversible`.
 
 ### 12. Create schemas
 
@@ -1140,6 +1403,22 @@ with a statement of `CREATE TABLE <catalog>.<schema>.probe (id INT)`, then an
 so either use one that is already there or bring step 19 forward for this check
 alone.
 
+**Sources**
+
+- [Create schemas](https://learn.microsoft.com/en-us/azure/databricks/schemas/create-schema),
+  fetched 2026-08-12. Creating a schema needs `USE CATALOG` and `CREATE SCHEMA` on
+  the parent catalog, plus `CREATE MANAGED STORAGE` on the external location if it
+  names its own managed location. "Every Unity Catalog catalog automatically
+  includes a system-provided read-only `INFORMATION_SCHEMA`", and the page names no
+  other automatic schema.
+- [Specify a managed storage location in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/managed-storage),
+  fetched 2026-08-11. A schema-level managed location overrides the catalog's, the
+  precedence this step warns about.
+- [What are catalogs in Azure Databricks?](https://learn.microsoft.com/en-us/azure/databricks/catalogs/),
+  fetched 2026-08-12. The three-level namespace, and the distinction between the
+  workspace catalog and the workspace's default catalog setting. Neither is a
+  per-catalog `default` schema, so this step does not claim one exists.
+
 ### 13. Apply catalog-level grants
 
 `Category: foundation` · `Owner: catalog owner, a workspace admin for anything created here` · `Inputs: the catalogs and schemas, from steps 11 and 12; the groups, from step 8` · `Prerequisite: 🔲 ADR ownership and grant model` · `Impact: Adjustable`
@@ -1174,6 +1453,17 @@ alone.
 > - The demotion is one checkbox, Admin access, on the principal's detail page
 >   under Workspace settings, Identity and access
 
+**Sources**
+
+- [What are catalogs in Azure Databricks?](https://learn.microsoft.com/en-us/azure/databricks/catalogs/),
+  fetched 2026-08-12. Grants inherit downward: "Users with `SELECT` on a catalog
+  can read any table in the catalog", and a user "cannot access that table unless
+  they also have the `USE CATALOG` privilege on the catalog that contains the
+  table".
+- [Admin privileges in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/admin-privileges),
+  fetched 2026-08-11. The workspace catalog's default grants, the surface this step
+  has to close, keep or delete.
+
 ### 14. Grant the service principals their catalog access
 
 `Category: foundation` · `Owner: catalog owner, a workspace admin for anything created here` · `Inputs: the CI principals, from step 4; the catalogs and schemas, from steps 11 and 12` · `Prerequisite: 🔲 ADR ownership and grant model, 🔲 ADR non-human identity model` · `Impact: Adjustable`
@@ -1195,6 +1485,17 @@ alone.
 **The play** 🔲
 
 **Check** 🔲
+
+**Sources**
+
+- [Connect to cloud object storage using Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/),
+  fetched 2026-08-12. Granting identities direct storage access to managed tables
+  bypasses Unity Catalog, and "Direct storage access is not supported for Unity
+  Catalog managed tables". So these principals get catalog privilege rather than a
+  role assignment.
+- [Automatic identity management](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/automatic-identity-management/),
+  fetched 2026-08-12. Why a Databricks managed principal cannot join an Entra
+  group, so these grants are direct and do not scale the way step 13's do.
 
 ### 15. Apply catalog to workspace bindings
 
@@ -1222,6 +1523,15 @@ your catalogs, or reading their names.
 > Objects created upstream are already `ISOLATION_MODE_ISOLATED`. Anything this
 > sequence creates is open unless bound.
 
+**Sources**
+
+- [Workspace-catalog binding](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/access-control/workspace-catalog-binding),
+  fetched 2026-08-12. Binding needs metastore admin, catalog owner or `MANAGE`, not
+  account admin, so this step stays inside the workspace admin's reach.
+- [What are catalogs in Azure Databricks?](https://learn.microsoft.com/en-us/azure/databricks/catalogs/),
+  fetched 2026-08-12. "Catalogs are shared with all workspaces attached to the
+  current metastore unless you specify a binding."
+
 ### 16. Enable the system table schemas
 
 `Category: foundation` · `Owner: Databricks account admin` · `Inputs: metastore ID, from step 1` · `Prerequisite: none` · `Impact: Lossy`
@@ -1241,7 +1551,8 @@ you accept that enabling it lands on every workspace sharing this metastore.
   indefinite for a handful. Anything needed beyond its window has to be copied out
 - Enabling them does not make them readable. Account admins and metastore admins
   have access by default, everyone else needs `USE CATALOG` on `system` plus
-  `USE SCHEMA` and `SELECT` on each schema. That grant lands on step 22's owner
+  `USE SCHEMA` and `SELECT` on each schema. Make that grant here, in the same
+  request, because step 22's owner cannot make it for themselves
 
 **What getting the execution wrong costs**
 
@@ -1300,6 +1611,23 @@ Result for this deployment, read 2026-08-11:
 > - It sits here for reading order and waits on nothing, so raise it as soon as
 >   an account admin is available
 
+**Sources**
+
+- [Monitor account activity with system tables](https://learn.microsoft.com/en-us/azure/databricks/admin/system-tables/),
+  fetched 2026-08-12. Enablement is per metastore and needs privilege model 1.0.
+  Each table has a free retention period, 30 to 365 days or indefinite depending on
+  the table. Querying needs `USE CATALOG` on `system` plus `USE SCHEMA` and
+  `SELECT` on each schema for anyone who is not an account or metastore admin. The
+  page does not state whether data predating enablement is available, which is why
+  this step carries a flag.
+- [Admin privileges in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/admin-privileges),
+  fetched 2026-08-11. Lists "Enable system tables" among the account admin
+  capabilities, "Enable system tables and control who can access them". That is the
+  documentary basis for this step's owner, and the endpoint refusal above confirms
+  it from the other direction.
+- [Features with limited regional availability](https://learn.microsoft.com/en-us/azure/databricks/resources/feature-region-support),
+  fetched 2026-08-11. System tables by region.
+
 ### 17. Create compute policies with enforced tags
 
 `Category: compute` · `Owner: workspace admin` · `Inputs: the tag names enforced by Azure Policy, from step 3` · `Prerequisite: 🔲 ADR serverless or classic posture, 🔲 ADR tagging and budget route` · `Impact: Rework 5d`
@@ -1340,6 +1668,23 @@ Result for this deployment, read 2026-08-11:
 > - Steps 17 and 18 are complementary and still do not cover everything between
 >   them
 
+**Sources**
+
+- [Create and manage compute policies](https://learn.microsoft.com/en-us/azure/databricks/admin/clusters/policies),
+  fetched 2026-08-12. Policies limit a user or group's compute creation, cap
+  resources per user and DBUs per hour, and carry a Tags section for custom tag
+  rules. They need the Premium plan. Editing a policy does not update existing
+  compute automatically, but `Enforce all` does, on next restart for all-purpose and
+  immediately for jobs compute. A user with unrestricted cluster creation also gets
+  the Unrestricted policy and "can create fully configurable compute resources". The
+  page describes all-purpose and jobs compute only, never SQL warehouses.
+- [Set up serverless SQL warehouses](https://learn.microsoft.com/en-us/azure/databricks/admin/sql/serverless),
+  fetched 2026-08-12. Cluster policies are not supported on serverless warehouses.
+  That is the other half of the coverage gap above.
+- [Attribute usage with serverless usage policies](https://learn.microsoft.com/en-us/azure/databricks/admin/usage/budget-policies),
+  fetched 2026-08-12. What step 18 covers and does not, and therefore where the gap
+  between the two mechanisms falls.
+
 ### 18. Create the serverless usage policy
 
 `Category: compute` · `Owner: workspace admin. A billing admin only to see every policy in the account` · `Inputs: the tag scheme, from step 17` · `Prerequisite: 🔲 ADR tagging and budget route` · `Impact: Lossy`
@@ -1369,6 +1714,18 @@ run here and their cost has to be attributed to something.
 **The play** 🔲
 
 **Check** 🔲
+
+**Sources**
+
+- [Attribute usage with serverless usage policies](https://learn.microsoft.com/en-us/azure/databricks/admin/usage/budget-policies),
+  fetched 2026-08-12. Public Preview, and renamed from budget policy. It applies cost
+  attribution tags and does not cap spend. "You must be a workspace admin to create
+  serverless usage policies", with the billing admin role needed only to view every
+  policy in the account. It covers notebooks, jobs, pipelines, serving endpoints,
+  Lakebase and Apps, never SQL warehouses, and "do not apply tags to classic compute
+  resources". Changes affect only usage initiated afterwards, existing assets are not
+  assigned a policy automatically, and a user with several policies who picks none
+  gets the first alphabetically.
 
 ### 19. Create SQL warehouses and set permissions
 
@@ -1405,6 +1762,18 @@ run here and their cost has to be attributed to something.
 >   `enable_serverless_compute` to `true`
 > - Set both explicitly. This runbook deploys from the repo, not the UI
 
+**Sources**
+
+- [Access control lists](https://learn.microsoft.com/en-us/azure/databricks/security/auth/access-control/),
+  fetched 2026-08-12. The SQL warehouse ACL table gives `CAN USE` both start and run
+  queries, and gives `CAN MONITOR` the same two plus the monitoring tab, so
+  `CAN MONITOR` is not read-only. Creating a warehouse needs workspace admin or
+  unrestricted cluster creation. On clusters, `CAN ATTACH TO` attaches to a running
+  one and `CAN RESTART` is what starts a stopped one.
+- [SQL warehouse types](https://learn.microsoft.com/en-us/azure/databricks/compute/sql-warehouse/warehouse-types),
+  fetched 2026-08-11. Classic, pro and serverless capabilities, and the differing UI
+  and API defaults.
+
 ### 20a. Settle the SQL semantics
 
 `Category: admin` · `Owner: workspace admin` · `Inputs: the current warehouse config, read in the play` · `Prerequisite: 🔲 ADR legacy surface posture` · `Impact: Rework 10d`
@@ -1437,6 +1806,15 @@ compute here.
 > - `spark.sql.storeAssignmentPolicy` is a separate setting and defaults to
 >   `ANSI` regardless, so table inserts already reject bad casts even here
 
+**Sources**
+
+- [ANSI compliance in Databricks Runtime](https://learn.microsoft.com/en-us/azure/databricks/sql/language-manual/sql-ref-ansi-compliance),
+  fetched 2026-08-12. `spark.sql.ansi.enabled` defaults to true and is "Enabled by
+  default in Apache Spark 4.0 and Databricks Runtime 17.0 and above", so this
+  workspace's `ansi_mode: false` diverges from it. Invalid casts return null rather
+  than throwing, and integer overflow wraps.
+  `spark.sql.storeAssignmentPolicy` is independent and defaults to `ANSI`.
+
 ### 20b. Close the routes around Unity Catalog
 
 `Category: admin` · `Owner: workspace admin` · `Inputs: the current workspace settings, read in the play` · `Prerequisite: 🔲 ADR legacy surface posture` · `Impact: Rework 10d`
@@ -1461,6 +1839,13 @@ data.
 **The play** 🔲
 
 **Check** 🔲
+
+**Sources**
+
+- [Manage your workspace](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace-settings/),
+  fetched 2026-08-12. The settings this step covers: the DBFS file browser, the upload
+  data UI, the web terminal, user isolation enforcement, workspace access for
+  Databricks personnel, and Restrict workspace admins.
 
 ### 21. Apply classification tags, column masks, row filters
 
@@ -1491,9 +1876,25 @@ data.
 
 **Check** 🔲
 
+**Sources**
+
+- [Row filters and column masks](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/filters-and-masks/),
+  fetched 2026-08-12. Table-level filters and masks are "managed by the table owner"
+  or a user with `MANAGE`, which resolves this step's owner. Databricks recommends
+  ABAC policies instead, attached at catalog or schema level from governed tags, which
+  "table owners can't override or remove". With ANSI mode disabled, a parameter type
+  mismatch silently casts to `NULL` so a row filter can return every row, and the page
+  recommends enabling ANSI mode so the cast raises instead. Views, time travel,
+  clones, path-based access and several `MERGE` cases are unsupported.
+- [Network Security Perimeter for Azure Storage](https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security-perimeter),
+  fetched 2026-08-12. Azure Backup is unsupported on an account associated with a
+  perimeter, which removes one mechanism from the data protection ADR if step 6 takes
+  route A. Container immutability and lifecycle policies are unaffected, being storage
+  account features rather than a backup service.
+
 ### 22. Configure monitoring and alerting
 
-`Category: protection` · `Owner: platform engineer for the system tables, Databricks account admin for account-wide budgets` · `Inputs: the system tables, from step 16; the tag scheme, from steps 17 and 18` · `Prerequisite: none` · `Impact: Adjustable`
+`Category: protection` · `Owner: workspace admin for the system tables, once granted on system by an account or metastore admin at step 16, Databricks account admin for account-wide budgets` · `Inputs: the system tables, from step 16; the tag scheme, from steps 17 and 18` · `Prerequisite: none` · `Impact: Adjustable`
 
 **When to use** When cost or access has to be noticed without someone thinking to
 look.
@@ -1520,6 +1921,20 @@ look.
 
 **Check** 🔲
 
+**Sources**
+
+- [Create and monitor budgets](https://learn.microsoft.com/en-us/azure/databricks/admin/account-settings/budgets),
+  fetched 2026-08-12. Account admin to create and manage, or a workspace admin through
+  Governance Hub for workspaces they administer. Budgets are scoped by workspace,
+  product and custom tag, carry up to four thresholds each, and alert by email. "Do not
+  use this feature as a way to ensure an absolute spend cap on final billed amounts."
+  Notification can lag usage by up to 24 hours, and `system.billing.usage` updates every
+  few hours, so the three sources disagree at any given moment by design.
+- [Monitor account activity with system tables](https://learn.microsoft.com/en-us/azure/databricks/admin/system-tables/),
+  fetched 2026-08-12. The per-table retention window, 30 to 365 days or indefinite,
+  which sets this step's horizon. Also the grants a reader who is not an account or
+  metastore admin needs.
+
 ### 23. Acceptance test
 
 `Category: acceptance` · `Owner: test user` · `Inputs: a principal that can write to the bronze schema, from step 4 with its grants from step 14; the bronze catalog and schema, from steps 11 and 12; the grants that let a group read them, from step 13; a warehouse the test user can use, from step 19; the test user's group membership and entitlements, from steps 8 and 9` · `Prerequisite: none` · `Impact: Adjustable`
@@ -1540,6 +1955,13 @@ look.
 
 **Check** 🔲
 
+**Sources**
+
+- [What are catalogs in Azure Databricks?](https://learn.microsoft.com/en-us/azure/databricks/catalogs/),
+  fetched 2026-08-12, re-read 2026-08-13. "Catalog owners have all privileges on the
+  catalog and the objects in the catalog, and they can grant access to any object in
+  the catalog". No earlier check in this runbook therefore tested a grant.
+
 ---
 
 ## When it fails at step 23
@@ -1559,275 +1981,12 @@ Read the error rather than re-running the earlier steps.
 | The group member cannot open the SQL editor at all | Step 9, the Databricks SQL access entitlement was not assigned explicitly |
 | Everything works for you and nothing works for them | You are a workspace admin. Test as the test user, on their credentials, or you are testing nothing |
 
-## Sources
-
-Fetched and verified on the dates shown. Preconditions rests on all of them, not
-on any one.
-
-Fetched 2026-08-11:
-
-- [Databricks administration overview](https://learn.microsoft.com/en-us/azure/databricks/admin/admin-concepts).
-  Establishing the first account admin, and what a non-account-admin sees.
-- [Admin privileges in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-privileges/admin-privileges).
-  The workspace admin privilege list for auto-enabled workspaces, and the
-  workspace catalog default grants.
-- [Manage Unity Catalog metastores](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/manage-metastore).
-  Metastore-level storage is optional and absent from automatically created
-  metastores. Account console navigation for step 1. Re-read 2026-08-12 for the
-  removal semantics: the path cannot be modified once set, only removed and
-  re-added, by an account admin. Removal pushes the root down into catalogs that
-  have no storage root of their own, as their catalog-level managed location,
-  without interrupting access, and may create an external location named
-  `prior_metastore_root_location`. Afterwards every catalog must name a dedicated
-  location registered as an external location, which is what step 11 relies on.
-- [Specify a managed storage location in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/managed-storage).
-  Managed storage precedence, and `ALTER CATALOG SET MANAGED LOCATION` on
-  Databricks Runtime 18.1 and above, which affects only objects created after
-  the change.
-
-Added 2026-08-11 for step 2:
-
-- [Connect to serverless compute](https://learn.microsoft.com/en-us/azure/databricks/compute/serverless/).
-  Serverless is available by default in most workspaces and needs no enablement,
-  provided Unity Catalog is on and the region supports it. Re-read 2026-08-12:
-  the page covers notebooks, jobs and Lakeflow pipelines only, and states that
-  serverless SQL warehouses, model serving and AI features use serverless
-  infrastructure independently and have their own configuration paths. Step 2.
-- [Set up serverless SQL warehouses](https://learn.microsoft.com/en-us/azure/databricks/admin/sql/serverless).
-  Fetched 2026-08-12. Enabled by default. The requirements are the Premium plan
-  and a supporting region. Cluster policies are not supported on serverless
-  warehouses, which is the source for step 17's note. Storage firewalls must
-  admit the serverless compute nodes, which is step 6.
-- [Features with limited regional availability](https://learn.microsoft.com/en-us/azure/databricks/resources/feature-region-support).
-  The serverless, system tables and ingestion tables by region.
-- [SQL warehouse types](https://learn.microsoft.com/en-us/azure/databricks/compute/sql-warehouse/warehouse-types).
-  Classic, pro and serverless capabilities, and the differing UI and API
-  defaults, used at step 19.
-
-Added 2026-08-11 for step 6:
-
-- [Serverless compute plane networking](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/).
-  What an NCC is, and the end of serverless subnet allowlisting on 9 June 2026.
-- [Configure private connectivity to Azure resources](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/serverless-private-link).
-  NCC creation, private endpoint rules, the Azure-side approval, the limits, and
-  the requirement that classic compute also use private endpoints once a
-  resource is restricted. Re-read 2026-08-12: "If you configure your Azure
-  resource to only accept connections from private endpoints, any connection to
-  the resource from your classic Databricks compute resources also must use
-  private endpoints." Route B also requires the Premium plan and an account
-  admin. Setting public network access to Disabled is presented as optional
-  hardening, not as a required end state.
-
-Fetched 2026-08-12, for the owner corrections and the file event roles:
-
-- [Manage groups](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/manage-groups).
-  Workspace admins can create account groups and assign them to a workspace. The
-  group provenance ADR uses only the second half. Steps 8 and 9.
-- [Automatic identity management](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/automatic-identity-management/).
-  On by default for accounts created after 1 August 2025. Entra is the source of
-  truth and membership of a synced group cannot be updated in Databricks.
-  Carried from [[2026-08-10-databricks-cicd-service-principal]], verified there.
-  Step 8, and the service principal consequence at step 4.
-- [Workspace-catalog binding](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/access-control/workspace-catalog-binding).
-  Binding needs metastore admin, catalog owner or `MANAGE`, not account admin.
-  Step 15.
-- [Manage service principals](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/manage-service-principals).
-  Creation is documented, renaming an existing principal is not. Step 4. Re-read
-  2026-08-12: deactivation is named as preferable to removal, which is "a
-  destructive action", and deletion stops compute, fails jobs and breaks Run as
-  Owner sharing. Workspace admins cannot delete an account-level principal.
-- [Service principals](https://learn.microsoft.com/en-us/azure/databricks/admin/users-groups/service-principals).
-  Fetched 2026-08-12 for step 4. Databricks managed is the recommendation for
-  Databricks automation, Entra ID managed only where a process "must authenticate
-  with Azure Databricks and other Azure resources at the same time". The creator
-  becomes service principal manager, which does not confer the service principal
-  user role needed to run jobs as it.
-- [Manage external locations](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/manage-external-locations).
-  File events on by default, and the four role assignments. Only one of the four
-  survives now that no files land in storage. Dated 2026-08-11, and it
-  contradicts the June ADLS page on the EventGrid role name.
-- [Configure an Azure network security perimeter](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/serverless-firewall-config).
-  Route A, and why Secured by Perimeter breaks serverless. Step 6. Re-read
-  2026-08-12: route A also hits classic compute, "Configuring a firewall also
-  affects connectivity from classic compute resources. You must also update your
-  resource access rules to allow the IPs for connections from classic compute
-  resources." The service tag works only against Azure Storage in the workspace's
-  region, the regional tag is preferred over the global one, and transition mode
-  is recommended indefinitely rather than as a staging step.
-- [Delete a workspace](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/delete-workspace).
-  The workspace catalog, managed resource group, storage and access connector all
-  survive deletion unless force deleted. Re-read 2026-08-12: Databricks "converts
-  the managed resource group into a regular resource group", retaining the Unity
-  Catalog container and the access connector in it, which is step 5's second
-  bullet verbatim. Deleting the resource group through the portal does not force
-  delete it. Step 5.
-- [Upgrade Azure Blob Storage with Azure Data Lake Storage capabilities](https://learn.microsoft.com/en-us/azure/storage/blobs/upgrade-to-data-lake-storage-gen2-how-to).
-  Fetched 2026-08-12 for step 5. A hierarchical namespace can be enabled after
-  creation. "An upgrade is one-way." Writes are disabled during it, and it will
-  not pass validation while immutable storage, soft delete, blob snapshots or
-  encryption scopes are enabled, or while page blobs are present.
-- [Deploy a workspace using the Azure Portal](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace/create-workspace).
-  No templates or sample catalogs at creation. Workspace type Hybrid means
-  classic.
-- [Monitor account activity with system tables](https://learn.microsoft.com/en-us/azure/databricks/admin/system-tables/).
-  Enablement is per metastore and needs privilege model 1.0. The page names no
-  role for enabling, so the account admin requirement at step 16 rests on the
-  endpoint refusal, not on the documentation. Re-read 2026-08-12: each table has
-  a free retention period, 30 to 365 days or indefinite depending on the table,
-  and querying needs `USE CATALOG` on `system` plus `USE SCHEMA` and `SELECT` on
-  each schema for anyone who is not an account or metastore admin. The page does
-  not state whether data predating enablement is available, which is why step 16
-  carries a flag.
-
-Added 2026-08-12 for step 22, which had no source of its own:
-
-- [Create and monitor budgets](https://learn.microsoft.com/en-us/azure/databricks/admin/account-settings/budgets).
-  Account admin to create and manage, or a workspace admin through Governance Hub
-  for workspaces they administer. Budgets are scoped by workspace, product and
-  custom tag, carry up to four thresholds each, and alert by email. "Do not use
-  this feature as a way to ensure an absolute spend cap on final billed amounts."
-  Notification can lag usage by up to 24 hours, and `system.billing.usage` updates
-  every few hours, so the three sources disagree at any given moment by design.
-
-Added 2026-08-12 for step 21, which had no source of its own:
-
-- [Row filters and column masks](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/filters-and-masks/).
-  Table-level filters and masks are "managed by the table owner" or a user with
-  `MANAGE`, which resolves that step's owner. Databricks recommends ABAC policies
-  instead, attached at catalog or schema level from governed tags, which "table
-  owners can't override or remove". With ANSI mode disabled, a parameter type
-  mismatch silently casts to `NULL` so a row filter can return every row, and the
-  page recommends enabling ANSI mode so the cast raises instead. Views, time
-  travel, clones, path-based access and several `MERGE` cases are unsupported.
-
-Added 2026-08-12 for step 20, which had no source of its own:
-
-- [Manage your workspace](https://learn.microsoft.com/en-us/azure/databricks/admin/workspace-settings/).
-  The settings surface this step covers, including the DBFS file browser, the
-  upload data UI, the web terminal, user isolation enforcement, workspace access
-  for Databricks personnel, and Restrict workspace admins.
-- [ANSI compliance in Databricks Runtime](https://learn.microsoft.com/en-us/azure/databricks/sql/language-manual/sql-ref-ansi-compliance).
-  `spark.sql.ansi.enabled` defaults to true and is "Enabled by default in Apache
-  Spark 4.0 and Databricks Runtime 17.0 and above", so this workspace's
-  `ansi_mode: false` diverges from it. Invalid casts return null rather than
-  throwing, and integer overflow wraps. `spark.sql.storeAssignmentPolicy` is
-  independent and defaults to `ANSI`.
-
-Added 2026-08-12 for step 19:
-
-- [Access control lists](https://learn.microsoft.com/en-us/azure/databricks/security/auth/access-control/).
-  The SQL warehouse ACL table gives `CAN USE` both start and run queries, and gives
-  `CAN MONITOR` the same two plus the monitoring tab, so `CAN MONITOR` is not
-  read-only. Creating a warehouse needs workspace admin or unrestricted cluster
-  creation. On clusters, `CAN ATTACH TO` attaches to a running one and `CAN RESTART`
-  is what starts a stopped one. Also the secret scope ACL levels for step 10.
-
-Added 2026-08-12 for step 18, which had no source of its own:
-
-- [Attribute usage with serverless usage policies](https://learn.microsoft.com/en-us/azure/databricks/admin/usage/budget-policies).
-  Public Preview, and renamed from budget policy. It applies cost attribution tags
-  and does not cap spend. "You must be a workspace admin to create serverless usage
-  policies", with the billing admin role needed only to view every policy in the
-  account. It covers notebooks, jobs, pipelines, serving endpoints, Lakebase and
-  Apps, never SQL warehouses, and "do not apply tags to classic compute resources".
-  Changes affect only usage initiated afterwards, existing assets are not assigned
-  a policy automatically, and a user with several policies who picks none gets the
-  first alphabetically.
-
-Added 2026-08-12 for step 17, which had no source of its own:
-
-- [Create and manage compute policies](https://learn.microsoft.com/en-us/azure/databricks/admin/clusters/policies).
-  Policies limit a user or group's compute creation, cap resources per user and
-  DBUs per hour, and carry a Tags section for custom tag rules. They need the
-  Premium plan. Editing a policy does not update existing compute automatically,
-  but `Enforce all` does, on next restart for all-purpose and immediately for jobs
-  compute. A user with unrestricted cluster creation also gets the Unrestricted
-  policy and "can create fully configurable compute resources". The page describes
-  all-purpose and jobs compute only, never SQL warehouses.
-
-Added 2026-08-12 for step 12, which the managed storage page above only half
-covered:
-
-- [Create schemas](https://learn.microsoft.com/en-us/azure/databricks/schemas/create-schema).
-  Creating a schema needs `USE CATALOG` and `CREATE SCHEMA` on the parent catalog,
-  plus `CREATE MANAGED STORAGE` on the external location if it names its own
-  managed location. "Every Unity Catalog catalog automatically includes a
-  system-provided read-only `INFORMATION_SCHEMA`", and the page names no other
-  automatic schema.
-- [What are catalogs in Azure Databricks?](https://learn.microsoft.com/en-us/azure/databricks/catalogs/).
-  The three-level namespace, and the distinction between the workspace catalog and
-  the workspace's default catalog setting. Neither is a per-catalog `default`
-  schema, which is why step 12 does not claim one exists. Also step 13's
-  inheritance bullet: "Users with `SELECT` on a catalog can read any table in the
-  catalog", and a user "cannot access that table unless they also have the
-  `USE CATALOG` privilege on the catalog that contains the table".
-
-Added 2026-08-12 for step 8:
-
-- [Configure Group Source of Authority (SOA) in Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/identity/hybrid/how-to-group-source-of-authority-configure).
-  A synced group is read-only in the cloud, "any write attempts to the group in
-  the cloud fail", and its fields are greyed out in the admin centre. Source of
-  authority can be converted per group with a Graph PATCH setting
-  `isCloudManaged`, needing Hybrid Administrator, the
-  `Group-OnPremisesSyncBehavior.ReadWrite.All` scope, an Entra Free licence and a
-  current sync client. Nested groups convert one at a time, lowest first. After
-  conversion `onPremisesSyncEnabled` reads null, the same as a cloud-native group.
-
-Added 2026-08-12 for step 6, on the Azure side of route A:
-
-- [What is a network security perimeter?](https://learn.microsoft.com/en-us/azure/private-link/network-security-perimeter-concepts).
-  Generally available in all Azure public cloud regions, so route A is open in
-  France Central. Storage is an onboarded resource type. Service endpoint traffic
-  "is not supported" and "can be denied even when an inbound rule allows
-  0.0.0.0/0". Resource names are limited to 44 characters for a perimeter
-  association to fit, which binds step 5's naming.
-- [Network Security Perimeter for Azure Storage](https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security-perimeter).
-  Perimeter rules override the account's own firewall. ADLS Gen2 is covered for
-  HTTPS operations. Enforced mode does not honour trusted services. Azure Backup,
-  object replication and static websites are unsupported on an associated
-  account. This page's advice to move to enforced mode contradicts the Databricks
-  page's advice to stay in transition.
-
-Added 2026-08-12, settling what "Databricks-managed" means and whether it removes
-steps 5 to 7:
-
-- [Managed versus external assets in Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/managed-versus-external).
-  Managed means Unity Catalog owns the location and lifecycle, not that Databricks
-  holds the data. "The data files always remain in your cloud account."
-- [Connect to cloud object storage using Unity Catalog](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/).
-  An external location is a path plus a storage credential, and assigning a managed
-  storage location "must reference an external location object". Also warns that
-  granting identities direct storage access to managed tables bypasses Unity
-  Catalog, and that direct storage access is unsupported for managed tables.
-- [Default storage in Databricks](https://learn.microsoft.com/en-us/azure/databricks/storage/default-storage).
-  Storage in the Databricks account. Catalogs on it are "only available in
-  serverless workspaces" and classic compute cannot interact with it, so it is
-  unavailable to this VNet-injected workspace.
-
-Added 2026-08-12 for step 3, which had no source of its own:
-
-- [Azure Policy deny effect](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effect-deny).
-  Deny prevents the request before it is sent to the resource provider and returns
-  `403 (Forbidden)`. Existing resources matching a deny definition are marked
-  non-compliant rather than removed.
-- [Azure resource providers and types](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-providers-and-types).
-  A subscription must be registered for a provider before its resources can be
-  created, and `/register/action` is included in the Contributor and Owner roles.
-  The page does not state the scope that permission is needed at, which is why
-  step 3 carries a flag. It also states that ARM template and Bicep deployments
-  auto-register the providers they declare, which says nothing about Terraform.
-
-Carried from [[dbr-RG-to-working-non-admin-user]], verified there on 2026-08-10:
-
-- [Workspace entitlements and the 15 June 2026 system group change](https://learn.microsoft.com/en-us/azure/databricks/security/auth/entitlements),
-  used at step 9.
-
-> [!todo] ✅ Every step now carries a source
-> Steps 11, 20a, 20b, 21, 22 and 23 came off the unsourced list on 2026-08-12.
-> What remains before status leaves Draft is the empty fields, not the sourcing:
-> `The play` and `Check` are still `🔲` on steps 5, 7, 9, 10, 11, 12, 13, 14, 15,
-> 17, 18, 19, 20a, 20b, 21, 22 and 23.
+> [!todo] 🔲 What remains before status leaves Draft
+> - The empty fields, not the sourcing. `The play` and `Check` are still `🔲` on
+>   steps 5, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20a, 20b, 21, 22 and 23
+> - Every source now sits under the step or section it backs, with the date it was
+>   fetched. A source consumed by several steps appears in full under each
 
 <!--
-Version: 2.0 | Last Updated: 2026-08-12 | Status: Draft
+Version: 3.2 | Last Updated: 2026-08-13 | Status: Draft
 -->
