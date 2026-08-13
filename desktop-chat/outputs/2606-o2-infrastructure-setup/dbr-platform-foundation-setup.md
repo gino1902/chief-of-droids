@@ -325,7 +325,7 @@ it.
 
 | Block | Steps | Why here |
 | :--- | :--- | :--- |
-| 0, condemn or continue | The provisioned baseline, 1, 2, the resource group scope of 3, 20a | Every read is free, and a failure is a question for the Terraform rather than something to fix by hand. 20a joins them because it requires nothing and step 12 cannot write before it is settled |
+| 0, condemn or continue | The provisioned baseline, 1, the resource group scope of 3, 20a | Every read is free, and a failure is a question for the Terraform rather than something to fix by hand. 20a joins them because it requires nothing and step 12 cannot write before it is settled |
 | 1, requests | The account admin's four asks, the platform engineer's five, the Entra admin's three | Other people's queues. Raised on day one and then left running. Step 6's carries two owners, and step 16 loses a day of history for every day it waits |
 | 2, build | Storage: 5, 6's verification, 7, 11. Identity: 4, 8, 9. Compute: 17, then 19 | Storage and identity are independent until they meet at 11. Compute joins them so that step 12 runs on tagged compute |
 | 3, checkpoint | 12 | Its write test proves the managed location and the serverless path from step 6 in one statement. Failure unwinds 11 alone, not the grants |
@@ -437,6 +437,11 @@ there that then waits on someone else.
   output JSON, because resource IDs truncate in tables
 - Resolve each `policyDefinitionId` to its effect. An audit policy and a deny
   policy are indistinguishable in the assignment list
+- Read `enforcementMode` alongside the effect. A `deny` assignment set to
+  `DoNotEnforce` marks resources non-compliant and blocks nothing
+- Read each assignment's `tagName` parameter rather than trusting its name. The
+  name is a label chosen by whoever assigned it and need not match the key the
+  policy enforces, and step 17 has to match the key
 
 ```bash
 SUB=<subscription-id>
@@ -448,7 +453,7 @@ az account set --subscription "$SUB"
 
 echo "== assignments =="
 az policy assignment list --scope "$SCOPE" --disable-scope-strict-match \
-  --query "[].{name:name, policy:policyDefinitionId, enforcement:enforcementMode}" -o json
+  --query "[].{name:name, policy:policyDefinitionId, enforcement:enforcementMode, params:parameters}" -o json
 
 echo "== definitions =="
 az policy assignment list --scope "$SCOPE" --disable-scope-strict-match \
@@ -468,30 +473,13 @@ az provider show -n Microsoft.Storage  --query registrationState -o tsv
 - You can name every deny-effect policy applying to what steps 5, 6 and 7 create,
   and name the scopes you could not read. Unreadable is an acceptable answer,
   unknown is not
+- Every deny assignment's `enforcementMode` is known. Under `DoNotEnforce` a
+  step 5 apply that succeeds proves nothing about the tags, so the tag names
+  still bind step 17 while nothing at this scope stops an untagged create
+- The tag keys are taken from the `tagName` parameters, character for character,
+  and step 17 uses those
 - Both providers read `Registered`, or a request is open with someone who can
   register them
-
-Failure is not finding no policies. Failure is not knowing.
-
-Result for this deployment, read 2026-08-11:
-
-| Finding | Value |
-| :--- | :--- |
-| Policy, resource group scope | Four assignments, all `Require a tag on resources`, effect `deny`, mode `Indexed` |
-| Tags enforced | `owner`, `environment`, `cost_center`, `project` |
-| Policy, above resource group | Unreadable. The operator holds Contributor on one resource group only |
-| Providers | `Microsoft.EventGrid` and `Microsoft.Storage` both `Registered` |
-
-Passed, with one scope unread. Nothing above the resource group could be checked,
-so a deny policy at subscription or management group level would be invisible
-here and would still stop an apply.
-
-> [!warning] Mode `Indexed` is narrower than it sounds
-> - Evaluates only resource types that support tags and location
-> - Does not apply to resource groups
-> - Skips child resources with no tags of their own, such as the NIC behind a
->   private endpoint. That is why untagged resources sit under a deny policy
->   without tripping it
 
 **Sources**
 
@@ -511,121 +499,71 @@ here and would still stop an apply.
 
 `Category: foundation` · `Owner: workspace admin, except the federation policy which is Databricks account admin` · `Inputs: existing service principals and their Entra records, read in the play; GitLab project and protected branches, from the baseline IaC repo row` · `Prerequisite: 🔲 ADR non-human identity model` · `Impact: Lossy`
 
-Detail on the two principal kinds, the four authentication routes and the
-federation build is in [[2026-08-10-databricks-cicd-service-principal]]. This
-step carries only what changes what you do here.
-
-**When to use** When you want automation that outlives the person who set it up
-and that you can revoke one environment at a time.
+Detail on the principal kinds, the authentication routes and the federation build
+is in [[2026-08-10-databricks-cicd-service-principal]].
 
 **Why it matters**
 
 - Automation must not run under a person's token. A principal is scoped
   independently, can be disabled on its own, and survives the person leaving
-- The kind is a creation-time choice and it is not cosmetic. Entra managed
-  authenticates to Databricks and to other Azure resources on one credential,
-  which is the only case Databricks endorses it for. Databricks managed is the
-  recommendation for everything else
+- The kind is fixed at creation. No `applicationId` gives a Databricks managed
+  principal, an existing Entra application ID gives an Entra managed one
 - The federation policy's subject claim is the entire security boundary. An
   unpinned subject lets any branch in the project deploy to production
 
-**What getting the execution wrong costs**
-
-- Deleting a principal stops its compute, fails its jobs and breaks anything
-  shared with Run as Owner. Deactivate instead
-- A subject pinned to a mutable path breaks when the group is renamed, and a
-  future project reusing that path would match the policy
+**What getting the execution wrong costs** Deleting a principal stops its
+compute, fails its jobs and breaks anything shared with Run as Owner. Deactivate
+instead.
 
 **The identity model**
 
 | Identity | Kind | Rationale |
 | :--- | :--- | :--- |
-| Infra Terraform | 🔲 unverified, see the result table | Authenticates to Azure and Databricks in the same run, which is the case that would justify Entra managed |
+| Infra Terraform | Entra sourced, carries an `externalId` | Authenticates to Azure and Databricks in the same run |
 | CI/CD bundle deploy | Databricks managed, one per environment, OIDC federation | No secret to rotate, and one environment can be revoked alone |
-| Claude Code | None. It runs as the human, over user-to-machine OAuth | See below |
-
-Claude Code gets no principal of its own:
-
-- Attribution stays on a person
-- It can never exceed your rights
-- Revocation is already solved, because access arrives and leaves with the Entra
-  group
-
-The cost, stated so it is a decision rather than an oversight: Claude Code cannot
-act when you are not there, and its actions are indistinguishable from yours in
-the audit log. Either of those becoming a problem is the trigger to revisit.
+| Claude Code | None. It runs as the human, over user-to-machine OAuth | Attribution stays on a person and it cannot exceed your rights. The cost is that it cannot act when you are not there |
 
 **The play**
 
-- Read what already exists before creating anything. A deployment principal
-  usually exists before this step
-- Check the display name through the API, not the UI. The UI resolves a name from
-  the identity provider even when the SCIM attribute is empty, and it is the
-  empty attribute that audit logs, `created_by` and every automated query will
-  report
-- Create the CI principals as Databricks managed, one per environment
-- Do not put them in `admins`
-- Do not plan to put them in a group either. Group provenance is Entra, and a
-  Databricks managed principal cannot join an Entra group. Grant them directly
-  at step 14, or make them Entra managed and accept the app registration
-- Federation policies are account-level and come last, because the subject cannot
-  be written until the repository and its protected branches exist
-- Decode a real CI token and read its `iss` and `sub` before writing any policy.
-  This is the verification step, not a precaution
+- Read what exists first. A deployment principal usually predates this step
+- Read names through the API, not the UI. The UI resolves a name from the
+  identity provider even when the SCIM attribute is empty, and it is the empty
+  attribute that `created_by` and every automated query report
+- Create one Databricks managed principal per environment, `displayName` set at
+  creation
+- Keep them out of `admins` and out of every group. Group provenance is Entra and
+  a Databricks managed principal cannot join an Entra group, so their access is a
+  direct grant at step 14
+- The federation policy comes last. It is account-level, and its subject cannot
+  be written before the repository and its protected branches exist
+- Decode a real CI token and read its `iss` and `sub` before writing the policy
 
 ```bash
 P=<profile>
+
 databricks -p "$P" service-principals list -o json
-az ad sp show --id <application-id> --query "{name:displayName, appId:appId}"
+
+databricks -p "$P" service-principals create \
+  --json '{"displayName":"SP-CICD-<region>-<org>-<env>","active":true}'
+
+databricks -p "$P" service-principals get <scim-id>
 ```
 
-**Check** A write is checked by reading back the thing that should have changed,
-not by the command not erroring.
+**Check** Read back rather than trusting a clean exit. The create response only
+echoes what you sent, and it carries neither `groups` nor `entitlements`.
 
-- `service-principals get` returns the display name you set
-- If it does not, wait and read again. The write propagates on a delay and an
-  immediate read can show nothing. Only a name that appears and then reverts
-  means Entra is the source and the change belongs there
-- No CI principal appears in `admins`
+- `displayName` is what you set. If it is missing, wait and read again. A SCIM
+  write can succeed and read back empty for a while
+- `groups` is empty, read again after ten minutes. An automation rule can add
+  `admins` on a delay
 - A pipeline run on a non-protected branch fails to authenticate against the
   production policy
 
-Result for this deployment, read 2026-08-11:
-
-| Finding | Value |
-| :--- | :--- |
-| Existing principal | Application ID `9ff3bc2c-c77a-436a-a8b1-a740cd61cae0`. Entra holds an application of that ID named `SP-Terraform-fra-sqli-dev`, created 2026-07-30 |
-| How Databricks holds it | Source reads Databricks, and the record carries an `External Id (from identity provider)`. 🔲 which kind it is, unverified |
-| Name | Shown in the UI, resolved through the identity provider reference. The SCIM `displayName` attribute is empty, so the CLI, the API and `created_by` all report the application ID |
-| Group membership | `admins`, `users`, and the Databricks-created users clone |
-| Entitlements | Admin access, unrestricted cluster creation, instance pool creation, all directly assigned and editable on the detail page |
-| CI principals | None |
-| Creating one | A workspace admin created a Databricks managed principal through the SCIM API. `displayName` was accepted on creation and persisted |
-| Its default entitlements | `workspace-access` and `databricks-sql-access`, neither requested |
-
-Not passed. No CI principals exist, and their federation policies cannot be
-written until the repository and its protected branches do.
-
-> [!warning] Read back, and allow for lag
-> - A SCIM patch setting `displayName` returned nothing and exited cleanly. `get`
->   showed no name. Later both `list` and `get` had it. The write had succeeded
->   and the read was too early
-> - A clean exit is not a result. One negative read-back is not proof of failure
-> - The UI is not a read-back. It resolved the name through the identity provider
->   while the API had none, so it can show a value no automated caller will see
-
-> [!info] Workspace admin on the deployment principal is a constraint
-> - An automation rule places it in `admins`, which is where its `CREATE CATALOG`
->   and `CREATE EXTERNAL LOCATION` come from
-> - Explicit grants are the narrower alternative, parked at step 13
-> - Do not demote before those grants exist, or the next deploy fails
-
-> [!info] Where the owner splits
-> - A workspace admin can create a Databricks managed principal, and
->   `displayName` sticks on creation
-> - The federation policy is account-level and needs an account admin
-> - Observed only for a Databricks managed principal created through the SCIM
->   API. Linking an Entra managed one at workspace level is 🔲 untested
+> [!info] Do not demote the Terraform principal
+> Its `admins` membership is where its `CREATE CATALOG` and
+> `CREATE EXTERNAL LOCATION` come from. Explicit grants are the narrower
+> alternative, parked at step 13. Demoting before those grants exist fails the
+> next deploy.
 
 **Sources**
 
@@ -1488,6 +1426,9 @@ Result for this deployment, read 2026-08-11:
 
 `Category: compute` · `Owner: workspace admin` · `Inputs: the tag names enforced by Azure Policy, from step 3` · `Prerequisite: 🔲 ADR serverless or classic posture, 🔲 ADR tagging and budget route` · `Impact: Rework 5d`
 
+Serverless compute and serverless SQL warehouses are available in
+`francecentral` and enabled on the workspace. Steps 18 and 19 take it from here.
+
 **When to use** When someone will create clusters.
 
 **Why it matters**
@@ -1543,7 +1484,7 @@ Result for this deployment, read 2026-08-11:
 
 ### 18. Create the serverless usage policy
 
-`Category: compute` · `Owner: workspace admin, or a holder of Serverless usage policy: Manager. The account-level billing admin role to see and manage every policy in the account` · `Inputs: the tag scheme, from step 17` · `Prerequisite: 🔲 ADR tagging and budget route` · `Impact: Lossy`
+`Category: compute` · `Owner: workspace admin, or a holder of Serverless usage policy: Manager. The account-level billing admin role to see and manage every policy in the account` · `Inputs: the tag scheme, plus serverless availability and enablement, both from step 17` · `Prerequisite: 🔲 ADR tagging and budget route` · `Impact: Lossy`
 
 Called a budget policy until recently. The documentation now says serverless usage
 policy, which describes it better.
@@ -1598,7 +1539,7 @@ run here and their cost has to be attributed to something.
 
 ### 19. Create SQL warehouses and set permissions
 
-`Category: compute` · `Owner: workspace admin` · `Inputs: the groups that get CAN USE, from step 8, usable here only once assigned to the workspace at step 9` · `Prerequisite: 🔲 ADR serverless or classic posture` · `Impact: Adjustable`
+`Category: compute` · `Owner: workspace admin` · `Inputs: the groups that get CAN USE, from step 8, usable here only once assigned to the workspace at step 9; serverless availability and enablement, from step 17` · `Prerequisite: 🔲 ADR serverless or classic posture` · `Impact: Adjustable`
 
 **Why it matters**
 
