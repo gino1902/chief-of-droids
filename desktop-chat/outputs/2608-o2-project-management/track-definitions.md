@@ -39,7 +39,9 @@ Every later artefact is written into the workspace this track delivers. Its work
 
 All platform components enabling use case implementation: Unity Catalog, connectors, CI-CD, cost and usage model, observability model, tags policy, architecture decisions, development framework.
 
-Its deliverables follow three different scheduling logics, so each carries a cadence tag: upfront baseline, standing decision work, or extraction of observed repetition.
+Its deliverables follow three different scheduling logics, so each carries a cadence tag: upfront baseline, standing decision work, or runway.
+
+Runway is the architectural runway, and it is governed by one principle. We build what the plane needs to take off, and no more. The runway then extends as the plane grows, so it is never finished and never built out ahead of the aircraft that will use it. A runway deliverable is therefore neither designed in full upfront nor withheld until repetition has piled up. It is built to what the next slices need, and extended when they need more.
 
 ### ⚙️ Activities
 
@@ -50,9 +52,9 @@ Its deliverables follow three different scheduling logics, so each carries a cad
 - Set the data quality standard and the data protection standard.
 - Deliver the connectivity the reporting estate needs to read the platform.
 - Catalogue the production star schemas before the first slice, including the access route to the live semantic models.
-- Rule and record architecture decisions, among them alerting and freshness thresholds, provisioning requests, the protection policies and the framework shape at extraction.
+- Rule and record architecture decisions, among them alerting and freshness thresholds, provisioning requests, the protection policies and each extension of the development framework.
 - Run the automated pipeline checks at CI and review the residual risks by checklist.
-- Extract the development framework once repetition is observed across slices.
+- Build the development framework as runway. Deliver the part the next slices need, then extend it as the platform grows and the slices show what they repeat.
 
 ### 📦 Deliverables
 
@@ -65,7 +67,7 @@ Its deliverables follow three different scheduling logics, so each carries a cad
 - Upfront baseline: reporting connectivity, meaning the serverless warehouse for BI, the connection and single sign-on configuration, and the capacity prerequisite.
 - Upfront baseline: the model inventory, a catalogue of the production star schemas covering facts, dimensions, grain, keys and measures, with its access route to the live semantic models.
 - Standing: the architecture decision log, the alerting and freshness decision, the provisioning gate decisions quoting measured usage numbers, the data protection policies for row filtering and masking, and the residual-risk review checklist.
-- Extraction: the development framework (project tree, templates, harness), not built upfront, its shape decided at extraction through an architecture decision.
+- Runway: the development framework (project tree, templates, harness), built to what the next slices need rather than designed in full upfront, extended as the platform grows, with each extension decided through an architecture decision.
 
 ## Data engineering
 
@@ -162,6 +164,6 @@ Each deliverable below sits where tracks meet and has exactly one owner.
 
 | Field        | Value      |
 |--------------|------------|
-| Version      | 1.1        |
+| Version      | 1.2        |
 | Last Updated | 2026-08-21 |
 | Status       | Draft      |
