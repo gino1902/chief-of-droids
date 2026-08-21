@@ -81,7 +81,7 @@ Data quality proves itself only on real data under real consumption, so the trac
 - `Silver` per slice: cleanse, standardize and hold the history of changing records.
 - `Gold` per slice: aggregate, refine and enrich into the slice's target tables.
 - Register and reuse conformed dimensions across slices.
-- Run the parity job in every slice that reproduces an existing report.
+- Run the parity tests in every slice that reproduces a figure users read today, in a report or in an application.
 - Orchestrate each slice end to end and re-run it after a fix without invalidating its parity evidence.
 - Build the cost mart over the platform's own usage data.
 - Table maintenance is not scoped as work. Managed tables with clustering keys leave compaction to the platform.
@@ -92,8 +92,8 @@ Data quality proves itself only on real data under real consumption, so the trac
 - Per slice: `Bronze`, `Silver` and `Gold` tables on managed storage with clustering keys, rescued records and validation metrics.
 - Per slice: the orchestrating job with schedule, retries, notification routing and a stated freshness target.
 - Per slice: the backfill and full-refresh procedure, with a parity re-run as its exit.
-- The parity job, comparing measure values at report grain and filter context against the live semantic model, with a stated tolerance per measure type and pass or fail evidence per run.
-- The conformed dimension register with its surrogate key strategy, and the rule that extending a shared dimension re-runs every prior slice's parity job.
+- The parity tests, comparing measure values at report grain and filter context against the figures users read today, whether a live Power BI semantic model or an application report such as APP, Smart or EPM, with a stated tolerance per measure type and pass or fail evidence per run.
+- The conformed dimension register with its surrogate key strategy, and the rule that extending a shared dimension re-runs every prior slice's parity tests.
 - The cost mart, views over the platform's billing, query history and audit data joined to the use case and team mapping.
 
 ## Usage layer
@@ -151,8 +151,8 @@ Each deliverable below sits where tracks meet and has exactly one owner.
 | Landing zone volume            | Infrastructure delivers the storage and the access identity, Platform engineering declares the credential, the external location and the volume, Data engineering reads from it | Platform engineering |
 | Model inventory                | Reads the production Power BI semantic models and feeds an architecture decision                                                                                                | Platform engineering |
 | Reporting connectivity         | Delivered as a platform service, consumed by every endpoint the Usage layer repoints                                                                                            | Platform engineering |
-| Parity job per report          | Specified from the model inventory, runs inside Data engineering pipelines, gates roll out                                                                                      | Data engineering     |
-| Parity job CI gate             | Runs the parity job's own tests on every merge                                                                                                                                  | Platform engineering |
+| Parity tests per report        | Specified from the model inventory and the consumed application reports, run inside Data engineering pipelines, gate roll out                                                   | Data engineering     |
+| Parity tests CI gate           | Runs the parity comparator's own tests on every merge                                                                                                                           | Platform engineering |
 | Conformed dimension register   | Built inside the slice that first needs a shared dimension, binding on every later slice                                                                                        | Data engineering     |
 | Cost mart                      | Reads the platform's usage data, Deployment reads adoption from it, provisioning decisions quote it                                                                             | Data engineering     |
 | Endpoint usage telemetry       | Registered by the Usage layer, modelled into the cost mart, read by Deployment                                                                                                  | Usage layer          |
