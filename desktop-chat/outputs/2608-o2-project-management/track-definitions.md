@@ -14,7 +14,7 @@ How a secure foundation is built, from network configuration and access manageme
 
 Every later artefact is written into the workspace this track delivers. Its work is finite and front-loaded, not demand-ordered.
 
-### Activities
+### ⚙️ Activities
 
 - Decide the workspace type and record it as an architecture decision, since it scopes the network and storage work that follows.
 - Configure the network resources group and the workspace network.
@@ -25,7 +25,7 @@ Every later artefact is written into the workspace this track delivers. Its work
 - The whole block is front-loaded and finite, not demand-ordered.
 - Provisioning compute for scale is not in this track. Provisioned compute exists only after an architecture decision quoting measured usage numbers.
 
-### Deliverables
+### 📦 Deliverables
 
 - The workspace type decision.
 - The secure, terraformed workspace with its test suite, remote state and its own pipeline, plus the manual checklist for settings with no API.
@@ -41,7 +41,7 @@ All platform components enabling use case implementation: Unity Catalog, connect
 
 Its deliverables follow three different scheduling logics, so each carries a cadence tag: upfront baseline, standing decision work, or extraction of observed repetition.
 
-### Activities
+### ⚙️ Activities
 
 - Author the governance surface and platform services as code.
 - Set the compute baseline and the policies governing any exception to it.
@@ -54,7 +54,7 @@ Its deliverables follow three different scheduling logics, so each carries a cad
 - Run the automated pipeline checks at CI and review the residual risks by checklist.
 - Extract the development framework once repetition is observed across slices.
 
-### Deliverables
+### 📦 Deliverables
 
 - Upfront baseline: the catalog as code with catalogs, schemas, volumes and grants, tags policy, and the group model grants are written against.
 - Upfront baseline: the compute baseline, serverless by default, with policies for the exception path.
@@ -73,7 +73,7 @@ Data transformation from ingestion to trusted, business-ready state. `Bronze`: s
 
 Data quality proves itself only on real data under real consumption, so the track delivers vertical slices that each end at a consumer, instead of completing one layer across all sources.
 
-### Activities
+### ⚙️ Activities
 
 - Deliver slices. The schedule unit is one report's data driven from `Bronze` through `Silver` to `Gold`.
 - Agree the landing zone contract per source, covering arrival, ordering and duplicate handling.
@@ -86,7 +86,7 @@ Data quality proves itself only on real data under real consumption, so the trac
 - Build the cost mart over the platform's own usage data.
 - Table maintenance is not scoped as work. Managed tables with clustering keys leave compaction to the platform.
 
-### Deliverables
+### 📦 Deliverables
 
 - Landing zone contract per source.
 - Per slice: `Bronze`, `Silver` and `Gold` tables on managed storage with clustering keys, rescued records and validation metrics.
@@ -102,7 +102,7 @@ The endpoints users interact with: AI/BI, agents, workflows. Endpoints are Datab
 
 A consumer must exist at the end of every slice for usage feedback to start early, and one endpoint per slice is enough for that.
 
-### Activities
+### ⚙️ Activities
 
 - Build one endpoint per slice, dashboard first.
 - Grant the slice's consumer group access to its `Gold` schema.
@@ -110,7 +110,7 @@ A consumer must exist at the end of every slice for usage feedback to start earl
 - Build custom apps and agent and workflow endpoints as demand arrives.
 - Stay thin early. The track builds nothing ahead of demand.
 
-### Deliverables
+### 📦 Deliverables
 
 - One endpoint per slice.
 - Per endpoint: the consumer group and its grants on the slice's `Gold` schema.
@@ -124,7 +124,7 @@ Drives use case adoption from an upfront selection process to roll out, through 
 
 The name reads as an end phase, but the track bookends the plan: selection sits at the head and the invitation and feedback loop runs inside every slice. Its owner is staffed from day one.
 
-### Activities
+### ⚙️ Activities
 
 - Run the upfront use case selection process, at the head of the plan.
 - Order the slice backlog and gate each slice on its readiness before it starts.
@@ -133,7 +133,7 @@ The name reads as an end phase, but the track bookends the plan: selection sits 
 - Retire the superseded report and its refresh path once a slice is rolled out.
 - Improve live use cases iteratively, then roll out.
 
-### Deliverables
+### 📦 Deliverables
 
 - The ordered slice backlog with its selection and sequencing criteria, and the per-slice readiness gate.
 - The slice definition of done, applied to every slice.
@@ -146,19 +146,19 @@ The name reads as an end phase, but the track bookends the plan: selection sits 
 
 Each deliverable below sits where tracks meet and has exactly one owner.
 
-| Deliverable | Junction | Owner |
-|---|---|---|
-| Landing zone volume | Infrastructure delivers the storage and the access identity, Platform engineering declares the credential, the external location and the volume, Data engineering reads from it | Platform engineering |
-| Model inventory | Reads the production Power BI semantic models and feeds an architecture decision | Platform engineering |
-| Reporting connectivity | Delivered as a platform service, consumed by every endpoint the Usage layer repoints | Platform engineering |
-| Parity job per report | Specified from the model inventory, runs inside Data engineering pipelines, gates roll out | Data engineering |
-| Parity job CI gate | Runs the parity job's own tests on every merge | Platform engineering |
-| Conformed dimension register | Built inside the slice that first needs a shared dimension, binding on every later slice | Data engineering |
-| Cost mart | Reads the platform's usage data, Deployment reads adoption from it, provisioning decisions quote it | Data engineering |
-| Endpoint usage telemetry | Registered by the Usage layer, modelled into the cost mart, read by Deployment | Usage layer |
-| Residual-risk review checklist | A CI review artefact applied to every pipeline | Platform engineering |
-| Deployment tooling boundary | Fixes which catalog objects the infrastructure code owns and which the packaging tooling owns | Platform engineering |
-| Provisioning gate | An architecture decision quoting measured usage numbers, requested by the workload's track | Platform engineering |
+| Deliverable                    | Junction                                                                                                                                                                        | Owner                |
+| :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------- |
+| Landing zone volume            | Infrastructure delivers the storage and the access identity, Platform engineering declares the credential, the external location and the volume, Data engineering reads from it | Platform engineering |
+| Model inventory                | Reads the production Power BI semantic models and feeds an architecture decision                                                                                                | Platform engineering |
+| Reporting connectivity         | Delivered as a platform service, consumed by every endpoint the Usage layer repoints                                                                                            | Platform engineering |
+| Parity job per report          | Specified from the model inventory, runs inside Data engineering pipelines, gates roll out                                                                                      | Data engineering     |
+| Parity job CI gate             | Runs the parity job's own tests on every merge                                                                                                                                  | Platform engineering |
+| Conformed dimension register   | Built inside the slice that first needs a shared dimension, binding on every later slice                                                                                        | Data engineering     |
+| Cost mart                      | Reads the platform's usage data, Deployment reads adoption from it, provisioning decisions quote it                                                                             | Data engineering     |
+| Endpoint usage telemetry       | Registered by the Usage layer, modelled into the cost mart, read by Deployment                                                                                                  | Usage layer          |
+| Residual-risk review checklist | A CI review artefact applied to every pipeline                                                                                                                                  | Platform engineering |
+| Deployment tooling boundary    | Fixes which catalog objects the infrastructure code owns and which the packaging tooling owns                                                                                   | Platform engineering |
+| Provisioning gate              | An architecture decision quoting measured usage numbers, requested by the workload's track                                                                                      | Platform engineering |
 
 | Field        | Value      |
 |--------------|------------|
