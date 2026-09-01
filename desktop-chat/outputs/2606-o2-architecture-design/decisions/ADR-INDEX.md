@@ -42,9 +42,11 @@ conformance derivation reading this directory reads only decisions. See
 | [ADR-010](ADR-010-middleware-o2-boundary.md) | Middleware and O2 boundary: SQLI data contracts, one-way inbound | Draft, amended | 2026-08-04 |
 | [ADR-011](ADR-011-ingestion-baseline-entity-contract.md) | Ingestion baseline: contract on entities, producing system as configuration | Draft | |
 | [ADR-012](ADR-012-repository-tree-strategy.md) | Repository tree strategy: the tree's shape follows the work, not the data | Draft | |
+| [ADR-013](ADR-013-bronze-table-projection.md) | Bronze table projection: one table per feed, named from the vehicle, generated from configuration | Draft | |
+| [ADR-014](ADR-014-bronze-write-block.md) | Bronze write block: whole-record VARIANT plus a fixed provenance set, stated in the record | Draft | |
 
-> ⚠️ Numbering is not reconciled. ADR-011 is the highest number known to this session, but records
-> are being written in parallel sessions, so 012 onward may already be claimed elsewhere. Reconcile
+> ⚠️ Numbering is not reconciled. ADR-014 is the highest number known to this session, but records
+> are being written in parallel sessions, so 015 onward may already be claimed elsewhere. Reconcile
 > against every in-flight session before assigning a number, and do not reserve numbers in advance.
 
 Two records are scoped and unwritten, deliberately unnumbered until the reconciliation above:
@@ -106,6 +108,19 @@ paths appear, and ADR-009 for the disposable-bridge precedent. It is the first r
 companion document is a locked C4 System Landscape describing what exists, rather than a locked
 design proposing how to build.
 
+ADR-013 and ADR-014 close the bronze layer, and both were written from a conformance derivation
+rather than from an interview. ADR-013 decides what a bronze table corresponds to, what it is
+called and how the set of them is generated, closing an Underspecified unit, a Gap on naming and an
+Underspecified projection. ADR-014 decides what a bronze table contains, reconciling a Conflict
+between ADR-008 and ADR-009 on the write block.
+
+ADR-014 is the first record written specifically because the substrate could not answer. ADR-008
+and ADR-009 both hold the bronze write shape by reference to design documents outside this
+directory, which ADR-INDEX describes above as deliberate concision. The consequence was that the
+only two Accepted records carried the least derivable content, and no rewording could fix it. The
+lesson generalises: a record that delegates its substance to a document outside the substrate is
+untestable by the conformance suite, however well written the delegation is.
+
 ADR-010 consolidates the middleware and O2 boundary. It grounds on ADR-001 (medallion ownership)
 and ADR-009 (the implemented SharePoint-to-bronze pattern). Its 2026-08-04 amendment records that
 the contracts are not canonical, that canonicalisation is deferred with no owner, and three open
@@ -157,7 +172,14 @@ in any decision, so it is not cited here. Until a record carries it, the count i
   than the number.
 - The feed-to-entity mapping does not exist. ADR-011 admits an entity "when a supply path
   exists" and nothing records which feeds carry which entities, so that admission test cannot
-  be evaluated. Two subdomains already have more entities than feeds.
+  be evaluated. Two subdomains already have more entities than feeds. ADR-013 does not need it,
+  because bronze projects from feeds, but it records the mapping's arrival as a reopening trigger.
+- ~~The bronze unit, its naming rule and the feed-to-table step are unowned.~~ Closed 2026-09-01 by
+  ADR-013.
+- ~~ADR-008 and ADR-009 conflict on the bronze write block.~~ Closed 2026-09-01 by ADR-014, which
+  amends both on that element and states the write block inline.
+- That a streaming table with no attached flow keeps its data across pipeline runs is undocumented,
+  and ADR-013's retirement rule depends on it. Test before ADR-013 leaves Draft.
 - `Task` is TBD on every record, to be filled once ticketed.
 - Decision-maker is a placeholder (Gino) on most records, and the consulted parties vary and need
   confirming. ADR-010 is the exception, carrying five named decision-makers, which is why its
