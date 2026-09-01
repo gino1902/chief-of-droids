@@ -70,7 +70,7 @@
 
 Reopens when the feed-to-entity mapping exists, making D evaluable, or when one logical dataset splits across several vehicles, which is the case this record has not tested.
 
-> ⚠️ Unverified and load-bearing. That a streaming table with no attached flow keeps its data across pipeline runs is not documented anywhere. The `create_streaming_table` plus `@dp.append_flow` pattern is documented, the persistence of a flowless table is not. Test before this record leaves Draft.
+> ⚠️ Unverified and load-bearing. That a streaming table with no attached flow keeps its data across pipeline runs is not documented anywhere. The `create_streaming_table` plus `@dp.append_flow` pattern is documented, the persistence of a flowless table is not. Test 2 in [`../2026-09-01-bronze-platform-tests.md`](../2026-09-01-bronze-platform-tests.md) settles it on the workspace. Run it before this record leaves Draft.
 
 ## Consequences
 

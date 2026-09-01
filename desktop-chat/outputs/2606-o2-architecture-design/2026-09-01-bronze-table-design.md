@@ -197,10 +197,10 @@ Common to all three: `cloudFiles.format=json`, `multiLine=true`, `singleVariantC
 
 ## Validation
 
-Three empirical tests come first, in this order, because each can invalidate the design rather than merely fail it.
+Three empirical tests come first, in this order, because each can invalidate the design rather than merely fail it. They run on the workspace, not locally, and the runnable versions are in [2026-09-01-bronze-platform-tests.md](2026-09-01-bronze-platform-tests.md).
 
 1. One file, top-level array, `multiLine=true`, `singleVariantColumn`. Does it yield one row per array element? If not, the grain of the whole layer is wrong.
-2. Two tables in one pipeline, a flow on one, then the flow removed and the pipeline re-run. Do the table and its rows survive? If not, the retirement rule does not work.
+2. Two tables in one pipeline, a flow on one, then the flow removed and the pipeline re-run, with a third run removing the declaration as the control. Do the table and its rows survive? If not, the retirement rule does not work.
 3. `singleVariantColumn` with `databricks.connection` on one SharePoint file, which is ADR-009's own open verification. Not needed for the sandbox, needed before the SharePoint phase.
 
 Then the standing checks.
