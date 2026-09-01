@@ -108,18 +108,18 @@ paths appear, and ADR-009 for the disposable-bridge precedent. It is the first r
 companion document is a locked C4 System Landscape describing what exists, rather than a locked
 design proposing how to build.
 
-ADR-013 and ADR-014 close the bronze layer, and both were written from a conformance derivation
-rather than from an interview. ADR-013 decides what a bronze table corresponds to, what it is
-called and how the set of them is generated, closing an Underspecified unit, a Gap on naming and an
-Underspecified projection. ADR-014 decides what a bronze table contains, reconciling a Conflict
-between ADR-008 and ADR-009 on the write block.
+ADR-013 and ADR-014 close the bronze layer. Both were written from a conformance derivation rather
+than from an interview, which is a first for this set.
 
-ADR-014 is the first record written specifically because the substrate could not answer. ADR-008
-and ADR-009 both hold the bronze write shape by reference to design documents outside this
-directory, which ADR-INDEX describes above as deliberate concision. The consequence was that the
-only two Accepted records carried the least derivable content, and no rewording could fix it. The
-lesson generalises: a record that delegates its substance to a document outside the substrate is
-untestable by the conformance suite, however well written the delegation is.
+- ADR-013 decides what a bronze table corresponds to, what it is called and how the set is
+  generated, closing an Underspecified unit, a Gap on naming and an Underspecified projection.
+- ADR-014 decides what a bronze table contains, reconciling a Conflict between ADR-008 and ADR-009
+  on the write block, and states that block inline rather than by reference.
+- The lesson generalises beyond bronze. ADR-008 and ADR-009 both held the write shape by reference
+  to design documents outside this directory, which this index describes above as deliberate
+  concision. The result was that the only two Accepted records carried the least derivable content,
+  and no rewording could fix it. A record that delegates its substance outside the substrate is
+  untestable by the suite, however well the delegation is written.
 
 ADR-010 consolidates the middleware and O2 boundary. It grounds on ADR-001 (medallion ownership)
 and ADR-009 (the implemented SharePoint-to-bronze pattern). Its 2026-08-04 amendment records that
