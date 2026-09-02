@@ -127,32 +127,29 @@ One pipeline defines every table by looping the feed configuration, over two lis
 from pyspark import pipelines as dp
 from o2_platform.bronze import ingest
 
-for feed in ingest.materialised_feeds(config_path):   # active or retired
-    dp.create_streaming_table(name=feed.table, cluster_by=["_snapshot_date"],
-                              cluster_by_auto=True)
-
-for feed in ingest.ingesting_feeds(config_path):      # active only
-    def attach(feed=feed):        # bind the loop variable, or every flow reads the last feed
-        @dp.append_flow(target=feed.table)
+for feed in ingest.active_feeds(config_path):
+    def define(feed=feed):        # bind the loop variable, or every flow reads the last feed
+        dp.create_streaming_table(name=feed.table, cluster_by=["_snapshot_date"],
+                                  cluster_by_auto=True)
+        @dp.append_flow(target=feed.table, name=f"flow_{feed.table}")
         def _():
             return ingest.read(spark, feed, landing_root)
-    attach()
+    define()
 ```
 
-- The split is forced, not stylistic. A dataset absent from a later run is dropped from the target schema, so a single loop over active feeds would destroy a table the moment its feed stopped being active.
-- Retiring a feed removes it from the ingestion list alone, stopping the flow and keeping the table.
-- Deleting a configuration row deletes the table. Default storage keeps the files 7 days, which is time to notice.
-- `cluster_by_auto` is a real boolean argument on `create_streaming_table`, and the reference states it combines with `cluster_by` for the initial keys.
+- One loop over active feeds. Retiring a feed means removing its row, and its table survives, tested
+  2026-09-02 in development mode, production mode and production mode with a full refresh.
+- An earlier version used two loops, so a retired feed kept a declared table with no flow. That is
+  invalid: the update fails with `No query found for dataset` and takes every other feed down with
+  it.
+- `cluster_by_auto` is a real boolean argument on `create_streaming_table`, and it combines with
+  `cluster_by` for the initial keys.
 
-> ⚠️ Tested 2026-09-02 and the two-loop split above does not work. A streaming table with no
-> attached flow is not a valid state: the update fails with `No query found for dataset <name>`, and
-> it fails the whole update, so one retired feed would stop every other feed. Removing the dataset
-> entirely, however, did not drop the table, which is the opposite of the behaviour this split was
-> built to prevent. Retirement may simply be removing the feed, but the run was development mode
-> with no full refresh, so one production-mode run settles it. ADR-013's projection half is
-> reopened. The unit and naming halves are unaffected.
+> ⚠️ Documentation says a dataset omitted from a later run is dropped from the target schema. That
+> did not reproduce under any of the three conditions tested. Do not treat non-destructive removal as
+> guaranteed, and keep the check in the validation set so a platform change surfaces it.
 
-The feed configuration needs five columns it does not have, plus a fourth status value for retired.
+The feed configuration needs five columns it does not have. A fourth status value is no longer required for safety, since removal proved non-destructive, and is now only a documentation choice.
 
 | Column | Why |
 |:-------|:----|
@@ -195,15 +192,15 @@ Common to all three: `cloudFiles.format=json`, `multiLine=true`, `singleVariantC
 
 `encoding` is explicit on purpose. All 21 files carry a BOM, the reader detects encoding from it automatically, and the vendor documents that detection as unreliable with an explicit `encoding` as the remedy. The BOM and `multiLine` interaction is documented nowhere.
 
-> ⚠️ Tested 2026-09-02 and it does not hold. `singleVariantColumn` with `multiLine=true` puts the
-> whole file in one VARIANT, so a 3-record array gives 1 row, not 3, on both `read_files` and
-> `cloudFiles`. `multiLine` is not the cause: without `singleVariantColumn` the array explodes
-> correctly. `multiLine=false` is worse, yielding one row per physical line with no error.
-> Consequently every bronze table would be one row per file, and the two largest feeds would exceed
-> the 128 MiB cap as a single value and carry no data at all. `variant_explode` recovers the
-> elements. The clean fix is newline-delimited JSON from the producer. Evidence and the full option
-> set are in [2026-09-01-bronze-platform-tests.md](2026-09-01-bronze-platform-tests.md), and the
-> grain must be settled before anything is built.
+> ⚠️ Tested 2026-09-02 and the read block above is wrong for the files as they arrive today.
+> `singleVariantColumn` with `multiLine=true` puts the whole file in one VARIANT, giving one row per
+> file, and the two largest feeds would exceed the 128 MiB cap and carry nothing. Two routes work and
+> both preserve explicit nulls, which `projects_report` contains. Ask the producer for
+> newline-delimited JSON, then `multiLine=false` plus `singleVariantColumn` is one row per record with
+> no cap exposure. Failing that, schema inference plus
+> `to_variant_object(struct(* EXCEPT (_rescued_data)))` is the faithful generic fallback, at the cost
+> of a schema location and active schema evolution. Full option table in
+> [2026-09-01-bronze-platform-tests.md](2026-09-01-bronze-platform-tests.md).
 
 ---
 
@@ -221,17 +218,15 @@ Common to all three: `cloudFiles.format=json`, `multiLine=true`, `singleVariantC
 
 ## Validation
 
-Tests 1 and 2 ran on the workspace on 2026-09-02 and both failed. Results, evidence and the
-swept-object list are in [2026-09-01-bronze-platform-tests.md](2026-09-01-bronze-platform-tests.md).
-Test 3 is unchanged and still gated on the SharePoint Beta and an Entra app registration.
+Tests 1 and 2 ran on the workspace on 2026-09-02, both failed, and a second round the same day
+settled what replaces them. Evidence, the full option table and the swept-object list are in
+[2026-09-01-bronze-platform-tests.md](2026-09-01-bronze-platform-tests.md). Test 3 is unchanged and
+still gated on the SharePoint Beta and an Entra app registration.
 
-Two things must be settled before the standing checks below mean anything.
-
-1. The grain. Decide between newline-delimited JSON from the producer, exploding in bronze, or
-   reading with schema inference and wrapping each row. Only the first avoids the 128 MiB cap on the
-   two largest feeds.
-2. The retirement mechanism, which needs one production-mode pipeline run to confirm what run C
-   showed in development mode.
+- Retirement is settled. One loop, remove the feed, the table survives. Verified under three
+  conditions.
+- The grain has two working routes and the choice is not O2's alone. It depends on whether the
+  producer will emit newline-delimited JSON. Ask before building.
 
 Then the standing checks.
 

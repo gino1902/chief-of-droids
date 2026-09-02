@@ -36,11 +36,21 @@
 
 **Name.** Take the vehicle filename, drop the date prefix and the extension, lowercase, replace each run of non-alphanumeric characters with one underscore. Store the result in the feed configuration so the name is data.
 
-**Projection.** One ingestion pipeline defines every table by iterating the feed configuration, over two lists rather than one.
+**Projection.** One ingestion pipeline defines every table by iterating the active feeds in the
+configuration. One loop, not two.
 
-- The table list holds every feed ever ingested and never shrinks.
-- The ingestion list holds the feeds currently ingesting.
-- A feed's status moves it between them, so retiring a feed stops its flow and keeps its table.
+- Retiring a feed means removing it from the active list. Its table and history stay.
+- Tested 2026-09-02 in development mode, production mode and production mode with a full refresh. In
+  all three the removed dataset's table survived with its rows.
+- An earlier version of this record used two lists, on the documented behaviour that a dataset
+  omitted from a later run is dropped from the target schema. That behaviour did not reproduce under
+  any of the three conditions, and the two-list form is separately invalid, since a streaming table
+  with no attached flow fails the whole pipeline update with `No query found for dataset`.
+
+> ⚠️ Three conditions is not exhaustive, and the documentation says otherwise. Do not treat
+> non-destructive removal as guaranteed. The check sits in Validation so a platform change surfaces
+> it, and evidence is in
+> [`../2026-09-01-bronze-platform-tests.md`](../2026-09-01-bronze-platform-tests.md).
 
 ### Rationale
 
@@ -58,33 +68,17 @@
 - B also makes the producer structural, which is what ADR-011 decided against.
 - The naming rule rests on a confirmed absence. ADR-012's prohibition is written against directory names and does not reach table names, so nothing forbids the rule and nothing else supplies one.
 - Mechanical beats tidy because the alternative is a judgement re-made per feed. The price is accepted: `others_whoz_profile_report` carries a source-folder bucket that means nothing to O2.
-- The two-list split was argued from documented drop-on-absence behaviour. That argument did not survive testing, see the note under Validation. The split is withdrawn and the retirement mechanism is reopened.
+- The projection is a single loop because removal proved non-destructive on test, and because the two-list alternative is invalid: a flowless streaming table fails the whole update.
 
 ## Validation
 
 - Every active feed row has exactly one bronze table, and the counts match.
 - No producer name, filename, source path or table name appears in pipeline code. Greppable.
 - Adding a feed row and redeploying creates a table with no diff outside the configuration file.
-- Flipping a feed to retired stops its flow and leaves its table and row count unchanged. This is the check most likely to fail.
+- Removing a feed from the active list leaves its table and row count unchanged. Verified 2026-09-02 under three conditions, and the check stays because the documentation says the opposite.
 - The naming rule yields distinct names with no collision. Verified on the 2026-09-01 configuration, which produces 21.
 
 Reopens when the feed-to-entity mapping exists, making D evaluable, or when one logical dataset splits across several vehicles, which is the case this record has not tested.
-
-> ⚠️ Falsified 2026-09-02. The two-list projection above does not work, and the reason it was built
-> did not reproduce either. Tested on the workspace, evidence in
-> [`../2026-09-01-bronze-platform-tests.md`](../2026-09-01-bronze-platform-tests.md).
->
-> - A streaming table declared by `create_streaming_table` with no attached flow is not a valid
->   state. The pipeline update fails with `No query found for dataset <name>`, and it fails the
->   whole update, so one retired feed would stop ingestion for every other feed.
-> - Removing the dataset entirely did not drop the table. It survived with its data, still a
->   `STREAMING_TABLE`. So the drop-on-absence this split was designed to prevent did not occur.
-> - That inverts the problem. Retirement may simply be removing the feed from the configuration.
->   Do not write that as a rule yet: the run was development mode, serverless, triggered, with no
->   full refresh, and any of those could explain it. One production-mode run settles it.
->
-> The unit and the naming halves of this record are unaffected and stand. The projection half is
-> reopened. Editing rather than superseding is legitimate only because this record is Draft.
 
 ## Consequences
 
@@ -92,7 +86,7 @@ Reopens when the feed-to-entity mapping exists, making D evaluable, or when one 
 - A feed added, retired or repointed is a configuration edit touching no code and no directory.
 - Deleting a configuration row deletes a table. Default storage keeps the files for 7 days, which is time to notice rather than a safety net.
 - The feed configuration gains at least four columns: derived table name, path relative to the landing root, filename glob, and record shape.
-- The status vocabulary needs a fourth value. Retired means was ingested and no longer is, which today cannot be expressed.
+- The status vocabulary does not need a fourth value for safety, since removal is non-destructive. A retired value may still be wanted to record which feeds once ingested, which is documentation rather than correctness.
 - Table names carry source-folder artefacts. Anyone reading the catalog for business meaning is reading the wrong layer.
 - A logical dataset split across vehicles becomes several tables and a union in silver. No such case exists today.
 

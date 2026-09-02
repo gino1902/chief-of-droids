@@ -33,20 +33,28 @@ This record states the write block inline rather than referring to it.
 
 ## Decision
 
-> ⚠️ The column contract below stands. How `payload` gets populated does not, as of 2026-09-02.
-> `singleVariantColumn` with `multiLine=true` puts the whole file in one VARIANT, giving one row per
-> file rather than one row per record, verified on both `read_files` and `cloudFiles`. Two feeds
-> would additionally exceed the 128 MiB cap as a single value and carry no data at all. Evidence and
-> the available repairs are in
-> [`../2026-09-01-bronze-platform-tests.md`](../2026-09-01-bronze-platform-tests.md). The grain
-> question needs settling, most cleanly by asking the producer for newline-delimited JSON, before
-> this record leaves Draft.
+> ⚠️ The five columns below stand. How `payload` is populated is now decided by the source format,
+> tested 2026-09-02, evidence in
+> [`../2026-09-01-bronze-platform-tests.md`](../2026-09-01-bronze-platform-tests.md).
+>
+> - `singleVariantColumn` with `multiLine=true` puts the whole file in one VARIANT, so a pretty-printed
+>   array gives one row per file. Two feeds would also exceed the 128 MiB cap and carry nothing.
+> - With newline-delimited JSON, `multiLine=false` plus `singleVariantColumn` gives one row per record,
+>   preserves explicit nulls and never builds a whole-file VARIANT. This is the target and it needs a
+>   producer change.
+> - Without it, the only faithful generic route is schema inference plus
+>   `to_variant_object(struct(* EXCEPT (_rescued_data)))`, which costs a schema location and active
+>   schema evolution.
+> - `parse_json(to_json(struct(*)))` is disqualified. `to_json` drops null fields, and
+>   `projects_report` carries explicit nulls, so it would silently alter the data.
+>
+> Which of the two applies is an open decision pending the producer's answer.
 
 **Option A. Every bronze table carries these five columns and no others.**
 
 | Column | Type | Source |
 |:-------|:-----|:-------|
-| `payload` | VARIANT | The whole record, via `singleVariantColumn` |
+| `payload` | VARIANT | The whole record. `singleVariantColumn` on NDJSON, or `to_variant_object` on an array, see the note above |
 | `_source_file` | STRING | `_metadata.file_path` |
 | `_source_file_mtime` | TIMESTAMP | `_metadata.file_modification_time` |
 | `_ingested_at` | TIMESTAMP | Pipeline run time |

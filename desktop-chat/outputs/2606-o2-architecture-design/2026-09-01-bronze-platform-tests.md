@@ -3,7 +3,7 @@
 | Field | Value |
 |:------|:------|
 | Date | 2026-09-01 |
-| Status | Run 2026-09-02. Both tests failed. See Results |
+| Status | Run 2026-09-02, then a second round the same day. Both questions now answered. See Results and Round 2 |
 | Runs on | The Databricks workspace, profile `o2_sandbox`, warehouse `ca24aadb34697d64` |
 | Run by | gmourgues@sqli.com, 2026-09-02, serverless throughout |
 | Gates | [ADR-013](decisions/ADR-013-bronze-table-projection.md) leaving Draft, and the whole layer's grain |
@@ -234,6 +234,69 @@ Run C is the surprising half and it inverts the problem.
 ### Test 3 not run
 
 Still gated on the SharePoint Beta, the Entra app registration and the permission scopes. Unchanged.
+
+---
+
+## Round 2, 2026-09-02, the options the first round left untested
+
+Same throwaway-and-sweep pattern. Two files this time, the pretty-printed array the producer sends
+today and a newline-delimited version of the same three records, plus a third file carrying explicit
+nulls inside a nested object, which mirrors `projects_report`.
+
+### The grain: only two routes are both correct and faithful
+
+| Route | Rows from 3 records | Explicit nulls | Whole file through one VARIANT |
+|:------|--------------------:|:---------------|:-------------------------------|
+| NDJSON, `multiLine=false` plus `singleVariantColumn` | 3, correct | preserved | no |
+| `singleVariantColumn` then `variant_explode` | 3, correct | preserved | yes, so the two large feeds fail |
+| Schema inference then `to_variant_object(struct(* EXCEPT (_rescued_data)))` | 3, correct | preserved | no |
+| Schema inference then `parse_json(to_json(struct(*)))` | 3, correct | **destroyed** | no |
+| `schema => 'payload VARIANT'` | 3, but all NULL | not applicable | no |
+| `schemaHints => 'payload VARIANT'` | 3, payload column empty | not applicable | no |
+
+- The two documented alternatives I had flagged as "next thing to try" are both dead ends, and both
+  fail in a way that looks like success. `schema => 'payload VARIANT'` returns the right row count
+  with every payload NULL, because the records have no field called `payload`. `schemaHints` simply
+  adds an empty column beside the inferred ones. A row count alone would have passed either.
+- `parse_json(to_json(struct(*)))` is disqualified on fidelity. `to_json` drops null-valued fields,
+  so `{"delivery_manager":{"id":null,"display_name":null}}` becomes `{"delivery_manager":{}}`.
+  `projects_report` carries exactly that shape, so this route would silently alter the data.
+- `to_variant_object` preserves nulls exactly. With `struct(*)` it carries a `_rescued_data` artefact
+  into the payload, and `struct(* EXCEPT (_rescued_data))` removes it without naming any feed's
+  columns, so the form stays generic.
+- NDJSON was confirmed end to end, not just in SQL. A serverless pipeline read it through Auto Loader
+  with `singleVariantColumn` and produced three rows per table.
+
+**So the upstream ask is worth making, and the interim exists if it is refused.** NDJSON keeps
+`singleVariantColumn` and needs no schema inference. The `to_variant_object` route works for all 21
+feeds including the two that exceed the cap, at the cost of schema inference, a schema location and
+a `_rescued_data` column to exclude.
+
+### Retirement: drop-on-absence did not reproduce under any condition
+
+| Condition | Removed dataset's table |
+|:----------|:------------------------|
+| Development mode, triggered | survived with its rows |
+| Production mode, triggered | survived with its rows |
+| Production mode, full refresh | survived with its rows |
+
+- Three conditions, no drop. The documented behaviour, that a dataset omitted from a later run is
+  dropped automatically from the target schema, did not occur in any of them.
+- So ADR-013's two-loop split is not just invalid, it is unnecessary. A single loop over active feeds
+  is correct, and retiring a feed means removing its row.
+- The fourth status value is no longer needed for safety. It may still be wanted to record which
+  feeds once ingested, which is a documentation choice rather than a correctness one.
+- ⚠️ State the divergence rather than declaring the documentation wrong. Three conditions is not
+  exhaustive, and the behaviour may be scoped to materialized views, or to a case these runs did not
+  reach. What is safe to rely on is that removal is not destructive here, and the check belongs in
+  the validation set so a platform change surfaces it.
+
+### Swept
+
+Pipelines `zz-bronze-flowless-probe` and `zz-prod-retire-probe` deleted, workspace sources under
+`/Users/gmourgues@sqli.com/zz_probe/` deleted, schema `dev_sandbox.zz_grain_probe` dropped cascade
+with its tables and volume. Verified: `dev_sandbox` shows its original four schemas and the workspace
+lists no pipelines.
 
 ---
 
