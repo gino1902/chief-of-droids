@@ -1,11 +1,35 @@
 # Databricks dev tests
 
-One entry per test. What is being tested, the play, what passes.
+One entry per test. What it needs, what is being tested, the play, what passes,
+and what passing means. Run them in the order given, because the later ones
+depend on objects the earlier ones create.
+
+## Terms
+
+Enough to read the tests. Each of these appears below without further
+explanation.
+
+| Term | What it is |
+| :--- | :--- |
+| Unity Catalog | The governance layer that owns catalogs, schemas, tables and the grants on them. It sits outside any single workspace. |
+| Metastore | The account-level registry holding those definitions. This workspace shares one with other tenants, which is why isolation matters. |
+| Catalog | The top level of a data namespace. A catalog holds schemas, a schema holds tables. |
+| Schema | A group of tables inside a catalog. What most databases call a database. |
+| Binding | The list of workspaces allowed to reach a catalog. A separate object from the catalog itself. |
+| SQL warehouse | Managed compute that runs SQL. One must be running for any query below to return. |
+| Bundle (DAB) | A folder of YAML plus code that the CLI deploys to a workspace. `databricks.yml` is its root file. |
+| Target | One named deployment of a bundle, for example `dev` or `staging`. Targets can point at different catalogs. |
+| Service principal | A non-human identity. It owns nothing and holds no privilege until one is granted. |
+| Storage credential | The identity Unity Catalog uses to reach Azure storage, backed here by an access connector. |
+| External location | A storage path Unity Catalog is allowed to use, paired with a credential. |
+| Cluster policy | A rule set applied whenever compute is created. Used here to force tags onto it. |
+| Lakeflow pipeline | A managed job that keeps derived tables up to date. Formerly Delta Live Tables. The module is now `pyspark.pipelines`, imported as `dp`. `dlt` still works and is no longer recommended. |
 
 ## Values
 
-Every `<placeholder>` in this document resolves here. Substitute before running
-anything.
+Two kinds of placeholder. The first table is what you are given, substitute
+before running anything. The second is what a command hands back to you part way
+through a test.
 
 | Placeholder | Value |
 | :--- | :--- |
@@ -27,7 +51,7 @@ anything.
 | `<sp-name>` | `SP-CICD-fra-sqli-dev` |
 | `<sp-app-id>` | `178e0409-b9d4-43f8-93c7-3b3e29ef0326` |
 | `<sp-scim-id>` | `148154309461952` |
-| `<warehouse-id>` | `ca24aadb34697d64` |
+| `<warehouse-id>` | `ca24aadb34697d64` (the existing warehouse the queries below run on) |
 | `<storage-account>` | `stdbrmanagedfrasqlidev` |
 | `<container>` | `managed` |
 | `<connector>` | `ac-databricks-dev` |
@@ -40,7 +64,18 @@ anything.
 | `<cost-center>` | `TBD` |
 | `<project>` | `databricks` |
 | `<tags>` | `owner=<owner> environment=<environment> cost_center=<cost-center> project=<project>` |
-| `<admins-group-id>` | `155326641383371` |
+
+Produced as you go. Read each from the output of the command named.
+
+| Placeholder | Where it comes from |
+| :--- | :--- |
+| `<policy-id>` | Returned by `cluster-policies create`. |
+| `<warehouse-id-new>` | Returned by `warehouses create` in the tagging test. Not the same warehouse as `<warehouse-id>`. |
+| `<pipeline-id>` | Returned by `pipelines create`. |
+| `<job-id>` | From `databricks -p <profile> jobs list`. |
+| `<group-id>` | The Databricks group id from `groups list`, not the Entra object id. |
+| `<runner-token>` | The `glrt-` token from GitLab, Settings, CI/CD, Runners. |
+| `<client-id>`, `<client-secret>`, `<refresh-token>` | From the Entra app registration. See the SharePoint test. |
 
 ## Sign in
 
@@ -54,7 +89,57 @@ Every test below assumes this is done and that you hold workspace admin.
 
 ---
 
+## Check what the platform will refuse before building on it
+
+Needs: read access to the workspace and to `<rg>`. Nothing is created or
+changed.
+
+Three reads. They cost nothing and they decide how the later entries have to be
+written. Skipping them means discovering the answers as failed applies.
+
+```bash
+databricks -p <profile> metastores summary
+```
+
+Look for `storage_root`. Absent means every catalog you create must name its own
+`MANAGED LOCATION`, which is what the storage entry does. Present means a catalog
+created without one silently inherits storage belonging to the shared metastore,
+and your data lands somewhere you do not own.
+
+```bash
+az policy assignment list --scope "/subscriptions/<subscription>/resourceGroups/<rg>" --disable-scope-strict-match --query "[].{name:name, effect:policyDefinitionId, enforcement:enforcementMode, params:parameters}" -o json
+```
+
+This tells you which tags every resource you create in that group must carry.
+Miss one and the policy
+refuses the request with `403` before it reaches the resource provider, unless
+`enforcementMode` reads `DoNotEnforce`, in which case the create succeeds and the
+resource is quietly marked non-compliant instead.
+
+Take the keys from each assignment's `tagName` parameter rather than its name,
+because the name is a label someone chose.
+
+Assignments above the resource group do not appear unless you can read that
+scope. Unreadable is an acceptable answer, unknown is not.
+
+```bash
+az provider show -n Microsoft.Storage --query registrationState -o tsv
+az provider show -n Microsoft.EventGrid --query registrationState -o tsv
+```
+
+Both must read `Registered` or the storage entry fails at its first create.
+
+Pass: you can state the `storage_root`, the tag keys, the enforcement mode, the
+scopes you could not read, and both provider states.
+
+Means: you can say where new data lands by default, which tags Azure will insist
+on, and whether the storage tests can run at all. Without these three answers
+the later tests fail on surprises instead of on real problems.
+
 ## Check an isolated catalog is still reachable
+
+Needs: workspace admin. This one changes live configuration, so run it against
+`<catalog>` and nothing else.
 
 On a shared metastore every other tenant's workspace can see your catalogs, so
 you set them `ISOLATED`. That does not bind your own workspace: the binding list
@@ -95,7 +180,14 @@ catalog lists no schemas and still passes.
 - Isolation is between workspaces, never between catalogs. Grants separate
   catalogs.
 
+Means: other tenants on the shared metastore cannot reach your data and your own
+workspace still can. A catalog set to isolated with no binding is unreachable by
+everyone, yourself included.
+
 ## Check the same code deploys to two targets
+
+Needs: workspace admin and a local clone of the `<bundle>` repo. Work inside
+that repo, not in a scratch directory.
 
 Dev and staging run the same source tree against different catalogs. What breaks
 that is `mode: development`, which prefixes every resource name, schemas
@@ -212,7 +304,13 @@ between them.
   through every failed run above. Read `bundle summary` to know what exists, not
   the deploy's exit code.
 
+Means: one source tree serves dev and staging with no manual edit between them.
+Promoting to staging cannot carry a dev-only name along with it.
+
 ## Check the CI pipeline can authenticate without a secret
+
+Needs: Maintainer on the GitLab project, and a machine that can run a GitLab
+runner. No Databricks account admin yet, that is the next test.
 
 The pipeline authenticates as a service principal with no secret anywhere. Until
 a federation policy exists it cannot succeed, but it still produces the token
@@ -285,7 +383,13 @@ Why those two variables are in the file:
 `DATABRICKS_OIDC_TOKEN_ENV` is the right variable name for a generic OIDC
 provider. The CLI echoes it back as `oidc_token_env`.
 
+Means: the pipeline holds no Databricks secret anywhere. The error it returns is
+the exact federation policy to request, so the ask you send the account admin is
+precise rather than approximate.
+
 ## Check a grant is enforced against someone who owns nothing
+
+Needs: workspace admin, plus the UI step below before the deploy will work.
 
 You own everything you created here, and an owner holds every privilege on it. So
 your own queries never test a grant, they only test that you are the owner.
@@ -361,7 +465,14 @@ apart.
 - `CREATE TABLE IF NOT EXISTS` on an existing table needs no privilege. The
   denial lands on the first statement that writes.
 
+Means: access is decided by grants rather than by ownership. Whatever you can
+read as yourself tells you nothing about what a colleague or a job can read.
+
 ## Check managed tables can live on storage you own
+
+Needs: Contributor on `<rg>` for the creates, and Owner or User Access
+Administrator for the role assignment. Those are usually two different people,
+so raise the role request early.
 
 Everything on the workspace's own container dies with the workspace. This puts
 managed tables on a storage account in a resource group you control.
@@ -438,7 +549,14 @@ exists. Nothing else changes.
 - The role goes on the container, so it is one assignment per container. Prod
   with a container per catalog needs one each.
 
+Means: the data outlives the workspace. Delete or rebuild the workspace and the
+tables are still sitting in a resource group your team controls.
+
 ## Check tags land on compute and on warehouses
+
+Needs: workspace admin. `<cost-center>` is still `TBD` and the policy fixes it
+as a literal value, so set the real one before creating the policy or every
+cluster it governs carries a wrong tag.
 
 Databricks compute is the largest line on the bill. Untagged, you cannot say
 which project or environment spent it, and the tags on your Azure resources do
@@ -475,8 +593,8 @@ with `0 is not a valid value` even though the UI fills it in.
 
 ```bash
 databricks -p <profile> warehouses create --json '{"name":"wh-dev","cluster_size":"2X-Small","warehouse_type":"PRO","enable_serverless_compute":true,"auto_stop_mins":10,"min_num_clusters":1,"max_num_clusters":1,"tags":{"custom_tags":[{"key":"owner","value":"<owner>"},{"key":"environment","value":"<environment>"},{"key":"cost_center","value":"<cost-center>"},{"key":"project","value":"<project>"}]}}'
-databricks -p <profile> warehouses set-permissions <warehouse-id> --json '{"access_control_list":[{"group_name":"<group>","permission_level":"CAN_USE"}]}'
-databricks -p <profile> warehouses get <warehouse-id> -o json
+databricks -p <profile> warehouses set-permissions <warehouse-id-new> --json '{"access_control_list":[{"group_name":"<group>","permission_level":"CAN_USE"}]}'
+databricks -p <profile> warehouses get <warehouse-id-new> -o json
 ```
 
 Pass: the `custom_tags` read back and `<group>` holds `CAN_USE`.
@@ -484,53 +602,20 @@ Pass: the `custom_tags` read back and `<group>` holds `CAN_USE`.
 It starts `RUNNING` and bills until auto-stop, so stop it when you are done:
 
 ```bash
-databricks -p <profile> warehouses stop <warehouse-id>
+databricks -p <profile> warehouses stop <warehouse-id-new>
 ```
 
 Compute created before the policy existed stays untagged and no policy reaches
 back to fix it. The provisioned starter warehouse is the usual case.
 
-## Check what the platform will refuse before building on it
-
-Three reads. They cost nothing and they decide how the later entries have to be
-written. Skipping them means discovering the answers as failed applies.
-
-```bash
-databricks -p <profile> metastores summary
-```
-
-Look for `storage_root`. Absent means every catalog you create must name its own
-`MANAGED LOCATION`, which is what the storage entry does. Present means a catalog
-created without one silently inherits storage belonging to the shared metastore,
-and your data lands somewhere you do not own.
-
-```bash
-az policy assignment list --scope "/subscriptions/<subscription>/resourceGroups/<rg>" --disable-scope-strict-match --query "[].{name:name, effect:policyDefinitionId, enforcement:enforcementMode, params:parameters}" -o json
-```
-
-This tells you which tags every resource you create in that group must carry.
-Miss one and the policy
-refuses the request with `403` before it reaches the resource provider, unless
-`enforcementMode` reads `DoNotEnforce`, in which case the create succeeds and the
-resource is quietly marked non-compliant instead.
-
-Take the keys from each assignment's `tagName` parameter rather than its name,
-because the name is a label someone chose.
-
-Assignments above the resource group do not appear unless you can read that
-scope. Unreadable is an acceptable answer, unknown is not.
-
-```bash
-az provider show -n Microsoft.Storage --query registrationState -o tsv
-az provider show -n Microsoft.EventGrid --query registrationState -o tsv
-```
-
-Both must read `Registered` or the storage entry fails at its first create.
-
-Pass: you can state the `storage_root`, the tag keys, the enforcement mode, the
-scopes you could not read, and both provider states.
+Means: compute spend can be attributed to a project and an environment. Enforced
+automatically on clusters and jobs, manual on warehouses, so any warehouse
+someone creates by hand will be untagged and invisible on the bill.
 
 ## Check the group came from Entra and not from Databricks
+
+Needs: directory read in Entra and workspace admin. The pull-in step is UI only,
+there is no CLI route without account admin.
 
 Both kinds look the same in the workspace. A group created in Databricks has its
 own membership list that nobody syncs, so two answers to who has access appear
@@ -566,7 +651,13 @@ Check the `entitlements` it arrived with. Observed: `workspace-access`,
 `databricks-sql-access` and `workspace-consume`, none of them requested. The
 default is not minimal.
 
+Means: there is one membership list, held in Entra, so an access review there is
+the truth. A Databricks-created group would give you a second list that nobody
+syncs and that quietly drifts.
+
 ## Check a source connector exists before asking for credentials
+
+Needs: workspace admin. Both calls are rejected, so nothing is created.
 
 Every Lakeflow Connect source needs credentials someone else has to produce. Two
 rejected calls tell you whether the connector exists on this workspace and
@@ -596,7 +687,14 @@ That is the request: an Entra app registration, admin consent, a client secret,
 and a user OAuth flow to mint the refresh token. Note there is no federation
 option, so this route needs a secret.
 
+Means: you know the connector exists on this workspace and exactly which
+credentials to request, before anyone starts an app registration that might turn
+out to be the wrong shape.
+
 ## Check an Azure VM can reach GitLab and the workspace
+
+Needs: access to Azure Cloud Shell. Running this from your own machine proves
+nothing.
 
 The runner polls both outbound. Test before anyone builds a VM, because the
 answer decides whether it can sit in Azure at all.
@@ -622,23 +720,35 @@ Pass: any HTTP response from both. Observed `302` and `404`. A `403` means a WAF
 or an IP access list. A timeout means public access is closed and the runner
 needs a private endpoint of its own.
 
+Means: a runner can sit in Azure and reach both endpoints outbound, so it needs
+no private endpoint and no inbound rule of its own.
+
 ## Check a serverless pipeline actually runs in this region
+
+Needs: workspace admin and a catalog you can write to.
 
 Lakeflow Connect ingestion runs on serverless pipelines. Regional availability
 tables are not always right, and a restriction bites when compute starts rather
 than when you create the pipeline, so create one and run it.
 
-`probe_pipeline.py`, three lines:
+`probe_pipeline.py`, three lines.
 
 ```python
 # Databricks notebook source
-import dlt
+from pyspark import pipelines as dp
 
 
-@dlt.table
+@dp.materialized_view
 def probe():
     return spark.range(1)
 ```
+
+Updated 2026-09-02. This test was written with `import dlt` and `@dlt.table`, which still
+work, so the original is not broken. `dlt` has been replaced by `pyspark.pipelines` and
+Databricks recommends the new module, which is what a serverless pipeline ran on this
+workspace with on 2026-09-02. The decorator changed too: `@dp.table` is for a streaming
+read and `@dp.materialized_view` for a batch read, and `spark.range(1)` is a batch read.
+That decorator choice is from the documentation and has not been re-run here.
 
 ```bash
 databricks -p <profile> workspace import /Users/<user>/probe_pipeline --file probe_pipeline.py --format SOURCE --language PYTHON --overwrite
@@ -664,7 +774,21 @@ The last line matters. Deleting a pipeline leaves its tables behind: the pipelin
 owns the definition and the refresh, Unity Catalog owns the table, so the table
 is orphaned rather than dropped.
 
+That ownership split was confirmed again on 2026-09-02 from the other direction. Removing
+a dataset from a running pipeline's source also leaves its table and rows in place, in
+development mode, production mode and production mode with a full refresh. Documentation
+says an omitted dataset is dropped from the target schema, and it did not happen in any of
+the three. Evidence in
+[`../2606-o2-architecture-design/2026-09-01-bronze-platform-tests.md`](../2606-o2-architecture-design/2026-09-01-bronze-platform-tests.md),
+and the consequence for the bronze layer is in ADR-013.
+
+Means: serverless pipelines really do run in `<region>`, so Lakeflow Connect
+ingestion is buildable here rather than only on paper.
+
 ## Check the role assignment actually covers the container
+
+Needs: the role assignment from the storage test to have been granted. This is
+that test's retest, not a new one.
 
 The role list is not proof. A role granted at storage account or resource group
 scope covers the container without appearing on it, and a role on the container
@@ -679,7 +803,13 @@ databricks -p <profile> tables delete <catalog-own>.<schema>.probe
 
 Pass: `"state": "SUCCEEDED"` instead of `UC_CLOUD_STORAGE_ACCESS_FAILURE`.
 
+Means: Unity Catalog can write to your container. Until this passes, every query
+against `<catalog-own>` fails for everyone, admins included.
+
 ## Check the pipeline authenticates once the federation policy exists
+
+Needs: a Databricks account admin to have created the policy from the claims the
+earlier CI test printed.
 
 A Databricks account admin writes the policy, and a wrong issuer, subject or
 audience produces the same rejection as no policy at all. Only a run tells you it
@@ -692,7 +822,12 @@ git push
 
 Pass: the `validate` job prints `Validation OK!` instead of `TOKEN_INVALID`.
 
+Means: CI authenticates as a service principal with no stored secret. There is
+nothing to rotate and nothing to leak.
+
 ## Check jobs run on the shared runner rather than yours
+
+Needs: the shared runner to exist on a VM, built by whoever owns that VM.
 
 Once a runner exists on a VM, your local one is still registered and will keep
 picking jobs up. A green pipeline then tells you nothing about theirs.
@@ -706,7 +841,14 @@ git push
 Pass: the job runs, and its first log line names their runner rather than
 `mac-local`.
 
+Means: the pipeline works for the team rather than only while your laptop is
+awake and registered.
+
 ## Check the SharePoint connection can be created
+
+Needs: an Entra admin to have created the app registration, granted admin
+consent, issued the client secret and run the user OAuth flow for the refresh
+token.
 
 The app registration, its consent and its secret are all done by an Entra admin,
 and the only way to know they produced the right thing is to build the connection
@@ -721,6 +863,31 @@ and are deliberately not in the values table.
 
 Pass: the connection is created rather than listing missing options.
 
+Means: the credentials you were handed are the right ones and ingestion from
+SharePoint can be built on them.
+
+## Clean up
+
+The pipeline test removes what it made. Nothing else does. Run this once the
+tests have served their purpose, oldest scratch first, or the next person
+inherits a bill and a set of half-configured objects.
+
+```bash
+databricks -p <profile> warehouses delete <warehouse-id-new>
+databricks -p <profile> cluster-policies delete <policy-id>
+databricks -p <profile> service-principals delete <sp-scim-id>
+databricks -p <profile> schemas delete <catalog-own>.<schema>
+databricks -p <profile> catalogs delete <catalog-own> --force
+databricks -p <profile> external-locations delete el-managed-dev
+databricks -p <profile> storage-credentials delete sc-managed-dev
+az storage account delete -g <rg> -n <storage-account> --yes
+az databricks access-connector delete -g <rg> -n <connector> --yes
+```
+
+Leave `<catalog>` and `<catalog-staging>` alone. They hold the bundle's schema
+and job, which the two-target and grants tests reuse. Deleting the storage
+account destroys the tables in `<catalog-own>` and there is no undo.
+
 <!--
-Version: 0.1 | Last Updated: 2026-08-13 | Status: Draft
+Version: 0.2 | Last Updated: 2026-08-27 | Status: Draft
 -->
