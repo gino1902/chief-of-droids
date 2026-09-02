@@ -13,19 +13,29 @@
 
 ---
 
-## Default storage and serverless
+## Storage and compute, as observed
 
-Serverless workspace confirmed 2026-09-01, so catalogs on default storage are available.
+Checked on the workspace 2026-09-02.
 
-- `CREATE CATALOG dev_sandbox` takes no location. The storage credential, access connector and external location that the dev platform sequence spends three steps on are not needed for the catalog.
-- An external location is still needed later for the ADR-008 ADLS source, because serverless reaches cloud storage only through one.
-- Managed volumes are supported, and uploading local files to one is a documented task, so the sandbox landing volume works.
-- Classic compute cannot touch anything in default storage. Every read and write is serverless, which hardens ADR-004 rather than changing it, and leaves no escape hatch if a serverless limit bites.
-- Only `Trigger.AvailableNow` and the deprecated `Trigger.Once` are supported. The design already uses the first, but it narrows ADR-005's continuous fallback to the pipeline's own continuous mode.
-- A dropped managed table keeps its files for 7 days before purge, which softens the generation section's sharpest failure mode. Billing continues through it.
-- Nothing outside Databricks can read the underlying files, since FileIO access and credential vending are unsupported. Bronze does not care, being silver-only under ADR-001. Gold will, and ODBC results above roughly 5 MiB fail when front-end Private Link is enabled.
+- `dev_sandbox` already exists as a managed catalog owned by `SGA-Databricks-DEV-CLUSTER-Dev_TF`,
+  with `bronze`, `landing` and `landing.sharepoint_replica` already created. Nothing needs creating.
+- Its `storage_root` is `abfss://unity-catalog-storage@dbstorageu2vas6zgjlwwo.dfs.core.windows.net/`,
+  which is the workspace's own managed storage account. So "default storage" here means the
+  workspace default, not the Databricks default-storage product feature for serverless workspaces.
+  An earlier version of this section described that feature and its limits, which do not apply.
+- `wh-sandbox` is serverless PRO. A serverless Lakeflow pipeline ran without special configuration,
+  so ADR-004's serverless decision holds in practice as well as on paper.
+- Serverless supports only `Trigger.AvailableNow` and the deprecated `Trigger.Once`, which the
+  design already uses, and it narrows ADR-005's continuous fallback to the pipeline's own continuous
+  mode.
+- Serverless accepts six Spark properties and `eagerClustering.streaming.enabled` is not one, so
+  treat clustering on write as unavailable and expect layout to rest on predictive optimization.
 
-This choice must not generalise quietly. `dbr-to-check.md` argues the opposite case, that a catalog should sit on storage you own so destroying a workspace cannot take the data. Default storage catalogs bind by default to the workspace that created them. For a disposable catalog that is fine. For dev, staging or production it reopens that note deliberately rather than by inheritance.
+`dbr-to-check.md` bears directly on this and is not satisfied. Its whole argument is that a
+catalog should sit on storage you own with its own IaC stack, so that destroying a workspace cannot
+take the data. `dev_sandbox` sits on the workspace's managed storage account, which is the
+arrangement that note warns against. For a catalog that is disposable by decision this is the right
+trade. For dev, staging or production it is the question that note exists to force.
 
 ---
 
@@ -134,7 +144,13 @@ for feed in ingest.ingesting_feeds(config_path):      # active only
 - Deleting a configuration row deletes the table. Default storage keeps the files 7 days, which is time to notice.
 - `cluster_by_auto` is a real boolean argument on `create_streaming_table`, and the reference states it combines with `cluster_by` for the initial keys.
 
-> ⚠️ Unverified and load-bearing. That a streaming table with no attached flow is a supported steady state whose data survives is documented nowhere. The whole retirement rule rests on it. Test before writing it down as a rule.
+> ⚠️ Tested 2026-09-02 and the two-loop split above does not work. A streaming table with no
+> attached flow is not a valid state: the update fails with `No query found for dataset <name>`, and
+> it fails the whole update, so one retired feed would stop every other feed. Removing the dataset
+> entirely, however, did not drop the table, which is the opposite of the behaviour this split was
+> built to prevent. Retirement may simply be removing the feed, but the run was development mode
+> with no full refresh, so one production-mode run settles it. ADR-013's projection half is
+> reopened. The unit and naming halves are unaffected.
 
 The feed configuration needs five columns it does not have, plus a fourth status value for retired.
 
@@ -179,7 +195,15 @@ Common to all three: `cloudFiles.format=json`, `multiLine=true`, `singleVariantC
 
 `encoding` is explicit on purpose. All 21 files carry a BOM, the reader detects encoding from it automatically, and the vendor documents that detection as unreliable with an explicit `encoding` as the remedy. The BOM and `multiLine` interaction is documented nowhere.
 
-> ⚠️ The single largest untested assumption here. Twenty of 21 feeds are a top-level JSON array, and the whole design assumes `multiLine=true` yields one row per array element. No Azure Databricks page states it. If it does not hold, every bronze table is one row per file and the grain of the layer is wrong. One file settles it, so settle it first.
+> ⚠️ Tested 2026-09-02 and it does not hold. `singleVariantColumn` with `multiLine=true` puts the
+> whole file in one VARIANT, so a 3-record array gives 1 row, not 3, on both `read_files` and
+> `cloudFiles`. `multiLine` is not the cause: without `singleVariantColumn` the array explodes
+> correctly. `multiLine=false` is worse, yielding one row per physical line with no error.
+> Consequently every bronze table would be one row per file, and the two largest feeds would exceed
+> the 128 MiB cap as a single value and carry no data at all. `variant_explode` recovers the
+> elements. The clean fix is newline-delimited JSON from the producer. Evidence and the full option
+> set are in [2026-09-01-bronze-platform-tests.md](2026-09-01-bronze-platform-tests.md), and the
+> grain must be settled before anything is built.
 
 ---
 
@@ -197,11 +221,17 @@ Common to all three: `cloudFiles.format=json`, `multiLine=true`, `singleVariantC
 
 ## Validation
 
-Three empirical tests come first, in this order, because each can invalidate the design rather than merely fail it. They run on the workspace, not locally, and the runnable versions are in [2026-09-01-bronze-platform-tests.md](2026-09-01-bronze-platform-tests.md).
+Tests 1 and 2 ran on the workspace on 2026-09-02 and both failed. Results, evidence and the
+swept-object list are in [2026-09-01-bronze-platform-tests.md](2026-09-01-bronze-platform-tests.md).
+Test 3 is unchanged and still gated on the SharePoint Beta and an Entra app registration.
 
-1. One file, top-level array, `multiLine=true`, `singleVariantColumn`. Does it yield one row per array element? If not, the grain of the whole layer is wrong.
-2. Two tables in one pipeline, a flow on one, then the flow removed and the pipeline re-run, with a third run removing the declaration as the control. Do the table and its rows survive? If not, the retirement rule does not work.
-3. `singleVariantColumn` with `databricks.connection` on one SharePoint file, which is ADR-009's own open verification. Not needed for the sandbox, needed before the SharePoint phase.
+Two things must be settled before the standing checks below mean anything.
+
+1. The grain. Decide between newline-delimited JSON from the producer, exploding in bronze, or
+   reading with schema inference and wrapping each row. Only the first avoids the 128 MiB cap on the
+   two largest feeds.
+2. The retirement mechanism, which needs one production-mode pipeline run to confirm what run C
+   showed in development mode.
 
 Then the standing checks.
 

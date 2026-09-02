@@ -3,8 +3,9 @@
 | Field | Value |
 |:------|:------|
 | Date | 2026-09-01 |
-| Status | Draft, not yet run |
-| Runs on | The Databricks workspace. Nothing here can be checked locally |
+| Status | Run 2026-09-02. Both tests failed. See Results |
+| Runs on | The Databricks workspace, profile `o2_sandbox`, warehouse `ca24aadb34697d64` |
+| Run by | gmourgues@sqli.com, 2026-09-02, serverless throughout |
 | Gates | [ADR-013](decisions/ADR-013-bronze-table-projection.md) leaving Draft, and the whole layer's grain |
 | Format | Follows `dbr-dev-tests.md`: what it needs, what is tested, the play, what passes, what passing means |
 
@@ -14,27 +15,22 @@ Two tests, both cheap, both on serverless. A third is listed last and is not nee
 
 ## Setup, once
 
-Needs a serverless workspace, confirmed 2026-09-01, and `CREATE CATALOG`.
+None of this needs creating. Checked 2026-09-02: `dev_sandbox` exists as a managed catalog owned by
+`SGA-Databricks-DEV-CLUSTER-Dev_TF`, and `bronze`, `landing` and
+`landing.sharepoint_replica` all exist already, owned by eadeogun@sqli.com.
 
-```sql
-CREATE CATALOG dev_sandbox;
-CREATE SCHEMA dev_sandbox.bronze;
-CREATE SCHEMA dev_sandbox.landing;
-CREATE VOLUME dev_sandbox.landing.sharepoint_replica;
-```
-
-- No location on the catalog. That is the point of default storage.
-- Then upload one small file to
-  `/Volumes/dev_sandbox/landing/sharepoint_replica/app-reports/analytic/site/`.
-- Use `analytic_site`, which is 30 records and 3 KB, from
-  `2608-o2-data-sources/analytic/site/2026-08-05__analytic_site.json`.
-- Catalog Explorer upload is the documented path. The CLI form
-  `databricks fs cp <local> dbfs:/Volumes/dev_sandbox/landing/sharepoint_replica/...` should also
-  work but is not verified here.
-
-> ⚠️ That file is real personal-data-adjacent production data. `analytic_site` is only site names
-> and ids, so it is the safest of the 21 to start with. Do not bulk-copy the corpus into the
-> sandbox before settling the grants question in the design document's Governance section.
+- Do not run `CREATE CATALOG`. The `pbi-databricks-sandbox` repo is explicit that a catalog must not
+  be invented in a shared metastore, and this one is already there.
+- Read access is not automatic. This identity has no `READ VOLUME` on
+  `dev_sandbox.landing.sharepoint_replica`, so a test needing files creates its own throwaway schema
+  and volume rather than asking for a grant on someone else's object.
+- Use a synthetic file rather than a real payload. Three records with the same structural
+  properties, a pretty-printed top-level array with a UTF-8 BOM, test exactly the same thing and put
+  no client data in the sandbox.
+- `databricks fs cp <local> dbfs:/Volumes/...` works and is verified. `databricks fs mkdir` on the
+  target directory first, since `cp` does not create it.
+- Statements execute through `databricks api post /api/2.0/sql/statements` with `warehouse_id`,
+  `statement` and `wait_timeout`, per the `pbi-databricks-sandbox` runbook.
 
 ---
 
@@ -163,6 +159,81 @@ Not needed for the sandbox and not cheap. Listed so it is not forgotten.
 - That is other people and their lead times, which is why it sits behind the first two rather than
   beside them.
 - Gates the SharePoint phase only. The sandbox reads from a volume, which is the documented pattern.
+
+---
+
+## Results, run 2026-09-02
+
+Both tests failed. Every object created was swept, and `dev_sandbox` was left with the four schemas
+it had before.
+
+Run in a throwaway schema `dev_sandbox.zz_grain_probe` with its own volume, not in
+`dev_sandbox.bronze` and not against `dev_sandbox.landing.sharepoint_replica`, which this identity
+has no READ VOLUME on. The probe file was synthetic, three records with the same structural
+properties as `analytic_site`, pretty-printed array with a UTF-8 BOM, so no client data entered the
+sandbox.
+
+### Test 1 failed. `singleVariantColumn` collapses the file to one row
+
+| Read | Rows from a 3-record array | payload shape |
+|:-----|---------------------------:|:--------------|
+| `multiLine=true` plus `singleVariantColumn` | 1 | `ARRAY<OBJECT<active,id,name>>` |
+| `multiLine=true` alone, schema inferred | 3 | one object per row, correct |
+| `multiLine=false` plus `singleVariantColumn` | 17 | one per physical line, garbage |
+
+- Confirmed on both paths. `read_files` from SQL and `cloudFiles` inside a serverless Lakeflow
+  pipeline gave the same single row, so this is the reader, not the API.
+- `multiLine` is not the culprit. Without `singleVariantColumn` the array explodes correctly, so the
+  collapse comes from `singleVariantColumn` treating the whole multiline file as one record.
+- `multiLine=false` is worse than wrong, it is silent. Seventeen rows from a three-record file, one
+  per physical line of pretty-printed JSON, with no error.
+- `variant_explode(payload)` recovers the elements correctly, each as
+  `OBJECT<active,id,name>`. That is the available repair.
+
+What this breaks, in the design as written:
+
+- Every bronze table would hold one row per file rather than one row per record.
+- `others_whoz_profile_report` at 196.8 MB and `project_projects_report` at 143.1 MB both exceed the
+  128 MiB VARIANT cap as a single value, so under `PERMISSIVE` they would land in
+  `corruptRecordColumn` and carry no data at all. The two largest feeds fail hardest.
+- The clean fix is upstream. Newline-delimited JSON, one object per line, makes `multiLine=false`
+  plus `singleVariantColumn` the documented happy path with no cap exposure.
+- The interim fixes both cost something. Exploding in bronze breaks byte-faithfulness and still
+  passes the whole file through one VARIANT, so it does not help the two large feeds. Reading with
+  schema inference and wrapping each row reintroduces the schema evolution that
+  `singleVariantColumn` was chosen to avoid.
+
+### Test 2 failed. A flowless streaming table is not a valid state
+
+- Run A, both tables declared and both fed, completed. Both tables held their row.
+- Run B, one flow removed and its `create_streaming_table` kept, failed the update outright:
+  `No query found for dataset dev_sandbox.zz_grain_probe.t2_loses_flow`.
+- The failure is not scoped to that dataset. The whole update failed, so under this design one
+  retired feed would stop ingestion for every other feed in the pipeline.
+- Run C, the dataset removed from both loops, completed. **The table survived with its row intact,
+  still a `STREAMING_TABLE`.**
+
+Run C is the surprising half and it inverts the problem.
+
+- The documented drop-on-absence did not happen. Removing a dataset entirely left the table and its
+  data in place, which is the opposite of what ADR-013's two-loop split was built to prevent.
+- So the retirement mechanism may be the simple one after all: remove the feed from the
+  configuration and the table stays.
+- ⚠️ Do not write that as a rule yet. The pipeline was in development mode, serverless, triggered,
+  and no full refresh was run. Any of those could be the reason nothing was dropped. One more run in
+  production mode settles it, and that is the next test rather than a conclusion.
+
+### What was swept
+
+- Pipeline `zz-bronze-flowless-probe`, deleted.
+- Workspace source under `/Users/gmourgues@sqli.com/zz_probe/`, deleted.
+- Schema `dev_sandbox.zz_grain_probe` with its two tables and its volume, dropped cascade.
+- Verified afterwards: `dev_sandbox` shows `bronze`, `default`, `information_schema`, `landing`, and
+  the workspace lists no pipelines.
+
+### Test 3 not run
+
+Still gated on the SharePoint Beta, the Entra app registration and the permission scopes. Unchanged.
 
 ---
 

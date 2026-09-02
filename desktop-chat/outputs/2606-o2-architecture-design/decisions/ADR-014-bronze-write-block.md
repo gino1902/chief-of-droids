@@ -33,6 +33,15 @@ This record states the write block inline rather than referring to it.
 
 ## Decision
 
+> ⚠️ The column contract below stands. How `payload` gets populated does not, as of 2026-09-02.
+> `singleVariantColumn` with `multiLine=true` puts the whole file in one VARIANT, giving one row per
+> file rather than one row per record, verified on both `read_files` and `cloudFiles`. Two feeds
+> would additionally exceed the 128 MiB cap as a single value and carry no data at all. Evidence and
+> the available repairs are in
+> [`../2026-09-01-bronze-platform-tests.md`](../2026-09-01-bronze-platform-tests.md). The grain
+> question needs settling, most cleanly by asking the producer for newline-delimited JSON, before
+> this record leaves Draft.
+
 **Option A. Every bronze table carries these five columns and no others.**
 
 | Column | Type | Source |

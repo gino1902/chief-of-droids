@@ -58,7 +58,7 @@
 - B also makes the producer structural, which is what ADR-011 decided against.
 - The naming rule rests on a confirmed absence. ADR-012's prohibition is written against directory names and does not reach table names, so nothing forbids the rule and nothing else supplies one.
 - Mechanical beats tidy because the alternative is a judgement re-made per feed. The price is accepted: `others_whoz_profile_report` carries a source-folder bucket that means nothing to O2.
-- The two-list split is forced, not chosen. Lakeflow drops a dataset absent from a later run, so a single loop over active feeds would destroy a table the moment its feed stopped being active.
+- The two-list split was argued from documented drop-on-absence behaviour. That argument did not survive testing, see the note under Validation. The split is withdrawn and the retirement mechanism is reopened.
 
 ## Validation
 
@@ -70,7 +70,21 @@
 
 Reopens when the feed-to-entity mapping exists, making D evaluable, or when one logical dataset splits across several vehicles, which is the case this record has not tested.
 
-> ⚠️ Unverified and load-bearing. That a streaming table with no attached flow keeps its data across pipeline runs is not documented anywhere. The `create_streaming_table` plus `@dp.append_flow` pattern is documented, the persistence of a flowless table is not. Test 2 in [`../2026-09-01-bronze-platform-tests.md`](../2026-09-01-bronze-platform-tests.md) settles it on the workspace. Run it before this record leaves Draft.
+> ⚠️ Falsified 2026-09-02. The two-list projection above does not work, and the reason it was built
+> did not reproduce either. Tested on the workspace, evidence in
+> [`../2026-09-01-bronze-platform-tests.md`](../2026-09-01-bronze-platform-tests.md).
+>
+> - A streaming table declared by `create_streaming_table` with no attached flow is not a valid
+>   state. The pipeline update fails with `No query found for dataset <name>`, and it fails the
+>   whole update, so one retired feed would stop ingestion for every other feed.
+> - Removing the dataset entirely did not drop the table. It survived with its data, still a
+>   `STREAMING_TABLE`. So the drop-on-absence this split was designed to prevent did not occur.
+> - That inverts the problem. Retirement may simply be removing the feed from the configuration.
+>   Do not write that as a rule yet: the run was development mode, serverless, triggered, with no
+>   full refresh, and any of those could explain it. One production-mode run settles it.
+>
+> The unit and the naming halves of this record are unaffected and stand. The projection half is
+> reopened. Editing rather than superseding is legitimate only because this record is Draft.
 
 ## Consequences
 
