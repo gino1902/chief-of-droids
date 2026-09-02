@@ -300,6 +300,35 @@ lists no pipelines.
 
 ---
 
+## Test 4, what an oversized file actually does
+
+Not run. Moved here from the landing-audit handover, because it is a sandbox test rather than an
+audit of the landing zone.
+
+**Why it matters.** It decides whether an oversized read is a loss you can detect or one you cannot.
+`whoz_profile_report` at 196.8 MB and `projects_report` at 143.1 MB exceed the 128 MiB cap when the
+whole file becomes one VARIANT. No individual record is near the cap, the largest in the corpus is
+410 KB, so this bites the file and not the record.
+
+**Only under a rejected route.** `singleVariantColumn` with `multiLine=true`, and the
+`variant_explode` repair built on it. Neither surviving route, NDJSON or `to_variant_object`, has any
+cap exposure. So this is worth knowing and is not on the critical path.
+
+**Play.** Generate a synthetic file just over 128 MiB, a top-level array of small repeated records,
+no client data. Read it with `singleVariantColumn` and `multiLine=true`.
+
+**What to observe, in this order.**
+
+- Does it produce a row at all, with `payload` null, or no row?
+- Is there anything in the table that identifies the failure, given the target has no
+  `corruptRecordColumn` declared?
+- Does the Auto Loader checkpoint mark the file processed, so that a rerun after a fix skips it?
+
+The third is the one that matters. If the file is consumed and the rows are absent, then fixing the
+code does not recover the data and the file must be renamed or the checkpoint cleared.
+
+---
+
 ## Cleanup
 
 ```sql
