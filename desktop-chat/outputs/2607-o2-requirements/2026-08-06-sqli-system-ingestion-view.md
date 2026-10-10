@@ -97,15 +97,11 @@ chart agree with the 19 active feeds, since **active** means landed and ingested
 flowchart LR
 %% SQLI System View - O2 Ingestion Perspective - PI-1
 %% Orchestrated Operations Platform | 8/6/26 | C2 - Restricted
-%% WARNING (title box):
+%% WARNING:
 %%   - Manual AR/AP Invoice entry for NL, DE, SE in Unit4
-%%   - Manual month end accrual entry in Unit4
+%%   - Manual month end accrual ❓expense/revenue❓ entry in Unit4
 %%   - Manual Employee creation for all countries but FR in APP
-%% Arrow convention: as drawn. "Extract/Ingest X from" points at the provider.
-%% Not encoded: blue = SQLI Network, grey = External. Dynamics, SharePoint
-%% and Databricks sit in the Microsoft boundary but are SQLI Network.
-%% ⚠️ Verify: SharePoint Online is Microsoft-hosted SaaS reached over OAuth
-%% (ADR-009), so whether it counts as SQLI Network needs confirming.
+
 
   subgraph SQLI
     APP["APP<br/>[Software System]<br/>Revenue & cost Recognition, Project Allocation, Employee Security"]
@@ -151,6 +147,7 @@ flowchart LR
   MW -.->|"Extract People Review from (planned)"| SKU
   MW -.->|"Extract Market Job Post from (planned)"| JOBS
   MW -.->|"Extract Subcontractor, Supplier from (planned)"| U4
+  MW -.->|"Extract Expenses - direct / indirect - from (planned)"| U4
   MW -.->|"Store data files into"| SPO
 
 
